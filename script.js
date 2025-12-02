@@ -213,10 +213,22 @@ streetViewInput.addEventListener('input', (e) => {
 // REVERSE GEOCODING (Nominatim)
 // ===================================
 
+// Brazilian state name to code mapping
+const brazilStates = {
+    'Acre': 'AC', 'Alagoas': 'AL', 'Amapá': 'AP', 'Amazonas': 'AM',
+    'Bahia': 'BA', 'Ceará': 'CE', 'Distrito Federal': 'DF',
+    'Espírito Santo': 'ES', 'Goiás': 'GO', 'Maranhão': 'MA',
+    'Mato Grosso': 'MT', 'Mato Grosso do Sul': 'MS', 'Minas Gerais': 'MG',
+    'Pará': 'PA', 'Paraíba': 'PB', 'Paraná': 'PR', 'Pernambuco': 'PE',
+    'Piauí': 'PI', 'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN',
+    'Rio Grande do Sul': 'RS', 'Rondônia': 'RO', 'Roraima': 'RR',
+    'Santa Catarina': 'SC', 'São Paulo': 'SP', 'Sergipe': 'SE', 'Tocantins': 'TO'
+};
+
 async function getCityFromCoordinates(lat, lng) {
     try {
         const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=pt-BR`,
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=pt-BR`,
             {
                 headers: {
                     'User-Agent': 'OOH System'
@@ -236,11 +248,18 @@ async function getCityFromCoordinates(lat, lng) {
                 data.address.village ||
                 data.address.municipality || '';
 
-            const uf = data.address.state_code ||
-                data.address.state || '';
+            // Fix UF: Use ISO3166-2-lvl4 format (BR-XX) or map state name
+            let uf = '';
+            if (data.address['ISO3166-2-lvl4']) {
+                // Format: "BR-PR" -> extract "PR"
+                uf = data.address['ISO3166-2-lvl4'].split('-')[1];
+            } else if (data.address.state) {
+                // Fallback: map state name to code
+                uf = brazilStates[data.address.state] || data.address.state.substring(0, 2).toUpperCase();
+            }
 
             document.getElementById('cidade').value = cidade;
-            document.getElementById('uf').value = uf.toUpperCase().substring(0, 2);
+            document.getElementById('uf').value = uf;
         }
     } catch (error) {
         console.error('Erro ao buscar cidade:', error);
@@ -263,6 +282,42 @@ longitudeInput.addEventListener('change', () => {
         getCityFromCoordinates(lat, lng);
     }
 });
+
+// ===================================
+// COORDINATE EDITING
+// ===================================
+
+const editLatBtn = document.getElementById('edit-latitude');
+const editLngBtn = document.getElementById('edit-longitude');
+
+// Toggle edit mode for both coordinates together
+function toggleCoordinateEdit() {
+    const isReadonly = latitudeInput.readOnly;
+
+    latitudeInput.readOnly = !isReadonly;
+    longitudeInput.readOnly = !isReadonly;
+
+    // Update button icons (both buttons do the same thing)
+    const newIcon = isReadonly ?
+        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>` :
+        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>`;
+
+    editLatBtn.innerHTML = newIcon;
+    editLngBtn.innerHTML = newIcon;
+
+    // Focus on latitude input when enabling edit
+    if (!isReadonly) {
+        latitudeInput.focus();
+    }
+}
+
+editLatBtn.addEventListener('click', toggleCoordinateEdit);
+editLngBtn.addEventListener('click', toggleCoordinateEdit);
 
 // ===================================
 // IMAGE PREVIEW
