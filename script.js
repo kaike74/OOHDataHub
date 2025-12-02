@@ -1,0 +1,454 @@
+// ===================================
+// GLOBAL VARIABLES
+// ===================================
+
+let map;
+let markers = [];
+const API_BASE_URL = 'https://ooh-system.YOUR_SUBDOMAIN.workers.dev'; // Update this after deployment
+
+// ===================================
+// MAP INITIALIZATION
+// ===================================
+
+function initMap() {
+    // Initialize Leaflet map centered on Brazil
+    map = L.map('map').setView([-15.7801, -47.9292], 4);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(map);
+    
+    // Load existing points
+    loadPoints();
+}
+
+// ===================================
+// LOAD POINTS FROM API
+// ===================================
+
+async function loadPoints() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/ooh`);
+        
+        if (!response.ok) {
+            throw new Error('Erro ao carregar pontos');
+        }
+        
+        const points = await response.json();
+        
+        // Clear existing markers
+        markers.forEach(marker => marker.remove());
+        markers = [];
+        
+        // Add markers for each point
+        if (points.length > 0) {
+            const bounds = [];
+            
+            points.forEach(point => {
+                if (point.latitude && point.longitude) {
+                    const marker = L.marker([point.latitude, point.longitude], {
+                        icon: createCustomIcon()
+                    }).addTo(map);
+                    
+                    // Create popup content
+                    const popupContent = `
+                        <div class="popup-content">
+                            <h3>${point.codigo_ooh}</h3>
+                            <p><strong>Endereço:</strong> ${point.endereco || 'N/A'}</p>
+                            <p><strong>Exibidora:</strong> ${point.exibidora_nome || 'N/A'}</p>
+                            <p><strong>Cidade:</strong> ${point.cidade || 'N/A'} - ${point.uf || 'N/A'}</p>
+                            ${point.medidas ? `<p><strong>Medidas:</strong> ${point.medidas}</p>` : ''}
+                        </div>
+                    `;
+                    
+                    marker.bindPopup(popupContent);
+                    markers.push(marker);
+                    bounds.push([point.latitude, point.longitude]);
+                }
+            });
+            
+            // Fit map to show all markers
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao carregar pontos:', error);
+        // Show user-friendly error message
+        alert('Não foi possível carregar os pontos. Verifique sua conexão e tente novamente.');
+    }
+}
+
+// ===================================
+// CUSTOM MARKER ICON
+// ===================================
+
+function createCustomIcon() {
+    return L.icon({
+        iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+                <path fill="#2563eb" d="M12 0C7.802 0 4 3.403 4 7.602C4 11.8 7.469 16.812 12 24C16.531 16.812 20 11.8 20 7.602C20 3.403 16.199 0 12 0z"/>
+                <circle cx="12" cy="8" r="3" fill="white"/>
+            </svg>
+        `),
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32]
+    });
+}
+
+// ===================================
+// MODAL MANAGEMENT
+// ===================================
+
+const modal = document.getElementById('modal-cadastro');
+const addPointBtn = document.getElementById('add-point');
+const closeModalBtn = document.getElementById('close-modal');
+const cancelBtn = document.getElementById('cancel-btn');
+const modalBackdrop = document.querySelector('.modal-backdrop');
+
+function openModal() {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+    resetForm();
+}
+
+addPointBtn.addEventListener('click', openModal);
+closeModalBtn.addEventListener('click', closeModal);
+cancelBtn.addEventListener('click', closeModal);
+modalBackdrop.addEventListener('click', closeModal);
+
+// Close modal on ESC key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// ===================================
+// FORM MANAGEMENT
+// ===================================
+
+const form = document.getElementById('form-cadastro');
+const exibidoraSelect = document.getElementById('id_exibidora');
+const novaExibidoraFields = document.getElementById('nova-exibidora-fields');
+
+// Toggle new exhibitor fields
+exibidoraSelect.addEventListener('change', (e) => {
+    if (e.target.value === 'nova') {
+        novaExibidoraFields.style.display = 'block';
+        document.getElementById('nome_exibidora').required = true;
+    } else {
+        novaExibidoraFields.style.display = 'none';
+        document.getElementById('nome_exibidora').required = false;
+    }
+});
+
+// ===================================
+// LOAD EXHIBITORS
+// ===================================
+
+async function loadExibidoras() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/exibidoras`);
+        
+        if (!response.ok) {
+            throw new Error('Erro ao carregar exibidoras');
+        }
+        
+        const exibidoras = await response.json();
+        
+        // Clear existing options (except first two)
+        while (exibidoraSelect.options.length > 2) {
+            exibidoraSelect.remove(2);
+        }
+        
+        // Add exhibitors to select
+        exibidoras.forEach(exibidora => {
+            const option = document.createElement('option');
+            option.value = exibidora.id;
+            option.textContent = exibidora.nome;
+            exibidoraSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Erro ao carregar exibidoras:', error);
+    }
+}
+
+// ===================================
+// STREET VIEW COORDINATE EXTRACTION
+// ===================================
+
+const streetViewInput = document.getElementById('streetview_embed');
+const latitudeInput = document.getElementById('latitude');
+const longitudeInput = document.getElementById('longitude');
+
+streetViewInput.addEventListener('input', (e) => {
+    const iframeHTML = e.target.value;
+    
+    // Regex to extract coordinates from Google Street View iframe
+    const regex = /!1d(-?\d+\.?\d*)!2d(-?\d+\.?\d*)/;
+    const match = iframeHTML.match(regex);
+    
+    if (match) {
+        const lat = parseFloat(match[1]);
+        const lng = parseFloat(match[2]);
+        
+        latitudeInput.value = lat;
+        longitudeInput.value = lng;
+        
+        // Fetch city and state from coordinates
+        getCityFromCoordinates(lat, lng);
+    }
+});
+
+// ===================================
+// REVERSE GEOCODING (Nominatim)
+// ===================================
+
+async function getCityFromCoordinates(lat, lng) {
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=pt-BR`,
+            {
+                headers: {
+                    'User-Agent': 'OOH System'
+                }
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error('Erro ao buscar localização');
+        }
+        
+        const data = await response.json();
+        
+        if (data.address) {
+            const cidade = data.address.city || 
+                          data.address.town || 
+                          data.address.village || 
+                          data.address.municipality || '';
+            
+            const uf = data.address.state_code || 
+                      data.address.state || '';
+            
+            document.getElementById('cidade').value = cidade;
+            document.getElementById('uf').value = uf.toUpperCase().substring(0, 2);
+        }
+    } catch (error) {
+        console.error('Erro ao buscar cidade:', error);
+    }
+}
+
+// Also trigger geocoding when coordinates are manually changed
+latitudeInput.addEventListener('change', () => {
+    const lat = parseFloat(latitudeInput.value);
+    const lng = parseFloat(longitudeInput.value);
+    if (lat && lng) {
+        getCityFromCoordinates(lat, lng);
+    }
+});
+
+longitudeInput.addEventListener('change', () => {
+    const lat = parseFloat(latitudeInput.value);
+    const lng = parseFloat(longitudeInput.value);
+    if (lat && lng) {
+        getCityFromCoordinates(lat, lng);
+    }
+});
+
+// ===================================
+// IMAGE PREVIEW
+// ===================================
+
+const imageInput = document.getElementById('imagem');
+const fileNameSpan = document.getElementById('file-name');
+const imagePreviewContainer = document.getElementById('image-preview-container');
+const imagePreview = document.getElementById('image-preview');
+
+imageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    
+    if (file) {
+        // Update file name
+        fileNameSpan.textContent = file.name;
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            imagePreview.src = event.target.result;
+            imagePreviewContainer.style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        fileNameSpan.textContent = 'Escolher arquivo';
+        imagePreviewContainer.style.display = 'none';
+    }
+});
+
+// ===================================
+// FORM SUBMISSION
+// ===================================
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submit-btn');
+    const originalBtnText = submitBtn.innerHTML;
+    
+    try {
+        // Disable submit button
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>Cadastrando...</span>';
+        
+        // Check if we need to create a new exhibitor first
+        let exibidoraId = exibidoraSelect.value;
+        
+        if (exibidoraId === 'nova') {
+            const nomeExibidora = document.getElementById('nome_exibidora').value;
+            const cnpjExibidora = document.getElementById('cnpj_exibidora').value;
+            
+            if (!nomeExibidora) {
+                alert('Por favor, preencha o nome da exibidora.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+                return;
+            }
+            
+            // Create new exhibitor
+            const exibidoraResponse = await fetch(`${API_BASE_URL}/api/exibidoras`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    nome: nomeExibidora,
+                    cnpj: cnpjExibidora
+                })
+            });
+            
+            if (!exibidoraResponse.ok) {
+                throw new Error('Erro ao criar exibidora');
+            }
+            
+            const exibidoraData = await exibidoraResponse.json();
+            exibidoraId = exibidoraData.id;
+        }
+        
+        // Prepare FormData
+        const formData = new FormData();
+        
+        // Basic fields
+        formData.append('codigo_ooh', document.getElementById('codigo_ooh').value);
+        formData.append('id_exibidora', exibidoraId);
+        formData.append('endereco', document.getElementById('endereco').value);
+        formData.append('ponto_referencia', document.getElementById('ponto_referencia').value);
+        formData.append('streetview_embed', document.getElementById('streetview_embed').value);
+        formData.append('latitude', document.getElementById('latitude').value);
+        formData.append('longitude', document.getElementById('longitude').value);
+        formData.append('cidade', document.getElementById('cidade').value);
+        formData.append('uf', document.getElementById('uf').value);
+        formData.append('medidas', document.getElementById('medidas').value);
+        formData.append('fluxo', document.getElementById('fluxo').value);
+        formData.append('observacoes', document.getElementById('observacoes').value);
+        
+        // Products (checkboxes)
+        const produtos = Array.from(document.querySelectorAll('input[name="produtos"]:checked'))
+            .map(cb => cb.value);
+        formData.append('produtos', JSON.stringify(produtos));
+        
+        // Value
+        const valor = document.getElementById('valor').value;
+        if (valor) {
+            formData.append('valor', valor);
+        }
+        
+        // Image
+        const imageFile = imageInput.files[0];
+        if (imageFile) {
+            formData.append('imagem', imageFile);
+        }
+        
+        // Submit form
+        const response = await fetch(`${API_BASE_URL}/api/ooh`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro ao cadastrar ponto');
+        }
+        
+        const data = await response.json();
+        
+        // Success! Add marker to map
+        const lat = parseFloat(document.getElementById('latitude').value);
+        const lng = parseFloat(document.getElementById('longitude').value);
+        
+        if (lat && lng) {
+            const marker = L.marker([lat, lng], {
+                icon: createCustomIcon()
+            }).addTo(map);
+            
+            const popupContent = `
+                <div class="popup-content">
+                    <h3>${document.getElementById('codigo_ooh').value}</h3>
+                    <p><strong>Endereço:</strong> ${document.getElementById('endereco').value}</p>
+                    <p><strong>Cidade:</strong> ${document.getElementById('cidade').value} - ${document.getElementById('uf').value}</p>
+                </div>
+            `;
+            
+            marker.bindPopup(popupContent);
+            markers.push(marker);
+            
+            // Center map on new marker
+            map.setView([lat, lng], 15);
+        }
+        
+        // Show success message
+        alert('Ponto cadastrado com sucesso!');
+        
+        // Close modal and reset form
+        closeModal();
+        
+        // Reload exhibitors list
+        await loadExibidoras();
+        
+    } catch (error) {
+        console.error('Erro ao cadastrar ponto:', error);
+        alert('Erro ao cadastrar ponto: ' + error.message);
+    } finally {
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+    }
+});
+
+// ===================================
+// RESET FORM
+// ===================================
+
+function resetForm() {
+    form.reset();
+    novaExibidoraFields.style.display = 'none';
+    imagePreviewContainer.style.display = 'none';
+    fileNameSpan.textContent = 'Escolher arquivo';
+    document.getElementById('nome_exibidora').required = false;
+}
+
+// ===================================
+// INITIALIZATION
+// ===================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    initMap();
+    loadExibidoras();
+});
