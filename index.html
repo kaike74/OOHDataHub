@@ -46,6 +46,82 @@
                 <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
         </button>
+
+        <!-- Details Drawer -->
+        <div id="details-drawer" class="drawer">
+            <div class="drawer-header">
+                <h2 id="drawer-title">Detalhes do Ponto</h2>
+                <button id="close-drawer" class="drawer-close-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="drawer-content">
+                <!-- Image Carousel -->
+                <div class="drawer-carousel">
+                    <div id="drawer-images" class="carousel-track">
+                        <!-- Images will be injected here -->
+                    </div>
+                    <div class="carousel-controls">
+                        <button id="prev-image" class="carousel-btn prev">❮</button>
+                        <button id="next-image" class="carousel-btn next">❯</button>
+                    </div>
+                    <div id="carousel-dots" class="carousel-dots"></div>
+                </div>
+
+                <!-- Point Details -->
+                <div class="drawer-section">
+                    <div class="drawer-info-row">
+                        <span class="drawer-label">Código:</span>
+                        <span id="drawer-code" class="drawer-value"></span>
+                    </div>
+                    <div class="drawer-info-row">
+                        <span class="drawer-label">Endereço:</span>
+                        <span id="drawer-address" class="drawer-value"></span>
+                    </div>
+                    <div class="drawer-info-row">
+                        <span class="drawer-label">Cidade/UF:</span>
+                        <span id="drawer-city" class="drawer-value"></span>
+                    </div>
+                    <div class="drawer-info-row">
+                        <span class="drawer-label">Medidas:</span>
+                        <span id="drawer-measures" class="drawer-value"></span>
+                    </div>
+                    <div class="drawer-info-row">
+                        <span class="drawer-label">Fluxo:</span>
+                        <span id="drawer-flow" class="drawer-value"></span>
+                    </div>
+                </div>
+
+                <!-- Exhibitor Info (Clickable) -->
+                <div class="drawer-section clickable" id="drawer-exhibitor-section">
+                    <h3>Exibidora</h3>
+                    <div class="drawer-info-row">
+                        <span class="drawer-label">Nome:</span>
+                        <span id="drawer-exhibitor" class="drawer-value link-style"></span>
+                    </div>
+                </div>
+
+                <!-- Products -->
+                <div class="drawer-section">
+                    <h3>Produtos</h3>
+                    <div id="drawer-products" class="drawer-products-list"></div>
+                </div>
+
+                <!-- Actions -->
+                <div class="drawer-actions">
+                    <button id="edit-point-btn" class="btn btn-primary full-width">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Editar Ponto
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Modal de Cadastro OOH -->

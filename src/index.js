@@ -169,8 +169,30 @@ async function createOOHPoint(request, env, corsHeaders) {
             ).run();
         }
 
-        // Insert product pricing if valor is provided
-        if (valor && produtos) {
+        // Insert product pricing
+        const productsDetailed = formData.get('products_detailed');
+
+        if (productsDetailed) {
+            try {
+                const productsArray = JSON.parse(productsDetailed);
+
+                for (const produto of productsArray) {
+                    await env.DB.prepare(`
+                        INSERT INTO produtos (
+                            id_ooh, produto, v1, tipo_periodo, created_at
+                        ) VALUES (?, ?, ?, ?, datetime('now'))
+                    `).bind(
+                        oohId,
+                        produto.tipo,
+                        parseFloat(produto.valor),
+                        produto.periodo || 'Mensal'
+                    ).run();
+                }
+            } catch (e) {
+                console.error('Error inserting detailed products:', e);
+            }
+        } else if (valor && produtos) {
+            // Legacy fallback
             try {
                 const produtosArray = JSON.parse(produtos);
 
@@ -178,7 +200,7 @@ async function createOOHPoint(request, env, corsHeaders) {
                     await env.DB.prepare(`
                         INSERT INTO produtos (
                             id_ooh, produto, v1, tipo_periodo, created_at
-                        ) VALUES (?, ?, ?, 'mensal', datetime('now'))
+                        ) VALUES (?, ?, ?, 'Mensal', datetime('now'))
                     `).bind(
                         oohId,
                         produto,
@@ -186,7 +208,7 @@ async function createOOHPoint(request, env, corsHeaders) {
                     ).run();
                 }
             } catch (e) {
-                console.error('Error inserting produtos:', e);
+                console.error('Error inserting legacy products:', e);
             }
         }
 
