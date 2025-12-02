@@ -733,3 +733,78 @@ select.form-input {
 .modal-content::-webkit-scrollbar-thumb:hover {
     background: var(--gray-500);
 }
+/* ===================================
+   EXHIBITOR MODAL
+   =================================== */
+
+.modal-exhibitor {
+    z-index: 10000;
+}
+
+/* ===================================
+   PRODUCT LIST
+   =================================== */
+
+.product-form {
+    margin-bottom: var(--spacing-lg);
+}
+
+.product-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-lg);
+}
+
+.product-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--primary);
+}
+
+.product-item-info {
+    flex: 1;
+}
+
+.product-item-name {
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-xs);
+}
+
+.product-item-details {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+}
+
+.product-remove-btn {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+}
+
+.product-remove-btn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+.product-remove-btn:active {
+    transform: translateY(0);
+}
+
+.product-list-empty {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}

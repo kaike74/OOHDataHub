@@ -244,8 +244,14 @@ async function getExibidoras(env, corsHeaders) {
 
 async function createExibidora(request, env, corsHeaders) {
     try {
-        const data = await request.json();
-        const { nome, cnpj, razao_social, endereco_faturamento, observacoes } = data;
+        const formData = await request.formData();
+
+        const nome = formData.get('nome');
+        const cnpj = formData.get('cnpj');
+        const razao_social = formData.get('razao_social');
+        const endereco_faturamento = formData.get('endereco_faturamento');
+        const observacoes = formData.get('observacoes');
+        const logo = formData.get('logo'); // File
 
         // Validate required fields
         if (!nome) {
@@ -255,18 +261,33 @@ async function createExibidora(request, env, corsHeaders) {
             });
         }
 
+        // Handle logo upload to R2
+        let logoKey = null;
+        if (logo && logo.size > 0) {
+            const timestamp = Date.now();
+            const fileName = logo.name || 'logo.jpg';
+            logoKey = `logos/${timestamp}-${fileName}`;
+
+            await env.R2.put(logoKey, logo.stream(), {
+                httpMetadata: {
+                    contentType: logo.type || 'image/jpeg'
+                }
+            });
+        }
+
         // Insert into exibidoras table
         const result = await env.DB.prepare(`
             INSERT INTO exibidoras (
                 nome, razao_social, cnpj, endereco_faturamento, observacoes,
-                created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+                logo_exibidora, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
         `).bind(
             nome,
             razao_social || null,
             cnpj || null,
             endereco_faturamento || null,
-            observacoes || null
+            observacoes || null,
+            logoKey
         ).run();
 
         return new Response(JSON.stringify({

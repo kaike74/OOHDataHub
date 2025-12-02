@@ -48,7 +48,7 @@
         </button>
     </div>
 
-    <!-- Modal de Cadastro OOH -->
+    <!-- Modal de Cadastro -->
     <div id="modal-cadastro" class="modal">
         <div class="modal-backdrop"></div>
         <div class="modal-content">
@@ -84,6 +84,23 @@
                                 <option value="">Selecione...</option>
                                 <option value="nova">+ Nova Exibidora</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <!-- Campos para Nova Exibidora (ocultos por padrão) -->
+                    <div id="nova-exibidora-fields" class="form-subsection" style="display: none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="nome_exibidora" class="form-label">Nome da Exibidora</label>
+                                <input type="text" id="nome_exibidora" name="nome_exibidora" class="form-input"
+                                    placeholder="Nome fantasia">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cnpj_exibidora" class="form-label">CNPJ</label>
+                                <input type="text" id="cnpj_exibidora" name="cnpj_exibidora" class="form-input"
+                                    placeholder="00.000.000/0000-00">
+                            </div>
                         </div>
                     </div>
 
@@ -215,50 +232,6 @@
                     </div>
                 </div>
 
-                <!-- Produtos e Preços -->
-                <div class="form-section">
-                    <h3 class="form-section-title">Produtos e Preços</h3>
-
-                    <div class="product-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="produto_tipo" class="form-label">Tipo de Produto</label>
-                                <select id="produto_tipo" class="form-input">
-                                    <option value="">Selecione...</option>
-                                    <option value="Locação">Locação</option>
-                                    <option value="Papel">Papel</option>
-                                    <option value="Lona">Lona</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="produto_valor" class="form-label">Valor (R$)</label>
-                                <input type="number" id="produto_valor" class="form-input" step="0.01"
-                                    placeholder="0.00">
-                            </div>
-
-                            <div class="form-group" id="produto_periodo_field" style="display: none;">
-                                <label for="produto_periodo" class="form-label">Período</label>
-                                <select id="produto_periodo" class="form-input">
-                                    <option value="Mensal">Mensal</option>
-                                    <option value="Bissemanal">Bissemanal</option>
-                                    <option value="Unitário">Unitário</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <button type="button" class="btn btn-secondary" id="add-product-btn">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            Adicionar Produto
-                        </button>
-                    </div>
-
-                    <div id="product-list" class="product-list"></div>
-                </div>
-
                 <!-- Detalhes Adicionais -->
                 <div class="form-section">
                     <h3 class="form-section-title">Detalhes Adicionais</h3>
@@ -274,6 +247,11 @@
                             <input type="text" id="fluxo" name="fluxo" class="form-input"
                                 placeholder="Ex: Alto, Médio, Baixo">
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="valor" class="form-label">Valor/Custo (R$)</label>
+                        <input type="number" id="valor" name="valor" class="form-input" step="0.01" placeholder="0.00">
                     </div>
 
                     <div class="form-group">
@@ -313,96 +291,6 @@
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                         Cadastrar Ponto
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal de Exibidora -->
-    <div id="modal-exibidora" class="modal modal-exhibitor">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Cadastrar Nova Exibidora</h2>
-                <button class="modal-close" id="close-modal-exibidora" title="Fechar">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-
-            <form id="form-exibidora" class="modal-form">
-                <div class="form-section">
-                    <h3 class="form-section-title">Informações da Exibidora</h3>
-
-                    <div class="form-group">
-                        <label for="nome_exib" class="form-label">
-                            Nome <span class="required">*</span>
-                        </label>
-                        <input type="text" id="nome_exib" name="nome" class="form-input" required
-                            placeholder="Nome fantasia">
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="cnpj_exib" class="form-label">CNPJ</label>
-                            <input type="text" id="cnpj_exib" name="cnpj" class="form-input"
-                                placeholder="00.000.000/0000-00" maxlength="18">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="razao_social_exib" class="form-label">
-                                Razão Social
-                                <span class="form-hint">Auto-preenchido pelo CNPJ</span>
-                            </label>
-                            <input type="text" id="razao_social_exib" name="razao_social" class="form-input"
-                                placeholder="Razão social da empresa">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="endereco_faturamento_exib" class="form-label">Endereço de Faturamento</label>
-                        <input type="text" id="endereco_faturamento_exib" name="endereco_faturamento" class="form-input"
-                            placeholder="Endereço completo para faturamento">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="observacoes_exib" class="form-label">Observações</label>
-                        <textarea id="observacoes_exib" name="observacoes" class="form-input" rows="3"
-                            placeholder="Observações adicionais..."></textarea>
-                    </div>
-                </div>
-
-                <div class="form-section">
-                    <h3 class="form-section-title">Logo da Exibidora</h3>
-
-                    <div class="form-group">
-                        <label for="logo_exib" class="form-label">Upload de Logo</label>
-                        <input type="file" id="logo_exib" name="logo" class="form-input-file" accept="image/*">
-                        <label for="logo_exib" class="file-label">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                            </svg>
-                            <span id="logo-file-name">Escolher arquivo</span>
-                        </label>
-                    </div>
-
-                    <div id="logo-preview-container" class="image-preview-container" style="display: none;">
-                        <img id="logo-preview" class="image-preview" alt="Preview">
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" id="cancel-exibidora-btn">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="submit-exibidora-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                        Salvar Exibidora
                     </button>
                 </div>
             </form>
