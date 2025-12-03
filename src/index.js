@@ -169,30 +169,8 @@ async function createOOHPoint(request, env, corsHeaders) {
             ).run();
         }
 
-        // Insert product pricing
-        const productsDetailed = formData.get('products_detailed');
-
-        if (productsDetailed) {
-            try {
-                const productsArray = JSON.parse(productsDetailed);
-
-                for (const produto of productsArray) {
-                    await env.DB.prepare(`
-                        INSERT INTO produtos (
-                            id_ooh, produto, v1, tipo_periodo, created_at
-                        ) VALUES (?, ?, ?, ?, datetime('now'))
-                    `).bind(
-                        oohId,
-                        produto.tipo,
-                        parseFloat(produto.valor),
-                        produto.periodo || 'Mensal'
-                    ).run();
-                }
-            } catch (e) {
-                console.error('Error inserting detailed products:', e);
-            }
-        } else if (valor && produtos) {
-            // Legacy fallback
+        // Insert product pricing if valor is provided
+        if (valor && produtos) {
             try {
                 const produtosArray = JSON.parse(produtos);
 
@@ -200,7 +178,7 @@ async function createOOHPoint(request, env, corsHeaders) {
                     await env.DB.prepare(`
                         INSERT INTO produtos (
                             id_ooh, produto, v1, tipo_periodo, created_at
-                        ) VALUES (?, ?, ?, 'Mensal', datetime('now'))
+                        ) VALUES (?, ?, ?, 'mensal', datetime('now'))
                     `).bind(
                         oohId,
                         produto,
@@ -208,7 +186,7 @@ async function createOOHPoint(request, env, corsHeaders) {
                     ).run();
                 }
             } catch (e) {
-                console.error('Error inserting legacy products:', e);
+                console.error('Error inserting produtos:', e);
             }
         }
 
@@ -266,14 +244,8 @@ async function getExibidoras(env, corsHeaders) {
 
 async function createExibidora(request, env, corsHeaders) {
     try {
-        const formData = await request.formData();
-
-        const nome = formData.get('nome');
-        const cnpj = formData.get('cnpj');
-        const razao_social = formData.get('razao_social');
-        const endereco_faturamento = formData.get('endereco_faturamento');
-        const observacoes = formData.get('observacoes');
-        const logo = formData.get('logo'); // File
+        const data = await request.json();
+        const { nome, cnpj, razao_social, endereco_faturamento, observacoes } = data;
 
         // Validate required fields
         if (!nome) {
@@ -283,33 +255,18 @@ async function createExibidora(request, env, corsHeaders) {
             });
         }
 
-        // Handle logo upload to R2
-        let logoKey = null;
-        if (logo && logo.size > 0) {
-            const timestamp = Date.now();
-            const fileName = logo.name || 'logo.jpg';
-            logoKey = `logos/${timestamp}-${fileName}`;
-
-            await env.R2.put(logoKey, logo.stream(), {
-                httpMetadata: {
-                    contentType: logo.type || 'image/jpeg'
-                }
-            });
-        }
-
         // Insert into exibidoras table
         const result = await env.DB.prepare(`
             INSERT INTO exibidoras (
                 nome, razao_social, cnpj, endereco_faturamento, observacoes,
-                logo_exibidora, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+                created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
         `).bind(
             nome,
             razao_social || null,
             cnpj || null,
             endereco_faturamento || null,
-            observacoes || null,
-            logoKey
+            observacoes || null
         ).run();
 
         return new Response(JSON.stringify({
