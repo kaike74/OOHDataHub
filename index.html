@@ -157,7 +157,6 @@
                                 Exibidora <span class="required">*</span>
                             </label>
                             <select id="id_exibidora" name="id_exibidora" class="form-input" required>
-                                <option value="">Selecione...</option>
                                 <option value="nova">+ Nova Exibidora</option>
                             </select>
                         </div>
@@ -365,7 +364,7 @@
 
                     <div class="form-group">
                         <label for="imagem" class="form-label">Upload de Imagem</label>
-                        <input type="file" id="imagem" name="imagem" class="form-input-file" accept="image/*">
+                        <input type="file" id="imagem" name="imagem" class="form-input-file" accept="image/*" multiple>
                         <label for="imagem" class="file-label">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -491,6 +490,7 @@
 
     <!-- Custom JS -->
     <script src="script.js"></script>
+    <script src="script-enhancements.js"></script>
 </body>
 
 </html>
