@@ -80,26 +80,11 @@
                             <label for="id_exibidora" class="form-label">
                                 Exibidora <span class="required">*</span>
                             </label>
-                            <select id="id_exibidora" name="id_exibidora" class="form-input" required>
-                                <option value="">Selecione...</option>
-                                <option value="nova">+ Nova Exibidora</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Campos para Nova Exibidora (ocultos por padrão) -->
-                    <div id="nova-exibidora-fields" class="form-subsection" style="display: none;">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="nome_exibidora" class="form-label">Nome da Exibidora</label>
-                                <input type="text" id="nome_exibidora" name="nome_exibidora" class="form-input"
-                                    placeholder="Nome fantasia">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="cnpj_exibidora" class="form-label">CNPJ</label>
-                                <input type="text" id="cnpj_exibidora" name="cnpj_exibidora" class="form-input"
-                                    placeholder="00.000.000/0000-00">
+                            <div class="select-with-action">
+                                <select id="id_exibidora" name="id_exibidora" class="form-input" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="nova">+ Nova Exibidora</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -134,15 +119,31 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="latitude" class="form-label">Latitude</label>
+                            <label for="latitude" class="form-label">
+                                Latitude
+                                <button type="button" class="btn-icon-small" id="toggle-lat" title="Editar Latitude">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                </button>
+                            </label>
                             <input type="number" id="latitude" name="latitude" class="form-input" step="any"
-                                placeholder="-15.7801">
+                                placeholder="-15.7801" readonly>
                         </div>
 
                         <div class="form-group">
-                            <label for="longitude" class="form-label">Longitude</label>
+                            <label for="longitude" class="form-label">
+                                Longitude
+                                <button type="button" class="btn-icon-small" id="toggle-lng" title="Editar Longitude">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                </button>
+                            </label>
                             <input type="number" id="longitude" name="longitude" class="form-input" step="any"
-                                placeholder="-47.9292">
+                                placeholder="-47.9292" readonly>
                         </div>
                     </div>
 
@@ -161,56 +162,55 @@
                     </div>
                 </div>
 
-                <!-- Tipo de Produto -->
+                <!-- Produtos e Custos -->
                 <div class="form-section">
-                    <h3 class="form-section-title">Tipo de Produto</h3>
+                    <h3 class="form-section-title">Produtos e Custos</h3>
 
-                    <div class="checkbox-grid">
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="produtos" value="Outdoor">
-                            <span class="checkbox-custom"></span>
-                            Outdoor
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="produtos" value="Frontlight">
-                            <span class="checkbox-custom"></span>
-                            Frontlight
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="produtos" value="Iluminado">
-                            <span class="checkbox-custom"></span>
-                            Iluminado
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="produtos" value="LED">
-                            <span class="checkbox-custom"></span>
-                            LED
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="produtos" value="Vertical">
-                            <span class="checkbox-custom"></span>
-                            Vertical
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="produtos" value="Empena">
-                            <span class="checkbox-custom"></span>
-                            Empena
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="produtos" value="MUB">
-                            <span class="checkbox-custom"></span>
-                            MUB
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="produtos" value="Painel Rodoviário">
-                            <span class="checkbox-custom"></span>
-                            Painel Rodoviário
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="produtos" value="Abrigo">
-                            <span class="checkbox-custom"></span>
-                            Abrigo
-                        </label>
+                    <div class="products-container">
+                        <div class="add-product-form">
+                            <div class="form-row small-gap">
+                                <div class="form-group" style="flex: 2;">
+                                    <label class="form-label-small">Produto</label>
+                                    <select id="new-prod-type" class="form-input-small">
+                                        <option value="Locação">Locação</option>
+                                        <option value="Papel">Papel</option>
+                                        <option value="Lona">Lona</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" style="flex: 2;">
+                                    <label class="form-label-small">Valor (R$)</label>
+                                    <input type="number" id="new-prod-value" class="form-input-small" step="0.01"
+                                        placeholder="0.00">
+                                </div>
+
+                                <div class="form-group" id="period-group" style="flex: 2;">
+                                    <label class="form-label-small">Período</label>
+                                    <select id="new-prod-period" class="form-input-small">
+                                        <option value="Bissemanal">Bissemanal</option>
+                                        <option value="Mensal">Mensal</option>
+                                        <option value="Unitário">Unitário</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" style="flex: 0 0 auto; justify-content: flex-end;">
+                                    <button type="button" id="add-product-btn" class="btn-icon-primary"
+                                        title="Adicionar Produto">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="products-list" id="products-list">
+                            <!-- Products will be added here dynamically -->
+                            <div class="empty-state">Nenhum produto adicionado</div>
+                        </div>
+
+                        <input type="hidden" id="produtos-json" name="produtos">
                     </div>
                 </div>
 
@@ -229,11 +229,6 @@
                             <input type="text" id="fluxo" name="fluxo" class="form-input"
                                 placeholder="Ex: Alto, Médio, Baixo">
                         </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="valor" class="form-label">Valor/Custo (R$)</label>
-                        <input type="number" id="valor" name="valor" class="form-input" step="0.01" placeholder="0.00">
                     </div>
 
                     <div class="form-group">
@@ -274,6 +269,68 @@
                         </svg>
                         Cadastrar Ponto
                     </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Nova Exibidora -->
+    <div id="modal-exibidora" class="modal" style="z-index: 10000;">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Nova Exibidora</h2>
+                <button class="modal-close" id="close-modal-exibidora" title="Fechar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="form-exibidora" class="modal-form">
+                <div class="form-group">
+                    <label for="cnpj_exib" class="form-label">CNPJ</label>
+                    <input type="text" id="cnpj_exib" name="cnpj" class="form-input" placeholder="00.000.000/0000-00">
+                    <span class="form-hint">Preencha para buscar dados automaticamente</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="nome_exib" class="form-label">Nome Fantasia <span class="required">*</span></label>
+                    <input type="text" id="nome_exib" name="nome" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="razao_social_exib" class="form-label">Razão Social</label>
+                    <input type="text" id="razao_social_exib" name="razao_social" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label for="endereco_exib" class="form-label">Endereço de Faturamento</label>
+                    <input type="text" id="endereco_exib" name="endereco_faturamento" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label for="obs_exib" class="form-label">Observações</label>
+                    <textarea id="obs_exib" name="observacoes" class="form-input" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="logo_exib" class="form-label">Logo</label>
+                    <input type="file" id="logo_exib" name="logo" class="form-input-file" accept="image/*">
+                    <label for="logo_exib" class="file-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <span id="logo-file-name">Escolher logo</span>
+                    </label>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancel-exib-btn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="save-exib-btn">Salvar Exibidora</button>
                 </div>
             </form>
         </div>

@@ -106,8 +106,7 @@ async function createOOHPoint(request, env, corsHeaders) {
         const medidas = formData.get('medidas');
         const fluxo = formData.get('fluxo');
         const observacoes = formData.get('observacoes');
-        const produtos = formData.get('produtos'); // JSON string
-        const valor = formData.get('valor');
+        const produtos = formData.get('produtos'); // JSON string: [{produto, valor, periodo}, ...]
         const imagem = formData.get('imagem'); // File
 
         // Validate required fields
@@ -169,20 +168,22 @@ async function createOOHPoint(request, env, corsHeaders) {
             ).run();
         }
 
-        // Insert product pricing if valor is provided
-        if (valor && produtos) {
+        // Insert product pricing
+        if (produtos) {
             try {
                 const produtosArray = JSON.parse(produtos);
 
-                for (const produto of produtosArray) {
+                for (const item of produtosArray) {
+                    // item = { produto: 'Locação', valor: 1000, periodo: 'Mensal' }
                     await env.DB.prepare(`
                         INSERT INTO produtos (
                             id_ooh, produto, v1, tipo_periodo, created_at
-                        ) VALUES (?, ?, ?, 'mensal', datetime('now'))
+                        ) VALUES (?, ?, ?, ?, datetime('now'))
                     `).bind(
                         oohId,
-                        produto,
-                        parseFloat(valor)
+                        item.produto,
+                        parseFloat(item.valor),
+                        item.periodo || 'Unitário'
                     ).run();
                 }
             } catch (e) {
@@ -244,8 +245,15 @@ async function getExibidoras(env, corsHeaders) {
 
 async function createExibidora(request, env, corsHeaders) {
     try {
-        const data = await request.json();
-        const { nome, cnpj, razao_social, endereco_faturamento, observacoes } = data;
+        // Changed to FormData to support file upload
+        const formData = await request.formData();
+
+        const nome = formData.get('nome');
+        const cnpj = formData.get('cnpj');
+        const razao_social = formData.get('razao_social');
+        const endereco_faturamento = formData.get('endereco_faturamento');
+        const observacoes = formData.get('observacoes');
+        const logo = formData.get('logo'); // File
 
         // Validate required fields
         if (!nome) {
@@ -255,18 +263,40 @@ async function createExibidora(request, env, corsHeaders) {
             });
         }
 
+        // Handle logo upload to R2
+        let logoKey = null;
+        if (logo && logo.size > 0) {
+            const timestamp = Date.now();
+            const fileName = logo.name || 'logo.jpg';
+            logoKey = `logo-${timestamp}-${fileName}`;
+
+            await env.R2.put(logoKey, logo.stream(), {
+                httpMetadata: {
+                    contentType: logo.type || 'image/jpeg'
+                }
+            });
+        }
+
         // Insert into exibidoras table
+        // Note: Assuming 'logo_key' column exists or will be added. 
+        // If it doesn't exist, this might fail unless we check or catch.
+        // For now, we'll try to insert it. If the user hasn't migrated, they'll need to.
+
+        // Construct query based on available columns (defensive coding not possible without schema check)
+        // We will assume the column 'logo_key' needs to be there.
+
         const result = await env.DB.prepare(`
             INSERT INTO exibidoras (
-                nome, razao_social, cnpj, endereco_faturamento, observacoes,
+                nome, razao_social, cnpj, endereco_faturamento, observacoes, logo_key,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+            ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
         `).bind(
             nome,
             razao_social || null,
             cnpj || null,
             endereco_faturamento || null,
-            observacoes || null
+            observacoes || null,
+            logoKey || null
         ).run();
 
         return new Response(JSON.stringify({
@@ -285,6 +315,16 @@ async function createExibidora(request, env, corsHeaders) {
         if (error.message.includes('UNIQUE')) {
             return new Response(JSON.stringify({ error: 'CNPJ já cadastrado' }), {
                 status: 400,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
+
+        // Fallback if logo_key column missing (quick fix attempt)
+        if (error.message.includes('no such column: logo_key')) {
+            return new Response(JSON.stringify({
+                error: 'Erro de banco de dados: Coluna logo_key não existe. Por favor, atualize o esquema.'
+            }), {
+                status: 500,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
         }

@@ -501,7 +501,6 @@ select.form-input {
 .file-label:hover {
     border-color: var(--primary);
     background: var(--primary-light);
-    background-opacity: 0.05;
     color: var(--primary);
 }
 
@@ -672,4 +671,172 @@ select.form-input {
 
 .modal-content::-webkit-scrollbar-thumb:hover {
     background: var(--gray-500);
+}
+
+/* ===================================
+   NEW UI COMPONENTS (ROUND 2)
+   =================================== */
+
+/* Lock/Unlock Button */
+.btn-icon-small {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    color: var(--gray-500);
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: var(--spacing-xs);
+}
+
+.btn-icon-small:hover {
+    background: var(--gray-200);
+    color: var(--primary);
+}
+
+.btn-icon-small svg {
+    width: 16px;
+    height: 16px;
+}
+
+.btn-icon-small.unlocked {
+    color: var(--warning);
+}
+
+/* Select with Action Button */
+.select-with-action {
+    position: relative;
+    width: 100%;
+}
+
+/* Products Section */
+.products-container {
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    border: 1px solid var(--gray-200);
+}
+
+.add-product-form {
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.small-gap {
+    gap: var(--spacing-sm) !important;
+}
+
+.form-label-small {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gray-600);
+    margin-bottom: 2px;
+}
+
+.form-input-small {
+    padding: 0.5rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    width: 100%;
+    background: white;
+}
+
+.btn-icon-primary {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-top: 18px;
+    /* Align with inputs */
+}
+
+.btn-icon-primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn-icon-primary svg {
+    width: 20px;
+    height: 20px;
+}
+
+.products-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.product-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-200);
+    font-size: 0.875rem;
+}
+
+.product-info {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+.product-type {
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.product-period {
+    background: var(--gray-100);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    color: var(--gray-600);
+}
+
+.product-value {
+    font-family: monospace;
+    font-weight: 600;
+    color: var(--success);
+}
+
+.btn-remove {
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.btn-remove:hover {
+    color: var(--danger);
+    background: #fee2e2;
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--gray-500);
+    font-size: 0.875rem;
+    padding: var(--spacing-md);
+    font-style: italic;
+}
+
+/* Exhibitor Modal Specifics */
+#modal-exibidora .modal-content {
+    border: 2px solid var(--primary);
 }
