@@ -10,13 +10,21 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts - E-MÍDIAS Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Roboto:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
+
+    <!-- E-MÍDIAS Theme Override -->
+    <link rel="stylesheet" href="emidias-theme.css">
 </head>
 
 <body>
@@ -165,6 +173,15 @@
                 <!-- Produtos e Custos -->
                 <div class="form-section">
                     <h3 class="form-section-title">Produtos e Custos</h3>
+                    <p class="form-section-description">
+                        <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        Preencha os dados do produto e clique em <strong>"+"</strong> para adicionar. Você pode
+                        adicionar um ou mais produtos conforme necessário.
+                    </p>
 
                     <div class="products-container">
                         <div class="add-product-form">
@@ -225,9 +242,11 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="fluxo" class="form-label">Fluxo</label>
-                            <input type="text" id="fluxo" name="fluxo" class="form-input"
-                                placeholder="Ex: Alto, Médio, Baixo">
+                            <label for="fluxo" class="form-label">
+                                Fluxo (pessoas/dia)
+                                <span class="form-hint">Estimativa de circulação</span>
+                            </label>
+                            <input type="text" id="fluxo" name="fluxo" class="form-input" placeholder="Ex: 15.000">
                         </div>
                     </div>
 
@@ -240,23 +259,23 @@
 
                 <!-- Upload de Imagem -->
                 <div class="form-section">
-                    <h3 class="form-section-title">Imagem</h3>
+                    <h3 class="form-section-title">Imagens</h3>
 
                     <div class="form-group">
-                        <label for="imagem" class="form-label">Upload de Imagem</label>
-                        <input type="file" id="imagem" name="imagem" class="form-input-file" accept="image/*">
+                        <label for="imagem" class="form-label">Upload de Imagens</label>
+                        <input type="file" id="imagem" name="imagem" class="form-input-file" accept="image/*" multiple>
                         <label for="imagem" class="file-label">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="17 8 12 3 7 8"></polyline>
                                 <line x1="12" y1="3" x2="12" y2="15"></line>
                             </svg>
-                            <span id="file-name">Escolher arquivo</span>
+                            <span id="file-name">Escolher imagens</span>
                         </label>
                     </div>
 
-                    <div id="image-preview-container" class="image-preview-container" style="display: none;">
-                        <img id="image-preview" class="image-preview" alt="Preview">
+                    <div id="images-preview-container" class="images-preview-container" style="display: none;">
+                        <!-- Image previews will be added here dynamically -->
                     </div>
                 </div>
 
@@ -336,9 +355,218 @@
         </div>
     </div>
 
+    <!-- Point Details Drawer -->
+    <div id="point-drawer" class="drawer">
+        <div class="drawer-backdrop"></div>
+        <div class="drawer-content">
+            <div class="drawer-header-images">
+                <div class="swiper point-images-swiper">
+                    <div class="swiper-wrapper" id="point-images-wrapper">
+                        <!-- Images will be loaded dynamically -->
+                    </div>
+                    <div class="swiper-pagination"></div>
+                    <div class="swiper-button-prev"></div>
+                    <div class="swiper-button-next"></div>
+                </div>
+            </div>
+
+            <div class="drawer-body">
+                <div class="drawer-header-actions">
+                    <button class="btn-drawer-close" id="close-point-drawer" title="Fechar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <h2 class="drawer-title" id="point-title">Carregando...</h2>
+
+                <!-- Exhibitor Card -->
+                <div class="info-card exhibitor-card" id="exhibitor-card">
+                    <div class="exhibitor-info">
+                        <img src="" alt="Logo" class="exhibitor-logo" id="point-exhibitor-logo">
+                        <div>
+                            <span class="card-label">Exibidora</span>
+                            <a href="#" class="exhibitor-link" id="point-exhibitor-link">
+                                <span id="point-exhibitor-name">-</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 18l6-6-6-6"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Point Information -->
+                <div class="info-section">
+                    <h3 class="section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        Localização
+                    </h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Endereço</span>
+                            <span class="info-value" id="point-endereco">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Ponto de Referência</span>
+                            <span class="info-value" id="point-referencia">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Cidade</span>
+                            <span class="info-value" id="point-cidade">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">UF</span>
+                            <span class="info-value" id="point-uf">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Coordenadas</span>
+                            <span class="info-value" id="point-coords">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Point Details -->
+                <div class="info-section">
+                    <h3 class="section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                            <path d="M3 9h18"></path>
+                            <path d="M9 21V9"></path>
+                        </svg>
+                        Detalhes
+                    </h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Medidas</span>
+                            <span class="info-value" id="point-medidas">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Fluxo</span>
+                            <span class="info-value" id="point-fluxo">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products -->
+                <div class="info-section" id="products-section">
+                    <h3 class="section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                        Produtos & Custos
+                    </h3>
+                    <div id="point-products-list" class="products-badges">
+                        <!-- Products will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Comments -->
+                <div class="info-section" id="comments-section">
+                    <h3 class="section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        Comentários
+                    </h3>
+                    <p class="comment-text" id="point-observacoes">-</p>
+                </div>
+
+                <!-- Actions -->
+                <div class="drawer-actions">
+                    <button class="btn btn-secondary" id="edit-point-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Editar Ponto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exhibitor Details Drawer -->
+    <div id="exhibitor-drawer" class="drawer drawer-nested">
+        <div class="drawer-backdrop"></div>
+        <div class="drawer-content">
+            <div class="drawer-body">
+                <div class="drawer-header-actions">
+                    <button class="btn-drawer-back" id="back-to-point" title="Voltar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6"></path>
+                        </svg>
+                    </button>
+                    <button class="btn-drawer-close" id="close-exhibitor-drawer" title="Fechar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="exhibitor-header">
+                    <img src="" alt="Logo" class="exhibitor-logo-large" id="exhibitor-logo">
+                    <h2 class="drawer-title" id="exhibitor-title">Carregando...</h2>
+                </div>
+
+                <!-- Exhibitor Information -->
+                <div class="info-section">
+                    <h3 class="section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="8.5" cy="7" r="4"></circle>
+                            <path d="M20 8v6M23 11h-6"></path>
+                        </svg>
+                        Informações da Empresa
+                    </h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Razão Social</span>
+                            <span class="info-value" id="exhibitor-razao">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">CNPJ</span>
+                            <span class="info-value" id="exhibitor-cnpj">-</span>
+                        </div>
+                        <div class="info-item full-width">
+                            <span class="info-label">Endereço de Faturamento</span>
+                            <span class="info-value" id="exhibitor-endereco">-</span>
+                        </div>
+                        <div class="info-item full-width" id="exhibitor-obs-section">
+                            <span class="info-label">Observações</span>
+                            <span class="info-value" id="exhibitor-obs">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="drawer-actions">
+                    <button class="btn btn-secondary" id="edit-exhibitor-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Editar Exibidora
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
     <!-- Custom JS -->
     <script src="script.js"></script>

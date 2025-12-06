@@ -456,29 +456,101 @@ async function getCityFromCoordinates(lat, lng) {
     });
 });
 
-// ===================================
-// IMAGE PREVIEW
+// IMAGE PREVIEW (MULTIPLE IMAGES)
 // ===================================
 
 const imageInput = document.getElementById('imagem');
 const fileNameSpan = document.getElementById('file-name');
-const imagePreviewContainer = document.getElementById('image-preview-container');
-const imagePreview = document.getElementById('image-preview');
+const imagesPreviewContainer = document.getElementById('images-preview-container');
+let selectedImages = []; // Array to store selected image files
 
 imageInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        fileNameSpan.textContent = file.name;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            imagePreview.src = event.target.result;
-            imagePreviewContainer.style.display = 'flex';
-        };
-        reader.readAsDataURL(file);
+    const files = Array.from(e.target.files);
+
+    if (files.length > 0) {
+        fileNameSpan.textContent = `${files.length} imagem(ns) selecionada(s)`;
+        selectedImages = files;
+        renderImagePreviews();
     } else {
-        fileNameSpan.textContent = 'Escolher arquivo';
-        imagePreviewContainer.style.display = 'none';
+        fileNameSpan.textContent = 'Escolher imagens';
+        selectedImages = [];
+        imagesPreviewContainer.style.display = 'none';
     }
+});
+
+function renderImagePreviews() {
+    imagesPreviewContainer.innerHTML = '';
+
+    if (selectedImages.length === 0) {
+        imagesPreviewContainer.style.display = 'none';
+        return;
+    }
+
+    imagesPreviewContainer.style.display = 'grid';
+
+    selectedImages.forEach((file, index) => {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            const div = document.createElement('div');
+            div.className = 'image-preview-item';
+            div.innerHTML = `
+                <img src="${e.target.result}" alt="Preview ${index + 1}">
+                <button type="button" class="btn-remove-image" onclick="removeImage(${index})" title="Remover">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            `;
+            imagesPreviewContainer.appendChild(div);
+        };
+
+        reader.readAsDataURL(file);
+    });
+}
+
+window.removeImage = function (index) {
+    selectedImages.splice(index, 1);
+
+    // Update file input (create new FileList)
+    const dt = new DataTransfer();
+    selectedImages.forEach(file => dt.items.add(file));
+    imageInput.files = dt.files;
+
+    fileNameSpan.textContent = selectedImages.length > 0
+        ? `${selectedImages.length} imagem(ns) selecionada(s)`
+        : 'Escolher imagens';
+
+    renderImagePreviews();
+};
+
+// ===================================
+// FLOW FIELD FORMATTING
+// ===================================
+
+const fluxoInput = document.getElementById('fluxo');
+
+// Format number with thousand separators
+function formatNumber(value) {
+    const number = value.replace(/\D/g, ''); // Remove non-digits
+    if (!number) return '';
+    return parseInt(number).toLocaleString('pt-BR');
+}
+
+// Real-time formatting
+fluxoInput.addEventListener('input', (e) => {
+    const cursorPosition = e.target.selectionStart;
+    const oldValue = e.target.value;
+    const oldLength = oldValue.length;
+
+    const formatted = formatNumber(oldValue);
+    e.target.value = formatted;
+
+    // Adjust cursor position after formatting
+    const newLength = formatted.length;
+    const diff = newLength - oldLength;
+    e.target.selectionStart = e.target.selectionEnd = cursorPosition + diff;
 });
 
 // ===================================
@@ -590,13 +662,263 @@ function resetForm() {
     form.reset();
     products = [];
     renderProducts();
-    imagePreviewContainer.style.display = 'none';
-    fileNameSpan.textContent = 'Escolher arquivo';
+
+    // Reset multiple images
+    selectedImages = [];
+    imagesPreviewContainer.style.display = 'none';
+    imagesPreviewContainer.innerHTML = '';
+    fileNameSpan.textContent = 'Escolher imagens';
+
     // Reset locks
     latInput.setAttribute('readonly', 'true');
     lngInput.setAttribute('readonly', 'true');
     toggleLatBtn.classList.remove('unlocked');
     toggleLngBtn.classList.remove('unlocked');
+}
+
+// ===================================
+// DRAWER SYSTEM
+// ===================================
+
+const pointDrawer = document.getElementById('point-drawer');
+const exhibitorDrawer = document.getElementById('exhibitor-drawer');
+let pointImagesSwiper = null;
+let currentPointData = null;
+let currentExhibitorData = null;
+
+// Open Point Drawer
+function openPointDrawer(pointData) {
+    currentPointData = pointData;
+    populatePointDrawer(pointData);
+    pointDrawer.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// Close Point Drawer
+function closePointDrawer() {
+    pointDrawer.classList.remove('active');
+    document.body.style.overflow = '';
+    if (pointImagesSwiper) {
+        pointImagesSwiper.destroy(true, true);
+        pointImagesSwiper = null;
+    }
+}
+
+// Open Exhibitor Drawer
+function openExhibitorDrawer(exhibitorData) {
+    currentExhibitorData = exhibitorData;
+    populateExhibitorDrawer(exhibitorData);
+    exhibitorDrawer.classList.add('active');
+}
+
+// Close Exhibitor Drawer
+function closeExhibitorDrawer() {
+    exhibitorDrawer.classList.remove('active');
+}
+
+// Populate Point Drawer with Data
+async function populatePointDrawer(point) {
+    // Set title
+    document.getElementById('point-title').textContent = point.codigo_ooh || 'Ponto OOH';
+
+    // Load images into carousel
+    const imagesWrapper = document.getElementById('point-images-wrapper');
+    imagesWrapper.innerHTML = '';
+
+    const images = point.imagem ? [point.imagem] : [];
+
+    if (images.length === 0) {
+        imagesWrapper.innerHTML = `
+            <div class="swiper-slide">
+                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background: var(--gradient-blue); color:white;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 100px; height: 100px;">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                </div>
+            </div>
+        `;
+    } else {
+        images.forEach(imgUrl => {
+            imagesWrapper.innerHTML += `
+                <div class="swiper-slide">
+                    <img src="${imgUrl}" alt="${point.codigo_ooh}">
+                </div>
+            `;
+        });
+    }
+
+    if (pointImagesSwiper) {
+        pointImagesSwiper.destroy(true, true);
+    }
+
+    pointImagesSwiper = new Swiper('.point-images-swiper', {
+        loop: images.length > 1,
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true,
+        },
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+        },
+    });
+
+    const exhibitorCard = document.getElementById('exhibitor-card');
+    if (point.id_exibidora) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/exibidoras/${point.id_exibidora}`);
+            if (response.ok) {
+                const exhibitor = await response.json();
+                const logoImg = document.getElementById('point-exhibitor-logo');
+                const nameSpan = document.getElementById('point-exhibitor-name');
+
+                if (exhibitor.logo) {
+                    logoImg.src = exhibitor.logo;
+                    logoImg.style.display = 'block';
+                } else {
+                    logoImg.style.display = 'none';
+                }
+
+                nameSpan.textContent = exhibitor.nome || 'N/A';
+                exhibitorCard.style.display = 'block';
+                currentExhibitorData = exhibitor;
+            } else {
+                exhibitorCard.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error loading exhibitor:', error);
+            exhibitorCard.style.display = 'none';
+        }
+    } else {
+        exhibitorCard.style.display = 'none';
+    }
+
+    document.getElementById('point-endereco').textContent = point.endereco || '-';
+    document.getElementById('point-referencia').textContent = point.ponto_referencia || '-';
+    document.getElementById('point-cidade').textContent = point.cidade || '-';
+    document.getElementById('point-uf').textContent = point.uf || '-';
+    document.getElementById('point-coords').textContent = point.latitude && point.longitude
+        ? `${point.latitude.toFixed(6)}, ${point.longitude.toFixed(6)}`
+        : '-';
+
+    document.getElementById('point-medidas').textContent = point.medidas || '-';
+    document.getElementById('point-fluxo').textContent = point.fluxo ? formatNumber(point.fluxo.toString()) : '-';
+
+    const productsList = document.getElementById('point-products-list');
+    const productsSection = document.getElementById('products-section');
+
+    if (point.produtos && point.produtos.length > 0) {
+        productsList.innerHTML = '';
+        point.produtos.forEach(prod => {
+            const badge = document.createElement('div');
+            badge.className = 'product-badge';
+            badge.innerHTML = `
+                <span class="product-badge-type">${prod.produto}</span>
+                ${prod.periodo && prod.produto === 'Locação' ? `<span class="product-badge-period">${prod.periodo}</span>` : ''}
+                <span class="product-badge-value">R$ ${parseFloat(prod.valor).toFixed(2)}</span>
+            `;
+            productsList.appendChild(badge);
+        });
+        productsSection.style.display = 'block';
+    } else {
+        productsSection.style.display = 'none';
+    }
+
+    const commentsSection = document.getElementById('comments-section');
+    const observacoes = document.getElementById('point-observacoes');
+
+    if (point.observacoes) {
+        observacoes.textContent = point.observacoes;
+        commentsSection.style.display = 'block';
+    } else {
+        commentsSection.style.display = 'none';
+    }
+}
+
+function populateExhibitorDrawer(exhibitor) {
+    document.getElementById('exhibitor-title').textContent = exhibitor.nome || 'Exibidora';
+
+    const logoImg = document.getElementById('exhibitor-logo');
+    if (exhibitor.logo) {
+        logoImg.src = exhibitor.logo;
+        logoImg.style.display = 'block';
+    } else {
+        logoImg.style.display = 'none';
+    }
+
+    document.getElementById('exhibitor-razao').textContent = exhibitor.razao_social || '-';
+    document.getElementById('exhibitor-cnpj').textContent = exhibitor.cnpj || '-';
+    document.getElementById('exhibitor-endereco').textContent = exhibitor.endereco_faturamento || '-';
+
+    const obsSection = document.getElementById('exhibitor-obs-section');
+    const obsValue = document.getElementById('exhibitor-obs');
+
+    if (exhibitor.observacoes) {
+        obsValue.textContent = exhibitor.observacoes;
+        obsSection.style.display = 'flex';
+    } else {
+        obsSection.style.display = 'none';
+    }
+}
+
+document.getElementById('close-point-drawer').addEventListener('click', closePointDrawer);
+document.getElementById('close-exhibitor-drawer').addEventListener('click', () => {
+    closeExhibitorDrawer();
+    closePointDrawer();
+});
+document.getElementById('back-to-point').addEventListener('click', closeExhibitorDrawer);
+
+document.getElementById('point-exhibitor-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    if (currentExhibitorData) {
+        openExhibitorDrawer(currentExhibitorData);
+    }
+});
+
+pointDrawer.querySelector('.drawer-backdrop').addEventListener('click', closePointDrawer);
+exhibitorDrawer.querySelector('.drawer-backdrop').addEventListener('click', closeExhibitorDrawer);
+
+document.getElementById('edit-point-btn').addEventListener('click', () => {
+    alert('Funcionalidade de edição será implementada em breve!');
+});
+
+document.getElementById('edit-exhibitor-btn').addEventListener('click', () => {
+    alert('Funcionalidade de edição será implementada em breve!');
+});
+
+// Override loadPoints to add drawer click handlers
+async function loadPointsWithDrawer() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/ooh`);
+        if (!response.ok) throw new Error('Erro ao carregar pontos');
+
+        const points = await response.json();
+        markers.forEach(marker => marker.remove());
+        markers = [];
+
+        if (points.length > 0) {
+            const bounds = [];
+            points.forEach(point => {
+                if (point.latitude && point.longitude) {
+                    const marker = L.marker([point.latitude, point.longitude], {
+                        icon: createCustomIcon()
+                    }).addTo(map);
+
+                    marker.on('click', () => openPointDrawer(point));
+                    markers.push(marker);
+                    bounds.push([point.latitude, point.longitude]);
+                }
+            });
+
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao carregar pontos:', error);
+    }
 }
 
 // ===================================
@@ -606,4 +928,5 @@ function resetForm() {
 document.addEventListener('DOMContentLoaded', () => {
     initMap();
     loadExibidoras();
+    setTimeout(() => loadPointsWithDrawer(), 100);
 });

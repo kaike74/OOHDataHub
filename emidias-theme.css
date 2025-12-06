@@ -1,0 +1,379 @@
+/* ===================================
+   E-MÍDIAS DESIGN SYSTEM OVERRIDE
+   ================================== */
+
+:root {
+    /* E-MÍDIAS Corporate Colors */
+    --primary: #06055B !important;
+    --primary-light: #0A0980 !important;
+    --accent: #FC1E75 !important;
+    --success: #059669 !important;
+    --success-light: #10B981 !important;
+    --danger: #DC2626 !important;
+
+    /* E-MÍDIAS Gray Scale */
+    --gray-900: #1E293B !important;
+    --gray-700: #475569 !important;
+    --gray-500: #64748B !important;
+    --gray-300: #E2E8F0 !important;
+    --gray-100: #F1F5F9 !important;
+    --gray-50: #F8FAFC !important;
+
+    /* E-MÍDIAS Gradients */
+    --gradient-primary: linear-gradient(135deg, #06055B 0%, #0A0980 100%) !important;
+    --gradient-blue: linear-gradient(135deg, #06055B 0%, #0A0980 100%) !important;
+    --gradient-success: linear-gradient(135deg, #059669 0%, #10B981 100%) !important;
+
+    /* E-MÍDIAS Spacing - 8px Grid */
+    --spacing-xs: 8px !important;
+    --spacing-sm: 12px !important;
+    --spacing-md: 16px !important;
+    --spacing-lg: 24px !important;
+    --spacing-xl: 32px !important;
+    --spacing-2xl: 48px !important;
+
+    /* E-MÍDIAS Border Radius */
+    --radius-sm: 4px !important;
+    --radius-md: 8px !important;
+    --radius-lg: 12px !important;
+
+    /* E-MÍDIAS Shadows (with blue tint) */
+    --shadow-sm: 0 1px 2px 0 rgba(6, 5, 91, 0.04) !important;
+    --shadow-md: 0 4px 6px -1px rgba(6, 5, 91, 0.06), 0 2px 4px -2px rgba(6, 5, 91, 0.04) !important;
+    --shadow-lg: 0 10px 15px -3px rgba(6, 5, 91, 0.08), 0 4px 6px -4px rgba(6, 5, 91, 0.04) !important;
+    --shadow-xl: 0 20px 25px -5px rgba(6, 5, 91, 0.1), 0 8px 10px -6px rgba(6, 5, 91, 0.06) !important;
+    --shadow-2xl: 0 25px 50px -12px rgba(6, 5, 91, 0.15) !important;
+
+    /* E-MÍDIAS Transitions */
+    --transition-fast: 150ms ease !important;
+    --transition-base: 200ms ease !important;
+    --transition-slow: 300ms ease !important;
+}
+
+/* ===================================
+   TYPOGRAPHY - E-MÍDIAS
+   ================================== */
+
+body {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.header-title,
+.modal-title,
+.drawer-title,
+.form-section-title,
+.section-title {
+    font-family: 'Space Grotesk', sans-serif !important;
+}
+
+/* ===================================
+   HEADER - E-MÍDIAS
+   ================================== */
+
+.header {
+    background: var(--gradient-primary) !important;
+}
+
+/* ===================================
+   BUTTONS - E-MÍDIAS
+   ================================== */
+
+.fab {
+    background: var(--gradient-primary) !important;
+}
+
+.fab:hover {
+    transform: translateY(-2px) rotate(90deg) !important;
+    box-shadow: 0 30px 60px -15px rgba(6, 5, 91, 0.3) !important;
+}
+
+.fab:active {
+    transform: translateY(0) rotate(90deg) !important;
+}
+
+.btn-primary {
+    background: var(--gradient-primary) !important;
+    padding: 10px 20px !important;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+
+.btn-primary:active {
+    transform: translateY(0) !important;
+}
+
+.btn-secondary {
+    background: white !important;
+    color: var(--gray-700) !important;
+    border: 1px solid var(--gray-300) !important;
+    padding: 10px 20px !important;
+}
+
+.btn-secondary:hover {
+    background: var(--gray-50) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Export/Success Button Style */
+.btn-export {
+    background: white !important;
+    color: var(--success) !important;
+    border: 1px solid var(--success) !important;
+    padding: 10px 20px !important;
+}
+
+.btn-export:hover {
+    background: var(--success) !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ===================================
+   FORM COMPONENTS - E-MÍDIAS
+   ================================== */
+
+.form-section-title {
+    border-bottom-color: var(--accent) !important;
+    border-bottom-width: 3px !important;
+}
+
+.form-section-description {
+    background: rgba(6, 5, 91, 0.03) !important;
+    border-left-color: var(--primary) !important;
+    border-left-width: 3px !important;
+}
+
+.form-input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(6, 5, 91, 0.1) !important;
+}
+
+.form-subsection {
+    border-left-color: var(--accent) !important;
+}
+
+/* ===================================
+   CARDS & INFO SECTIONS - E-MÍDIAS
+   ================================== */
+
+.info-card {
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+.exhibitor-card {
+    background: linear-gradient(135deg, rgba(6, 5, 91, 0.03) 0%, rgba(10, 9, 128, 0.05) 100%) !important;
+    border-left: 3px solid var(--accent) !important;
+}
+
+.section-title svg {
+    color: var(--primary) !important;
+}
+
+/* Add accent bar to important cards */
+.info-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.info-card {
+    position: relative;
+}
+
+/* ===================================
+   DRAWER - E-MÍDIAS
+   ================================== */
+
+.drawer-header-images {
+    background: var(--gradient-primary) !important;
+}
+
+.drawer-title {
+    color: var(--gray-900) !important;
+}
+
+/* ===================================
+   PRODUCT BADGES - E-MÍDIAS
+   ================================== */
+
+.product-badge {
+    background: var(--gray-50) !important;
+    border-color: var(--gray-300) !important;
+    transition: all var(--transition-base) !important;
+}
+
+.product-badge:hover {
+    background: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+    transform: translateY(-1px) !important;
+}
+
+.product-badge:hover .product-badge-type,
+.product-badge:hover .product-badge-value {
+    color: white !important;
+}
+
+.product-badge-value {
+    color: var(--success) !important;
+    font-weight: 600 !important;
+}
+
+/* ===================================
+   INTERACTIVE ELEMENTS - E-MÍDIAS
+   ================================== */
+
+.btn-icon-primary {
+    background: var(--primary) !important;
+}
+
+.btn-icon-primary:hover {
+    background: var(--primary-light) !important;
+    transform: translateY(-1px) !important;
+}
+
+.btn-drawer-close:hover,
+.btn-drawer-back:hover {
+    transform: scale(1.05) !important;
+}
+
+/* ===================================
+   LINKS - E-MÍDIAS  
+   ================================== */
+
+.exhibitor-link {
+    color: var(--primary) !important;
+}
+
+.exhibitor-link:hover {
+    color: var(--primary-light) !important;
+}
+
+/* ===================================
+   SCROLLBARS - E-MÍDIAS (Discrete)
+   ================================== */
+
+.drawer-content::-webkit-scrollbar,
+.modal-content::-webkit-scrollbar {
+    width: 6px !important;
+}
+
+.drawer-content::-webkit-scrollbar-track,
+.modal-content::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.drawer-content::-webkit-scrollbar-thumb,
+.modal-content::-webkit-scrollbar-thumb {
+    background: rgba(6, 5, 91, 0.2) !important;
+    border-radius: var(--radius-full) !important;
+}
+
+.drawer-content::-webkit-scrollbar-thumb:hover,
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(6, 5, 91, 0.3) !important;
+}
+
+/* ===================================
+   RESPONSIVE - E-MÍDIAS
+   ================================== */
+
+@media (max-width: 1400px) {
+
+    .header-content,
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+}
+
+/* ===================================
+   ACCENT HIGHLIGHTS - E-MÍDIAS
+   ================================== */
+
+/* Info icon in descriptions */
+.info-icon {
+    color: var(--primary) !important;
+}
+
+/* Required field markers */
+.required {
+    color: var(--danger) !important;
+}
+
+/* Success states */
+.btn-remove:hover {
+    background: rgba(220, 38, 38, 0.1) !important;
+    color: var(--danger) !important;
+}
+
+/* ===================================
+   CHECKBOX - E-MÍDIAS
+   ================================== */
+
+.checkbox-label input[type="checkbox"]:checked+.checkbox-custom {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+/* ===================================
+   MODAL HEADER - E-MÍDIAS
+   ================================== */
+
+.modal-header {
+    border-bottom-color: var(--gray-300) !important;
+}
+
+.modal-close:hover {
+    background: var(--gray-100) !important;
+}
+
+/* ===================================
+   COMMENT/OBSERVACOES - E-MÍDIAS
+   ================================== */
+
+.comment-text {
+    background: var(--gray-50) !important;
+    border-left-color: var(--primary) !important;
+}
+
+/* ===================================
+   PRODUCTS LIST IN FORM - E-MÍDIAS
+   ================================== */
+
+.product-item {
+    border-color: var(--gray-300) !important;
+    background: white !important;
+}
+
+.product-value {
+    color: var(--success) !important;
+}
+
+/* ===================================
+   LEAFLET POPUP - E-MÍDIAS
+   ================================== */
+
+.leaflet-popup-content-wrapper {
+    border-radius: var(--radius-lg) !important;
+}
+
+.leaflet-popup-content h3 {
+    color: var(--primary) !important;
+    font-family: 'Space Grotesk', sans-serif !important;
+}
