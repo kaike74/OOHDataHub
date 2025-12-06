@@ -766,30 +766,24 @@ async function populatePointDrawer(point) {
     });
 
     const exhibitorCard = document.getElementById('exhibitor-card');
-    if (point.id_exibidora) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/exibidoras/${point.id_exibidora}`);
-            if (response.ok) {
-                const exhibitor = await response.json();
-                const logoImg = document.getElementById('point-exhibitor-logo');
-                const nameSpan = document.getElementById('point-exhibitor-name');
+    if (point.id_exibidora || point.exibidora_nome) {
+        // For now, just show exhibitor name from point data
+        // TODO: Implement GET /api/exibidoras/:id endpoint in backend
+        const nameSpan = document.getElementById('point-exhibitor-name');
+        const logoImg = document.getElementById('point-exhibitor-logo');
 
-                if (exhibitor.logo) {
-                    logoImg.src = exhibitor.logo;
-                    logoImg.style.display = 'block';
-                } else {
-                    logoImg.style.display = 'none';
-                }
+        // Use exhibitor name from point if available
+        nameSpan.textContent = point.exibidora_nome || point.nome_exibidora || 'Exibidora';
 
-                nameSpan.textContent = exhibitor.nome || 'N/A';
-                exhibitorCard.style.display = 'block';
-                currentExhibitorData = exhibitor;
-            } else {
-                exhibitorCard.style.display = 'none';
-            }
-        } catch (error) {
-            console.error('Error loading exhibitor:', error);
-            exhibitorCard.style.display = 'none';
+        // Hide logo for now until we have the endpoint
+        logoImg.style.display = 'none';
+
+        exhibitorCard.style.display = 'block';
+
+        // Hide the link to exhibitor details since endpoint doesn't exist yet
+        const exhibitorLink = document.getElementById('point-exhibitor-link');
+        if (exhibitorLink) {
+            exhibitorLink.style.display = 'none';
         }
     } else {
         exhibitorCard.style.display = 'none';
@@ -809,20 +803,35 @@ async function populatePointDrawer(point) {
     const productsList = document.getElementById('point-products-list');
     const productsSection = document.getElementById('products-section');
 
-    if (point.produtos && point.produtos.length > 0) {
+    // Parse produtos - it comes as JSON string from database
+    let produtosArray = [];
+    if (point.produtos) {
+        try {
+            // If it's already an array, use it; if it's a string, parse it
+            produtosArray = typeof point.produtos === 'string'
+                ? JSON.parse(point.produtos)
+                : point.produtos;
+        } catch (e) {
+            console.error('Error parsing produtos:', e);
+            produtosArray = [];
+        }
+    }
+
+    if (Array.isArray(produtosArray) && produtosArray.length > 0) {
         productsList.innerHTML = '';
-        point.produtos.forEach(prod => {
+        produtosArray.forEach(prod => {
             const badge = document.createElement('div');
             badge.className = 'product-badge';
             badge.innerHTML = `
-                <span class="product-badge-type">${prod.produto}</span>
+                <span class="product-badge-type">${prod.produto || 'Produto'}</span>
                 ${prod.periodo && prod.produto === 'Locação' ? `<span class="product-badge-period">${prod.periodo}</span>` : ''}
-                <span class="product-badge-value">R$ ${parseFloat(prod.valor).toFixed(2)}</span>
+                <span class="product-badge-value">R$ ${prod.valor ? parseFloat(prod.valor).toFixed(2) : '0.00'}</span>
             `;
             productsList.appendChild(badge);
         });
         productsSection.style.display = 'block';
     } else {
+        // Hide products section if no products
         productsSection.style.display = 'none';
     }
 
