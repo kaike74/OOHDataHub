@@ -29,6 +29,32 @@ Sistema moderno de gestão de pontos OOH (Out-of-Home) com Google Maps, Next.js 
 - D1 Database (SQLite)
 - R2 Storage
 
+## 🏗️ Arquitetura do Sistema
+
+O sistema é composto por 3 partes principais que se comunicam:
+
+1.  **Frontend (Cloudflare Pages):**
+    -   Feito em Next.js (Static Export).
+    -   Hospedado no Cloudflare Pages.
+    -   **Comunicação:** Faz requisições HTTP para a URL do Worker (`NEXT_PUBLIC_API_URL`).
+    -   **Mapas:** Carrega script do Google Maps diretamente no cliente.
+
+2.  **API (Cloudflare Workers):**
+    -   Código em `workers/src`.
+    -   **Função:** Recebe as requisições do Frontend e processa.
+    -   **Acesso a Dados:**
+        -   Lê/Grava no **D1 Database** (binding `env.DB`).
+        -   Gerencia uploads no **R2 Storage** (binding `env.R2`).
+    -   **Deploy:** Feito via `wrangler deploy` na pasta `workers/`.
+
+3.  **Banco de Dados (D1):**
+    -   SQLite distribuído na Edge.
+    -   Gerenciado via migrations na pasta `migrations/`.
+    -   Só pode ser acessado pelo Worker (ou via wrangler CLI).
+
+### 🔄 Fluxo de Dados
+Frontend -> API (Worker) -> D1 / R2 -> API -> Frontend
+
 ## 📦 Estrutura do Projeto
 
 ```
