@@ -82,8 +82,8 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
         const result = await env.DB.prepare(`
       INSERT INTO pontos_ooh (
         codigo_ooh, endereco, latitude, longitude, cidade, uf,
-        id_exibidora, medidas, fluxo, observacoes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        id_exibidora, medidas, fluxo, tipo, observacoes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
             data.codigo_ooh,
             data.endereco,
@@ -94,6 +94,7 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
             data.id_exibidora || null,
             data.medidas || null,
             data.fluxo || null,
+            data.tipos || null, // NOVO campo
             data.observacoes || null
         ).run();
 
