@@ -1,6 +1,6 @@
 name = "ooh-system"
-main = "src/index.js"
-compatibility_date = "2025-12-01"
+main = "src/index.ts"
+compatibility_date = "2025-12-08"
 
 [[d1_databases]]
 binding = "DB"
@@ -10,3 +10,6 @@ database_id = "79b92724-c85e-401b-a97e-4a77432b3398"
 [[r2_buckets]]
 binding = "R2"
 bucket_name = "ooh-bucket"
+
+[vars]
+ALLOWED_ORIGINS = "*"

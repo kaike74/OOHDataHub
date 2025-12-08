@@ -1,0 +1,190 @@
+'use client';
+
+import { useStore } from '@/lib/store';
+import { api } from '@/lib/api';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import { X, MapPin, Building2, Ruler, Users, FileText } from 'lucide-react';
+import { useState } from 'react';
+
+export default function Sidebar() {
+    const selectedPonto = useStore((state) => state.selectedPonto);
+    const isSidebarOpen = useStore((state) => state.isSidebarOpen);
+    const setSidebarOpen = useStore((state) => state.setSidebarOpen);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+    if (!selectedPonto || !isSidebarOpen) return null;
+
+    const imagens = selectedPonto.imagens || [];
+    const produtos = selectedPonto.produtos || [];
+
+    const nextImage = () => {
+        setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
+    };
+
+    const prevImage = () => {
+        setCurrentImageIndex((prev) => (prev - 1 + imagens.length) % imagens.length);
+    };
+
+    return (
+        <>
+            {/* Overlay */}
+            <div
+                className="fixed inset-0 bg-black/20 z-40 lg:hidden"
+                onClick={() => setSidebarOpen(false)}
+            />
+
+            {/* Sidebar */}
+            <div className="fixed right-0 top-0 h-full w-full sm:w-96 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto">
+                {/* Header com imagens */}
+                {imagens.length > 0 && (
+                    <div className="relative h-64 bg-gray-200">
+                        <img
+                            src={api.getImageUrl(imagens[currentImageIndex])}
+                            alt={`Imagem ${currentImageIndex + 1}`}
+                            className="w-full h-full object-cover"
+                        />
+
+                        {imagens.length > 1 && (
+                            <>
+                                <button
+                                    onClick={prevImage}
+                                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"
+                                >
+                                    ◄
+                                </button>
+                                <button
+                                    onClick={nextImage}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"
+                                >
+                                    ►
+                                </button>
+                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    {currentImageIndex + 1} / {imagens.length}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {/* Content */}
+                <div className="p-6">
+                    {/* Header com botão fechar */}
+                    <div className="flex items-start justify-between mb-6">
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-900">
+                                {selectedPonto.codigo_ooh}
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-1">
+                                {formatDate(selectedPonto.created_at)}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setSidebarOpen(false)}
+                            className="text-gray-400 hover:text-gray-600 p-2"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
+
+                    {/* Informações */}
+                    <div className="space-y-4">
+                        {/* Endereço */}
+                        <div className="flex items-start gap-3">
+                            <MapPin className="text-blue-600 mt-1 flex-shrink-0" size={20} />
+                            <div>
+                                <p className="font-medium text-gray-700">Endereço</p>
+                                <p className="text-gray-900">{selectedPonto.endereco}</p>
+                                {selectedPonto.cidade && selectedPonto.uf && (
+                                    <p className="text-sm text-gray-500">
+                                        {selectedPonto.cidade} - {selectedPonto.uf}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Exibidora */}
+                        {selectedPonto.exibidora_nome && (
+                            <div className="flex items-start gap-3">
+                                <Building2 className="text-blue-600 mt-1 flex-shrink-0" size={20} />
+                                <div>
+                                    <p className="font-medium text-gray-700">Exibidora</p>
+                                    <p className="text-gray-900">{selectedPonto.exibidora_nome}</p>
+                                    {selectedPonto.exibidora_cnpj && (
+                                        <p className="text-sm text-gray-500">
+                                            CNPJ: {selectedPonto.exibidora_cnpj}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Medidas */}
+                        {selectedPonto.medidas && (
+                            <div className="flex items-start gap-3">
+                                <Ruler className="text-blue-600 mt-1 flex-shrink-0" size={20} />
+                                <div>
+                                    <p className="font-medium text-gray-700">Medidas</p>
+                                    <p className="text-gray-900">{selectedPonto.medidas}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Fluxo */}
+                        {selectedPonto.fluxo && (
+                            <div className="flex items-start gap-3">
+                                <Users className="text-blue-600 mt-1 flex-shrink-0" size={20} />
+                                <div>
+                                    <p className="font-medium text-gray-700">Fluxo</p>
+                                    <p className="text-gray-900">{selectedPonto.fluxo.toLocaleString()} pessoas/dia</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Produtos */}
+                        {produtos.length > 0 && (
+                            <div>
+                                <p className="font-medium text-gray-700 mb-2">Produtos e Valores</p>
+                                <div className="space-y-2">
+                                    {produtos.map((produto, idx) => (
+                                        <div key={idx} className="bg-gray-50 p-3 rounded-lg">
+                                            <div className="flex justify-between items-center">
+                                                <span className="font-medium text-gray-900">{produto.tipo}</span>
+                                                <span className="text-blue-600 font-bold">
+                                                    {formatCurrency(produto.valor)}
+                                                </span>
+                                            </div>
+                                            {produto.periodo && (
+                                                <p className="text-sm text-gray-500 mt-1">{produto.periodo}</p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Observações */}
+                        {selectedPonto.observacoes && (
+                            <div className="flex items-start gap-3">
+                                <FileText className="text-blue-600 mt-1 flex-shrink-0" size={20} />
+                                <div>
+                                    <p className="font-medium text-gray-700">Observações</p>
+                                    <p className="text-gray-900 whitespace-pre-wrap">{selectedPonto.observacoes}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Ações */}
+                    <div className="mt-8 flex gap-3">
+                        <button className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition">
+                            Editar
+                        </button>
+                        <button className="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition">
+                            Histórico
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+}
