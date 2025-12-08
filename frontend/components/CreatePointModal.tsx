@@ -6,25 +6,28 @@ import { api } from '@/lib/api';
 import { X, Upload, Plus, Trash2, MapPin, Loader2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 
-interface Produto {
-  tipo: string;
+interface Custo {
+  produto: string; // Locação, Papel, Lona
   valor: string;
-  periodo: string;
+  periodo: string; // Bissemanal, Mensal, Unitário (só aparece se produto = Locação)
 }
 
-const TIPOS_PRODUTO = [
+const TIPOS_OOH = [
   'Outdoor',
-  'Digital',
-  'Backlight',
   'Frontlight',
+  'Led',
+  'Vertical',
+  'Iluminado',
   'Empena',
-  'Painel LED',
-  'Relógio de Rua',
-  'Totem',
-  'Outros'
+  'Mub',
+  'Painel rodoviário',
+  'Abrigo'
 ];
 
-const PERIODOS = ['Mensal', 'Bissemanal', 'Quinzenal', 'Semanal'];
+const PRODUTOS_CUSTO = ['Locação', 'Papel', 'Lona'];
+
+const PERIODOS = ['Bissemanal', 'Mensal', 'Unitário'];
+
 
 export default function CreatePointModal() {
   const isModalOpen = useStore((state) => state.isModalOpen);
@@ -48,8 +51,9 @@ export default function CreatePointModal() {
   const [idExibidora, setIdExibidora] = useState('');
   const [medidas, setMedidas] = useState('');
   const [fluxo, setFluxo] = useState('');
+  const [tipos, setTipos] = useState<string[]>([]); // Multiselect de tipos OOH
   const [observacoes, setObservacoes] = useState('');
-  const [produtos, setProdutos] = useState<Produto[]>([{ tipo: '', valor: '', periodo: '' }]);
+  const [custos, setCustos] = useState<Custo[]>([{ produto: '', valor: '', periodo: '' }]);
   const [images, setImages] = useState<File[]>([]);
   const [imagesPreviews, setImagesPreviews] = useState<string[]>([]);
 
@@ -114,18 +118,32 @@ export default function CreatePointModal() {
     setImagesPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
-  const addProduto = () => {
-    setProdutos([...produtos, { tipo: '', valor: '', periodo: '' }]);
+  const toggleTipo = (tipo: string) => {
+    setTipos(prev =>
+      prev.includes(tipo)
+        ? prev.filter(t => t !== tipo)
+        : [...prev, tipo]
+    );
   };
 
-  const removeProduto = (index: number) => {
-    setProdutos(produtos.filter((_, i) => i !== index));
+  const addCusto = () => {
+    setCustos([...custos, { produto: '', valor: '', periodo: '' }]);
   };
 
-  const updateProduto = (index: number, field: keyof Produto, value: string) => {
-    const newProdutos = [...produtos];
-    newProdutos[index][field] = value;
-    setProdutos(newProdutos);
+  const removeCusto = (index: number) => {
+    setCustos(custos.filter((_, i) => i !== index));
+  };
+
+  const updateCusto = (index: number, field: keyof Custo, value: string) => {
+    const newCustos = [...custos];
+    newCustos[index][field] = value;
+
+    // Se mudou o produto e não é Locação, limpar período
+    if (field === 'produto' && value !== 'Locação') {
+      newCustos[index].periodo = '';
+    }
+
+    setCustos(newCustos);
   };
 
   // Geocoding do endereço
@@ -181,8 +199,8 @@ export default function CreatePointModal() {
     const newErrors: Record<string, string> = {};
 
     if (!idExibidora) newErrors.idExibidora = 'Exibidora é obrigatória';
-    if (produtos.some(p => p.tipo && !p.valor)) {
-      newErrors.produtos = 'Preencha o valor para todos os produtos';
+    if (custos.some(c => c.produto && !c.valor)) {
+      newErrors.custos = 'Preencha o valor para todos os custos';
     }
 
     setErrors(newErrors);
@@ -211,13 +229,14 @@ export default function CreatePointModal() {
         id_exibidora: idExibidora ? parseInt(idExibidora) : null,
         medidas: medidas || null,
         fluxo: fluxo ? parseInt(fluxo) : null,
+        tipos: tipos.length > 0 ? tipos.join(', ') : null, // Salvar tipos como string separada por vírgula
         observacoes: observacoes || null,
-        produtos: produtos
-          .filter(p => p.tipo && p.valor)
-          .map(p => ({
-            tipo: p.tipo,
-            valor: parseFloat(p.valor.replace(/[^\d,]/g, '').replace(',', '.')),
-            periodo: p.periodo || null
+        produtos: custos
+          .filter(c => c.produto && c.valor)
+          .map(c => ({
+            tipo: c.produto, // Renomear produto para tipo na API
+            valor: parseFloat(c.valor.replace(/[^\d,]/g, '').replace(',', '.')),
+            periodo: c.periodo || null
           }))
       };
 
@@ -261,8 +280,9 @@ export default function CreatePointModal() {
       setIdExibidora('');
       setMedidas('');
       setFluxo('');
+      setTipos([]);
       setObservacoes('');
-      setProdutos([{ tipo: '', valor: '', periodo: '' }]);
+      setCustos([{ produto: '', valor: '', periodo: '' }]);
       setImages([]);
       setImagesPreviews([]);
       setErrors({});
@@ -471,14 +491,37 @@ export default function CreatePointModal() {
                 </div>
               </div>
 
-              {/* Produtos */}
+              {/* Tipo (Multiselect) */}
+              <div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                  Tipo
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {TIPOS_OOH.map((tipo) => (
+                    <button
+                      key={tipo}
+                      type="button"
+                      onClick={() => toggleTipo(tipo)}
+                      className={`px-3 py-2 rounded-lg border-2 transition font-medium text-sm ${tipos.includes(tipo)
+                          ? 'border-emidias-accent bg-pink-50 text-emidias-accent'
+                          : 'border-emidias-gray/30 hover:border-emidias-accent text-gray-700'
+                        }`}
+                    >
+                      {tipo}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custos */}
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <label className="block text-sm font-semibold text-emidias-primary">
-                    Produtos e Valores
+                    Custos
                   </label>
                   <button
-                    onClick={addProduto}
+                    type="button"
+                    onClick={addCusto}
                     className="text-emidias-accent hover:text-emidias-primary text-sm font-medium flex items-center gap-1"
                   >
                     <Plus size={16} />
@@ -487,47 +530,55 @@ export default function CreatePointModal() {
                 </div>
 
                 <div className="space-y-3">
-                  {produtos.map((produto, index) => (
+                  {custos.map((custo, index) => (
                     <div key={index} className="flex gap-3 items-start p-4 bg-gray-50 rounded-lg">
                       <div className="flex-1 grid grid-cols-3 gap-3">
                         <select
-                          value={produto.tipo}
-                          onChange={(e) => updateProduto(index, 'tipo', e.target.value)}
+                          value={custo.produto}
+                          onChange={(e) => updateCusto(index, 'produto', e.target.value)}
                           className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
                         >
-                          <option value="">Tipo...</option>
-                          {TIPOS_PRODUTO.map((tipo) => (
-                            <option key={tipo} value={tipo}>
-                              {tipo}
+                          <option value="">Produto...</option>
+                          {PRODUTOS_CUSTO.map((produto) => (
+                            <option key={produto} value={produto}>
+                              {produto}
                             </option>
                           ))}
                         </select>
 
                         <input
                           type="text"
-                          value={produto.valor}
-                          onChange={(e) => updateProduto(index, 'valor', e.target.value)}
+                          value={custo.valor}
+                          onChange={(e) => updateCusto(index, 'valor', e.target.value)}
                           className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
                           placeholder="R$ 1.000,00"
                         />
 
-                        <select
-                          value={produto.periodo}
-                          onChange={(e) => updateProduto(index, 'periodo', e.target.value)}
-                          className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                        >
-                          <option value="">Período...</option>
-                          {PERIODOS.map((periodo) => (
-                            <option key={periodo} value={periodo}>
-                              {periodo}
-                            </option>
-                          ))}
-                        </select>
+                        {/* Período só aparece se produto = Locação */}
+                        {custo.produto === 'Locação' ? (
+                          <select
+                            value={custo.periodo}
+                            onChange={(e) => updateCusto(index, 'periodo', e.target.value)}
+                            className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                          >
+                            <option value="">Período...</option>
+                            {PERIODOS.map((periodo) => (
+                              <option key={periodo} value={periodo}>
+                                {periodo}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="px-3 py-2 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm">
+                            N/A
+                          </div>
+                        )}
                       </div>
 
-                      {produtos.length > 1 && (
+                      {custos.length > 1 && (
                         <button
-                          onClick={() => removeProduto(index)}
+                          type="button"
+                          onClick={() => removeCusto(index)}
                           className="text-red-500 hover:text-red-700 p-2"
                         >
                           <Trash2 size={18} />
@@ -536,8 +587,8 @@ export default function CreatePointModal() {
                     </div>
                   ))}
                 </div>
-                {errors.produtos && (
-                  <p className="text-red-500 text-sm mt-1">{errors.produtos}</p>
+                {errors.custos && (
+                  <p className="text-red-500 text-sm mt-1">{errors.custos}</p>
                 )}
               </div>
 
@@ -548,11 +599,10 @@ export default function CreatePointModal() {
                 </label>
                 <div
                   {...getRootProps()}
-                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${
-                    isDragActive
-                      ? 'border-emidias-accent bg-pink-50'
-                      : 'border-emidias-gray/30 hover:border-emidias-accent'
-                  }`}
+                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${isDragActive
+                    ? 'border-emidias-accent bg-pink-50'
+                    : 'border-emidias-gray/30 hover:border-emidias-accent'
+                    }`}
                 >
                   <input {...getInputProps()} />
                   <Upload className="mx-auto text-emidias-gray mb-3" size={32} />
