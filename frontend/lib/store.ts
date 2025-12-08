@@ -11,6 +11,7 @@ interface AppState {
     selectedPonto: Ponto | null;
     isSidebarOpen: boolean;
     isModalOpen: boolean;
+    streetViewCoordinates: { lat: number; lng: number } | null;
 
     // Filters
     filterCidade: string | null;
@@ -25,6 +26,7 @@ interface AppState {
     setSelectedPonto: (ponto: Ponto | null) => void;
     setSidebarOpen: (open: boolean) => void;
     setModalOpen: (open: boolean) => void;
+    setStreetViewCoordinates: (coords: { lat: number; lng: number } | null) => void;
     setFilterCidade: (cidade: string | null) => void;
     setFilterUF: (uf: string | null) => void;
     setFilterExibidora: (id: number | null) => void;
@@ -40,6 +42,7 @@ export const useStore = create<AppState>((set) => ({
     selectedPonto: null,
     isSidebarOpen: false,
     isModalOpen: false,
+    streetViewCoordinates: null,
     filterCidade: null,
     filterUF: null,
     filterExibidora: null,
@@ -58,6 +61,7 @@ export const useStore = create<AppState>((set) => ({
         selectedPonto: open ? undefined : null,
     }),
     setModalOpen: (open) => set({ isModalOpen: open }),
+    setStreetViewCoordinates: (coords) => set({ streetViewCoordinates: coords }),
     setFilterCidade: (cidade) => set({ filterCidade: cidade }),
     setFilterUF: (uf) => set({ filterUF: uf }),
     setFilterExibidora: (id) => set({ filterExibidora: id }),

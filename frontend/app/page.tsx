@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 import GoogleMap from '@/components/map/GoogleMap';
 import Sidebar from '@/components/Sidebar';
+import CreatePointModal from '@/components/CreatePointModal';
+import MapFilters from '@/components/MapFilters';
+import AddressSearch from '@/components/AddressSearch';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { MapPin, Plus, Filter, BarChart3 } from 'lucide-react';
@@ -11,6 +14,8 @@ export default function HomePage() {
   const [isPontos, setIsPontos] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [searchLocation, setSearchLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
 
   const setPontos = useStore((state) => state.setPontos);
   const setExibidoras = useStore((state) => state.setExibidoras);
@@ -44,33 +49,44 @@ export default function HomePage() {
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0 z-10">
+      <header className="gradient-primary px-6 py-3 flex items-center justify-between flex-shrink-0 z-10 fixed top-0 left-0 right-0 h-[70px]">
+        {/* Logo OOH Data Hub - Esquerda */}
         <div className="flex items-center gap-3">
-          <div className="bg-blue-600 p-2 rounded-lg">
-            <MapPin className="text-white" size={24} />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Sistema OOH</h1>
-            <p className="text-sm text-gray-500">
-              {pontos.length} pontos cadastrados
-            </p>
-          </div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            OOH Data Hub
+          </h1>
+          <span className="text-white/60 text-sm hidden md:inline">
+            {pontos.length} pontos
+          </span>
         </div>
 
+        {/* Logo E-MÍDIAS - Centro */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <img
+            src="https://raw.githubusercontent.com/kaike74/distribuicaoemidias/main/logo%20E-MIDIAS%20png%20fundo%20escuro%20HORIZONTAL%20(1).png"
+            alt="E-MÍDIAS Logo"
+            className="h-12 object-contain"
+          />
+        </div>
+
+        {/* Ações - Direita */}
         <div className="flex items-center gap-3">
-          <button className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-2 transition">
+          <button
+            onClick={() => setIsFiltersOpen(true)}
+            className="px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg flex items-center gap-2 transition"
+          >
             <Filter size={20} />
             <span className="hidden sm:inline">Filtros</span>
           </button>
 
-          <button className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-2 transition">
+          <button className="px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg flex items-center gap-2 transition">
             <BarChart3 size={20} />
             <span className="hidden sm:inline">Stats</span>
           </button>
 
           <button
             onClick={() => setModalOpen(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 transition font-medium"
+            className="px-4 py-2 bg-emidias-accent text-white rounded-lg hover:bg-[#E01A6A] flex items-center gap-2 transition font-medium hover-lift shadow-lg"
           >
             <Plus size={20} />
             <span className="hidden sm:inline">Novo Ponto</span>
@@ -78,8 +94,15 @@ export default function HomePage() {
         </div>
       </header>
 
+      {/* Search Bar */}
+      <div className="fixed top-[90px] left-1/2 -translate-x-1/2 z-30 w-full max-w-lg px-4">
+        <AddressSearch
+          onLocationSelect={(location) => setSearchLocation(location)}
+        />
+      </div>
+
       {/* Main Content */}
-      <main className="flex-1 relative">
+      <main className="flex-1 relative mt-[70px]">
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-20">
             <div className="text-center">
@@ -104,8 +127,10 @@ export default function HomePage() {
           </div>
         )}
 
-        <GoogleMap />
+        <GoogleMap searchLocation={searchLocation} />
         <Sidebar />
+        <CreatePointModal />
+        <MapFilters isOpen={isFiltersOpen} onClose={() => setIsFiltersOpen(false)} />
       </main>
     </div>
   );

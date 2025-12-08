@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: "Sistema OOH - Gestão de Pontos Out-of-Home",
-  description: "Sistema moderno de gestão de pontos OOH com mapa interativo",
+  title: "OOH Data Hub - Sistema de Gestão E-MÍDIAS",
+  description: "Sistema moderno de gestão de pontos OOH com mapa interativo e identidade visual E-MÍDIAS",
 };
 
 export default function RootLayout({
@@ -16,7 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={inter.className}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

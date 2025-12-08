@@ -1,0 +1,662 @@
+'use client';
+
+import { useState, useCallback, useEffect } from 'react';
+import { useStore } from '@/lib/store';
+import { api } from '@/lib/api';
+import { X, Upload, Plus, Trash2, MapPin, Loader2 } from 'lucide-react';
+import { useDropzone } from 'react-dropzone';
+
+interface Produto {
+  tipo: string;
+  valor: string;
+  periodo: string;
+}
+
+const TIPOS_PRODUTO = [
+  'Outdoor',
+  'Digital',
+  'Backlight',
+  'Frontlight',
+  'Empena',
+  'Painel LED',
+  'Relógio de Rua',
+  'Totem',
+  'Outros'
+];
+
+const PERIODOS = ['Mensal', 'Bissemanal', 'Quinzenal', 'Semanal'];
+
+export default function CreatePointModal() {
+  const isModalOpen = useStore((state) => state.isModalOpen);
+  const setModalOpen = useStore((state) => state.setModalOpen);
+  const exibidoras = useStore((state) => state.exibidoras);
+  const setPontos = useStore((state) => state.setPontos);
+  const streetViewCoordinates = useStore((state) => state.streetViewCoordinates);
+  const setStreetViewCoordinates = useStore((state) => state.setStreetViewCoordinates);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Formulário
+  const [codigoOoh, setCodigoOoh] = useState('');
+  const [endereco, setEndereco] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [cidade, setCidade] = useState('');
+  const [uf, setUf] = useState('');
+  const [idExibidora, setIdExibidora] = useState('');
+  const [medidas, setMedidas] = useState('');
+  const [fluxo, setFluxo] = useState('');
+  const [observacoes, setObservacoes] = useState('');
+  const [produtos, setProdutos] = useState<Produto[]>([{ tipo: '', valor: '', periodo: '' }]);
+  const [images, setImages] = useState<File[]>([]);
+  const [imagesPreviews, setImagesPreviews] = useState<string[]>([]);
+
+  // Geocoding
+  const [isGeocoding, setIsGeocoding] = useState(false);
+
+  // Preencher coordenadas do Street View
+  useEffect(() => {
+    if (streetViewCoordinates && isModalOpen) {
+      setLatitude(streetViewCoordinates.lat.toString());
+      setLongitude(streetViewCoordinates.lng.toString());
+
+      // Fazer geocoding reverso para obter endereço
+      const reverseGeocode = async () => {
+        try {
+          const geocoder = new google.maps.Geocoder();
+          const result = await geocoder.geocode({
+            location: { lat: streetViewCoordinates.lat, lng: streetViewCoordinates.lng }
+          });
+
+          if (result.results[0]) {
+            setEndereco(result.results[0].formatted_address);
+
+            const addressComponents = result.results[0].address_components;
+            const cidadeComponent = addressComponents.find(c => c.types.includes('administrative_area_level_2'));
+            const ufComponent = addressComponents.find(c => c.types.includes('administrative_area_level_1'));
+
+            if (cidadeComponent) setCidade(cidadeComponent.long_name);
+            if (ufComponent) setUf(ufComponent.short_name);
+          }
+        } catch (error) {
+          console.error('Erro no geocoding reverso:', error);
+        }
+      };
+
+      reverseGeocode();
+    }
+  }, [streetViewCoordinates, isModalOpen]);
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const newFiles = acceptedFiles.filter(file => file.type.startsWith('image/'));
+    setImages(prev => [...prev, ...newFiles]);
+
+    // Criar previews
+    newFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagesPreviews(prev => [...prev, e.target?.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] },
+    multiple: true
+  });
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImagesPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const addProduto = () => {
+    setProdutos([...produtos, { tipo: '', valor: '', periodo: '' }]);
+  };
+
+  const removeProduto = (index: number) => {
+    setProdutos(produtos.filter((_, i) => i !== index));
+  };
+
+  const updateProduto = (index: number, field: keyof Produto, value: string) => {
+    const newProdutos = [...produtos];
+    newProdutos[index][field] = value;
+    setProdutos(newProdutos);
+  };
+
+  // Geocoding do endereço
+  const geocodeAddress = async () => {
+    if (!endereco) {
+      setErrors({ ...errors, endereco: 'Digite um endereço' });
+      return;
+    }
+
+    setIsGeocoding(true);
+    try {
+      const geocoder = new google.maps.Geocoder();
+      const result = await geocoder.geocode({ address: endereco });
+
+      if (result.results[0]) {
+        const location = result.results[0].geometry.location;
+        setLatitude(location.lat().toString());
+        setLongitude(location.lng().toString());
+
+        // Extrair cidade e UF
+        const addressComponents = result.results[0].address_components;
+        const cidadeComponent = addressComponents.find(c => c.types.includes('administrative_area_level_2'));
+        const ufComponent = addressComponents.find(c => c.types.includes('administrative_area_level_1'));
+
+        if (cidadeComponent) setCidade(cidadeComponent.long_name);
+        if (ufComponent) setUf(ufComponent.short_name);
+
+        setErrors({ ...errors, endereco: '' });
+      } else {
+        setErrors({ ...errors, endereco: 'Endereço não encontrado' });
+      }
+    } catch (error) {
+      console.error('Erro no geocoding:', error);
+      setErrors({ ...errors, endereco: 'Erro ao buscar coordenadas' });
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
+
+  // Validação
+  const validateStep1 = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!codigoOoh) newErrors.codigoOoh = 'Código OOH é obrigatório';
+    if (!endereco) newErrors.endereco = 'Endereço é obrigatório';
+    if (!latitude || !longitude) newErrors.coordenadas = 'Coordenadas são obrigatórias';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!idExibidora) newErrors.idExibidora = 'Exibidora é obrigatória';
+    if (produtos.some(p => p.tipo && !p.valor)) {
+      newErrors.produtos = 'Preencha o valor para todos os produtos';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (currentStep === 1 && validateStep1()) {
+      setCurrentStep(2);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!validateStep2()) return;
+
+    setIsLoading(true);
+    try {
+      // Criar ponto
+      const pontoData = {
+        codigo_ooh: codigoOoh,
+        endereco,
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        cidade: cidade || null,
+        uf: uf || null,
+        id_exibidora: idExibidora ? parseInt(idExibidora) : null,
+        medidas: medidas || null,
+        fluxo: fluxo ? parseInt(fluxo) : null,
+        observacoes: observacoes || null,
+        produtos: produtos
+          .filter(p => p.tipo && p.valor)
+          .map(p => ({
+            tipo: p.tipo,
+            valor: parseFloat(p.valor.replace(/[^\d,]/g, '').replace(',', '.')),
+            periodo: p.periodo || null
+          }))
+      };
+
+      const newPonto = await api.createPonto(pontoData);
+
+      // Upload de imagens
+      if (images.length > 0) {
+        await Promise.all(
+          images.map((file, index) =>
+            api.uploadImage(file, newPonto.id.toString(), index, index === 0)
+          )
+        );
+      }
+
+      // Atualizar lista de pontos
+      const pontos = await api.getPontos();
+      setPontos(pontos);
+
+      // Fechar modal e limpar
+      handleClose();
+    } catch (error: any) {
+      console.error('Erro ao criar ponto:', error);
+      setErrors({ submit: error.message || 'Erro ao salvar ponto' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    setModalOpen(false);
+    setStreetViewCoordinates(null);
+    setTimeout(() => {
+      // Reset form
+      setCurrentStep(1);
+      setCodigoOoh('');
+      setEndereco('');
+      setLatitude('');
+      setLongitude('');
+      setCidade('');
+      setUf('');
+      setIdExibidora('');
+      setMedidas('');
+      setFluxo('');
+      setObservacoes('');
+      setProdutos([{ tipo: '', valor: '', periodo: '' }]);
+      setImages([]);
+      setImagesPreviews([]);
+      setErrors({});
+    }, 300);
+  };
+
+  if (!isModalOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Overlay */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={handleClose}
+      />
+
+      {/* Modal */}
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="gradient-primary px-6 py-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-white">Novo Ponto OOH</h2>
+            <p className="text-white/80 text-sm mt-1">
+              Etapa {currentStep} de 2
+            </p>
+          </div>
+          <button
+            onClick={handleClose}
+            className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-lg transition"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="bg-gray-100 h-2">
+          <div
+            className="bg-emidias-accent h-full transition-all duration-300"
+            style={{ width: `${(currentStep / 2) * 100}%` }}
+          />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              {/* Código OOH */}
+              <div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                  Código OOH <span className="text-emidias-accent">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={codigoOoh}
+                  onChange={(e) => setCodigoOoh(e.target.value)}
+                  className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                  placeholder="Ex: OOH-001"
+                />
+                {errors.codigoOoh && (
+                  <p className="text-red-500 text-sm mt-1">{errors.codigoOoh}</p>
+                )}
+              </div>
+
+              {/* Endereço com Geocoding */}
+              <div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                  Endereço Completo <span className="text-emidias-accent">*</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={endereco}
+                    onChange={(e) => setEndereco(e.target.value)}
+                    className="flex-1 px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                    placeholder="Rua, número, bairro, cidade - UF"
+                  />
+                  <button
+                    onClick={geocodeAddress}
+                    disabled={isGeocoding}
+                    className="px-4 py-3 bg-emidias-success text-white rounded-lg hover:bg-emidias-success-light transition font-medium flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {isGeocoding ? (
+                      <Loader2 className="animate-spin" size={20} />
+                    ) : (
+                      <MapPin size={20} />
+                    )}
+                    Buscar
+                  </button>
+                </div>
+                {errors.endereco && (
+                  <p className="text-red-500 text-sm mt-1">{errors.endereco}</p>
+                )}
+              </div>
+
+              {/* Coordenadas */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                    Latitude <span className="text-emidias-accent">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                    placeholder="-23.5505"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                    Longitude <span className="text-emidias-accent">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                    placeholder="-46.6333"
+                  />
+                </div>
+              </div>
+              {errors.coordenadas && (
+                <p className="text-red-500 text-sm mt-1">{errors.coordenadas}</p>
+              )}
+
+              {/* Cidade e UF */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                    Cidade
+                  </label>
+                  <input
+                    type="text"
+                    value={cidade}
+                    onChange={(e) => setCidade(e.target.value)}
+                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                    placeholder="São Paulo"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                    UF
+                  </label>
+                  <input
+                    type="text"
+                    value={uf}
+                    onChange={(e) => setUf(e.target.value.toUpperCase())}
+                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                    placeholder="SP"
+                    maxLength={2}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              {/* Exibidora */}
+              <div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                  Exibidora <span className="text-emidias-accent">*</span>
+                </label>
+                <select
+                  value={idExibidora}
+                  onChange={(e) => setIdExibidora(e.target.value)}
+                  className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                >
+                  <option value="">Selecione...</option>
+                  {exibidoras.map((ex) => (
+                    <option key={ex.id} value={ex.id}>
+                      {ex.nome}
+                    </option>
+                  ))}
+                </select>
+                {errors.idExibidora && (
+                  <p className="text-red-500 text-sm mt-1">{errors.idExibidora}</p>
+                )}
+              </div>
+
+              {/* Medidas e Fluxo */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                    Medidas
+                  </label>
+                  <input
+                    type="text"
+                    value={medidas}
+                    onChange={(e) => setMedidas(e.target.value)}
+                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                    placeholder="Ex: 9x3m"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                    Fluxo (pessoas/dia)
+                  </label>
+                  <input
+                    type="number"
+                    value={fluxo}
+                    onChange={(e) => setFluxo(e.target.value)}
+                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                    placeholder="50000"
+                  />
+                </div>
+              </div>
+
+              {/* Produtos */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-semibold text-emidias-primary">
+                    Produtos e Valores
+                  </label>
+                  <button
+                    onClick={addProduto}
+                    className="text-emidias-accent hover:text-emidias-primary text-sm font-medium flex items-center gap-1"
+                  >
+                    <Plus size={16} />
+                    Adicionar
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {produtos.map((produto, index) => (
+                    <div key={index} className="flex gap-3 items-start p-4 bg-gray-50 rounded-lg">
+                      <div className="flex-1 grid grid-cols-3 gap-3">
+                        <select
+                          value={produto.tipo}
+                          onChange={(e) => updateProduto(index, 'tipo', e.target.value)}
+                          className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                        >
+                          <option value="">Tipo...</option>
+                          {TIPOS_PRODUTO.map((tipo) => (
+                            <option key={tipo} value={tipo}>
+                              {tipo}
+                            </option>
+                          ))}
+                        </select>
+
+                        <input
+                          type="text"
+                          value={produto.valor}
+                          onChange={(e) => updateProduto(index, 'valor', e.target.value)}
+                          className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                          placeholder="R$ 1.000,00"
+                        />
+
+                        <select
+                          value={produto.periodo}
+                          onChange={(e) => updateProduto(index, 'periodo', e.target.value)}
+                          className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                        >
+                          <option value="">Período...</option>
+                          {PERIODOS.map((periodo) => (
+                            <option key={periodo} value={periodo}>
+                              {periodo}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {produtos.length > 1 && (
+                        <button
+                          onClick={() => removeProduto(index)}
+                          className="text-red-500 hover:text-red-700 p-2"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {errors.produtos && (
+                  <p className="text-red-500 text-sm mt-1">{errors.produtos}</p>
+                )}
+              </div>
+
+              {/* Upload de Imagens */}
+              <div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                  Imagens
+                </label>
+                <div
+                  {...getRootProps()}
+                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${
+                    isDragActive
+                      ? 'border-emidias-accent bg-pink-50'
+                      : 'border-emidias-gray/30 hover:border-emidias-accent'
+                  }`}
+                >
+                  <input {...getInputProps()} />
+                  <Upload className="mx-auto text-emidias-gray mb-3" size={32} />
+                  <p className="text-emidias-primary font-medium">
+                    {isDragActive ? 'Solte as imagens aqui' : 'Arraste imagens ou clique para selecionar'}
+                  </p>
+                  <p className="text-gray-500 text-sm mt-1">
+                    PNG, JPG, JPEG ou WEBP (múltiplas imagens)
+                  </p>
+                </div>
+
+                {/* Previews */}
+                {imagesPreviews.length > 0 && (
+                  <div className="mt-4 grid grid-cols-4 gap-3">
+                    {imagesPreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg"
+                        />
+                        <button
+                          onClick={() => removeImage(index)}
+                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Observações */}
+              <div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                  Observações
+                </label>
+                <textarea
+                  value={observacoes}
+                  onChange={(e) => setObservacoes(e.target.value)}
+                  rows={4}
+                  className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition resize-none"
+                  placeholder="Informações adicionais sobre o ponto..."
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Error de submit */}
+          {errors.submit && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600">{errors.submit}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between">
+          <div>
+            {currentStep === 2 && (
+              <button
+                onClick={() => setCurrentStep(1)}
+                className="px-6 py-2 text-emidias-primary hover:bg-gray-100 rounded-lg transition font-medium"
+              >
+                Voltar
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleClose}
+              className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition font-medium"
+            >
+              Cancelar
+            </button>
+
+            {currentStep === 1 ? (
+              <button
+                onClick={handleNext}
+                className="px-6 py-2 gradient-primary text-white rounded-lg hover-lift transition font-medium shadow-lg"
+              >
+                Próximo
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="px-6 py-2 bg-emidias-accent text-white rounded-lg hover:bg-[#E01A6A] hover-lift transition font-medium shadow-lg disabled:opacity-50 flex items-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="animate-spin" size={20} />
+                    Salvando...
+                  </>
+                ) : (
+                  'Salvar Ponto'
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
