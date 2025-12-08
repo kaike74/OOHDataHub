@@ -80,12 +80,20 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
             }
 
             // Inserir ponto
-            const result = await env.DB.prepare(`
+            const sql = `
           INSERT INTO pontos_ooh (
             codigo_ooh, endereco, latitude, longitude, cidade, uf,
             id_exibidora, medidas, fluxo, tipo, observacoes
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).bind(
+        `;
+            console.log(`[${new Date().toISOString()}] Executing INSERT with SQL:`, sql);
+            console.log('Params:', {
+                codigo_ooh: data.codigo_ooh,
+                endereco: data.endereco,
+                tipo: data.tipos
+            });
+
+            const result = await env.DB.prepare(sql).bind(
                 data.codigo_ooh,
                 data.endereco,
                 data.latitude || null,
