@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { useStore } from '@/lib/store';
 import { Ponto } from '@/lib/types';
@@ -24,15 +23,21 @@ export default function GoogleMap() {
         const initMap = async () => {
             if (!mapRef.current || googleMapRef.current) return;
 
-            const loader = new Loader({
-                apiKey: GOOGLE_MAPS_API_KEY,
-                version: 'weekly',
-                libraries: ['places', 'geocoding'],
-            });
+            // Carrega o Google Maps API manualmente
+            if (!window.google) {
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,geocoding`;
+                script.async = true;
+                script.defer = true;
 
-            const { Map } = await loader.importLibrary('maps');
+                await new Promise<void>((resolve, reject) => {
+                    script.onload = () => resolve();
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            }
 
-            googleMapRef.current = new Map(mapRef.current, {
+            googleMapRef.current = new google.maps.Map(mapRef.current, {
                 center: { lat: -23.5505, lng: -46.6333 }, // São Paulo
                 zoom: 12,
                 mapTypeControl: true,
