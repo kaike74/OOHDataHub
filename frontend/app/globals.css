@@ -5,69 +5,23 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    /* Cores Principais E-MÍDIAS */
-    --emidias-primary: #06055B;
-    --emidias-primary-light: #0A0980;
-    --emidias-accent: #FC1E75;
-    --emidias-success: #059669;
-    --emidias-success-light: #10B981;
-    --emidias-danger: #DC2626;
-    --emidias-gray: #64748B;
-    --emidias-light-gray: #F1F5F9;
-    --emidias-medium-gray: #E2E8F0;
-    --emidias-dark-gray: #475569;
-    --emidias-white: #FFFFFF;
-    --emidias-dark: #1E293B;
-    --emidias-bg: #F8FAFC;
-
-    /* Gradientes */
-    --gradient-primary: linear-gradient(135deg, #06055B 0%, #0A0980 100%);
-    --gradient-success: linear-gradient(135deg, #059669 0%, #10B981 100%);
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #F8FAFC;
   }
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--emidias-bg);
-}
-
-/* Utility Classes E-MÍDIAS */
 @layer utilities {
   .gradient-primary {
-    background: var(--gradient-primary);
+    background: linear-gradient(135deg, #06055B 0%, #0A0980 100%);
   }
 
   .gradient-success {
-    background: var(--gradient-success);
-  }
-
-  .text-emidias-primary {
-    color: var(--emidias-primary);
-  }
-
-  .text-emidias-accent {
-    color: var(--emidias-accent);
-  }
-
-  .bg-emidias-primary {
-    background-color: var(--emidias-primary);
-  }
-
-  .bg-emidias-accent {
-    background-color: var(--emidias-accent);
-  }
-
-  .border-emidias-gray {
-    border-color: var(--emidias-medium-gray);
-  }
-
-  .card-shadow {
-    box-shadow: 0 2px 8px rgba(6, 5, 91, 0.06);
+    background: linear-gradient(135deg, #059669 0%, #10B981 100%);
   }
 
   .hover-lift {
@@ -76,5 +30,9 @@ body {
 
   .hover-lift:hover {
     transform: translateY(-1px);
+  }
+
+  .card-shadow {
+    box-shadow: 0 2px 8px rgba(6, 5, 91, 0.06);
   }
 }
