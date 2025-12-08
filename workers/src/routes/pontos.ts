@@ -68,51 +68,62 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
 
     // POST /api/pontos - Criar novo ponto
     if (request.method === 'POST' && path === '/api/pontos') {
-        const data = await request.json() as any;
+        try {
+            const data = await request.json() as any;
 
-        // Validações básicas
-        if (!data.codigo_ooh || !data.endereco) {
-            return new Response(JSON.stringify({ error: 'Campos obrigatórios faltando' }), {
-                status: 400,
+            // Validações básicas
+            if (!data.codigo_ooh || !data.endereco) {
+                return new Response(JSON.stringify({ error: 'Campos obrigatórios faltando' }), {
+                    status: 400,
+                    headers,
+                });
+            }
+
+            // Inserir ponto
+            const result = await env.DB.prepare(`
+          INSERT INTO pontos_ooh (
+            codigo_ooh, endereco, latitude, longitude, cidade, uf,
+            id_exibidora, medidas, fluxo, tipo, observacoes
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+                data.codigo_ooh,
+                data.endereco,
+                data.latitude || null,
+                data.longitude || null,
+                data.cidade || null,
+                data.uf || null,
+                data.id_exibidora || null,
+                data.medidas || null,
+                data.fluxo || null,
+                data.tipos || null,
+                data.observacoes || null
+            ).run();
+
+            const pontoId = result.meta.last_row_id;
+
+            // Inserir produtos se houver
+            if (data.produtos && Array.isArray(data.produtos)) {
+                for (const prod of data.produtos) {
+                    await env.DB.prepare(
+                        'INSERT INTO produtos (id_ponto, tipo, valor, periodo) VALUES (?, ?, ?, ?)'
+                    ).bind(pontoId, prod.tipo, prod.valor, prod.periodo || null).run();
+                }
+            }
+
+            return new Response(JSON.stringify({ id: pontoId, success: true }), {
+                status: 201,
+                headers,
+            });
+        } catch (error: any) {
+            console.error('Erro ao criar ponto:', error);
+            return new Response(JSON.stringify({
+                error: error.message || 'Erro ao criar ponto',
+                details: error.cause?.message || error.toString()
+            }), {
+                status: 500,
                 headers,
             });
         }
-
-        // Inserir ponto
-        const result = await env.DB.prepare(`
-      INSERT INTO pontos_ooh (
-        codigo_ooh, endereco, latitude, longitude, cidade, uf,
-        id_exibidora, medidas, fluxo, tipo, observacoes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(
-            data.codigo_ooh,
-            data.endereco,
-            data.latitude || null,
-            data.longitude || null,
-            data.cidade || null,
-            data.uf || null,
-            data.id_exibidora || null,
-            data.medidas || null,
-            data.fluxo || null,
-            data.tipos || null, // NOVO campo
-            data.observacoes || null
-        ).run();
-
-        const pontoId = result.meta.last_row_id;
-
-        // Inserir produtos se houver
-        if (data.produtos && Array.isArray(data.produtos)) {
-            for (const prod of data.produtos) {
-                await env.DB.prepare(
-                    'INSERT INTO produtos (id_ponto, tipo, valor, periodo) VALUES (?, ?, ?, ?)'
-                ).bind(pontoId, prod.tipo, prod.valor, prod.periodo || null).run();
-            }
-        }
-
-        return new Response(JSON.stringify({ id: pontoId, success: true }), {
-            status: 201,
-            headers,
-        });
     }
 
     // PUT /api/pontos/:id - Atualizar ponto
