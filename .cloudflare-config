@@ -1,0 +1,48 @@
+# Cloudflare Configuration
+
+## ⚠️ IMPORTANTE: Deploy Separado
+
+Este repositório contém **dois projetos separados**:
+
+1. **Frontend** (`/frontend`) → Deploy no Cloudflare Pages
+2. **Worker** (`/workers`) → Deploy no Cloudflare Workers
+
+## Como Corrigir o Erro de Deploy do Worker
+
+O erro que você está vendo ocorre porque o Cloudflare está tentando fazer deploy automático do Worker a partir da raiz do repositório.
+
+### Solução: Desabilitar Deploy Automático do Worker
+
+1. Acesse o [Cloudflare Dashboard](https://dash.cloudflare.com)
+2. Vá em **Workers & Pages**
+3. Se houver um Worker com deploy automático configurado:
+   - Clique no Worker
+   - Vá em **Settings** → **Deployments**
+   - **Desabilite** o deploy automático via GitHub
+
+### Como Fazer Deploy dos Projetos
+
+#### Frontend (Cloudflare Pages)
+- Deploy automático via GitHub ✅
+- Branch: `main` ou branches de feature
+- Build command: `npm run build` (já configurado)
+- Output directory: `out` (já configurado)
+
+#### Worker (Cloudflare Workers)
+- Deploy **MANUAL** via Wrangler CLI
+- Execute na pasta `workers/`:
+
+```bash
+cd workers
+npx wrangler deploy
+```
+
+Ou configure GitHub Actions para deploy automático (se necessário)
+
+---
+
+## Por que Deploy Separado?
+
+- O Worker precisa de bindings D1 (database) e R2 (storage)
+- O Pages é um site estático que consome a API do Worker
+- Ambos têm ciclos de deploy independentes

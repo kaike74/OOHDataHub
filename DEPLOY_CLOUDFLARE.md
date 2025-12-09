@@ -1,5 +1,33 @@
 # 🚀 Deploy no Cloudflare Pages
 
+## ⚠️ Erro: "Missing entry-point to Worker script"?
+
+Se você está vendo o erro abaixo durante o deploy:
+```
+✘ [ERROR] Missing entry-point to Worker script or to assets directory
+```
+
+**Causa**: O Cloudflare está tentando fazer deploy do Worker automaticamente, mas este repositório tem **dois projetos separados**:
+- **Frontend** (Cloudflare Pages) → `/frontend`
+- **Worker** (Cloudflare Workers) → `/workers`
+
+**Solução**: Desabilite o deploy automático do Worker
+
+1. Acesse: https://dash.cloudflare.com
+2. Vá em **Workers & Pages**
+3. Procure por **ooh-system** (ou similar) na lista de Workers
+4. Se encontrar um Worker configurado:
+   - Clique nele
+   - Vá em **Settings** → **Deployments**
+   - **Desabilite** o deploy automático via GitHub
+5. O Worker deve ser deployado **manualmente** via CLI:
+   ```bash
+   cd workers
+   npx wrangler deploy
+   ```
+
+---
+
 ## Configuração das Variáveis de Ambiente
 
 Para que o site funcione corretamente no Cloudflare Pages, você precisa configurar as seguintes variáveis de ambiente:
