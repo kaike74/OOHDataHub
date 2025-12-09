@@ -1,182 +1,264 @@
-# 🗺️ Sistema OOH - Gestão de Pontos Out-of-Home
+# 🗺️ OOH Data Hub - Sistema de Gestão de Pontos Out-of-Home
 
-Sistema moderno de gestão de pontos OOH (Out-of-Home) com Google Maps, Next.js 14, TypeScript, Cloudflare Workers, D1 e R2.
+Sistema moderno e completo de gestão de pontos OOH (Out-of-Home) com mapa interativo, gerenciamento de exibidoras e upload de imagens.
 
-## 🎯 Funcionalidades
+## 🎯 Funcionalidades Implementadas
 
-- ✅ Mapa interativo com Google Maps
-- ✅ Clustering inteligente de pontos
-- ✅ Sidebar com detalhes completos
-- ✅ Upload de imagens para R2
-- ✅ API REST completa
-- ✅ Banco de dados D1 (SQLite)
-- ⏳ Formulário de cadastro/edição
-- ⏳ Filtros avançados
-- ⏳ Street View integration
+### 📍 Gestão de Pontos OOH
+- ✅ Mapa interativo com Google Maps e clustering inteligente
+- ✅ Cadastro completo de pontos (formulário em 2 etapas)
+- ✅ Edição de pontos existentes
+- ✅ Upload de múltiplas imagens por ponto
+- ✅ Geocoding automático de endereços
+- ✅ Integração com Street View
+- ✅ Modal de hover com carrossel de imagens
+- ✅ Gaveta de detalhes lateral
+- ✅ Filtros avançados por cidade, UF e exibidora
+- ✅ Busca de endereços com sugestões
+
+### 🏢 Gestão de Exibidoras
+- ✅ View com cards das exibidoras
+- ✅ Informações completas (CNPJ, razão social, contatos)
+- ✅ Estatísticas automáticas (total de pontos, regiões)
+- ✅ Filtro de pontos por exibidora
+- ✅ Gaveta de detalhes da exibidora
+- ✅ Upload de logo
+
+### 🎨 Interface e UX
+- ✅ Sistema de navegação com menu hambúrguer
+- ✅ Design responsivo e moderno
+- ✅ Animações e transições suaves
+- ✅ Cores e identidade visual E-MÍDIAS
+- ✅ Tooltips interativos
 
 ## 🛠️ Stack Tecnológica
 
 ### Frontend
-- Next.js 14 (App Router)
-- TypeScript
-- Tailwind CSS
-- Zustand (state management)
-- Google Maps API
-- Lucide Icons
+- **Framework**: Next.js 14 (App Router) com Static Export
+- **Linguagem**: TypeScript
+- **Estilização**: Tailwind CSS
+- **State Management**: Zustand
+- **Mapa**: Google Maps JavaScript API
+- **Ícones**: Lucide React
+- **Hospedagem**: Cloudflare Pages
 
 ### Backend
-- Cloudflare Workers
-- D1 Database (SQLite)
-- R2 Storage
-
-## 🏗️ Arquitetura do Sistema
-
-O sistema é composto por 3 partes principais que se comunicam:
-
-1.  **Frontend (Cloudflare Pages):**
-    -   Feito em Next.js (Static Export).
-    -   Hospedado no Cloudflare Pages.
-    -   **Comunicação:** Faz requisições HTTP para a URL do Worker (`NEXT_PUBLIC_API_URL`).
-    -   **Mapas:** Carrega script do Google Maps diretamente no cliente.
-
-2.  **API (Cloudflare Workers):**
-    -   Código em `workers/src`.
-    -   **Função:** Recebe as requisições do Frontend e processa.
-    -   **Acesso a Dados:**
-        -   Lê/Grava no **D1 Database** (binding `env.DB`).
-        -   Gerencia uploads no **R2 Storage** (binding `env.R2`).
-    -   **Deploy:** Feito via `wrangler deploy` na pasta `workers/`.
-
-3.  **Banco de Dados (D1):**
-    -   SQLite distribuído na Edge.
-    -   Gerenciado via migrations na pasta `migrations/`.
-    -   Só pode ser acessado pelo Worker (ou via wrangler CLI).
-
-### 🔄 Fluxo de Dados
-Frontend -> API (Worker) -> D1 / R2 -> API -> Frontend
+- **API**: Cloudflare Workers
+- **Banco de Dados**: Cloudflare D1 (SQLite distribuído)
+- **Storage**: Cloudflare R2 (compatível com S3)
+- **Linguagem**: TypeScript
 
 ## 📦 Estrutura do Projeto
 
 ```
 OOHDataHub/
-├── frontend/              # Next.js App
-│   ├── app/              # Pages e layouts
-│   ├── components/       # Componentes React
-│   ├── lib/              # Utilitários e state
+├── frontend/                    # Aplicação Next.js
+│   ├── app/                     # Páginas (App Router)
+│   │   ├── layout.tsx          # Layout principal
+│   │   └── page.tsx            # Página inicial com mapa
+│   ├── components/             # Componentes React
+│   │   ├── map/
+│   │   │   └── GoogleMap.tsx   # Componente do mapa
+│   │   ├── AddressSearch.tsx   # Busca de endereços
+│   │   ├── CreatePointModal.tsx # Formulário de cadastro/edição
+│   │   ├── ExibidorasView.tsx  # View de cards das exibidoras
+│   │   ├── ExibidoraSidebar.tsx # Gaveta de detalhes da exibidora
+│   │   ├── MapFilters.tsx      # Filtros do mapa
+│   │   ├── MapTooltip.tsx      # Tooltip ao passar mouse
+│   │   ├── NavigationMenu.tsx  # Menu de navegação
+│   │   └── Sidebar.tsx         # Gaveta de detalhes do ponto
+│   ├── lib/                    # Bibliotecas e utilitários
+│   │   ├── api.ts              # Cliente da API
+│   │   ├── store.ts            # Zustand store
+│   │   ├── types.ts            # Definições TypeScript
+│   │   └── utils.ts            # Funções auxiliares
 │   └── package.json
 │
-├── workers/              # Cloudflare Worker
+├── workers/                    # Cloudflare Worker (API)
 │   ├── src/
-│   │   ├── routes/      # API routes
-│   │   └── utils/       # Helpers
-│   └── wrangler.toml
+│   │   ├── routes/            # Endpoints da API
+│   │   │   ├── pontos.ts      # CRUD de pontos
+│   │   │   ├── exibidoras.ts  # CRUD de exibidoras
+│   │   │   ├── upload.ts      # Upload de imagens
+│   │   │   └── stats.ts       # Estatísticas
+│   │   ├── utils/
+│   │   │   └── cors.ts        # Configuração CORS
+│   │   └── index.ts           # Entry point do Worker
+│   ├── wrangler.toml          # Configuração Cloudflare
+│   └── package.json
 │
-└── migrations/           # SQL migrations para D1
-    ├── 0001_initial.sql
-    └── 0002_indexes.sql
+├── migrations/                 # Migrations do banco D1
+│   ├── 0001_initial.sql       # Schema inicial
+│   ├── 0002_indexes.sql       # Índices
+│   ├── 0005_production_schema.sql # Schema de produção
+│   ├── 0007_add_tipo_column.sql # Adiciona coluna tipo
+│   └── 0008_fix_final_cleanup.sql # Schema final completo
+│
+├── .gitignore
+└── README.md
 ```
 
-## 🚀 Como Usar
+## 🚀 Setup e Deploy
 
-### 1. Aplicar Migrations no D1
+### 1. Configurar Cloudflare
 
-Primeiro, aplique as migrations no banco de dados D1:
+Você precisa ter:
+- Conta no Cloudflare
+- Wrangler CLI instalado: `npm install -g wrangler`
+- D1 Database criado: `wrangler d1 create ooh-db`
+- R2 Bucket criado: `wrangler r2 bucket create ooh-bucket`
 
-\`\`\`bash
+### 2. Aplicar Migrations no D1
+
+```bash
 # Na raiz do projeto
 wrangler d1 execute ooh-db --remote --file=migrations/0001_initial.sql
 wrangler d1 execute ooh-db --remote --file=migrations/0002_indexes.sql
-\`\`\`
+wrangler d1 execute ooh-db --remote --file=migrations/0005_production_schema.sql
+wrangler d1 execute ooh-db --remote --file=migrations/0007_add_tipo_column.sql
+wrangler d1 execute ooh-db --remote --file=migrations/0008_fix_final_cleanup.sql
+```
 
-### 2. Deploy do Worker
+> **Nota**: O migration 0008 é idempotente e contém o schema completo. Se estiver configurando um novo banco, pode aplicar apenas ele.
 
-\`\`\`bash
+### 3. Deploy do Worker (API)
+
+```bash
 cd workers
 npm install
 wrangler deploy
-\`\`\`
+```
 
-**Importante:** Anote a URL do worker deployado (ex: `https://ooh-system.seu-usuario.workers.dev`)
+Anote a URL do worker deployado (ex: `https://ooh-system.seu-usuario.workers.dev`)
 
-### 3. Configurar e Rodar Frontend
+### 4. Deploy do Frontend
 
-\`\`\`bash
+```bash
 cd frontend
-
-# Editar .env.local e substituir a URL do worker
-# NEXT_PUBLIC_API_URL=https://ooh-system.seu-usuario.workers.dev
-
-# Instalar dependências (já foi feito)
 npm install
 
-# Rodar em desenvolvimento
-npm run dev
-\`\`\`
-
-Acesse: `http://localhost:3000`
-
-### 4. Build para Produção
-
-\`\`\`bash
-cd frontend
-npm run build
-
-# Deploy no Cloudflare Pages
-npx wrangler pages deploy out
-\`\`\`
-
-## 🔑 Configuração
-
-### Variáveis de Ambiente (Frontend)
-
-Crie `.env.local` no diretório `frontend/`:
-
-\`\`\`bash
+# Criar .env.local com as variáveis
+cat > .env.local << EOF
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=sua-api-key-aqui
-NEXT_PUBLIC_API_URL=https://seu-worker.workers.dev
-\`\`\`
+NEXT_PUBLIC_API_URL=https://ooh-system.seu-usuario.workers.dev
+EOF
+
+# Build e deploy
+npm run build
+npx wrangler pages deploy out
+```
+
+## 🔑 Variáveis de Ambiente
+
+### Frontend (.env.local)
+```bash
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSy...  # Google Maps API Key
+NEXT_PUBLIC_API_URL=https://...workers.dev  # URL do Worker
+```
 
 ### Worker (wrangler.toml)
-
-Já configurado em `workers/wrangler.toml`:
-- D1 Database: `ooh-db`
-- R2 Bucket: `ooh-bucket`
-- CORS: Permitido de qualquer origem (para desenvolvimento)
+Já configurado no arquivo:
+- `database_name = "ooh-db"` - Banco D1
+- `bucket_name = "ooh-bucket"` - R2 Storage
+- `ALLOWED_ORIGINS = "*"` - CORS (ajustar para produção)
 
 ## 📊 API Endpoints
 
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/api/pontos` | Lista todos os pontos |
-| GET | `/api/pontos/:id` | Detalhes de um ponto |
-| POST | `/api/pontos` | Criar novo ponto |
-| PUT | `/api/pontos/:id` | Atualizar ponto |
-| DELETE | `/api/pontos/:id` | Deletar ponto |
-| GET | `/api/exibidoras` | Lista exibidoras |
-| POST | `/api/exibidoras` | Criar exibidora |
-| POST | `/api/upload` | Upload de imagem |
-| GET | `/api/images/:key` | Servir imagem do R2 |
-| GET | `/api/stats` | Estatísticas gerais |
+### Pontos OOH
+```
+GET    /api/pontos           # Listar todos os pontos
+GET    /api/pontos/:id       # Detalhes de um ponto
+POST   /api/pontos           # Criar novo ponto
+PUT    /api/pontos/:id       # Atualizar ponto
+DELETE /api/pontos/:id       # Deletar ponto
+```
 
-## 🗄️ Schema do Banco
+### Exibidoras
+```
+GET    /api/exibidoras       # Listar exibidoras
+GET    /api/exibidoras/:id   # Detalhes de uma exibidora
+POST   /api/exibidoras       # Criar exibidora
+PUT    /api/exibidoras/:id   # Atualizar exibidora
+DELETE /api/exibidoras/:id   # Deletar exibidora
+```
 
-O banco D1 possui 5 tabelas principais:
-- `pontos_ooh` - Pontos OOH
-- `imagens` - Imagens dos pontos
-- `produtos` - Produtos/preços
-- `exibidoras` - Empresas exibidoras
-- `historico` - Log de alterações
+### Upload e Imagens
+```
+POST   /api/upload           # Upload de imagem
+GET    /api/images/:key      # Servir imagem do R2
+```
 
-Ver detalhes em `migrations/0001_initial.sql`
+### Estatísticas
+```
+GET    /api/stats            # Estatísticas gerais do sistema
+```
 
-## 🎨 Próximos Passos
+## 🗄️ Schema do Banco de Dados
 
-- [ ] Implementar formulário de cadastro/edição
-- [ ] Adicionar filtros avançados
-- [ ] Integrar Street View
-- [ ] Dashboard de estatísticas
-- [ ] Export de dados (CSV/Excel)
-- [ ] Autenticação de usuários
+### Tabelas Principais
+- **pontos_ooh**: Pontos OOH com localização, exibidora, medidas, fluxo, tipos
+- **exibidoras**: Empresas exibidoras (nome, CNPJ, contatos, logo)
+- **imagens**: Imagens dos pontos (chave R2, ordem, capa)
+- **produtos**: Produtos e valores por ponto (locação, papel, lona)
+- **historico**: Log de alterações nos pontos
+
+Ver schema completo em `migrations/0008_fix_final_cleanup.sql`
+
+## 🎨 Design System
+
+### Cores (Tailwind)
+```javascript
+// tailwind.config.js
+colors: {
+  'emidias-primary': '#1e3a8a',    // Azul principal
+  'emidias-accent': '#FC1E75',     // Rosa destaque
+  'emidias-gray': '#6B7280',       // Cinza neutro
+  // ...
+}
+```
+
+### Componentes Principais
+- **GoogleMap**: Mapa com markers e clustering
+- **Sidebar**: Gaveta lateral de detalhes do ponto
+- **ExibidoraSidebar**: Gaveta lateral de detalhes da exibidora
+- **CreatePointModal**: Modal de cadastro/edição em 2 etapas
+- **NavigationMenu**: Menu hambúrguer com navegação
+- **ExibidorasView**: Grid de cards das exibidoras
+- **MapTooltip**: Tooltip ao passar mouse sobre marker
+
+## 📝 Desenvolvimento
+
+### Rodar Localmente
+
+Terminal 1 - Worker:
+```bash
+cd workers
+wrangler dev --port 8787
+```
+
+Terminal 2 - Frontend:
+```bash
+cd frontend
+npm run dev
+```
+
+Acesse: `http://localhost:3000`
+
+## 🔒 Segurança
+
+- ✅ CORS configurado
+- ✅ Validação de tipos no TypeScript
+- ✅ Foreign keys e constraints no banco
+- ⚠️ TODO: Autenticação de usuários
+- ⚠️ TODO: Rate limiting na API
+
+## 📈 Performance
+
+- ✅ Clustering de markers no mapa
+- ✅ Static export do Next.js
+- ✅ Edge computing com Cloudflare Workers
+- ✅ R2 para servir imagens otimizadas
+- ✅ Índices no banco de dados D1
 
 ## 📝 Licença
 
@@ -184,4 +266,4 @@ MIT
 
 ---
 
-**Desenvolvido com IA** 🤖 | 2025-12-08
+**Desenvolvido com IA** 🤖 | Última atualização: 2025-12-09
