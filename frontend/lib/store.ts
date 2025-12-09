@@ -80,10 +80,11 @@ export const useStore = create<AppState>((set) => ({
         selectedPonto: open ? undefined : null,
         selectedExibidora: open ? undefined : null,
     }),
-    setModalOpen: (open) => set({
+    setModalOpen: (open) => set((state) => ({
         isModalOpen: open,
-        editingPonto: open ? undefined : null,
-    }),
+        // Só limpa editingPonto ao FECHAR o modal
+        editingPonto: open ? state.editingPonto : null,
+    })),
     setMenuOpen: (open) => set({ isMenuOpen: open }),
     setCurrentView: (view) => set({
         currentView: view,
