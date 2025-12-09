@@ -3,12 +3,15 @@
 import { useEffect, useState } from 'react';
 import GoogleMap from '@/components/map/GoogleMap';
 import Sidebar from '@/components/Sidebar';
+import ExibidoraSidebar from '@/components/ExibidoraSidebar';
 import CreatePointModal from '@/components/CreatePointModal';
 import MapFilters from '@/components/MapFilters';
 import AddressSearch from '@/components/AddressSearch';
+import NavigationMenu from '@/components/NavigationMenu';
+import ExibidorasView from '@/components/ExibidorasView';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { MapPin, Plus, Filter } from 'lucide-react';
+import { Plus, Filter, Menu } from 'lucide-react';
 
 export default function HomePage() {
   const [isPontos, setIsPontos] = useState(false);
@@ -20,6 +23,8 @@ export default function HomePage() {
   const setPontos = useStore((state) => state.setPontos);
   const setExibidoras = useStore((state) => state.setExibidoras);
   const setModalOpen = useStore((state) => state.setModalOpen);
+  const setMenuOpen = useStore((state) => state.setMenuOpen);
+  const currentView = useStore((state) => state.currentView);
   const pontos = useStore((state) => state.pontos);
 
   // Carregar dados iniciais
@@ -68,30 +73,45 @@ export default function HomePage() {
 
         {/* Ações - Direita */}
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsFiltersOpen(true)}
-            className="px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg flex items-center gap-2 transition"
-          >
-            <Filter size={20} />
-            <span className="hidden sm:inline">Filtros</span>
-          </button>
+          {currentView === 'map' && (
+            <>
+              <button
+                onClick={() => setIsFiltersOpen(true)}
+                className="px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg flex items-center gap-2 transition"
+              >
+                <Filter size={20} />
+                <span className="hidden sm:inline">Filtros</span>
+              </button>
 
+              <button
+                onClick={() => setModalOpen(true)}
+                className="px-4 py-2 bg-emidias-accent text-white rounded-lg hover:bg-[#E01A6A] flex items-center gap-2 transition font-medium hover-lift shadow-lg"
+              >
+                <Plus size={20} />
+                <span className="hidden sm:inline">Novo Ponto</span>
+              </button>
+            </>
+          )}
+
+          {/* Menu Hambúrguer */}
           <button
-            onClick={() => setModalOpen(true)}
-            className="px-4 py-2 bg-emidias-accent text-white rounded-lg hover:bg-[#E01A6A] flex items-center gap-2 transition font-medium hover-lift shadow-lg"
+            onClick={() => setMenuOpen(true)}
+            className="px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition"
+            title="Menu"
           >
-            <Plus size={20} />
-            <span className="hidden sm:inline">Novo Ponto</span>
+            <Menu size={24} />
           </button>
         </div>
       </header>
 
-      {/* Search Bar */}
-      <div className="fixed top-[90px] left-1/2 -translate-x-1/2 z-30 w-full max-w-lg px-4">
-        <AddressSearch
-          onLocationSelect={(location) => setSearchLocation(location)}
-        />
-      </div>
+      {/* Search Bar - Apenas no mapa */}
+      {currentView === 'map' && (
+        <div className="fixed top-[90px] left-1/2 -translate-x-1/2 z-30 w-full max-w-lg px-4">
+          <AddressSearch
+            onLocationSelect={(location) => setSearchLocation(location)}
+          />
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 relative mt-[70px]">
@@ -119,10 +139,21 @@ export default function HomePage() {
           </div>
         )}
 
-        <GoogleMap searchLocation={searchLocation} />
-        <Sidebar />
+        {/* Views */}
+        {currentView === 'map' && (
+          <>
+            <GoogleMap searchLocation={searchLocation} />
+            <Sidebar />
+            <ExibidoraSidebar />
+          </>
+        )}
+
+        {currentView === 'exibidoras' && <ExibidorasView />}
+
+        {/* Componentes Globais */}
         <CreatePointModal />
         <MapFilters isOpen={isFiltersOpen} onClose={() => setIsFiltersOpen(false)} />
+        <NavigationMenu />
       </main>
     </div>
   );
