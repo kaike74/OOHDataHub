@@ -11,6 +11,7 @@ export interface Ponto {
     id_exibidora: number | null;
     medidas: string | null;
     fluxo: number | null;
+    tipos: string | null;
     observacoes: string | null;
     status: string;
     created_at: string;
