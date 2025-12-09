@@ -9,9 +9,11 @@ interface MapTooltipProps {
   ponto: Ponto;
   position: { x: number; y: number };
   onStreetViewClick?: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
-export default function MapTooltip({ ponto, position, onStreetViewClick }: MapTooltipProps) {
+export default function MapTooltip({ ponto, position, onStreetViewClick, onMouseEnter, onMouseLeave }: MapTooltipProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const imagens = ponto.imagens || [];
 
@@ -33,17 +35,21 @@ export default function MapTooltip({ ponto, position, onStreetViewClick }: MapTo
 
   return (
     <div
-      className="absolute pointer-events-none z-40"
+      className="absolute z-40 pointer-events-none"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
         transform: 'translate(-50%, -100%) translateY(-20px)',
       }}
     >
-      <div className="bg-white rounded-xl shadow-2xl overflow-hidden card-shadow animate-in fade-in slide-in-from-bottom-2 duration-200 pointer-events-auto">
+      <div
+        className="bg-white rounded-xl shadow-2xl overflow-hidden card-shadow animate-in fade-in slide-in-from-bottom-2 duration-200 pointer-events-auto"
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
         {/* Imagens com Carrossel */}
         {imagens.length > 0 && (
-          <div className="relative h-32 w-64 bg-gray-200">
+          <div className="relative h-32 w-56 bg-gray-200">
             <img
               src={api.getImageUrl(imagens[currentImageIndex])}
               alt={ponto.codigo_ooh}

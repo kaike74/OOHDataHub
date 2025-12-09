@@ -10,6 +10,8 @@ export default function Sidebar() {
     const selectedPonto = useStore((state) => state.selectedPonto);
     const isSidebarOpen = useStore((state) => state.isSidebarOpen);
     const setSidebarOpen = useStore((state) => state.setSidebarOpen);
+    const setEditingPonto = useStore((state) => state.setEditingPonto);
+    const setModalOpen = useStore((state) => state.setModalOpen);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     if (!selectedPonto || !isSidebarOpen) return null;
@@ -25,6 +27,11 @@ export default function Sidebar() {
         setCurrentImageIndex((prev) => (prev - 1 + imagens.length) % imagens.length);
     };
 
+    const handleEdit = () => {
+        setEditingPonto(selectedPonto);
+        setModalOpen(true);
+    };
+
     return (
         <>
             {/* Overlay */}
@@ -34,15 +41,23 @@ export default function Sidebar() {
             />
 
             {/* Sidebar */}
-            <div className="fixed right-0 top-0 h-full w-full sm:w-96 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto">
+            <div className="fixed right-0 top-[70px] h-[calc(100vh-70px)] w-full sm:w-96 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto">
                 {/* Header com imagens */}
-                {imagens.length > 0 && (
+                {imagens.length > 0 ? (
                     <div className="relative h-64 bg-gray-200">
                         <img
                             src={api.getImageUrl(imagens[currentImageIndex])}
                             alt={`Imagem ${currentImageIndex + 1}`}
                             className="w-full h-full object-cover"
                         />
+
+                        {/* Botão Fechar - Canto superior direito */}
+                        <button
+                            onClick={() => setSidebarOpen(false)}
+                            className="absolute top-3 right-3 bg-white/95 hover:bg-white text-gray-700 hover:text-gray-900 p-2.5 rounded-full shadow-lg transition-all hover:scale-110 z-10"
+                        >
+                            <X size={24} />
+                        </button>
 
                         {imagens.length > 1 && (
                             <>
@@ -64,26 +79,28 @@ export default function Sidebar() {
                             </>
                         )}
                     </div>
+                ) : (
+                    <div className="relative h-20 bg-gradient-to-r from-emidias-primary to-emidias-accent flex items-center justify-center">
+                        {/* Botão Fechar - Sem imagens */}
+                        <button
+                            onClick={() => setSidebarOpen(false)}
+                            className="absolute top-3 right-3 bg-white/95 hover:bg-white text-gray-700 hover:text-gray-900 p-2.5 rounded-full shadow-lg transition-all hover:scale-110 z-10"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
                 )}
 
                 {/* Content */}
                 <div className="p-6">
-                    {/* Header com botão fechar */}
-                    <div className="flex items-start justify-between mb-6">
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-900">
-                                {selectedPonto.codigo_ooh}
-                            </h2>
-                            <p className="text-sm text-gray-500 mt-1">
-                                {formatDate(selectedPonto.created_at)}
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => setSidebarOpen(false)}
-                            className="text-gray-400 hover:text-gray-600 p-2"
-                        >
-                            <X size={24} />
-                        </button>
+                    {/* Header */}
+                    <div className="mb-6">
+                        <h2 className="text-2xl font-bold text-gray-900">
+                            {selectedPonto.codigo_ooh}
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">
+                            {formatDate(selectedPonto.created_at)}
+                        </p>
                     </div>
 
                     {/* Informações */}
@@ -176,11 +193,11 @@ export default function Sidebar() {
 
                     {/* Ações */}
                     <div className="mt-8 flex gap-3">
-                        <button className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition">
+                        <button
+                            onClick={handleEdit}
+                            className="flex-1 bg-emidias-primary text-white py-3 rounded-lg font-medium hover:bg-emidias-primary-light transition"
+                        >
                             Editar
-                        </button>
-                        <button className="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition">
-                            Histórico
                         </button>
                     </div>
                 </div>

@@ -5,10 +5,11 @@ import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { useStore } from '@/lib/store';
 import { Ponto } from '@/lib/types';
 import { api } from '@/lib/api';
+import { config } from '@/lib/config';
 import MapTooltip from '@/components/MapTooltip';
 import { MapPin } from 'lucide-react';
 
-const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+const GOOGLE_MAPS_API_KEY = config.googleMapsApiKey;
 
 interface GoogleMapProps {
     searchLocation?: { lat: number; lng: number; address: string } | null;
@@ -167,7 +168,10 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                     if (hoverTimeoutRef.current) {
                         clearTimeout(hoverTimeoutRef.current);
                     }
-                    setHoveredPonto(null);
+                    // Delay antes de esconder o tooltip para dar tempo de mover o mouse para ele
+                    hoverTimeoutRef.current = setTimeout(() => {
+                        setHoveredPonto(null);
+                    }, 200);
                 });
 
                 return marker;
@@ -249,6 +253,16 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                     ponto={hoveredPonto}
                     position={tooltipPosition}
                     onStreetViewClick={() => handleStreetViewClick(hoveredPonto)}
+                    onMouseEnter={() => {
+                        // Cancelar timeout quando mouse entra no tooltip
+                        if (hoverTimeoutRef.current) {
+                            clearTimeout(hoverTimeoutRef.current);
+                        }
+                    }}
+                    onMouseLeave={() => {
+                        // Esconder tooltip quando mouse sai do tooltip
+                        setHoveredPonto(null);
+                    }}
                 />
             )}
 

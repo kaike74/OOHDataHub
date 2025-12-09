@@ -32,10 +32,14 @@ const PERIODOS = ['Bissemanal', 'Mensal', 'Unitário'];
 export default function CreatePointModal() {
   const isModalOpen = useStore((state) => state.isModalOpen);
   const setModalOpen = useStore((state) => state.setModalOpen);
+  const editingPonto = useStore((state) => state.editingPonto);
+  const setEditingPonto = useStore((state) => state.setEditingPonto);
   const exibidoras = useStore((state) => state.exibidoras);
   const setPontos = useStore((state) => state.setPontos);
   const streetViewCoordinates = useStore((state) => state.streetViewCoordinates);
   const setStreetViewCoordinates = useStore((state) => state.setStreetViewCoordinates);
+
+  const isEditMode = !!editingPonto;
 
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -59,6 +63,32 @@ export default function CreatePointModal() {
 
   // Geocoding
   const [isGeocoding, setIsGeocoding] = useState(false);
+
+  // Preencher campos quando em modo edição
+  useEffect(() => {
+    if (editingPonto && isModalOpen) {
+      setCodigoOoh(editingPonto.codigo_ooh || '');
+      setEndereco(editingPonto.endereco || '');
+      setLatitude(editingPonto.latitude?.toString() || '');
+      setLongitude(editingPonto.longitude?.toString() || '');
+      setCidade(editingPonto.cidade || '');
+      setUf(editingPonto.uf || '');
+      setIdExibidora(editingPonto.id_exibidora?.toString() || '');
+      setMedidas(editingPonto.medidas || '');
+      setFluxo(editingPonto.fluxo?.toString() || '');
+      setTipos(editingPonto.tipos ? editingPonto.tipos.split(', ') : []);
+      setObservacoes(editingPonto.observacoes || '');
+      setCustos(
+        editingPonto.produtos && editingPonto.produtos.length > 0
+          ? editingPonto.produtos.map((p) => ({
+              produto: p.tipo,
+              valor: p.valor.toString(),
+              periodo: p.periodo || '',
+            }))
+          : [{ produto: '', valor: '', periodo: '' }]
+      );
+    }
+  }, [editingPonto, isModalOpen]);
 
   // Preencher coordenadas do Street View
   useEffect(() => {
@@ -218,7 +248,7 @@ export default function CreatePointModal() {
 
     setIsLoading(true);
     try {
-      // Criar ponto
+      // Dados do ponto
       const pontoData = {
         codigo_ooh: codigoOoh,
         endereco,
@@ -240,13 +270,23 @@ export default function CreatePointModal() {
           }))
       };
 
-      const newPonto = await api.createPonto(pontoData);
+      let pontoId: number;
 
-      // Upload de imagens
+      if (isEditMode && editingPonto) {
+        // Atualizar ponto existente
+        await api.updatePonto(editingPonto.id, pontoData);
+        pontoId = editingPonto.id;
+      } else {
+        // Criar novo ponto
+        const newPonto = await api.createPonto(pontoData);
+        pontoId = newPonto.id;
+      }
+
+      // Upload de imagens (apenas se houver novas imagens)
       if (images.length > 0) {
         await Promise.all(
           images.map((file, index) =>
-            api.uploadImage(file, newPonto.id.toString(), index, index === 0)
+            api.uploadImage(file, pontoId.toString(), index, index === 0)
           )
         );
       }
@@ -258,7 +298,7 @@ export default function CreatePointModal() {
       // Fechar modal e limpar
       handleClose();
     } catch (error: any) {
-      console.error('Erro ao criar ponto:', error);
+      console.error('Erro ao salvar ponto:', error);
       setErrors({ submit: error.message || 'Erro ao salvar ponto' });
     } finally {
       setIsLoading(false);
@@ -268,6 +308,7 @@ export default function CreatePointModal() {
   const handleClose = () => {
     setModalOpen(false);
     setStreetViewCoordinates(null);
+    setEditingPonto(null);
     setTimeout(() => {
       // Reset form
       setCurrentStep(1);
@@ -304,7 +345,9 @@ export default function CreatePointModal() {
         {/* Header */}
         <div className="gradient-primary px-6 py-4 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-white">Novo Ponto OOH</h2>
+            <h2 className="text-2xl font-bold text-white">
+              {isEditMode ? 'Editar Ponto OOH' : 'Novo Ponto OOH'}
+            </h2>
             <p className="text-white/80 text-sm mt-1">
               Etapa {currentStep} de 2
             </p>
@@ -700,7 +743,7 @@ export default function CreatePointModal() {
                     Salvando...
                   </>
                 ) : (
-                  'Salvar Ponto'
+                  isEditMode ? 'Atualizar Ponto' : 'Salvar Ponto'
                 )}
               </button>
             )}
