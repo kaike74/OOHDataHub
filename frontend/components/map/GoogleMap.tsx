@@ -163,6 +163,12 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                     }, 300);
                 });
 
+                marker.addListener('mouseout', () => {
+                    if (hoverTimeoutRef.current) {
+                        clearTimeout(hoverTimeoutRef.current);
+                    }
+                    setHoveredPonto(null);
+                });
 
                 return marker;
             });
@@ -243,7 +249,6 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                     ponto={hoveredPonto}
                     position={tooltipPosition}
                     onStreetViewClick={() => handleStreetViewClick(hoveredPonto)}
-                    onClose={() => setHoveredPonto(null)}
                 />
             )}
 
