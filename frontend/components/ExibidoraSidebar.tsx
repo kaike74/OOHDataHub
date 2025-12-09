@@ -35,6 +35,7 @@ export default function ExibidoraSidebar() {
     };
 
     const handleEdit = () => {
+        if (!selectedExibidora) return;
         // TODO: Implementar modal de edição de exibidora
         alert(`Editar exibidora: ${selectedExibidora.nome}\n\nFuncionalidade será implementada em breve.`);
     };
