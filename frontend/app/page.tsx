@@ -8,7 +8,7 @@ import MapFilters from '@/components/MapFilters';
 import AddressSearch from '@/components/AddressSearch';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { MapPin, Plus, Filter, BarChart3 } from 'lucide-react';
+import { MapPin, Plus, Filter } from 'lucide-react';
 
 export default function HomePage() {
   const [isPontos, setIsPontos] = useState(false);
@@ -49,15 +49,12 @@ export default function HomePage() {
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="gradient-primary px-6 py-3 flex items-center justify-between flex-shrink-0 z-10 fixed top-0 left-0 right-0 h-[70px]">
+      <header className="gradient-primary px-6 py-3 flex items-center justify-between flex-shrink-0 z-10 fixed top-0 left-0 right-0 h-[70px] border-b-2 border-emidias-accent">
         {/* Logo OOH Data Hub - Esquerda */}
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-white tracking-tight">
             OOH Data Hub
           </h1>
-          <span className="text-white/60 text-sm hidden md:inline">
-            {pontos.length} pontos
-          </span>
         </div>
 
         {/* Logo E-MÍDIAS - Centro */}
@@ -77,11 +74,6 @@ export default function HomePage() {
           >
             <Filter size={20} />
             <span className="hidden sm:inline">Filtros</span>
-          </button>
-
-          <button className="px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg flex items-center gap-2 transition">
-            <BarChart3 size={20} />
-            <span className="hidden sm:inline">Stats</span>
           </button>
 
           <button

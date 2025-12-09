@@ -32,6 +32,8 @@ const PERIODOS = ['Bissemanal', 'Mensal', 'Unitário'];
 export default function CreatePointModal() {
   const isModalOpen = useStore((state) => state.isModalOpen);
   const setModalOpen = useStore((state) => state.setModalOpen);
+  const editingPonto = useStore((state) => state.editingPonto);
+  const setEditingPonto = useStore((state) => state.setEditingPonto);
   const exibidoras = useStore((state) => state.exibidoras);
   const setPontos = useStore((state) => state.setPontos);
   const streetViewCoordinates = useStore((state) => state.streetViewCoordinates);
@@ -59,6 +61,42 @@ export default function CreatePointModal() {
 
   // Geocoding
   const [isGeocoding, setIsGeocoding] = useState(false);
+
+  // Preencher formulário ao editar
+  useEffect(() => {
+    if (editingPonto && isModalOpen) {
+      setCodigoOoh(editingPonto.codigo_ooh || '');
+      setEndereco(editingPonto.endereco || '');
+      setLatitude(editingPonto.latitude?.toString() || '');
+      setLongitude(editingPonto.longitude?.toString() || '');
+      setCidade(editingPonto.cidade || '');
+      setUf(editingPonto.uf || '');
+      setIdExibidora(editingPonto.id_exibidora?.toString() || '');
+      setMedidas(editingPonto.medidas || '');
+      setFluxo(editingPonto.fluxo?.toString() || '');
+
+      // Parse tipos se existir
+      if (editingPonto.tipos) {
+        setTipos(editingPonto.tipos.split(', ').filter(Boolean));
+      }
+
+      setObservacoes(editingPonto.observacoes || '');
+
+      // Parse produtos
+      if (editingPonto.produtos && editingPonto.produtos.length > 0) {
+        setCustos(editingPonto.produtos.map(p => ({
+          produto: p.tipo,
+          valor: p.valor.toString(),
+          periodo: p.periodo || ''
+        })));
+      }
+
+      // Carregar previews de imagens existentes
+      if (editingPonto.imagens && editingPonto.imagens.length > 0) {
+        setImagesPreviews(editingPonto.imagens.map(img => api.getImageUrl(img)));
+      }
+    }
+  }, [editingPonto, isModalOpen]);
 
   // Preencher coordenadas do Street View
   useEffect(() => {
@@ -218,7 +256,6 @@ export default function CreatePointModal() {
 
     setIsLoading(true);
     try {
-      // Criar ponto
       const pontoData = {
         codigo_ooh: codigoOoh,
         endereco,
@@ -229,24 +266,34 @@ export default function CreatePointModal() {
         id_exibidora: idExibidora ? parseInt(idExibidora) : null,
         medidas: medidas || null,
         fluxo: fluxo ? parseInt(fluxo) : null,
-        tipos: tipos.length > 0 ? tipos.join(', ') : null, // Salvar tipos como string separada por vírgula
+        tipos: tipos.length > 0 ? tipos.join(', ') : null,
         observacoes: observacoes || null,
         produtos: custos
           .filter(c => c.produto && c.valor)
           .map(c => ({
-            tipo: c.produto, // Renomear produto para tipo na API
+            tipo: c.produto,
             valor: parseFloat(c.valor.replace(/[^\d,]/g, '').replace(',', '.')),
             periodo: c.periodo || null
           }))
       };
 
-      const newPonto = await api.createPonto(pontoData);
+      let pontoId: number;
 
-      // Upload de imagens
+      if (editingPonto) {
+        // Atualizar ponto existente
+        await api.updatePonto(editingPonto.id, pontoData);
+        pontoId = editingPonto.id;
+      } else {
+        // Criar novo ponto
+        const newPonto = await api.createPonto(pontoData);
+        pontoId = newPonto.id;
+      }
+
+      // Upload de novas imagens
       if (images.length > 0) {
         await Promise.all(
           images.map((file, index) =>
-            api.uploadImage(file, newPonto.id.toString(), index, index === 0)
+            api.uploadImage(file, pontoId.toString(), index, index === 0)
           )
         );
       }
@@ -258,7 +305,7 @@ export default function CreatePointModal() {
       // Fechar modal e limpar
       handleClose();
     } catch (error: any) {
-      console.error('Erro ao criar ponto:', error);
+      console.error('Erro ao salvar ponto:', error);
       setErrors({ submit: error.message || 'Erro ao salvar ponto' });
     } finally {
       setIsLoading(false);
@@ -267,6 +314,7 @@ export default function CreatePointModal() {
 
   const handleClose = () => {
     setModalOpen(false);
+    setEditingPonto(null);
     setStreetViewCoordinates(null);
     setTimeout(() => {
       // Reset form
@@ -304,7 +352,9 @@ export default function CreatePointModal() {
         {/* Header */}
         <div className="gradient-primary px-6 py-4 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-white">Novo Ponto OOH</h2>
+            <h2 className="text-2xl font-bold text-white">
+              {editingPonto ? 'Editar Ponto OOH' : 'Novo Ponto OOH'}
+            </h2>
             <p className="text-white/80 text-sm mt-1">
               Etapa {currentStep} de 2
             </p>
