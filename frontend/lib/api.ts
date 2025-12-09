@@ -1,6 +1,7 @@
 // API client para comunicação com Cloudflare Worker
+import { config } from './config';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8787';
+const API_URL = config.apiUrl;
 
 async function fetchAPI(endpoint: string, options?: RequestInit) {
     const response = await fetch(`${API_URL}${endpoint}`, {

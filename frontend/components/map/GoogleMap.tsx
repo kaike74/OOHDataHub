@@ -5,10 +5,11 @@ import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { useStore } from '@/lib/store';
 import { Ponto } from '@/lib/types';
 import { api } from '@/lib/api';
+import { config } from '@/lib/config';
 import MapTooltip from '@/components/MapTooltip';
 import { MapPin } from 'lucide-react';
 
-const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+const GOOGLE_MAPS_API_KEY = config.googleMapsApiKey;
 
 interface GoogleMapProps {
     searchLocation?: { lat: number; lng: number; address: string } | null;
