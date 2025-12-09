@@ -167,7 +167,10 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                     if (hoverTimeoutRef.current) {
                         clearTimeout(hoverTimeoutRef.current);
                     }
-                    setHoveredPonto(null);
+                    // Delay antes de esconder o tooltip para dar tempo de mover o mouse para ele
+                    hoverTimeoutRef.current = setTimeout(() => {
+                        setHoveredPonto(null);
+                    }, 200);
                 });
 
                 return marker;
@@ -249,6 +252,16 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                     ponto={hoveredPonto}
                     position={tooltipPosition}
                     onStreetViewClick={() => handleStreetViewClick(hoveredPonto)}
+                    onMouseEnter={() => {
+                        // Cancelar timeout quando mouse entra no tooltip
+                        if (hoverTimeoutRef.current) {
+                            clearTimeout(hoverTimeoutRef.current);
+                        }
+                    }}
+                    onMouseLeave={() => {
+                        // Esconder tooltip quando mouse sai do tooltip
+                        setHoveredPonto(null);
+                    }}
                 />
             )}
 
