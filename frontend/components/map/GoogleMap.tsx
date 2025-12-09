@@ -160,14 +160,17 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                                 y: pixelOffset.y
                             });
                         }
-                    }, 300);
+                    }, 200);
                 });
 
                 marker.addListener('mouseout', () => {
                     if (hoverTimeoutRef.current) {
                         clearTimeout(hoverTimeoutRef.current);
                     }
-                    setHoveredPonto(null);
+                    // Delay maior para permitir que o usuário mova o mouse para o tooltip
+                    hoverTimeoutRef.current = setTimeout(() => {
+                        setHoveredPonto(null);
+                    }, 300);
                 });
 
                 return marker;
@@ -249,6 +252,16 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                     ponto={hoveredPonto}
                     position={tooltipPosition}
                     onStreetViewClick={() => handleStreetViewClick(hoveredPonto)}
+                    onMouseEnter={() => {
+                        // Cancela o timeout de fechar quando o mouse entra no tooltip
+                        if (hoverTimeoutRef.current) {
+                            clearTimeout(hoverTimeoutRef.current);
+                        }
+                    }}
+                    onMouseLeave={() => {
+                        // Fecha o tooltip quando o mouse sai
+                        setHoveredPonto(null);
+                    }}
                 />
             )}
 
