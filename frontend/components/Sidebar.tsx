@@ -3,13 +3,14 @@
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { X, MapPin, Building2, Ruler, Users, FileText } from 'lucide-react';
+import { X, MapPin, Building2, Ruler, Users, FileText, Edit } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Sidebar() {
     const selectedPonto = useStore((state) => state.selectedPonto);
     const isSidebarOpen = useStore((state) => state.isSidebarOpen);
     const setSidebarOpen = useStore((state) => state.setSidebarOpen);
+    const setModalOpen = useStore((state) => state.setModalOpen);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     if (!selectedPonto || !isSidebarOpen) return null;
@@ -34,7 +35,7 @@ export default function Sidebar() {
             />
 
             {/* Sidebar */}
-            <div className="fixed right-0 top-0 h-full w-full sm:w-96 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto">
+            <div className="fixed right-0 top-0 h-full w-full sm:w-96 bg-white shadow-2xl z-30 transform transition-transform duration-300 ease-in-out overflow-y-auto">
                 {/* Header com imagens */}
                 {imagens.length > 0 && (
                     <div className="relative h-64 bg-gray-200">
@@ -43,6 +44,15 @@ export default function Sidebar() {
                             alt={`Imagem ${currentImageIndex + 1}`}
                             className="w-full h-full object-cover"
                         />
+
+                        {/* Botão Fechar - Posicionado no canto superior direito da imagem */}
+                        <button
+                            onClick={() => setSidebarOpen(false)}
+                            className="absolute top-3 right-3 bg-emidias-accent hover:bg-[#E01A6A] text-white p-2.5 rounded-full shadow-lg transition hover-lift z-10"
+                            aria-label="Fechar"
+                        >
+                            <X size={20} />
+                        </button>
 
                         {imagens.length > 1 && (
                             <>
@@ -68,22 +78,14 @@ export default function Sidebar() {
 
                 {/* Content */}
                 <div className="p-6">
-                    {/* Header com botão fechar */}
-                    <div className="flex items-start justify-between mb-6">
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-900">
-                                {selectedPonto.codigo_ooh}
-                            </h2>
-                            <p className="text-sm text-gray-500 mt-1">
-                                {formatDate(selectedPonto.created_at)}
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => setSidebarOpen(false)}
-                            className="text-gray-400 hover:text-gray-600 p-2"
-                        >
-                            <X size={24} />
-                        </button>
+                    {/* Header */}
+                    <div className="mb-6">
+                        <h2 className="text-2xl font-bold text-gray-900">
+                            {selectedPonto.codigo_ooh}
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">
+                            {formatDate(selectedPonto.created_at)}
+                        </p>
                     </div>
 
                     {/* Informações */}
@@ -176,10 +178,23 @@ export default function Sidebar() {
 
                     {/* Ações */}
                     <div className="mt-8 flex gap-3">
-                        <button className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition">
+                        <button
+                            onClick={() => {
+                                // TODO: Implementar edição - abrir modal com dados do ponto
+                                setModalOpen(true);
+                            }}
+                            className="flex-1 bg-emidias-primary hover:bg-emidias-primary-light text-white py-3 rounded-lg font-medium transition hover-lift flex items-center justify-center gap-2"
+                        >
+                            <Edit size={18} />
                             Editar
                         </button>
-                        <button className="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition">
+                        <button
+                            onClick={() => {
+                                // TODO: Implementar histórico
+                                alert('Funcionalidade de histórico em desenvolvimento');
+                            }}
+                            className="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition hover-lift"
+                        >
                             Histórico
                         </button>
                     </div>

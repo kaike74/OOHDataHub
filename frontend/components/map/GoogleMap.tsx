@@ -11,7 +11,7 @@ import { MapPin } from 'lucide-react';
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
 interface GoogleMapProps {
-  searchLocation?: { lat: number; lng: number; address: string } | null;
+    searchLocation?: { lat: number; lng: number; address: string } | null;
 }
 
 export default function GoogleMap({ searchLocation }: GoogleMapProps) {
@@ -163,12 +163,6 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                     }, 300);
                 });
 
-                marker.addListener('mouseout', () => {
-                    if (hoverTimeoutRef.current) {
-                        clearTimeout(hoverTimeoutRef.current);
-                    }
-                    setHoveredPonto(null);
-                });
 
                 return marker;
             });
@@ -249,6 +243,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                     ponto={hoveredPonto}
                     position={tooltipPosition}
                     onStreetViewClick={() => handleStreetViewClick(hoveredPonto)}
+                    onClose={() => setHoveredPonto(null)}
                 />
             )}
 
