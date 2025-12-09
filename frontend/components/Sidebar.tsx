@@ -3,11 +3,12 @@
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History } from 'lucide-react';
+import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Sidebar() {
     const selectedPonto = useStore((state) => state.selectedPonto);
+    const selectedExibidora = useStore((state) => state.selectedExibidora);
     const isSidebarOpen = useStore((state) => state.isSidebarOpen);
     const setSidebarOpen = useStore((state) => state.setSidebarOpen);
     const setModalOpen = useStore((state) => state.setModalOpen);
@@ -27,7 +28,15 @@ export default function Sidebar() {
         alert('Funcionalidade de histórico será implementada em breve');
     };
 
-    if (!selectedPonto || !isSidebarOpen) return null;
+    const handleStreetView = () => {
+        if (selectedPonto && selectedPonto.latitude && selectedPonto.longitude) {
+            const url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${selectedPonto.latitude},${selectedPonto.longitude}`;
+            window.open(url, '_blank');
+        }
+    };
+
+    // Só mostra se tiver ponto selecionado (não exibidora)
+    if (!selectedPonto || !isSidebarOpen || selectedExibidora) return null;
 
     const imagens = selectedPonto.imagens || [];
     const produtos = selectedPonto.produtos || [];
@@ -62,10 +71,10 @@ export default function Sidebar() {
                         {/* Botão Fechar - Canto superior direito da imagem */}
                         <button
                             onClick={() => setSidebarOpen(false)}
-                            className="absolute top-4 right-4 bg-emidias-accent hover:bg-[#E01A6A] text-white p-3 rounded-full shadow-2xl hover:scale-110 transition-all z-10 border-2 border-white/80"
+                            className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full shadow-lg hover:scale-105 transition-all z-10"
                             title="Fechar"
                         >
-                            <X size={24} strokeWidth={3} />
+                            <X size={20} strokeWidth={2} />
                         </button>
 
                         {imagens.length > 1 && (
@@ -191,21 +200,35 @@ export default function Sidebar() {
                     </div>
 
                     {/* Ações */}
-                    <div className="mt-8 flex gap-3">
-                        <button
-                            onClick={handleEdit}
-                            className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2"
-                        >
-                            <Pencil size={18} />
-                            Editar
-                        </button>
-                        <button
-                            onClick={handleHistory}
-                            className="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition flex items-center justify-center gap-2"
-                        >
-                            <History size={18} />
-                            Histórico
-                        </button>
+                    <div className="mt-8 space-y-3">
+                        {/* Street View - Destaque */}
+                        {selectedPonto.latitude && selectedPonto.longitude && (
+                            <button
+                                onClick={handleStreetView}
+                                className="w-full bg-emidias-accent text-white py-3 rounded-lg font-medium hover:bg-[#E01A6A] transition flex items-center justify-center gap-2 shadow-lg hover-lift"
+                            >
+                                <Eye size={18} />
+                                Ver no Street View
+                            </button>
+                        )}
+
+                        {/* Editar e Histórico */}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleEdit}
+                                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                            >
+                                <Pencil size={18} />
+                                Editar
+                            </button>
+                            <button
+                                onClick={handleHistory}
+                                className="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition flex items-center justify-center gap-2"
+                            >
+                                <History size={18} />
+                                Histórico
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

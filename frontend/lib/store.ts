@@ -10,8 +10,11 @@ interface AppState {
     // UI State
     selectedPonto: Ponto | null;
     editingPonto: Ponto | null;
+    selectedExibidora: Exibidora | null;
     isSidebarOpen: boolean;
     isModalOpen: boolean;
+    isMenuOpen: boolean;
+    currentView: 'map' | 'exibidoras';
     streetViewCoordinates: { lat: number; lng: number } | null;
 
     // Filters
@@ -26,8 +29,11 @@ interface AppState {
     setStats: (stats: Stats) => void;
     setSelectedPonto: (ponto: Ponto | null) => void;
     setEditingPonto: (ponto: Ponto | null) => void;
+    setSelectedExibidora: (exibidora: Exibidora | null) => void;
     setSidebarOpen: (open: boolean) => void;
     setModalOpen: (open: boolean) => void;
+    setMenuOpen: (open: boolean) => void;
+    setCurrentView: (view: 'map' | 'exibidoras') => void;
     setStreetViewCoordinates: (coords: { lat: number; lng: number } | null) => void;
     setFilterCidade: (cidade: string | null) => void;
     setFilterUF: (uf: string | null) => void;
@@ -43,8 +49,11 @@ export const useStore = create<AppState>((set) => ({
     stats: null,
     selectedPonto: null,
     editingPonto: null,
+    selectedExibidora: null,
     isSidebarOpen: false,
     isModalOpen: false,
+    isMenuOpen: false,
+    currentView: 'map',
     streetViewCoordinates: null,
     filterCidade: null,
     filterUF: null,
@@ -58,15 +67,30 @@ export const useStore = create<AppState>((set) => ({
     setSelectedPonto: (ponto) => set({
         selectedPonto: ponto,
         isSidebarOpen: !!ponto,
+        selectedExibidora: null,
     }),
     setEditingPonto: (ponto) => set({ editingPonto: ponto }),
+    setSelectedExibidora: (exibidora) => set({
+        selectedExibidora: exibidora,
+        isSidebarOpen: !!exibidora,
+        selectedPonto: null,
+    }),
     setSidebarOpen: (open) => set({
         isSidebarOpen: open,
         selectedPonto: open ? undefined : null,
+        selectedExibidora: open ? undefined : null,
     }),
     setModalOpen: (open) => set({
         isModalOpen: open,
         editingPonto: open ? undefined : null,
+    }),
+    setMenuOpen: (open) => set({ isMenuOpen: open }),
+    setCurrentView: (view) => set({
+        currentView: view,
+        isMenuOpen: false,
+        isSidebarOpen: false,
+        selectedPonto: null,
+        selectedExibidora: null,
     }),
     setStreetViewCoordinates: (coords) => set({ streetViewCoordinates: coords }),
     setFilterCidade: (cidade) => set({ filterCidade: cidade }),
