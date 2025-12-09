@@ -1,0 +1,18 @@
+{
+    "name": "ooh-system",
+    "compatibility_date": "2025-12-09",
+    "main": "src/index.js",
+    "d1_databases": [
+        {
+            "binding": "DB",
+            "database_name": "ooh-database",
+            "database_id": "YOUR_DATABASE_ID"
+        }
+    ],
+    "r2_buckets": [
+        {
+            "binding": "BUCKET",
+            "bucket_name": "ooh-images"
+        }
+    ]
+}
