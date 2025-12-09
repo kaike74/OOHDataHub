@@ -23,6 +23,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const pontos = useStore((state) => state.pontos);
+    const filterExibidora = useStore((state) => state.filterExibidora);
     const setSelectedPonto = useStore((state) => state.setSelectedPonto);
     const setModalOpen = useStore((state) => state.setModalOpen);
     const setStreetViewCoordinates = useStore((state) => state.setStreetViewCoordinates);
@@ -116,8 +117,13 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             clustererRef.current.clearMarkers();
         }
 
+        // Filtrar pontos por exibidora se filtro estiver ativo
+        const filteredPontos = filterExibidora
+            ? pontos.filter((ponto) => ponto.id_exibidora === filterExibidora)
+            : pontos;
+
         // Criar novos markers
-        const markers = pontos
+        const markers = filteredPontos
             .filter((ponto) => ponto.latitude && ponto.longitude)
             .map((ponto) => {
                 const marker = new google.maps.Marker({
@@ -195,7 +201,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             });
             googleMapRef.current.fitBounds(bounds);
         }
-    }, [pontos, isLoaded, setSelectedPonto]);
+    }, [pontos, filterExibidora, isLoaded, setSelectedPonto]);
 
     // Centralizar mapa quando search location mudar
     useEffect(() => {

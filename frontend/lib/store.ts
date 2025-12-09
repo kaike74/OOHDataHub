@@ -86,13 +86,15 @@ export const useStore = create<AppState>((set) => ({
         editingPonto: open ? state.editingPonto : null,
     })),
     setMenuOpen: (open) => set({ isMenuOpen: open }),
-    setCurrentView: (view) => set({
+    setCurrentView: (view) => set((state) => ({
         currentView: view,
         isMenuOpen: false,
-        isSidebarOpen: false,
-        selectedPonto: null,
-        selectedExibidora: null,
-    }),
+        // Só limpa sidebar e seleções ao ir para view de exibidoras
+        // Ao ir para o mapa, preserva selectedExibidora para abrir a gaveta
+        isSidebarOpen: view === 'exibidoras' ? false : state.isSidebarOpen,
+        selectedPonto: view === 'exibidoras' ? null : state.selectedPonto,
+        selectedExibidora: view === 'exibidoras' ? null : state.selectedExibidora,
+    })),
     setStreetViewCoordinates: (coords) => set({ streetViewCoordinates: coords }),
     setFilterCidade: (cidade) => set({ filterCidade: cidade }),
     setFilterUF: (uf) => set({ filterUF: uf }),
