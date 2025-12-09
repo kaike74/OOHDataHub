@@ -3,15 +3,17 @@
 import { useEffect, useState } from 'react';
 import { Ponto } from '@/lib/types';
 import { api } from '@/lib/api';
-import { Building2, Eye } from 'lucide-react';
+import { Building2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface MapTooltipProps {
   ponto: Ponto;
   position: { x: number; y: number };
   onStreetViewClick?: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
-export default function MapTooltip({ ponto, position, onStreetViewClick }: MapTooltipProps) {
+export default function MapTooltip({ ponto, position, onStreetViewClick, onMouseEnter, onMouseLeave }: MapTooltipProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const imagens = ponto.imagens || [];
 
@@ -31,6 +33,14 @@ export default function MapTooltip({ ponto, position, onStreetViewClick }: MapTo
     setCurrentImageIndex(0);
   }, [ponto.id]);
 
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + imagens.length) % imagens.length);
+  };
+
   return (
     <div
       className="absolute z-40 pointer-events-auto"
@@ -39,16 +49,42 @@ export default function MapTooltip({ ponto, position, onStreetViewClick }: MapTo
         top: `${position.y}px`,
         transform: 'translate(-50%, -100%) translateY(-20px)',
       }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       <div className="bg-white rounded-xl shadow-2xl overflow-hidden card-shadow animate-in fade-in slide-in-from-bottom-2 duration-200">
         {/* Imagens com Carrossel */}
         {imagens.length > 0 && (
-          <div className="relative h-40 w-80 bg-gray-200">
+          <div className="relative h-48 w-72 bg-gray-200">
             <img
               src={api.getImageUrl(imagens[currentImageIndex])}
               alt={ponto.codigo_ooh}
               className="w-full h-full object-cover"
             />
+
+            {/* Botões de navegação do carrossel */}
+            {imagens.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    prevImage();
+                  }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full transition"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextImage();
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full transition"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </>
+            )}
 
             {/* Indicador de imagens */}
             {imagens.length > 1 && (
@@ -58,7 +94,7 @@ export default function MapTooltip({ ponto, position, onStreetViewClick }: MapTo
             )}
 
             {/* Gradiente overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
           </div>
         )}
 

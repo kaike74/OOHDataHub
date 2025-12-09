@@ -49,7 +49,7 @@ export default function Sidebar() {
             />
 
             {/* Sidebar */}
-            <div className="fixed right-0 top-0 h-full w-full sm:w-96 bg-white shadow-2xl z-30 transform transition-transform duration-300 ease-in-out overflow-y-auto">
+            <div className="fixed right-0 top-[70px] h-[calc(100vh-70px)] w-full sm:w-96 bg-white shadow-2xl z-30 transform transition-transform duration-300 ease-in-out overflow-y-auto">
                 {/* Header com imagens */}
                 {imagens.length > 0 && (
                     <div className="relative h-64 bg-gray-200">
@@ -62,10 +62,10 @@ export default function Sidebar() {
                         {/* Botão Fechar - Canto superior direito da imagem */}
                         <button
                             onClick={() => setSidebarOpen(false)}
-                            className="absolute top-3 right-3 bg-emidias-accent hover:bg-emidias-accent/90 text-white p-2.5 rounded-full shadow-lg hover:scale-110 transition-all z-10"
+                            className="absolute top-4 right-4 bg-emidias-accent hover:bg-[#E01A6A] text-white p-3 rounded-full shadow-2xl hover:scale-110 transition-all z-10 border-2 border-white/80"
                             title="Fechar"
                         >
-                            <X size={22} strokeWidth={2.5} />
+                            <X size={24} strokeWidth={3} />
                         </button>
 
                         {imagens.length > 1 && (

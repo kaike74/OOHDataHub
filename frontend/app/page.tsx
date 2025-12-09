@@ -49,7 +49,7 @@ export default function HomePage() {
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="gradient-primary px-6 py-3 flex items-center justify-between flex-shrink-0 z-10 fixed top-0 left-0 right-0 h-[70px] border-b-2 border-emidias-accent">
+      <header className="gradient-primary px-6 py-3 flex items-center justify-between flex-shrink-0 z-10 fixed top-0 left-0 right-0 h-[70px] border-b-4 border-emidias-accent shadow-lg">
         {/* Logo OOH Data Hub - Esquerda */}
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-white tracking-tight">
