@@ -1,0 +1,9 @@
+# Cloudflare Pages ignore file
+# This tells Pages to ignore the worker directory during deployment
+
+worker/
+workers/
+*.wrangler/
+.wrangler/
+wrangler.toml
+wrangler.jsonc
