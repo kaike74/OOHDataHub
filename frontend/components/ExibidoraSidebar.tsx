@@ -2,7 +2,7 @@
 
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { X, Building2, FileText, MapPin, Phone, Mail, ArrowLeft, Pencil } from 'lucide-react';
+import { X, Building2, FileText, MapPin, Phone, Mail, Pencil } from 'lucide-react';
 import { useMemo } from 'react';
 
 export default function ExibidoraSidebar() {
@@ -28,7 +28,7 @@ export default function ExibidoraSidebar() {
         };
     }, [selectedExibidora, pontos]);
 
-    const handleVoltar = () => {
+    const handleClose = () => {
         setSidebarOpen(false);
         setFilterExibidora(null);
         setCurrentView('exibidoras');
@@ -36,7 +36,7 @@ export default function ExibidoraSidebar() {
 
     const handleEdit = () => {
         // TODO: Implementar modal de edição de exibidora
-        alert('Funcionalidade de edição será implementada em breve');
+        alert(`Editar exibidora: ${selectedExibidora.nome}\n\nFuncionalidade será implementada em breve.`);
     };
 
     if (!selectedExibidora || !isSidebarOpen) return null;
@@ -63,11 +63,11 @@ export default function ExibidoraSidebar() {
                         <Building2 size={80} className="text-white/80" />
                     )}
 
-                    {/* Botão Fechar */}
+                    {/* Botão Fechar - Volta para Exibidoras */}
                     <button
-                        onClick={() => setSidebarOpen(false)}
+                        onClick={handleClose}
                         className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full shadow-lg hover:scale-105 transition-all z-10"
-                        title="Fechar"
+                        title="Voltar para Exibidoras"
                     >
                         <X size={20} strokeWidth={2} />
                     </button>
@@ -163,20 +163,11 @@ export default function ExibidoraSidebar() {
                     </div>
 
                     {/* Ações */}
-                    <div className="mt-8 space-y-3">
-                        {/* Voltar para Exibidoras */}
-                        <button
-                            onClick={handleVoltar}
-                            className="w-full bg-emidias-accent text-white py-3 rounded-lg font-medium hover:bg-[#E01A6A] transition flex items-center justify-center gap-2 shadow-lg hover-lift"
-                        >
-                            <ArrowLeft size={18} />
-                            Voltar para Exibidoras
-                        </button>
-
+                    <div className="mt-8">
                         {/* Editar */}
                         <button
                             onClick={handleEdit}
-                            className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                            className="w-full bg-emidias-accent text-white py-3 rounded-lg font-medium hover:bg-[#E01A6A] transition flex items-center justify-center gap-2 shadow-lg hover-lift"
                         >
                             <Pencil size={18} />
                             Editar Exibidora
