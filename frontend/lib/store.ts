@@ -73,11 +73,13 @@ export const useStore = create<AppState>((set) => ({
     setPontos: (pontos) => set({ pontos }),
     setExibidoras: (exibidoras) => set({ exibidoras }),
     setStats: (stats) => set({ stats }),
-    setSelectedPonto: (ponto) => set({
+    setSelectedPonto: (ponto) => set((state) => ({
         selectedPonto: ponto,
         isSidebarOpen: !!ponto,
-        selectedExibidora: null,
-    }),
+        // Preservar selectedExibidora se já estiver selecionada
+        // Isso permite que os detalhes do ponto sobreponham os detalhes da exibidora
+        selectedExibidora: ponto ? state.selectedExibidora : null,
+    })),
     setEditingPonto: (ponto) => set({ editingPonto: ponto }),
     setSelectedExibidora: (exibidora) => set({
         selectedExibidora: exibidora,
