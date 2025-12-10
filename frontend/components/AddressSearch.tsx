@@ -15,7 +15,7 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
   const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
-    if (!inputRef.current || !window.google) return;
+    if (!inputRef.current || !window.google) return undefined;
 
     // Inicializar autocomplete
     autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
@@ -66,11 +66,10 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
   return (
     <div className="relative">
       <div
-        className={`flex items-center gap-2 bg-white rounded-lg shadow-lg border-2 transition-all ${
-          isFocused
+        className={`flex items-center gap-2 bg-white rounded-lg shadow-lg border-2 transition-all ${isFocused
             ? 'border-emidias-primary shadow-xl'
             : 'border-transparent'
-        }`}
+          }`}
       >
         <div className="pl-4 text-emidias-primary">
           {isLoading ? (
