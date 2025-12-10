@@ -115,7 +115,7 @@ export default function Sidebar() {
                 // Fechar sidebar do ponto
                 setSidebarOpen(false);
                 // Aplicar filtro da exibidora
-                setFilterExibidora(exibidora.id);
+                setFilterExibidora([exibidora.id]);
                 // Selecionar exibidora (abre ExibidoraSidebar)
                 setSelectedExibidora(exibidora);
                 // Garantir que está na view de mapa

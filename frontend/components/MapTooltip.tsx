@@ -46,7 +46,7 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
       const exibidora = exibidoras.find(ex => ex.id === ponto.id_exibidora);
       if (exibidora) {
         // Aplicar filtro da exibidora
-        setFilterExibidora(exibidora.id);
+        setFilterExibidora([exibidora.id]);
         // Selecionar exibidora (abre ExibidoraSidebar)
         setSelectedExibidora(exibidora);
         // Garantir que está na view de mapa
