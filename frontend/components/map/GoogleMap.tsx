@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { useStore } from '@/lib/store';
 import { Ponto } from '@/lib/types';
@@ -27,6 +27,8 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
     const setSelectedPonto = useStore((state) => state.setSelectedPonto);
     const setModalOpen = useStore((state) => state.setModalOpen);
     const setStreetViewCoordinates = useStore((state) => state.setStreetViewCoordinates);
+    const streetViewRequest = useStore((state) => state.streetViewRequest);
+    const setStreetViewRequest = useStore((state) => state.setStreetViewRequest);
     const [isLoaded, setIsLoaded] = useState(false);
     const [isStreetViewMode, setIsStreetViewMode] = useState(false);
     const [streetViewPosition, setStreetViewPosition] = useState<{ lat: number; lng: number } | null>(null);
@@ -232,21 +234,32 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
         }
     }, [searchLocation]);
 
-    const handleStreetViewClick = (ponto: Ponto) => {
+    // Reagir a solicitações de Street View
+    useEffect(() => {
+        if (streetViewRequest && streetViewRef.current && isLoaded) {
+            const position = new google.maps.LatLng(streetViewRequest.lat, streetViewRequest.lng);
+            streetViewRef.current.setPosition(position);
+            streetViewRef.current.setVisible(true);
+            // Limpar o request após processar
+            setStreetViewRequest(null);
+        }
+    }, [streetViewRequest, isLoaded, setStreetViewRequest]);
+
+    const handleStreetViewClick = useCallback((ponto: Ponto) => {
         if (ponto.latitude && ponto.longitude && streetViewRef.current) {
             const position = new google.maps.LatLng(ponto.latitude, ponto.longitude);
             streetViewRef.current.setPosition(position);
             streetViewRef.current.setVisible(true);
         }
-    };
+    }, []);
 
-    const handleCadastrarAqui = () => {
+    const handleCadastrarAqui = useCallback(() => {
         if (!streetViewPosition) return;
 
         // Passar coordenadas para o modal via Zustand
         setStreetViewCoordinates(streetViewPosition);
         setModalOpen(true);
-    };
+    }, [streetViewPosition, setStreetViewCoordinates, setModalOpen]);
 
     return (
         <div className="relative w-full h-full">

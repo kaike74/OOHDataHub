@@ -38,6 +38,7 @@ export default function CreatePointModal() {
   const setPontos = useStore((state) => state.setPontos);
   const streetViewCoordinates = useStore((state) => state.streetViewCoordinates);
   const setStreetViewCoordinates = useStore((state) => state.setStreetViewCoordinates);
+  const isExibidoraModalOpen = useStore((state) => state.isExibidoraModalOpen);
 
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -130,6 +131,17 @@ export default function CreatePointModal() {
       reverseGeocode();
     }
   }, [streetViewCoordinates, isModalOpen]);
+
+  // Selecionar automaticamente a exibidora recém-criada
+  useEffect(() => {
+    if (!isExibidoraModalOpen && isModalOpen && exibidoras.length > 0 && !idExibidora) {
+      // Quando o ExibidoraModal fecha e não há exibidora selecionada, seleciona a mais recente
+      const latestExibidora = exibidoras[exibidoras.length - 1];
+      if (latestExibidora) {
+        setIdExibidora(latestExibidora.id.toString());
+      }
+    }
+  }, [isExibidoraModalOpen, exibidoras, isModalOpen, idExibidora]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.filter(file => file.type.startsWith('image/'));
