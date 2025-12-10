@@ -55,7 +55,7 @@ export default function Sidebar() {
 
     // Auto-rotate images every 3 seconds
     useEffect(() => {
-        if (imagens.length <= 1) return;
+        if (imagens.length <= 1) return undefined;
 
         const interval = setInterval(() => {
             setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
