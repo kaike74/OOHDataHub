@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Loader2 } from 'lucide-react';
@@ -52,8 +52,8 @@ export default function LoginPage() {
         }
     };
 
-    // Initialize Google Sign-In
-    useState(() => {
+    // Initialize Google Sign-In (client-side only)
+    useEffect(() => {
         const script = document.createElement('script');
         script.src = 'https://accounts.google.com/gsi/client';
         script.async = true;
@@ -79,9 +79,11 @@ export default function LoginPage() {
         document.body.appendChild(script);
 
         return () => {
-            document.body.removeChild(script);
+            if (document.body.contains(script)) {
+                document.body.removeChild(script);
+            }
         };
-    });
+    }, []);
 
     return (
         <div className="min-h-screen flex">
