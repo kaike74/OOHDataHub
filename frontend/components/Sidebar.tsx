@@ -3,8 +3,8 @@
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye } from 'lucide-react';
-import { useState } from 'react';
+import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 export default function Sidebar() {
     const selectedPonto = useStore((state) => state.selectedPonto);
@@ -13,27 +13,32 @@ export default function Sidebar() {
     const setSidebarOpen = useStore((state) => state.setSidebarOpen);
     const setModalOpen = useStore((state) => state.setModalOpen);
     const setEditingPonto = useStore((state) => state.setEditingPonto);
+    const setStreetViewRequest = useStore((state) => state.setStreetViewRequest);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    const handleEdit = () => {
+    const handleEdit = useCallback(() => {
         if (selectedPonto) {
             setEditingPonto(selectedPonto);
             setModalOpen(true);
             setSidebarOpen(false);
         }
-    };
+    }, [selectedPonto, setEditingPonto, setModalOpen, setSidebarOpen]);
 
-    const handleHistory = () => {
+    const handleHistory = useCallback(() => {
         // TODO: Implementar modal de histórico
         alert('Funcionalidade de histórico será implementada em breve');
-    };
+    }, []);
 
-    const handleStreetView = () => {
+    const handleStreetView = useCallback(() => {
         if (selectedPonto && selectedPonto.latitude && selectedPonto.longitude) {
-            const url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${selectedPonto.latitude},${selectedPonto.longitude}`;
-            window.open(url, '_blank');
+            setStreetViewRequest({ lat: selectedPonto.latitude, lng: selectedPonto.longitude });
         }
-    };
+    }, [selectedPonto, setStreetViewRequest]);
+
+    const handleClose = useCallback(() => {
+        setSidebarOpen(false);
+    }, [setSidebarOpen]);
 
     // Só mostra se tiver ponto selecionado (não exibidora)
     if (!selectedPonto || !isSidebarOpen || selectedExibidora) return null;
@@ -41,61 +46,90 @@ export default function Sidebar() {
     const imagens = selectedPonto.imagens || [];
     const produtos = selectedPonto.produtos || [];
 
-    const nextImage = () => {
+    const nextImage = useCallback(() => {
         setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
-    };
+    }, [imagens.length]);
 
-    const prevImage = () => {
+    const prevImage = useCallback(() => {
         setCurrentImageIndex((prev) => (prev - 1 + imagens.length) % imagens.length);
-    };
+    }, [imagens.length]);
+
+    // Auto-rotate de imagens a cada 3 segundos
+    useEffect(() => {
+        if (imagens.length <= 1) return;
+
+        // Clear any existing interval
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+        }
+
+        intervalRef.current = setInterval(() => {
+            setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
+        }, 3000);
+
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        };
+    }, [imagens.length]);
+
+    // Reset quando o ponto mudar
+    useEffect(() => {
+        setCurrentImageIndex(0);
+    }, [selectedPonto?.id]);
 
     return (
         <>
             {/* Overlay */}
             <div
                 className="fixed inset-0 bg-black/20 z-20 lg:hidden"
-                onClick={() => setSidebarOpen(false)}
+                onClick={handleClose}
             />
 
             {/* Sidebar */}
             <div className="fixed right-0 top-[70px] h-[calc(100vh-70px)] w-full sm:w-96 bg-white shadow-2xl z-30 transform transition-transform duration-300 ease-in-out overflow-y-auto">
+                {/* Botão Fechar - Sticky (aparece sempre) */}
+                <button
+                    onClick={handleClose}
+                    className="sticky top-3 right-3 ml-auto mr-3 z-50 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full shadow-lg hover:scale-105 transition-all flex items-center justify-center"
+                    title="Fechar"
+                >
+                    <X size={20} strokeWidth={2} />
+                </button>
+
                 {/* Header com imagens */}
-                {imagens.length > 0 && (
-                    <div className="relative h-64 bg-gray-200">
+                {imagens.length > 0 ? (
+                    <div className="relative h-64 bg-gray-200 -mt-11">
                         <img
                             src={api.getImageUrl(imagens[currentImageIndex])}
                             alt={`Imagem ${currentImageIndex + 1}`}
                             className="w-full h-full object-cover"
                         />
 
-                        {/* Botão Fechar - Canto superior direito da imagem */}
-                        <button
-                            onClick={() => setSidebarOpen(false)}
-                            className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full shadow-lg hover:scale-105 transition-all z-10"
-                            title="Fechar"
-                        >
-                            <X size={20} strokeWidth={2} />
-                        </button>
-
                         {imagens.length > 1 && (
                             <>
                                 <button
                                     onClick={prevImage}
-                                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"
+                                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition"
                                 >
-                                    ◄
+                                    <ChevronLeft size={20} />
                                 </button>
                                 <button
                                     onClick={nextImage}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition"
                                 >
-                                    ►
+                                    <ChevronRight size={20} />
                                 </button>
-                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium">
                                     {currentImageIndex + 1} / {imagens.length}
                                 </div>
                             </>
                         )}
+                    </div>
+                ) : (
+                    <div className="relative h-48 bg-gradient-to-br from-emidias-primary to-emidias-accent flex items-center justify-center -mt-11">
+                        <MapPin size={64} className="text-white/30" />
                     </div>
                 )}
 

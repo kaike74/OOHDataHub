@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Ponto } from '@/lib/types';
 import { api } from '@/lib/api';
 import { Building2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -18,6 +18,22 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
   const [imageSize, setImageSize] = useState({ width: 288, height: 192 }); // Default: w-72 h-48
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const imagens = ponto.imagens || [];
+
+  const nextImage = useCallback(() => {
+    setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
+  }, [imagens.length]);
+
+  const prevImage = useCallback(() => {
+    setCurrentImageIndex((prev) => (prev - 1 + imagens.length) % imagens.length);
+  }, [imagens.length]);
+
+  const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.target as HTMLImageElement;
+    const aspectRatio = img.naturalWidth / img.naturalHeight;
+    const height = 180;
+    const width = Math.min(Math.max(height * aspectRatio, 240), 320);
+    setImageSize({ width, height });
+  }, []);
 
   // Auto-rotate imagens a cada 3 segundos
   useEffect(() => {
@@ -44,14 +60,6 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
     setCurrentImageIndex(0);
   }, [ponto.id]);
 
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + imagens.length) % imagens.length);
-  };
-
   // Format address with line breaks
   const formatAddress = (address: string) => {
     // Break address at commas for better readability
@@ -72,7 +80,7 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <div className="bg-white rounded-xl shadow-2xl overflow-hidden card-shadow animate-in fade-in zoom-in-95 duration-300 ease-out">
+      <div className="bg-white rounded-xl shadow-2xl overflow-hidden card-shadow animate-[tooltip-appear_0.2s_ease-out_forwards]">
         {/* Imagens com Carrossel */}
         {imagens.length > 0 && (
           <div
@@ -88,13 +96,7 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
               src={api.getImageUrl(imagens[currentImageIndex])}
               alt={ponto.codigo_ooh}
               className="w-full h-full object-cover"
-              onLoad={(e) => {
-                const img = e.target as HTMLImageElement;
-                const aspectRatio = img.naturalWidth / img.naturalHeight;
-                const height = 180;
-                const width = Math.min(Math.max(height * aspectRatio, 240), 320);
-                setImageSize({ width, height });
-              }}
+              onLoad={handleImageLoad}
             />
 
             {/* Botões de navegação do carrossel */}

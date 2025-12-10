@@ -18,6 +18,7 @@ interface AppState {
     isMenuOpen: boolean;
     currentView: 'map' | 'exibidoras';
     streetViewCoordinates: { lat: number; lng: number } | null;
+    streetViewRequest: { lat: number; lng: number } | null;
 
     // Filters
     filterCidade: string | null;
@@ -39,6 +40,7 @@ interface AppState {
     setMenuOpen: (open: boolean) => void;
     setCurrentView: (view: 'map' | 'exibidoras') => void;
     setStreetViewCoordinates: (coords: { lat: number; lng: number } | null) => void;
+    setStreetViewRequest: (request: { lat: number; lng: number } | null) => void;
     setFilterCidade: (cidade: string | null) => void;
     setFilterUF: (uf: string | null) => void;
     setFilterExibidora: (id: number | null) => void;
@@ -61,6 +63,7 @@ export const useStore = create<AppState>((set) => ({
     isMenuOpen: false,
     currentView: 'map',
     streetViewCoordinates: null,
+    streetViewRequest: null,
     filterCidade: null,
     filterUF: null,
     filterExibidora: null,
@@ -108,6 +111,7 @@ export const useStore = create<AppState>((set) => ({
         selectedExibidora: view === 'exibidoras' ? null : state.selectedExibidora,
     })),
     setStreetViewCoordinates: (coords) => set({ streetViewCoordinates: coords }),
+    setStreetViewRequest: (request) => set({ streetViewRequest: request }),
     setFilterCidade: (cidade) => set({ filterCidade: cidade }),
     setFilterUF: (uf) => set({ filterUF: uf }),
     setFilterExibidora: (id) => set({ filterExibidora: id }),
