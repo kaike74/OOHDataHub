@@ -79,23 +79,39 @@ export default function CreatePointModal() {
       // Parse tipos se existir
       if (editingPonto.tipos) {
         setTipos(editingPonto.tipos.split(', ').filter(Boolean));
+      } else {
+        setTipos([]);
       }
 
       setObservacoes(editingPonto.observacoes || '');
 
-      // Parse produtos
+      // Parse produtos com formatação
       if (editingPonto.produtos && editingPonto.produtos.length > 0) {
-        setCustos(editingPonto.produtos.map(p => ({
-          produto: p.tipo,
-          valor: p.valor.toString(),
-          periodo: p.periodo || ''
-        })));
+        setCustos(editingPonto.produtos.map(p => {
+          // Formatar valor para exibição
+          const reais = Math.floor(p.valor);
+          const centavos = Math.round((p.valor - reais) * 100);
+          const valorFormatado = `R$ ${reais.toLocaleString('pt-BR')},${centavos.toString().padStart(2, '0')}`;
+
+          return {
+            produto: p.tipo,
+            valor: valorFormatado,
+            periodo: p.periodo || ''
+          };
+        }));
+      } else {
+        setCustos([{ produto: '', valor: '', periodo: '' }]);
       }
 
       // Carregar previews de imagens existentes
       if (editingPonto.imagens && editingPonto.imagens.length > 0) {
         setImagesPreviews(editingPonto.imagens.map(img => api.getImageUrl(img)));
+      } else {
+        setImagesPreviews([]);
       }
+
+      // Limpar imagens novas ao editar
+      setImages([]);
     }
   }, [editingPonto, isModalOpen]);
 
@@ -525,28 +541,32 @@ export default function CreatePointModal() {
             <div className="space-y-6">
               {/* Exibidora */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-semibold text-emidias-primary">
-                    Exibidora <span className="text-emidias-accent">*</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => useStore.getState().setExibidoraModalOpen(true)}
-                    className="text-xs text-gray-500 hover:text-emidias-primary transition flex items-center gap-1"
-                  >
-                    <Plus size={14} />
-                    Nova exibidora
-                  </button>
-                </div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                  Exibidora <span className="text-emidias-accent">*</span>
+                </label>
                 <div className="relative">
                   <select
                     value={idExibidora}
-                    onChange={(e) => setIdExibidora(e.target.value)}
+                    onChange={(e) => {
+                      if (e.target.value === 'CREATE_NEW') {
+                        useStore.getState().setExibidoraModalOpen(true);
+                        // Manter o valor anterior se houver
+                        if (idExibidora) {
+                          setTimeout(() => setIdExibidora(idExibidora), 0);
+                        }
+                      } else {
+                        setIdExibidora(e.target.value);
+                      }
+                    }}
                     className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition appearance-none"
                     style={{
-                      paddingLeft: idExibidora && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key ? '52px' : '16px'
+                      paddingLeft: idExibidora && idExibidora !== 'CREATE_NEW' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key ? '52px' : '16px'
                     }}
                   >
+                    <option value="" disabled>Selecione uma exibidora...</option>
+                    <option value="CREATE_NEW" className="text-gray-600" style={{ fontStyle: 'italic' }}>
+                      + Cadastrar nova exibidora
+                    </option>
                     {exibidoras.map((ex) => (
                       <option key={ex.id} value={ex.id}>
                         {ex.nome}
