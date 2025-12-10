@@ -39,7 +39,6 @@ interface AppState {
     setMenuOpen: (open: boolean) => void;
     setCurrentView: (view: 'map' | 'exibidoras') => void;
     setStreetViewCoordinates: (coords: { lat: number; lng: number } | null) => void;
-    setStreetViewPosition: (coords: { lat: number; lng: number } | null) => void; // Alias
     setFilterCidade: (cidade: string | null) => void;
     setFilterUF: (uf: string | null) => void;
     setFilterExibidora: (id: number | null) => void;
@@ -109,7 +108,6 @@ export const useStore = create<AppState>((set) => ({
         selectedExibidora: view === 'exibidoras' ? null : state.selectedExibidora,
     })),
     setStreetViewCoordinates: (coords) => set({ streetViewCoordinates: coords }),
-    setStreetViewPosition: (coords) => set({ streetViewCoordinates: coords }), // Alias
     setFilterCidade: (cidade) => set({ filterCidade: cidade }),
     setFilterUF: (uf) => set({ filterUF: uf }),
     setFilterExibidora: (id) => set({ filterExibidora: id }),

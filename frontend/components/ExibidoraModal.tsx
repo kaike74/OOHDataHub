@@ -59,7 +59,6 @@ export default function ExibidoraModal() {
                 })));
             }).catch(err => console.error('Erro ao carregar contatos:', err));
         }
-        return undefined;
     }, [editingExibidora, isModalOpen]);
 
     const onDrop = useCallback((acceptedFiles: File[]) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import GoogleMap from '@/components/map/GoogleMap';
 import Sidebar from '@/components/Sidebar';
 import ExibidoraSidebar from '@/components/ExibidoraSidebar';
@@ -27,11 +27,6 @@ export default function HomePage() {
   const setMenuOpen = useStore((state) => state.setMenuOpen);
   const currentView = useStore((state) => state.currentView);
   const pontos = useStore((state) => state.pontos);
-
-  // Estabilizar callback para evitar re-renderizações infinitas
-  const handleLocationSelect = useCallback((location: { lat: number; lng: number; address: string }) => {
-    setSearchLocation(location);
-  }, []);
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -114,7 +109,7 @@ export default function HomePage() {
       {currentView === 'map' && (
         <div className="fixed top-[90px] left-1/2 -translate-x-1/2 z-30 w-full max-w-lg px-4">
           <AddressSearch
-            onLocationSelect={handleLocationSelect}
+            onLocationSelect={(location) => setSearchLocation(location)}
           />
         </div>
       )}

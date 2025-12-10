@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Ponto } from '@/lib/types';
 import { api } from '@/lib/api';
 import { Building2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -15,17 +15,28 @@ interface MapTooltipProps {
 
 export default function MapTooltip({ ponto, position, onStreetViewClick, onMouseEnter, onMouseLeave }: MapTooltipProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageSize, setImageSize] = useState({ width: 288, height: 192 }); // Default: w-72 h-48
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const imagens = ponto.imagens || [];
 
   // Auto-rotate imagens a cada 3 segundos
   useEffect(() => {
-    if (imagens.length <= 1) return undefined;
+    if (imagens.length <= 1) return;
 
-    const interval = setInterval(() => {
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    intervalRef.current = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
     }, 3000);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, [imagens.length]);
 
   // Reset quando o ponto mudar
@@ -41,6 +52,15 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
     setCurrentImageIndex((prev) => (prev - 1 + imagens.length) % imagens.length);
   };
 
+  // Format address with line breaks
+  const formatAddress = (address: string) => {
+    // Break address at commas for better readability
+    const parts = address.split(',').map(p => p.trim());
+    return parts;
+  };
+
+  const addressParts = formatAddress(ponto.endereco);
+
   return (
     <div
       className="absolute z-40 pointer-events-auto"
@@ -52,14 +72,29 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <div className="bg-white rounded-xl shadow-2xl overflow-hidden card-shadow min-w-[250px] max-w-[400px] animate-in fade-in zoom-in-95 duration-200 ease-out">
+      <div className="bg-white rounded-xl shadow-2xl overflow-hidden card-shadow animate-in fade-in zoom-in-95 duration-300 ease-out">
         {/* Imagens com Carrossel */}
         {imagens.length > 0 && (
-          <div className="relative h-48 w-full bg-gray-200">
+          <div
+            className="relative bg-gray-200"
+            style={{
+              width: 'auto',
+              maxWidth: '320px',
+              minWidth: '240px',
+              height: '180px'
+            }}
+          >
             <img
               src={api.getImageUrl(imagens[currentImageIndex])}
               alt={ponto.codigo_ooh}
               className="w-full h-full object-cover"
+              onLoad={(e) => {
+                const img = e.target as HTMLImageElement;
+                const aspectRatio = img.naturalWidth / img.naturalHeight;
+                const height = 180;
+                const width = Math.min(Math.max(height * aspectRatio, 240), 320);
+                setImageSize({ width, height });
+              }}
             />
 
             {/* Botões de navegação do carrossel */}
@@ -99,16 +134,20 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
         )}
 
         {/* Conteúdo */}
-        <div className="p-4">
+        <div className="p-4" style={{ maxWidth: imageSize.width + 'px' }}>
           {/* Código OOH */}
           <h3 className="font-bold text-emidias-primary text-base mb-1">
             {ponto.codigo_ooh}
           </h3>
 
           {/* Endereço com quebra de linha */}
-          <p className="text-sm text-gray-600 mb-2 break-words whitespace-normal line-clamp-3">
-            {ponto.endereco}
-          </p>
+          <div className="text-sm text-gray-600 mb-2">
+            {addressParts.map((part, idx) => (
+              <div key={idx} className="leading-tight">
+                {part}{idx < addressParts.length - 1 ? ',' : ''}
+              </div>
+            ))}
+          </div>
 
           {/* Exibidora */}
           {ponto.exibidora_nome && (

@@ -3,9 +3,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { X, Upload, Plus, Trash2, MapPin, Loader2, ChevronDown, Building2 } from 'lucide-react';
+import { X, Upload, Plus, Trash2, MapPin, Loader2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
-import ExibidoraModal from './ExibidoraModal';
 
 interface Custo {
   produto: string; // Locação, Papel, Lona
@@ -37,11 +36,8 @@ export default function CreatePointModal() {
   const setEditingPonto = useStore((state) => state.setEditingPonto);
   const exibidoras = useStore((state) => state.exibidoras);
   const setPontos = useStore((state) => state.setPontos);
-  const setExibidoras = useStore((state) => state.setExibidoras);
   const streetViewCoordinates = useStore((state) => state.streetViewCoordinates);
   const setStreetViewCoordinates = useStore((state) => state.setStreetViewCoordinates);
-  const isExibidoraModalOpen = useStore((state) => state.isExibidoraModalOpen);
-  const setExibidoraModalOpen = useStore((state) => state.setExibidoraModalOpen);
 
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -100,7 +96,6 @@ export default function CreatePointModal() {
         setImagesPreviews(editingPonto.imagens.map(img => api.getImageUrl(img)));
       }
     }
-    return undefined;
   }, [editingPonto, isModalOpen]);
 
   // Preencher coordenadas do Street View
@@ -134,7 +129,6 @@ export default function CreatePointModal() {
 
       reverseGeocode();
     }
-    return undefined;
   }, [streetViewCoordinates, isModalOpen]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -178,23 +172,25 @@ export default function CreatePointModal() {
     setCustos(custos.filter((_, i) => i !== index));
   };
 
-  // Formatar moeda
-  const formatCurrency = (value: string): string => {
-    const numbers = value.replace(/\D/g, '');
-    if (!numbers) return '';
-    const amount = parseInt(numbers) / 100;
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(amount);
-  };
-
   const updateCusto = (index: number, field: keyof Custo, value: string) => {
     const newCustos = [...custos];
 
-    // Formatar valor como moeda
+    // Format currency for valor field
     if (field === 'valor') {
-      newCustos[index][field] = formatCurrency(value);
+      // Remove tudo exceto números
+      const numbers = value.replace(/\D/g, '');
+
+      // Converter para centavos e formatar
+      if (numbers) {
+        const valueInCents = parseInt(numbers);
+        const formatted = (valueInCents / 100).toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        });
+        newCustos[index][field] = formatted;
+      } else {
+        newCustos[index][field] = '';
+      }
     } else {
       newCustos[index][field] = value;
     }
@@ -363,440 +359,464 @@ export default function CreatePointModal() {
   if (!isModalOpen) return null;
 
   return (
-    <>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        {/* Overlay */}
-        <div
-          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-          onClick={handleClose}
-        />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Overlay */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={handleClose}
+      />
 
-        {/* Modal */}
-        <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-          {/* Header */}
-          <div className="gradient-primary px-6 py-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-white">
-                {editingPonto ? 'Editar Ponto OOH' : 'Novo Ponto OOH'}
-              </h2>
-              <p className="text-white/80 text-sm mt-1">
-                Etapa {currentStep} de 2
-              </p>
-            </div>
-            <button
-              onClick={handleClose}
-              className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-lg transition"
-            >
-              <X size={24} />
-            </button>
+      {/* Modal */}
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="gradient-primary px-6 py-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-white">
+              {editingPonto ? 'Editar Ponto OOH' : 'Novo Ponto OOH'}
+            </h2>
+            <p className="text-white/80 text-sm mt-1">
+              Etapa {currentStep} de 2
+            </p>
           </div>
+          <button
+            onClick={handleClose}
+            className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-lg transition"
+          >
+            <X size={24} />
+          </button>
+        </div>
 
-          {/* Progress Bar */}
-          <div className="bg-gray-100 h-2">
-            <div
-              className="bg-emidias-accent h-full transition-all duration-300"
-              style={{ width: `${(currentStep / 2) * 100}%` }}
-            />
-          </div>
+        {/* Progress Bar */}
+        <div className="bg-gray-100 h-2">
+          <div
+            className="bg-emidias-accent h-full transition-all duration-300"
+            style={{ width: `${(currentStep / 2) * 100}%` }}
+          />
+        </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {currentStep === 1 && (
-              <div className="space-y-6">
-                {/* Código OOH */}
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              {/* Código OOH */}
+              <div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                  Código OOH <span className="text-emidias-accent">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={codigoOoh}
+                  onChange={(e) => setCodigoOoh(e.target.value)}
+                  className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                  placeholder="Ex: OOH-001"
+                />
+                {errors.codigoOoh && (
+                  <p className="text-red-500 text-sm mt-1">{errors.codigoOoh}</p>
+                )}
+              </div>
+
+              {/* Endereço com Geocoding */}
+              <div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                  Endereço Completo <span className="text-emidias-accent">*</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={endereco}
+                    onChange={(e) => setEndereco(e.target.value)}
+                    className="flex-1 px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                    placeholder="Rua, número, bairro, cidade - UF"
+                  />
+                  <button
+                    onClick={geocodeAddress}
+                    disabled={isGeocoding}
+                    className="px-4 py-3 bg-emidias-success text-white rounded-lg hover:bg-emidias-success-light transition font-medium flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {isGeocoding ? (
+                      <Loader2 className="animate-spin" size={20} />
+                    ) : (
+                      <MapPin size={20} />
+                    )}
+                    Buscar
+                  </button>
+                </div>
+                {errors.endereco && (
+                  <p className="text-red-500 text-sm mt-1">{errors.endereco}</p>
+                )}
+              </div>
+
+              {/* Coordenadas */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                    Código OOH <span className="text-emidias-accent">*</span>
+                    Latitude <span className="text-emidias-accent">*</span>
                   </label>
                   <input
                     type="text"
-                    value={codigoOoh}
-                    onChange={(e) => setCodigoOoh(e.target.value)}
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
                     className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                    placeholder="Ex: OOH-001"
+                    placeholder="-23.5505"
                   />
-                  {errors.codigoOoh && (
-                    <p className="text-red-500 text-sm mt-1">{errors.codigoOoh}</p>
-                  )}
                 </div>
-
-                {/* Endereço com Geocoding */}
                 <div>
                   <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                    Endereço Completo <span className="text-emidias-accent">*</span>
+                    Longitude <span className="text-emidias-accent">*</span>
                   </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={endereco}
-                      onChange={(e) => setEndereco(e.target.value)}
-                      className="flex-1 px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                      placeholder="Rua, número, bairro, cidade - UF"
-                    />
-                    <button
-                      onClick={geocodeAddress}
-                      disabled={isGeocoding}
-                      className="px-4 py-3 bg-emidias-success text-white rounded-lg hover:bg-emidias-success-light transition font-medium flex items-center gap-2 disabled:opacity-50"
-                    >
-                      {isGeocoding ? (
-                        <Loader2 className="animate-spin" size={20} />
-                      ) : (
-                        <MapPin size={20} />
-                      )}
-                      Buscar
-                    </button>
-                  </div>
-                  {errors.endereco && (
-                    <p className="text-red-500 text-sm mt-1">{errors.endereco}</p>
-                  )}
-                </div>
-
-                {/* Coordenadas */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                      Latitude <span className="text-emidias-accent">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={latitude}
-                      onChange={(e) => setLatitude(e.target.value)}
-                      className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                      placeholder="-23.5505"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                      Longitude <span className="text-emidias-accent">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={longitude}
-                      onChange={(e) => setLongitude(e.target.value)}
-                      className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                      placeholder="-46.6333"
-                    />
-                  </div>
-                </div>
-                {errors.coordenadas && (
-                  <p className="text-red-500 text-sm mt-1">{errors.coordenadas}</p>
-                )}
-
-                {/* Cidade e UF */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                      Cidade
-                    </label>
-                    <input
-                      type="text"
-                      value={cidade}
-                      onChange={(e) => setCidade(e.target.value)}
-                      className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                      placeholder="São Paulo"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                      UF
-                    </label>
-                    <input
-                      type="text"
-                      value={uf}
-                      onChange={(e) => setUf(e.target.value.toUpperCase())}
-                      className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                      placeholder="SP"
-                      maxLength={2}
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                    placeholder="-46.6333"
+                  />
                 </div>
               </div>
-            )}
+              {errors.coordenadas && (
+                <p className="text-red-500 text-sm mt-1">{errors.coordenadas}</p>
+              )}
 
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                {/* Exibidora */}
+              {/* Cidade e UF */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                    Exibidora <span className="text-emidias-accent">*</span>
+                    Cidade
                   </label>
-                  <div className="space-y-2">
-                    <select
-                      value={idExibidora}
-                      onChange={(e) => setIdExibidora(e.target.value)}
-                      className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                    >
-                      <option value="">Selecione...</option>
-                      {exibidoras.map((ex) => (
-                        <option key={ex.id} value={ex.id}>
-                          {ex.nome}
-                        </option>
-                      ))}
-                    </select>
-
-                    {/* Botão Criar Nova Exibidora */}
-                    <button
-                      type="button"
-                      onClick={() => setExibidoraModalOpen(true)}
-                      className="w-full px-4 py-2 border-2 border-dashed border-emidias-primary/30 text-emidias-primary rounded-lg hover:bg-emidias-primary/5 transition flex items-center justify-center gap-2 text-sm font-medium"
-                    >
-                      <Plus size={16} />
-                      Criar Nova Exibidora
-                    </button>
-                  </div>
-                  {errors.idExibidora && (
-                    <p className="text-red-500 text-sm mt-1">{errors.idExibidora}</p>
-                  )}
+                  <input
+                    type="text"
+                    value={cidade}
+                    onChange={(e) => setCidade(e.target.value)}
+                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                    placeholder="São Paulo"
+                  />
                 </div>
-
-                {/* Medidas e Fluxo */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                      Medidas
-                    </label>
-                    <input
-                      type="text"
-                      value={medidas}
-                      onChange={(e) => setMedidas(e.target.value)}
-                      className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                      placeholder="Ex: 9x3m"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                      Fluxo (pessoas/dia)
-                    </label>
-                    <input
-                      type="number"
-                      value={fluxo}
-                      onChange={(e) => setFluxo(e.target.value)}
-                      className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                      placeholder="50000"
-                    />
-                  </div>
-                </div>
-
-                {/* Tipo (Multiselect) */}
                 <div>
                   <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                    Tipo
+                    UF
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {TIPOS_OOH.map((tipo) => (
-                      <button
-                        key={tipo}
-                        type="button"
-                        onClick={() => toggleTipo(tipo)}
-                        className={`px-3 py-2 rounded-lg border-2 transition font-medium text-sm ${tipos.includes(tipo)
-                          ? 'border-emidias-accent bg-pink-50 text-emidias-accent'
-                          : 'border-emidias-gray/30 hover:border-emidias-accent text-gray-700'
-                          }`}
-                      >
-                        {tipo}
-                      </button>
-                    ))}
-                  </div>
+                  <input
+                    type="text"
+                    value={uf}
+                    onChange={(e) => setUf(e.target.value.toUpperCase())}
+                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                    placeholder="SP"
+                    maxLength={2}
+                  />
                 </div>
+              </div>
+            </div>
+          )}
 
-                {/* Custos */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="block text-sm font-semibold text-emidias-primary">
-                      Custos
-                    </label>
-                    <button
-                      type="button"
-                      onClick={addCusto}
-                      className="text-emidias-accent hover:text-emidias-primary text-sm font-medium flex items-center gap-1"
-                    >
-                      <Plus size={16} />
-                      Adicionar
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {custos.map((custo, index) => (
-                      <div key={index} className="flex gap-3 items-start p-4 bg-gray-50 rounded-lg">
-                        <div className="flex-1 grid grid-cols-3 gap-3">
-                          <select
-                            value={custo.produto}
-                            onChange={(e) => updateCusto(index, 'produto', e.target.value)}
-                            className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                          >
-                            <option value="">Produto...</option>
-                            {PRODUTOS_CUSTO.map((produto) => (
-                              <option key={produto} value={produto}>
-                                {produto}
-                              </option>
-                            ))}
-                          </select>
-
-                          <input
-                            type="text"
-                            value={custo.valor}
-                            onChange={(e) => updateCusto(index, 'valor', e.target.value)}
-                            className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                            placeholder="R$ 1.000,00"
-                          />
-
-                          {/* Período só aparece se produto = Locação */}
-                          {custo.produto === 'Locação' ? (
-                            <select
-                              value={custo.periodo}
-                              onChange={(e) => updateCusto(index, 'periodo', e.target.value)}
-                              className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                            >
-                              <option value="">Período...</option>
-                              {PERIODOS.map((periodo) => (
-                                <option key={periodo} value={periodo}>
-                                  {periodo}
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            <div className="px-3 py-2 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm">
-                              N/A
-                            </div>
-                          )}
-                        </div>
-
-                        {custos.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeCusto(index)}
-                            className="text-red-500 hover:text-red-700 p-2"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  {errors.custos && (
-                    <p className="text-red-500 text-sm mt-1">{errors.custos}</p>
-                  )}
-                </div>
-
-                {/* Upload de Imagens */}
-                <div>
-                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                    Imagens
-                  </label>
-                  <div
-                    {...getRootProps()}
-                    className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${isDragActive
-                      ? 'border-emidias-accent bg-pink-50'
-                      : 'border-emidias-gray/30 hover:border-emidias-accent'
-                      }`}
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              {/* Exibidora */}
+              <div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                  Exibidora <span className="text-emidias-accent">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={idExibidora}
+                    onChange={(e) => {
+                      if (e.target.value === 'CREATE_NEW') {
+                        // Open ExibidoraModal
+                        useStore.getState().setExibidoraModalOpen(true);
+                      } else {
+                        setIdExibidora(e.target.value);
+                      }
+                    }}
+                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition appearance-none"
+                    style={{
+                      backgroundImage: idExibidora && idExibidora !== 'CREATE_NEW'
+                        ? `url(${api.getImageUrl(exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key || '')})`
+                        : 'none',
+                      backgroundSize: '32px 32px',
+                      backgroundPosition: '12px center',
+                      backgroundRepeat: 'no-repeat',
+                      paddingLeft: idExibidora && idExibidora !== 'CREATE_NEW' ? '52px' : '16px'
+                    }}
                   >
-                    <input {...getInputProps()} />
-                    <Upload className="mx-auto text-emidias-gray mb-3" size={32} />
-                    <p className="text-emidias-primary font-medium">
-                      {isDragActive ? 'Solte as imagens aqui' : 'Arraste imagens ou clique para selecionar'}
-                    </p>
-                    <p className="text-gray-500 text-sm mt-1">
-                      PNG, JPG, JPEG ou WEBP (múltiplas imagens)
-                    </p>
-                  </div>
-
-                  {/* Previews */}
-                  {imagesPreviews.length > 0 && (
-                    <div className="mt-4 grid grid-cols-4 gap-3">
-                      {imagesPreviews.map((preview, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={preview}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg"
-                          />
-                          <button
-                            onClick={() => removeImage(index)}
-                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                      ))}
+                    <option value="">Selecione...</option>
+                    <option value="CREATE_NEW" className="font-semibold text-emidias-accent">
+                      ➕ Criar nova exibidora
+                    </option>
+                    {exibidoras.map((ex) => (
+                      <option
+                        key={ex.id}
+                        value={ex.id}
+                        style={{
+                          backgroundImage: ex.logo_r2_key ? `url(${api.getImageUrl(ex.logo_r2_key)})` : 'none',
+                          backgroundSize: '24px 24px',
+                          backgroundPosition: '8px center',
+                          backgroundRepeat: 'no-repeat',
+                          paddingLeft: ex.logo_r2_key ? '40px' : '12px'
+                        }}
+                      >
+                        {ex.nome}
+                      </option>
+                    ))}
+                  </select>
+                  {/* Logo preview next to selected */}
+                  {idExibidora && idExibidora !== 'CREATE_NEW' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key && (
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded overflow-hidden pointer-events-none">
+                      <img
+                        src={api.getImageUrl(exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key || '')}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   )}
                 </div>
+                {errors.idExibidora && (
+                  <p className="text-red-500 text-sm mt-1">{errors.idExibidora}</p>
+                )}
+              </div>
 
-                {/* Observações */}
+              {/* Medidas e Fluxo */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                    Observações
+                    Medidas
                   </label>
-                  <textarea
-                    value={observacoes}
-                    onChange={(e) => setObservacoes(e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition resize-none"
-                    placeholder="Informações adicionais sobre o ponto..."
+                  <input
+                    type="text"
+                    value={medidas}
+                    onChange={(e) => setMedidas(e.target.value)}
+                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                    placeholder="Ex: 9x3m"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                    Fluxo (pessoas/dia)
+                  </label>
+                  <input
+                    type="number"
+                    value={fluxo}
+                    onChange={(e) => setFluxo(e.target.value)}
+                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                    placeholder="50000"
                   />
                 </div>
               </div>
-            )}
 
-            {/* Error de submit */}
-            {errors.submit && (
-              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-600">{errors.submit}</p>
+              {/* Tipo (Multiselect) */}
+              <div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                  Tipo
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {TIPOS_OOH.map((tipo) => (
+                    <button
+                      key={tipo}
+                      type="button"
+                      onClick={() => toggleTipo(tipo)}
+                      className={`px-3 py-2 rounded-lg border-2 transition font-medium text-sm ${tipos.includes(tipo)
+                        ? 'border-emidias-accent bg-pink-50 text-emidias-accent'
+                        : 'border-emidias-gray/30 hover:border-emidias-accent text-gray-700'
+                        }`}
+                    >
+                      {tipo}
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              {/* Custos */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-semibold text-emidias-primary">
+                    Custos
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addCusto}
+                    className="text-emidias-accent hover:text-emidias-primary text-sm font-medium flex items-center gap-1"
+                  >
+                    <Plus size={16} />
+                    Adicionar
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {custos.map((custo, index) => (
+                    <div key={index} className="flex gap-3 items-start p-4 bg-gray-50 rounded-lg">
+                      <div className="flex-1 grid grid-cols-3 gap-3">
+                        <select
+                          value={custo.produto}
+                          onChange={(e) => updateCusto(index, 'produto', e.target.value)}
+                          className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                        >
+                          <option value="">Produto...</option>
+                          {PRODUTOS_CUSTO.map((produto) => (
+                            <option key={produto} value={produto}>
+                              {produto}
+                            </option>
+                          ))}
+                        </select>
+
+                        <input
+                          type="text"
+                          value={custo.valor}
+                          onChange={(e) => updateCusto(index, 'valor', e.target.value)}
+                          className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                          placeholder="R$ 1.000,00"
+                        />
+
+                        {/* Período só aparece se produto = Locação */}
+                        {custo.produto === 'Locação' ? (
+                          <select
+                            value={custo.periodo}
+                            onChange={(e) => updateCusto(index, 'periodo', e.target.value)}
+                            className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                          >
+                            <option value="">Período...</option>
+                            {PERIODOS.map((periodo) => (
+                              <option key={periodo} value={periodo}>
+                                {periodo}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="px-3 py-2 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm">
+                            N/A
+                          </div>
+                        )}
+                      </div>
+
+                      {custos.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeCusto(index)}
+                          className="text-red-500 hover:text-red-700 p-2"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {errors.custos && (
+                  <p className="text-red-500 text-sm mt-1">{errors.custos}</p>
+                )}
+              </div>
+
+              {/* Upload de Imagens */}
+              <div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                  Imagens
+                </label>
+                <div
+                  {...getRootProps()}
+                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${isDragActive
+                    ? 'border-emidias-accent bg-pink-50'
+                    : 'border-emidias-gray/30 hover:border-emidias-accent'
+                    }`}
+                >
+                  <input {...getInputProps()} />
+                  <Upload className="mx-auto text-emidias-gray mb-3" size={32} />
+                  <p className="text-emidias-primary font-medium">
+                    {isDragActive ? 'Solte as imagens aqui' : 'Arraste imagens ou clique para selecionar'}
+                  </p>
+                  <p className="text-gray-500 text-sm mt-1">
+                    PNG, JPG, JPEG ou WEBP (múltiplas imagens)
+                  </p>
+                </div>
+
+                {/* Previews */}
+                {imagesPreviews.length > 0 && (
+                  <div className="mt-4 grid grid-cols-4 gap-3">
+                    {imagesPreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg"
+                        />
+                        <button
+                          onClick={() => removeImage(index)}
+                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Observações */}
+              <div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                  Observações
+                </label>
+                <textarea
+                  value={observacoes}
+                  onChange={(e) => setObservacoes(e.target.value)}
+                  rows={4}
+                  className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition resize-none"
+                  placeholder="Informações adicionais sobre o ponto..."
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Error de submit */}
+          {errors.submit && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600">{errors.submit}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between">
+          <div>
+            {currentStep === 2 && (
+              <button
+                onClick={() => setCurrentStep(1)}
+                className="px-6 py-2 text-emidias-primary hover:bg-gray-100 rounded-lg transition font-medium"
+              >
+                Voltar
+              </button>
             )}
           </div>
 
-          {/* Footer */}
-          <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between">
-            <div>
-              {currentStep === 2 && (
-                <button
-                  onClick={() => setCurrentStep(1)}
-                  className="px-6 py-2 text-emidias-primary hover:bg-gray-100 rounded-lg transition font-medium"
-                >
-                  Voltar
-                </button>
-              )}
-            </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleClose}
+              className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition font-medium"
+            >
+              Cancelar
+            </button>
 
-            <div className="flex items-center gap-3">
+            {currentStep === 1 ? (
               <button
-                onClick={handleClose}
-                className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition font-medium"
+                onClick={handleNext}
+                className="px-6 py-2 gradient-primary text-white rounded-lg hover-lift transition font-medium shadow-lg"
               >
-                Cancelar
+                Próximo
               </button>
-
-              {currentStep === 1 ? (
-                <button
-                  onClick={handleNext}
-                  className="px-6 py-2 gradient-primary text-white rounded-lg hover-lift transition font-medium shadow-lg"
-                >
-                  Próximo
-                </button>
-              ) : (
-                <button
-                  onClick={handleSubmit}
-                  disabled={isLoading}
-                  className="px-6 py-2 bg-emidias-accent text-white rounded-lg hover:bg-[#E01A6A] hover-lift transition font-medium shadow-lg disabled:opacity-50 flex items-center gap-2"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="animate-spin" size={20} />
-                      Salvando...
-                    </>
-                  ) : (
-                    'Salvar Ponto'
-                  )}
-                </button>
-              )}
-            </div>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="px-6 py-2 bg-emidias-accent text-white rounded-lg hover:bg-[#E01A6A] hover-lift transition font-medium shadow-lg disabled:opacity-50 flex items-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="animate-spin" size={20} />
+                    Salvando...
+                  </>
+                ) : (
+                  'Salvar Ponto'
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
-
-      {/* ExibidoraModal - Overlay para criar nova exibidora */}
-      <ExibidoraModal />
-    </>
+    </div>
   );
 }

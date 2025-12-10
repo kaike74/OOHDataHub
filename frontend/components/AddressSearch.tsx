@@ -15,7 +15,7 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
   const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
-    if (!inputRef.current || !window.google) return undefined;
+    if (!inputRef.current || !window.google) return;
 
     // Inicializar autocomplete
     autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {

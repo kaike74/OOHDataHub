@@ -36,7 +36,6 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
     // Inicializar mapa
     useEffect(() => {
         const initMap = async () => {
-            console.log('GoogleMap loaded v2.0-fix-310-final');
             if (!mapRef.current || googleMapRef.current) return;
 
             // Carrega o Google Maps API manualmente
@@ -104,12 +103,11 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
         };
 
         initMap();
-        return undefined;
     }, []);
 
     // Atualizar markers quando pontos mudarem
     useEffect(() => {
-        if (!isLoaded || !googleMapRef.current) return undefined;
+        if (!isLoaded || !googleMapRef.current) return;
 
         // Limpar markers antigos
         markersRef.current.forEach((marker) => marker.setMap(null));
@@ -203,7 +201,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             });
             googleMapRef.current.fitBounds(bounds);
         }
-    }, [pontos, filterExibidora, isLoaded]);
+    }, [pontos, filterExibidora, isLoaded, setSelectedPonto]);
 
     // Centralizar mapa quando search location mudar
     useEffect(() => {

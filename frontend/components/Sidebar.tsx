@@ -4,7 +4,7 @@ import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export default function Sidebar() {
     const selectedPonto = useStore((state) => state.selectedPonto);
@@ -28,14 +28,10 @@ export default function Sidebar() {
         alert('Funcionalidade de histórico será implementada em breve');
     };
 
-    const setStreetViewPosition = useStore((state) => state.setStreetViewPosition);
-
     const handleStreetView = () => {
         if (selectedPonto && selectedPonto.latitude && selectedPonto.longitude) {
-            setStreetViewPosition({
-                lat: selectedPonto.latitude,
-                lng: selectedPonto.longitude
-            });
+            const url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${selectedPonto.latitude},${selectedPonto.longitude}`;
+            window.open(url, '_blank');
         }
     };
 
@@ -53,22 +49,6 @@ export default function Sidebar() {
         setCurrentImageIndex((prev) => (prev - 1 + imagens.length) % imagens.length);
     };
 
-    // Auto-rotate images every 3 seconds
-    useEffect(() => {
-        if (imagens.length <= 1) return undefined;
-
-        const interval = setInterval(() => {
-            setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
-        }, 3000);
-
-        return () => clearInterval(interval);
-    }, [imagens.length]);
-
-    // Reset image index when ponto changes
-    useEffect(() => {
-        setCurrentImageIndex(0);
-    }, [selectedPonto?.id]);
-
     return (
         <>
             {/* Overlay */}
@@ -79,23 +59,23 @@ export default function Sidebar() {
 
             {/* Sidebar */}
             <div className="fixed right-0 top-[70px] h-[calc(100vh-70px)] w-full sm:w-96 bg-white shadow-2xl z-30 transform transition-transform duration-300 ease-in-out overflow-y-auto">
-                {/* Botão Fechar - Sticky no topo */}
-                <button
-                    onClick={() => setSidebarOpen(false)}
-                    className="sticky top-0 right-0 z-50 float-right m-3 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full shadow-lg hover:scale-105 transition-all"
-                    title="Fechar"
-                >
-                    <X size={20} strokeWidth={2} />
-                </button>
-
                 {/* Header com imagens */}
                 {imagens.length > 0 && (
-                    <div className="relative h-64 bg-gray-200 -mt-12">
+                    <div className="relative h-64 bg-gray-200">
                         <img
                             src={api.getImageUrl(imagens[currentImageIndex])}
                             alt={`Imagem ${currentImageIndex + 1}`}
                             className="w-full h-full object-cover"
                         />
+
+                        {/* Botão Fechar - Canto superior direito da imagem */}
+                        <button
+                            onClick={() => setSidebarOpen(false)}
+                            className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full shadow-lg hover:scale-105 transition-all z-10"
+                            title="Fechar"
+                        >
+                            <X size={20} strokeWidth={2} />
+                        </button>
 
                         {imagens.length > 1 && (
                             <>
