@@ -60,7 +60,7 @@ export default function ExibidoraSidebar() {
                         <img
                             src={api.getImageUrl(selectedExibidora.logo_r2_key)}
                             alt={selectedExibidora.nome}
-                            className="w-full h-full object-contain p-8 bg-white/10"
+                            className="w-full h-full object-cover"
                         />
                     ) : (
                         <Building2 size={80} className="text-white/80" />

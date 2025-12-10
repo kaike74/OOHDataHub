@@ -66,7 +66,7 @@ export default function ExibidorasView() {
                                     <img
                                         src={api.getImageUrl(exibidora.logo_r2_key)}
                                         alt={exibidora.nome}
-                                        className="w-full h-full object-contain p-6 bg-white/10"
+                                        className="w-full h-full object-cover"
                                     />
                                 ) : (
                                     <Building2 size={64} className="text-white/80" />
