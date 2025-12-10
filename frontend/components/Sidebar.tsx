@@ -14,6 +14,10 @@ export default function Sidebar() {
     const setModalOpen = useStore((state) => state.setModalOpen);
     const setEditingPonto = useStore((state) => state.setEditingPonto);
     const setStreetViewRequest = useStore((state) => state.setStreetViewRequest);
+    const setSelectedExibidora = useStore((state) => state.setSelectedExibidora);
+    const setFilterExibidora = useStore((state) => state.setFilterExibidora);
+    const setCurrentView = useStore((state) => state.setCurrentView);
+    const exibidoras = useStore((state) => state.exibidoras);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -43,6 +47,22 @@ export default function Sidebar() {
     const handleClose = useCallback(() => {
         setSidebarOpen(false);
     }, [setSidebarOpen]);
+
+    const handleExibidoraClick = useCallback(() => {
+        if (selectedPonto && selectedPonto.id_exibidora) {
+            const exibidora = exibidoras.find(ex => ex.id === selectedPonto.id_exibidora);
+            if (exibidora) {
+                // Fechar sidebar do ponto
+                setSidebarOpen(false);
+                // Aplicar filtro da exibidora
+                setFilterExibidora(exibidora.id);
+                // Selecionar exibidora (abre ExibidoraSidebar)
+                setSelectedExibidora(exibidora);
+                // Garantir que está na view de mapa
+                setCurrentView('map');
+            }
+        }
+    }, [selectedPonto, exibidoras, setSidebarOpen, setFilterExibidora, setSelectedExibidora, setCurrentView]);
 
     const nextImage = useCallback(() => {
         setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
@@ -170,7 +190,12 @@ export default function Sidebar() {
                                 <Building2 className="text-blue-600 mt-1 flex-shrink-0" size={20} />
                                 <div>
                                     <p className="font-medium text-gray-700">Exibidora</p>
-                                    <p className="text-gray-900">{selectedPonto.exibidora_nome}</p>
+                                    <button
+                                        onClick={handleExibidoraClick}
+                                        className="text-gray-900 hover:text-emidias-accent hover:underline text-left font-medium transition"
+                                    >
+                                        {selectedPonto.exibidora_nome}
+                                    </button>
                                     {selectedPonto.exibidora_cnpj && (
                                         <p className="text-sm text-gray-500">
                                             CNPJ: {selectedPonto.exibidora_cnpj}

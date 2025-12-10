@@ -192,13 +192,14 @@ export default function CreatePointModal() {
       // Remove tudo exceto números
       const numbers = value.replace(/\D/g, '');
 
-      // Converter para centavos e formatar
-      if (numbers) {
-        const valueInCents = parseInt(numbers);
-        const formatted = (valueInCents / 100).toLocaleString('pt-BR', {
-          style: 'currency',
-          currency: 'BRL'
-        });
+      // Formatar com R$
+      if (numbers.length > 0) {
+        // Converter para número (em centavos)
+        const numValue = parseInt(numbers, 10);
+        // Formatar: dividir por 100 para centavos, formatar com vírgula
+        const reais = Math.floor(numValue / 100);
+        const centavos = numValue % 100;
+        const formatted = `R$ ${reais.toLocaleString('pt-BR')},${centavos.toString().padStart(2, '0')}`;
         newCustos[index][field] = formatted;
       } else {
         newCustos[index][field] = '';
@@ -524,53 +525,36 @@ export default function CreatePointModal() {
             <div className="space-y-6">
               {/* Exibidora */}
               <div>
-                <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                  Exibidora <span className="text-emidias-accent">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-semibold text-emidias-primary">
+                    Exibidora <span className="text-emidias-accent">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => useStore.getState().setExibidoraModalOpen(true)}
+                    className="text-xs text-gray-500 hover:text-emidias-primary transition flex items-center gap-1"
+                  >
+                    <Plus size={14} />
+                    Nova exibidora
+                  </button>
+                </div>
                 <div className="relative">
                   <select
                     value={idExibidora}
-                    onChange={(e) => {
-                      if (e.target.value === 'CREATE_NEW') {
-                        // Open ExibidoraModal
-                        useStore.getState().setExibidoraModalOpen(true);
-                      } else {
-                        setIdExibidora(e.target.value);
-                      }
-                    }}
+                    onChange={(e) => setIdExibidora(e.target.value)}
                     className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition appearance-none"
                     style={{
-                      backgroundImage: idExibidora && idExibidora !== 'CREATE_NEW'
-                        ? `url(${api.getImageUrl(exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key || '')})`
-                        : 'none',
-                      backgroundSize: '32px 32px',
-                      backgroundPosition: '12px center',
-                      backgroundRepeat: 'no-repeat',
-                      paddingLeft: idExibidora && idExibidora !== 'CREATE_NEW' ? '52px' : '16px'
+                      paddingLeft: idExibidora && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key ? '52px' : '16px'
                     }}
                   >
-                    <option value="">Selecione...</option>
-                    <option value="CREATE_NEW" className="font-semibold text-emidias-accent">
-                      ➕ Criar nova exibidora
-                    </option>
                     {exibidoras.map((ex) => (
-                      <option
-                        key={ex.id}
-                        value={ex.id}
-                        style={{
-                          backgroundImage: ex.logo_r2_key ? `url(${api.getImageUrl(ex.logo_r2_key)})` : 'none',
-                          backgroundSize: '24px 24px',
-                          backgroundPosition: '8px center',
-                          backgroundRepeat: 'no-repeat',
-                          paddingLeft: ex.logo_r2_key ? '40px' : '12px'
-                        }}
-                      >
+                      <option key={ex.id} value={ex.id}>
                         {ex.nome}
                       </option>
                     ))}
                   </select>
                   {/* Logo preview next to selected */}
-                  {idExibidora && idExibidora !== 'CREATE_NEW' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key && (
+                  {idExibidora && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key && (
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded overflow-hidden pointer-events-none">
                       <img
                         src={api.getImageUrl(exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key || '')}

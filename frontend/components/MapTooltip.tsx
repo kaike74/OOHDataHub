@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Ponto } from '@/lib/types';
 import { api } from '@/lib/api';
+import { useStore } from '@/lib/store';
 import { Building2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface MapTooltipProps {
@@ -14,6 +15,10 @@ interface MapTooltipProps {
 }
 
 export default function MapTooltip({ ponto, position, onStreetViewClick, onMouseEnter, onMouseLeave }: MapTooltipProps) {
+  const exibidoras = useStore((state) => state.exibidoras);
+  const setSelectedExibidora = useStore((state) => state.setSelectedExibidora);
+  const setFilterExibidora = useStore((state) => state.setFilterExibidora);
+  const setCurrentView = useStore((state) => state.setCurrentView);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageSize, setImageSize] = useState({ width: 288, height: 192 }); // Default: w-72 h-48
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -34,6 +39,21 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
     const width = Math.min(Math.max(height * aspectRatio, 240), 320);
     setImageSize({ width, height });
   }, []);
+
+  const handleExibidoraClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (ponto.id_exibidora) {
+      const exibidora = exibidoras.find(ex => ex.id === ponto.id_exibidora);
+      if (exibidora) {
+        // Aplicar filtro da exibidora
+        setFilterExibidora(exibidora.id);
+        // Selecionar exibidora (abre ExibidoraSidebar)
+        setSelectedExibidora(exibidora);
+        // Garantir que está na view de mapa
+        setCurrentView('map');
+      }
+    }
+  }, [ponto.id_exibidora, exibidoras, setFilterExibidora, setSelectedExibidora, setCurrentView]);
 
   // Auto-rotate imagens a cada 3 segundos
   useEffect(() => {
@@ -153,9 +173,14 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
 
           {/* Exibidora */}
           {ponto.exibidora_nome && (
-            <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+            <div className="flex items-center gap-2 text-xs mb-3">
               <Building2 size={14} className="text-emidias-accent flex-shrink-0" />
-              <span className="truncate">{ponto.exibidora_nome}</span>
+              <button
+                onClick={handleExibidoraClick}
+                className="truncate text-gray-500 hover:text-emidias-accent hover:underline transition text-left"
+              >
+                {ponto.exibidora_nome}
+              </button>
             </div>
           )}
 
