@@ -202,7 +202,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             });
             googleMapRef.current.fitBounds(bounds);
         }
-    }, [pontos, filterExibidora, isLoaded, setSelectedPonto]);
+    }, [pontos, filterExibidora, isLoaded]);
 
     // Centralizar mapa quando search location mudar
     useEffect(() => {
