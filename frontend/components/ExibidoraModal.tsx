@@ -21,8 +21,6 @@ export default function ExibidoraModal() {
     const [cnpj, setCnpj] = useState('');
     const [razaoSocial, setRazaoSocial] = useState('');
     const [endereco, setEndereco] = useState('');
-    const [telefone, setTelefone] = useState('');
-    const [email, setEmail] = useState('');
     const [observacoes, setObservacoes] = useState('');
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string>('');
@@ -34,8 +32,6 @@ export default function ExibidoraModal() {
             setCnpj(editingExibidora.cnpj || '');
             setRazaoSocial(editingExibidora.razao_social || '');
             setEndereco(editingExibidora.endereco || '');
-            setTelefone(editingExibidora.telefone || '');
-            setEmail(editingExibidora.email || '');
             setObservacoes(editingExibidora.observacoes || '');
 
             // Carregar preview da logo existente
@@ -87,32 +83,6 @@ export default function ExibidoraModal() {
     const handleCNPJChange = (value: string) => {
         const formatted = formatCNPJ(value);
         setCnpj(formatted);
-
-        // Buscar razão social se CNPJ válido (14 dígitos)
-        const numbers = formatted.replace(/\D/g, '');
-        if (numbers.length === 14) {
-            fetchRazaoSocial(numbers);
-        }
-    };
-
-    // Buscar razão social da ReceitaWS
-    const fetchRazaoSocial = async (cnpjNumbers: string) => {
-        try {
-            const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpjNumbers}`);
-            const data = await response.json();
-
-            if (data.status !== 'ERROR') {
-                setRazaoSocial(data.nome || '');
-                if (data.telefone) setTelefone(data.telefone);
-                if (data.email) setEmail(data.email);
-                if (data.logradouro) {
-                    const enderecoCompleto = `${data.logradouro}, ${data.numero} - ${data.bairro}, ${data.municipio} - ${data.uf}, ${data.cep}`;
-                    setEndereco(enderecoCompleto);
-                }
-            }
-        } catch (error) {
-            console.error('Erro ao buscar dados do CNPJ:', error);
-        }
     };
 
     // Validação
@@ -139,8 +109,6 @@ export default function ExibidoraModal() {
                 cnpj: cnpj.replace(/\D/g, ''),
                 razao_social: razaoSocial.trim() || null,
                 endereco: endereco.trim() || null,
-                telefone: telefone.trim() || null,
-                email: email.trim() || null,
                 observacoes: observacoes.trim() || null,
             };
 
@@ -184,8 +152,6 @@ export default function ExibidoraModal() {
             setCnpj('');
             setRazaoSocial('');
             setEndereco('');
-            setTelefone('');
-            setEmail('');
             setObservacoes('');
             setLogoFile(null);
             setLogoPreview('');
@@ -250,8 +216,8 @@ export default function ExibidoraModal() {
                                 <div
                                     {...getRootProps()}
                                     className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${isDragActive
-                                            ? 'border-emidias-accent bg-pink-50'
-                                            : 'border-emidias-gray/30 hover:border-emidias-accent'
+                                        ? 'border-emidias-accent bg-pink-50'
+                                        : 'border-emidias-gray/30 hover:border-emidias-accent'
                                         }`}
                                 >
                                     <input {...getInputProps()} />
@@ -299,9 +265,6 @@ export default function ExibidoraModal() {
                             {errors.cnpj && (
                                 <p className="text-red-500 text-sm mt-1">{errors.cnpj}</p>
                             )}
-                            <p className="text-gray-500 text-xs mt-1">
-                                A razão social será preenchida automaticamente
-                            </p>
                         </div>
 
                         {/* Razão Social */}
@@ -313,9 +276,8 @@ export default function ExibidoraModal() {
                                 type="text"
                                 value={razaoSocial}
                                 onChange={(e) => setRazaoSocial(e.target.value)}
-                                className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition bg-gray-50"
-                                placeholder="Preenchido automaticamente pelo CNPJ"
-                                readOnly
+                                className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                                placeholder="Digite a razão social"
                             />
                         </div>
 
@@ -333,33 +295,7 @@ export default function ExibidoraModal() {
                             />
                         </div>
 
-                        {/* Telefone e Email */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                                    Telefone
-                                </label>
-                                <input
-                                    type="text"
-                                    value={telefone}
-                                    onChange={(e) => setTelefone(e.target.value)}
-                                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                                    placeholder="(00) 0000-0000"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                                    E-mail
-                                </label>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                                    placeholder="contato@empresa.com"
-                                />
-                            </div>
-                        </div>
+
 
                         {/* Observações */}
                         <div>

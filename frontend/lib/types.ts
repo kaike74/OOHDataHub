@@ -37,8 +37,6 @@ export interface Exibidora {
     cnpj: string | null;
     razao_social: string | null;
     endereco: string | null;
-    telefone: string | null;
-    email: string | null;
     observacoes: string | null;
     logo_r2_key: string | null;
     created_at: string;
