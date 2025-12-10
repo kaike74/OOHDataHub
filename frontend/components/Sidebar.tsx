@@ -159,8 +159,8 @@ export default function Sidebar() {
         }
     }, [selectedPonto?.id]);
 
-    // Só mostra se tiver ponto selecionado (não exibidora)
-    if (!selectedPonto || !isSidebarOpen || selectedExibidora) return null;
+    // Só mostra se tiver ponto selecionado
+    if (!selectedPonto || !isSidebarOpen) return null;
 
     return (
         <>

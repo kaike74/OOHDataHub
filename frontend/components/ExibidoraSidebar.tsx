@@ -64,6 +64,7 @@ function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undef
 
 export default function ExibidoraSidebar() {
     const selectedExibidora = useStore((state) => state.selectedExibidora);
+    const selectedPonto = useStore((state) => state.selectedPonto);
     const isSidebarOpen = useStore((state) => state.isSidebarOpen);
     const setSidebarOpen = useStore((state) => state.setSidebarOpen);
     const setCurrentView = useStore((state) => state.setCurrentView);
@@ -99,7 +100,8 @@ export default function ExibidoraSidebar() {
         setExibidoraModalOpen(true);
     };
 
-    if (!selectedExibidora || !isSidebarOpen) return null;
+    // Só mostra se tiver exibidora selecionada e NÃO tiver ponto selecionado
+    if (!selectedExibidora || !isSidebarOpen || selectedPonto) return null;
 
     return (
         <>
