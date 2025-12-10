@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
 import Image from 'next/image';
 import { Loader2 } from 'lucide-react';
 
@@ -17,14 +16,33 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const router = useRouter();
-    const { login } = useAuth();
 
     const handleGoogleLogin = async (response: any) => {
         setLoading(true);
         setError('');
 
         try {
-            await login(response.credential);
+            // Call API to verify Google token
+            const apiResponse = await fetch(`https://ooh-system.kaike-458.workers.dev/api/auth/google`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ token: response.credential })
+            });
+
+            if (!apiResponse.ok) {
+                const errorData = await apiResponse.json();
+                throw new Error(errorData.error || 'Login failed');
+            }
+
+            const data = await apiResponse.json();
+
+            // Store token and user data
+            localStorage.setItem('auth_token', response.credential);
+            localStorage.setItem('user', JSON.stringify(data.user));
+
+            // Redirect to home
             router.push('/');
         } catch (err: any) {
             console.error('Login error:', err);
