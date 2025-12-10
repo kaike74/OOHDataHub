@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useStore } from '@/lib/store';
-import { X, Filter as FilterIcon, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Filter as FilterIcon, ChevronDown, ChevronUp, Search } from 'lucide-react';
 
 interface MapFiltersProps {
   isOpen: boolean;
@@ -12,22 +12,43 @@ interface MapFiltersProps {
 export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
   const pontos = useStore((state) => state.pontos);
   const exibidoras = useStore((state) => state.exibidoras);
+
+  // Get current filters from store
+  const filterPais = useStore((state) => state.filterPais);
   const filterCidade = useStore((state) => state.filterCidade);
   const filterUF = useStore((state) => state.filterUF);
   const filterExibidora = useStore((state) => state.filterExibidora);
+  const filterTipos = useStore((state) => state.filterTipos);
+  const filterValorMin = useStore((state) => state.filterValorMin);
+  const filterValorMax = useStore((state) => state.filterValorMax);
+
+  // Actions
+  const setFilterPais = useStore((state) => state.setFilterPais);
   const setFilterCidade = useStore((state) => state.setFilterCidade);
   const setFilterUF = useStore((state) => state.setFilterUF);
   const setFilterExibidora = useStore((state) => state.setFilterExibidora);
+  const setFilterTipos = useStore((state) => state.setFilterTipos);
+  const setFilterValorMin = useStore((state) => state.setFilterValorMin);
+  const setFilterValorMax = useStore((state) => state.setFilterValorMax);
   const clearFilters = useStore((state) => state.clearFilters);
 
-  const [selectedCidades, setSelectedCidades] = useState<string[]>([]);
-  const [selectedUFs, setSelectedUFs] = useState<string[]>([]);
-  const [selectedExibidoras, setSelectedExibidoras] = useState<number[]>([]);
-  const [valorMin, setValorMin] = useState<string>('');
-  const [valorMax, setValorMax] = useState<string>('');
-  const [tiposProduto, setTiposProduto] = useState<string[]>([]);
+  // Local state for UI
+  const [selectedPais, setSelectedPais] = useState<string | null>(filterPais);
+  const [selectedCidade, setSelectedCidade] = useState<string | null>(filterCidade);
+  const [selectedUF, setSelectedUF] = useState<string | null>(filterUF);
+  const [selectedExibidora, setSelectedExibidora] = useState<number | null>(filterExibidora);
+  const [selectedTipos, setSelectedTipos] = useState<string[]>(filterTipos);
+  const [valorMin, setValorMin] = useState<string>(filterValorMin?.toString() || '');
+  const [valorMax, setValorMax] = useState<string>(filterValorMax?.toString() || '');
+
+  // Search queries
+  const [paisSearch, setPaisSearch] = useState('');
+  const [ufSearch, setUfSearch] = useState('');
+  const [cidadeSearch, setCidadeSearch] = useState('');
+  const [exibidoraSearch, setExibidoraSearch] = useState('');
 
   const [expandedSections, setExpandedSections] = useState({
+    pais: true,
     localizacao: true,
     exibidora: true,
     tipo: false,
@@ -35,23 +56,33 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
   });
 
   // Extrair valores únicos dos pontos
-  const { cidades, ufs, tipos, valores } = useMemo(() => {
+  const { paises, cidades, ufs, tipos, valores } = useMemo(() => {
+    const paisesSet = new Set<string>();
     const cidadesSet = new Set<string>();
     const ufsSet = new Set<string>();
     const tiposSet = new Set<string>();
     const valoresArray: number[] = [];
 
     pontos.forEach(ponto => {
+      if (ponto.pais) paisesSet.add(ponto.pais);
       if (ponto.cidade) cidadesSet.add(ponto.cidade);
       if (ponto.uf) ufsSet.add(ponto.uf);
 
-      ponto.produtos?.forEach(produto => {
-        if (produto.tipo) tiposSet.add(produto.tipo);
+      // Extrair tipos do campo tipo (separados por vírgula)
+      if (ponto.tipo) {
+        const tiposArray = ponto.tipo.split(',').map(t => t.trim()).filter(Boolean);
+        tiposArray.forEach(tipo => tiposSet.add(tipo));
+      }
+
+      // Extrair valores apenas de produtos de "Locação"
+      const locacaoProdutos = ponto.produtos?.filter(p => p.tipo === 'Locação') || [];
+      locacaoProdutos.forEach(produto => {
         if (produto.valor) valoresArray.push(produto.valor);
       });
     });
 
     return {
+      paises: Array.from(paisesSet).sort(),
       cidades: Array.from(cidadesSet).sort(),
       ufs: Array.from(ufsSet).sort(),
       tipos: Array.from(tiposSet).sort(),
@@ -62,20 +93,46 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
     };
   }, [pontos]);
 
+  // Filtrar listas com base na busca
+  const filteredPaises = useMemo(() =>
+    paises.filter(p => p.toLowerCase().includes(paisSearch.toLowerCase())),
+    [paises, paisSearch]
+  );
+
+  const filteredUFs = useMemo(() =>
+    ufs.filter(u => u.toLowerCase().includes(ufSearch.toLowerCase())),
+    [ufs, ufSearch]
+  );
+
+  const filteredCidades = useMemo(() =>
+    cidades.filter(c => c.toLowerCase().includes(cidadeSearch.toLowerCase())),
+    [cidades, cidadeSearch]
+  );
+
+  const filteredExibidoras = useMemo(() =>
+    exibidoras.filter(e => e.nome.toLowerCase().includes(exibidoraSearch.toLowerCase())),
+    [exibidoras, exibidoraSearch]
+  );
+
   // Contar pontos filtrados
   const filteredCount = useMemo(() => {
     return pontos.filter(ponto => {
-      if (selectedCidades.length > 0 && !selectedCidades.includes(ponto.cidade || '')) return false;
-      if (selectedUFs.length > 0 && !selectedUFs.includes(ponto.uf || '')) return false;
-      if (selectedExibidoras.length > 0 && !selectedExibidoras.includes(ponto.id_exibidora || 0)) return false;
+      if (selectedPais && ponto.pais !== selectedPais) return false;
+      if (selectedUF && ponto.uf !== selectedUF) return false;
+      if (selectedCidade && ponto.cidade !== selectedCidade) return false;
+      if (selectedExibidora && ponto.id_exibidora !== selectedExibidora) return false;
 
-      if (tiposProduto.length > 0) {
-        const hasTipo = ponto.produtos?.some(p => tiposProduto.includes(p.tipo));
-        if (!hasTipo) return false;
+      if (selectedTipos.length > 0) {
+        const pontoTipos = ponto.tipo?.split(',').map(t => t.trim()) || [];
+        const hasMatchingTipo = selectedTipos.some(tipo => pontoTipos.includes(tipo));
+        if (!hasMatchingTipo) return false;
       }
 
       if (valorMin || valorMax) {
-        const valores = ponto.produtos?.map(p => p.valor) || [];
+        const locacaoProdutos = ponto.produtos?.filter(p => p.tipo === 'Locação') || [];
+        if (locacaoProdutos.length === 0) return false;
+
+        const valores = locacaoProdutos.map(p => p.valor);
         const max = Math.max(...valores);
         const min = Math.min(...valores);
 
@@ -85,49 +142,42 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
 
       return true;
     }).length;
-  }, [pontos, selectedCidades, selectedUFs, selectedExibidoras, tiposProduto, valorMin, valorMax]);
+  }, [pontos, selectedPais, selectedUF, selectedCidade, selectedExibidora, selectedTipos, valorMin, valorMax]);
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const toggleCidade = (cidade: string) => {
-    setSelectedCidades(prev =>
-      prev.includes(cidade) ? prev.filter(c => c !== cidade) : [...prev, cidade]
-    );
-  };
-
-  const toggleUF = (uf: string) => {
-    setSelectedUFs(prev =>
-      prev.includes(uf) ? prev.filter(u => u !== uf) : [...prev, uf]
-    );
-  };
-
-  const toggleExibidora = (id: number) => {
-    setSelectedExibidoras(prev =>
-      prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
-    );
-  };
-
   const toggleTipo = (tipo: string) => {
-    setTiposProduto(prev =>
+    setSelectedTipos(prev =>
       prev.includes(tipo) ? prev.filter(t => t !== tipo) : [...prev, tipo]
     );
   };
 
   const handleClearAll = () => {
-    setSelectedCidades([]);
-    setSelectedUFs([]);
-    setSelectedExibidoras([]);
-    setTiposProduto([]);
+    setSelectedPais(null);
+    setSelectedUF(null);
+    setSelectedCidade(null);
+    setSelectedExibidora(null);
+    setSelectedTipos([]);
     setValorMin('');
     setValorMax('');
+    setPaisSearch('');
+    setUfSearch('');
+    setCidadeSearch('');
+    setExibidoraSearch('');
     clearFilters();
   };
 
   const handleApply = () => {
-    // Aplicar filtros (você pode implementar a lógica de filtro real aqui)
-    // Por enquanto, apenas fechar o painel
+    // Aplicar todos os filtros ao store
+    setFilterPais(selectedPais);
+    setFilterUF(selectedUF);
+    setFilterCidade(selectedCidade);
+    setFilterExibidora(selectedExibidora);
+    setFilterTipos(selectedTipos);
+    setFilterValorMin(valorMin ? parseFloat(valorMin) : null);
+    setFilterValorMax(valorMax ? parseFloat(valorMax) : null);
     onClose();
   };
 
@@ -166,6 +216,48 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
 
         {/* Filtros */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          {/* País */}
+          <div className="border border-emidias-gray/20 rounded-lg overflow-hidden">
+            <button
+              onClick={() => toggleSection('pais')}
+              className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between transition"
+            >
+              <span className="font-semibold text-emidias-primary text-sm">País</span>
+              {expandedSections.pais ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+
+            {expandedSections.pais && (
+              <div className="p-4 space-y-3">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input
+                    type="text"
+                    value={paisSearch}
+                    onChange={(e) => setPaisSearch(e.target.value)}
+                    placeholder="Buscar país..."
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emidias-primary focus:border-transparent"
+                  />
+                </div>
+
+                {/* List */}
+                <div className="space-y-1 max-h-40 overflow-y-auto">
+                  {filteredPaises.map(pais => (
+                    <label key={pais} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                      <input
+                        type="radio"
+                        checked={selectedPais === pais}
+                        onChange={() => setSelectedPais(selectedPais === pais ? null : pais)}
+                        className="rounded-full border-gray-300 text-emidias-primary focus:ring-emidias-primary"
+                      />
+                      <span className="text-sm text-gray-700">{pais}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Localização */}
           <div className="border border-emidias-gray/20 rounded-lg overflow-hidden">
             <button
@@ -181,14 +273,27 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
                 {/* UF */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-2">Estado (UF)</label>
+
+                  {/* Search */}
+                  <div className="relative mb-2">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <input
+                      type="text"
+                      value={ufSearch}
+                      onChange={(e) => setUfSearch(e.target.value)}
+                      placeholder="Buscar UF..."
+                      className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emidias-primary focus:border-transparent"
+                    />
+                  </div>
+
                   <div className="space-y-1 max-h-32 overflow-y-auto">
-                    {ufs.map(uf => (
+                    {filteredUFs.map(uf => (
                       <label key={uf} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
                         <input
-                          type="checkbox"
-                          checked={selectedUFs.includes(uf)}
-                          onChange={() => toggleUF(uf)}
-                          className="rounded border-gray-300 text-emidias-primary focus:ring-emidias-primary"
+                          type="radio"
+                          checked={selectedUF === uf}
+                          onChange={() => setSelectedUF(selectedUF === uf ? null : uf)}
+                          className="rounded-full border-gray-300 text-emidias-primary focus:ring-emidias-primary"
                         />
                         <span className="text-sm text-gray-700">{uf}</span>
                       </label>
@@ -199,14 +304,27 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
                 {/* Cidade */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-2">Cidade</label>
+
+                  {/* Search */}
+                  <div className="relative mb-2">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <input
+                      type="text"
+                      value={cidadeSearch}
+                      onChange={(e) => setCidadeSearch(e.target.value)}
+                      placeholder="Buscar cidade..."
+                      className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emidias-primary focus:border-transparent"
+                    />
+                  </div>
+
                   <div className="space-y-1 max-h-40 overflow-y-auto">
-                    {cidades.map(cidade => (
+                    {filteredCidades.map(cidade => (
                       <label key={cidade} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
                         <input
-                          type="checkbox"
-                          checked={selectedCidades.includes(cidade)}
-                          onChange={() => toggleCidade(cidade)}
-                          className="rounded border-gray-300 text-emidias-primary focus:ring-emidias-primary"
+                          type="radio"
+                          checked={selectedCidade === cidade}
+                          onChange={() => setSelectedCidade(selectedCidade === cidade ? null : cidade)}
+                          className="rounded-full border-gray-300 text-emidias-primary focus:ring-emidias-primary"
                         />
                         <span className="text-sm text-gray-700">{cidade}</span>
                       </label>
@@ -229,14 +347,26 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
 
             {expandedSections.exibidora && (
               <div className="p-4">
+                {/* Search */}
+                <div className="relative mb-2">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input
+                    type="text"
+                    value={exibidoraSearch}
+                    onChange={(e) => setExibidoraSearch(e.target.value)}
+                    placeholder="Buscar exibidora..."
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emidias-primary focus:border-transparent"
+                  />
+                </div>
+
                 <div className="space-y-1 max-h-48 overflow-y-auto">
-                  {exibidoras.map(exibidora => (
+                  {filteredExibidoras.map(exibidora => (
                     <label key={exibidora.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
                       <input
-                        type="checkbox"
-                        checked={selectedExibidoras.includes(exibidora.id)}
-                        onChange={() => toggleExibidora(exibidora.id)}
-                        className="rounded border-gray-300 text-emidias-primary focus:ring-emidias-primary"
+                        type="radio"
+                        checked={selectedExibidora === exibidora.id}
+                        onChange={() => setSelectedExibidora(selectedExibidora === exibidora.id ? null : exibidora.id)}
+                        className="rounded-full border-gray-300 text-emidias-primary focus:ring-emidias-primary"
                       />
                       <span className="text-sm text-gray-700">{exibidora.nome}</span>
                     </label>
@@ -246,13 +376,13 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
             )}
           </div>
 
-          {/* Tipo de Produto */}
+          {/* Tipo */}
           <div className="border border-emidias-gray/20 rounded-lg overflow-hidden">
             <button
               onClick={() => toggleSection('tipo')}
               className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between transition"
             >
-              <span className="font-semibold text-emidias-primary text-sm">Tipo de Produto</span>
+              <span className="font-semibold text-emidias-primary text-sm">Tipo</span>
               {expandedSections.tipo ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
 
@@ -263,7 +393,7 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
                     <label key={tipo} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
                       <input
                         type="checkbox"
-                        checked={tiposProduto.includes(tipo)}
+                        checked={selectedTipos.includes(tipo)}
                         onChange={() => toggleTipo(tipo)}
                         className="rounded border-gray-300 text-emidias-primary focus:ring-emidias-primary"
                       />
@@ -275,14 +405,14 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
             )}
           </div>
 
-          {/* Faixa de Valor */}
+          {/* Faixa de Valor (Locação) */}
           {valores && (
             <div className="border border-emidias-gray/20 rounded-lg overflow-hidden">
               <button
                 onClick={() => toggleSection('valor')}
                 className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between transition"
               >
-                <span className="font-semibold text-emidias-primary text-sm">Faixa de Valor</span>
+                <span className="font-semibold text-emidias-primary text-sm">Faixa de Valor (Locação)</span>
                 {expandedSections.valor ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </button>
 
@@ -310,6 +440,9 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
                       />
                     </div>
                   </div>
+                  <p className="text-xs text-gray-500 italic">
+                    Valores baseados apenas em produtos de Locação
+                  </p>
                 </div>
               )}
             </div>

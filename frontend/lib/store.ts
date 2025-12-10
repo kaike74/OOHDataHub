@@ -23,7 +23,11 @@ interface AppState {
     // Filters
     filterCidade: string | null;
     filterUF: string | null;
+    filterPais: string | null;
     filterExibidora: number | null;
+    filterTipos: string[];
+    filterValorMin: number | null;
+    filterValorMax: number | null;
     searchQuery: string;
 
     // Actions
@@ -43,7 +47,11 @@ interface AppState {
     setStreetViewRequest: (request: { lat: number; lng: number } | null) => void;
     setFilterCidade: (cidade: string | null) => void;
     setFilterUF: (uf: string | null) => void;
+    setFilterPais: (pais: string | null) => void;
     setFilterExibidora: (id: number | null) => void;
+    setFilterTipos: (tipos: string[]) => void;
+    setFilterValorMin: (valor: number | null) => void;
+    setFilterValorMax: (valor: number | null) => void;
     setSearchQuery: (query: string) => void;
     clearFilters: () => void;
 }
@@ -66,7 +74,11 @@ export const useStore = create<AppState>((set) => ({
     streetViewRequest: null,
     filterCidade: null,
     filterUF: null,
+    filterPais: null,
     filterExibidora: null,
+    filterTipos: [],
+    filterValorMin: null,
+    filterValorMax: null,
     searchQuery: '',
 
     // Actions
@@ -117,12 +129,20 @@ export const useStore = create<AppState>((set) => ({
     setStreetViewRequest: (request) => set({ streetViewRequest: request }),
     setFilterCidade: (cidade) => set({ filterCidade: cidade }),
     setFilterUF: (uf) => set({ filterUF: uf }),
+    setFilterPais: (pais) => set({ filterPais: pais }),
     setFilterExibidora: (id) => set({ filterExibidora: id }),
+    setFilterTipos: (tipos) => set({ filterTipos: tipos }),
+    setFilterValorMin: (valor) => set({ filterValorMin: valor }),
+    setFilterValorMax: (valor) => set({ filterValorMax: valor }),
     setSearchQuery: (query) => set({ searchQuery: query }),
     clearFilters: () => set({
         filterCidade: null,
         filterUF: null,
+        filterPais: null,
         filterExibidora: null,
+        filterTipos: [],
+        filterValorMin: null,
+        filterValorMax: null,
         searchQuery: '',
     }),
 }));

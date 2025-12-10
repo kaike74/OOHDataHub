@@ -150,10 +150,53 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             clustererRef.current.clearMarkers();
         }
 
-        // Filtrar pontos por exibidora se filtro estiver ativo
-        const filteredPontos = filterExibidora
-            ? pontos.filter((ponto) => ponto.id_exibidora === filterExibidora)
-            : pontos;
+        // Obter filtros do store
+        const filterPais = useStore.getState().filterPais;
+        const filterUF = useStore.getState().filterUF;
+        const filterCidade = useStore.getState().filterCidade;
+        const filterTipos = useStore.getState().filterTipos;
+        const filterValorMin = useStore.getState().filterValorMin;
+        const filterValorMax = useStore.getState().filterValorMax;
+
+        // Aplicar TODOS os filtros
+        const filteredPontos = pontos.filter((ponto) => {
+            // Filtro por exibidora (já existente)
+            if (filterExibidora && ponto.id_exibidora !== filterExibidora) return false;
+
+            // Filtro por país
+            if (filterPais && ponto.pais !== filterPais) return false;
+
+            // Filtro por UF
+            if (filterUF && ponto.uf !== filterUF) return false;
+
+            // Filtro por cidade
+            if (filterCidade && ponto.cidade !== filterCidade) return false;
+
+            // Filtro por tipos (verificar se o ponto tem algum dos tipos selecionados)
+            if (filterTipos.length > 0) {
+                const pontoTipos = ponto.tipo?.split(',').map(t => t.trim()) || [];
+                const hasMatchingTipo = filterTipos.some(filterTipo =>
+                    pontoTipos.includes(filterTipo)
+                );
+                if (!hasMatchingTipo) return false;
+            }
+
+            // Filtro por faixa de valor (apenas produtos de "Locação")
+            if (filterValorMin !== null || filterValorMax !== null) {
+                const locacaoProdutos = ponto.produtos?.filter(p => p.tipo === 'Locação') || [];
+
+                if (locacaoProdutos.length === 0) return false;
+
+                const valores = locacaoProdutos.map(p => p.valor);
+                const maxValor = Math.max(...valores);
+                const minValor = Math.min(...valores);
+
+                if (filterValorMin !== null && maxValor < filterValorMin) return false;
+                if (filterValorMax !== null && minValor > filterValorMax) return false;
+            }
+
+            return true;
+        });
 
         // Criar novos markers
         const markers = filteredPontos
