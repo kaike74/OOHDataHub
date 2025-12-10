@@ -34,6 +34,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
     const [streetViewPosition, setStreetViewPosition] = useState<{ lat: number; lng: number } | null>(null);
     const [hoveredPonto, setHoveredPonto] = useState<Ponto | null>(null);
     const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number; lat: number; lng: number; address: string } | null>(null);
 
     // Inicializar mapa
     useEffect(() => {
@@ -98,6 +99,36 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                         lat: position.lat(),
                         lng: position.lng()
                     });
+                }
+            });
+
+            // Listener para context menu (botão direito)
+            googleMapRef.current.addListener('rightclick', async (event: google.maps.MapMouseEvent) => {
+                const lat = event.latLng?.lat();
+                const lng = event.latLng?.lng();
+
+                if (lat !== undefined && lng !== undefined) {
+                    // Geocoding reverso para obter endereço
+                    try {
+                        const geocoder = new google.maps.Geocoder();
+                        const result = await geocoder.geocode({
+                            location: { lat, lng }
+                        });
+
+                        const address = result.results[0]?.formatted_address || 'Endereço não encontrado';
+
+                        // Calcular posição do menu na tela
+                        const domEvent = event.domEvent as MouseEvent;
+                        setContextMenu({
+                            x: domEvent.clientX,
+                            y: domEvent.clientY,
+                            lat,
+                            lng,
+                            address
+                        });
+                    } catch (error) {
+                        console.error('Erro ao buscar endereço:', error);
+                    }
                 }
             });
 
@@ -261,6 +292,24 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
         setModalOpen(true);
     }, [streetViewPosition, setStreetViewCoordinates, setModalOpen]);
 
+    const handleCadastrarNoMapa = useCallback(() => {
+        if (!contextMenu) return;
+
+        // Passar coordenadas para o modal via Zustand
+        setStreetViewCoordinates({ lat: contextMenu.lat, lng: contextMenu.lng });
+        setModalOpen(true);
+        setContextMenu(null);
+    }, [contextMenu, setStreetViewCoordinates, setModalOpen]);
+
+    // Fechar context menu ao clicar em qualquer lugar
+    useEffect(() => {
+        const handleClick = () => setContextMenu(null);
+        if (contextMenu) {
+            document.addEventListener('click', handleClick);
+            return () => document.removeEventListener('click', handleClick);
+        }
+    }, [contextMenu]);
+
     return (
         <div className="relative w-full h-full">
             <div ref={mapRef} className="w-full h-full" />
@@ -282,6 +331,38 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                         setHoveredPonto(null);
                     }}
                 />
+            )}
+
+            {/* Context Menu - Botão Direito no Mapa */}
+            {contextMenu && !isStreetViewMode && (
+                <div
+                    className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden"
+                    style={{
+                        left: `${contextMenu.x}px`,
+                        top: `${contextMenu.y}px`,
+                        minWidth: '280px'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* Header com coordenadas */}
+                    <div className="px-4 py-2 bg-gray-50 border-b border-gray-200">
+                        <p className="text-xs font-mono text-gray-600">
+                            {contextMenu.lat.toFixed(6)}, {contextMenu.lng.toFixed(6)}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                            {contextMenu.address}
+                        </p>
+                    </div>
+
+                    {/* Botão de cadastrar */}
+                    <button
+                        onClick={handleCadastrarNoMapa}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 transition flex items-center gap-3 text-sm font-medium text-gray-700"
+                    >
+                        <MapPin size={16} className="text-emidias-accent" />
+                        Cadastrar OOH aqui
+                    </button>
+                </div>
             )}
 
             {/* Botão Cadastrar Aqui - Street View */}
