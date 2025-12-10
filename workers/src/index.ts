@@ -7,7 +7,7 @@ export interface Env {
 import { handlePontos } from './routes/pontos';
 import { handleExibidoras } from './routes/exibidoras';
 import { handleContatos } from './routes/contatos';
-import { handleUpload, handleImage } from './routes/upload';
+import { handleUpload, handleImage, handleUploadLogo } from './routes/upload';
 import { handleStats } from './routes/stats';
 import { corsHeaders, handleOptions } from './utils/cors';
 
@@ -37,6 +37,10 @@ export default {
 
             if (path === '/api/upload') {
                 return await handleUpload(request, env);
+            }
+
+            if (path === '/api/upload-logo') {
+                return await handleUploadLogo(request, env);
             }
 
             if (path.startsWith('/api/images/')) {

@@ -87,3 +87,66 @@ export async function handleImage(request: Request, env: Env, path: string): Pro
 
     return new Response(object.body, { headers });
 }
+
+export async function handleUploadLogo(request: Request, env: Env): Promise<Response> {
+    const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
+
+    if (request.method !== 'POST') {
+        return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+            status: 405,
+            headers,
+        });
+    }
+
+    try {
+        const formData = await request.formData();
+        const file = formData.get('file') as File;
+        const exibidoraId = formData.get('exibidoraId') as string;
+
+        if (!file) {
+            return new Response(JSON.stringify({ error: 'Arquivo não enviado' }), {
+                status: 400,
+                headers,
+            });
+        }
+
+        if (!exibidoraId) {
+            return new Response(JSON.stringify({ error: 'exibidoraId é obrigatório' }), {
+                status: 400,
+                headers,
+            });
+        }
+
+        // Gerar key única
+        const timestamp = Date.now();
+        const ext = file.name.split('.').pop();
+        const r2Key = `exibidoras/${exibidoraId}/${timestamp}.${ext}`;
+
+        // Upload para R2
+        await env.R2.put(r2Key, file.stream(), {
+            httpMetadata: {
+                contentType: file.type,
+            },
+        });
+
+        // Atualizar logo_r2_key na tabela exibidoras
+        await env.DB.prepare(`
+            UPDATE exibidoras 
+            SET logo_r2_key = ?
+            WHERE id = ?
+        `).bind(r2Key, exibidoraId).run();
+
+        return new Response(JSON.stringify({
+            success: true,
+            r2_key: r2Key,
+            url: `/api/images/${encodeURIComponent(r2Key)}`
+        }), { headers });
+
+    } catch (error: any) {
+        console.error('Upload logo error:', error);
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers,
+        });
+    }
+}
