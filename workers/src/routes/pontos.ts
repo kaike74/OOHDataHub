@@ -136,36 +136,67 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
 
     // PUT /api/pontos/:id - Atualizar ponto
     if (request.method === 'PUT' && path.match(/^\/api\/pontos\/\d+$/)) {
-        const id = path.split('/').pop();
-        const data = await request.json() as any;
+        try {
+            const id = path.split('/').pop();
+            const data = await request.json() as any;
 
-        await env.DB.prepare(`
-      UPDATE pontos_ooh SET
-        endereco = ?,
-        latitude = ?,
-        longitude = ?,
-        cidade = ?,
-        uf = ?,
-        id_exibidora = ?,
-        medidas = ?,
-        fluxo = ?,
-        observacoes = ?,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).bind(
-            data.endereco,
-            data.latitude,
-            data.longitude,
-            data.cidade,
-            data.uf,
-            data.id_exibidora,
-            data.medidas,
-            data.fluxo,
-            data.observacoes,
-            id
-        ).run();
+            // Atualizar ponto
+            await env.DB.prepare(`
+          UPDATE pontos_ooh SET
+            codigo_ooh = ?,
+            endereco = ?,
+            latitude = ?,
+            longitude = ?,
+            cidade = ?,
+            uf = ?,
+            id_exibidora = ?,
+            medidas = ?,
+            fluxo = ?,
+            tipo = ?,
+            observacoes = ?,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).bind(
+                data.codigo_ooh,
+                data.endereco,
+                data.latitude,
+                data.longitude,
+                data.cidade,
+                data.uf,
+                data.id_exibidora,
+                data.medidas,
+                data.fluxo,
+                data.tipos || null,
+                data.observacoes,
+                id
+            ).run();
 
-        return new Response(JSON.stringify({ success: true }), { headers });
+            // Atualizar produtos: deletar antigos e inserir novos
+            if (data.produtos !== undefined) {
+                // Deletar produtos antigos
+                await env.DB.prepare('DELETE FROM produtos WHERE id_ponto = ?').bind(id).run();
+
+                // Inserir novos produtos
+                if (Array.isArray(data.produtos) && data.produtos.length > 0) {
+                    for (const prod of data.produtos) {
+                        await env.DB.prepare(
+                            'INSERT INTO produtos (id_ponto, tipo, valor, periodo) VALUES (?, ?, ?, ?)'
+                        ).bind(id, prod.tipo, prod.valor, prod.periodo || null).run();
+                    }
+                }
+            }
+
+            return new Response(JSON.stringify({ success: true }), { headers });
+        } catch (error: any) {
+            console.error('Erro ao atualizar ponto:', error);
+            return new Response(JSON.stringify({
+                error: error.message || 'Erro ao atualizar ponto',
+                details: error.cause?.message || error.toString()
+            }), {
+                status: 500,
+                headers,
+            });
+        }
     }
 
     // DELETE /api/pontos/:id - Deletar ponto

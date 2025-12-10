@@ -558,12 +558,12 @@ export default function CreatePointModal() {
                         setIdExibidora(e.target.value);
                       }
                     }}
-                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition appearance-none"
+                    className="w-full py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition appearance-none"
                     style={{
-                      paddingLeft: idExibidora && idExibidora !== 'CREATE_NEW' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key ? '52px' : '16px'
+                      paddingLeft: idExibidora && idExibidora !== 'CREATE_NEW' && idExibidora !== '' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key ? '52px' : '16px',
+                      paddingRight: '16px'
                     }}
                   >
-                    <option value="" disabled>Selecione uma exibidora...</option>
                     <option value="CREATE_NEW" className="text-gray-600" style={{ fontStyle: 'italic' }}>
                       + Cadastrar nova exibidora
                     </option>
@@ -574,7 +574,7 @@ export default function CreatePointModal() {
                     ))}
                   </select>
                   {/* Logo preview next to selected */}
-                  {idExibidora && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key && (
+                  {idExibidora && idExibidora !== 'CREATE_NEW' && idExibidora !== '' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key && (
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded overflow-hidden pointer-events-none">
                       <img
                         src={api.getImageUrl(exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key || '')}
