@@ -24,7 +24,6 @@ interface AppState {
     filterCidade: string[];
     filterUF: string[];
     filterPais: string[];
-    filterEstado: string[];
     filterExibidora: number[];
     filterTipos: string[];
     filterValorMin: number | null;
@@ -49,7 +48,6 @@ interface AppState {
     setFilterCidade: (cidades: string[]) => void;
     setFilterUF: (ufs: string[]) => void;
     setFilterPais: (paises: string[]) => void;
-    setFilterEstado: (estados: string[]) => void;
     setFilterExibidora: (ids: number[]) => void;
     setFilterTipos: (tipos: string[]) => void;
     setFilterValorMin: (valor: number | null) => void;
@@ -77,7 +75,6 @@ export const useStore = create<AppState>((set) => ({
     filterCidade: [],
     filterUF: [],
     filterPais: [],
-    filterEstado: [],
     filterExibidora: [],
     filterTipos: [],
     filterValorMin: null,
@@ -133,7 +130,6 @@ export const useStore = create<AppState>((set) => ({
     setFilterCidade: (cidades) => set({ filterCidade: cidades }),
     setFilterUF: (ufs) => set({ filterUF: ufs }),
     setFilterPais: (paises) => set({ filterPais: paises }),
-    setFilterEstado: (estados) => set({ filterEstado: estados }),
     setFilterExibidora: (ids) => set({ filterExibidora: ids }),
     setFilterTipos: (tipos) => set({ filterTipos: tipos }),
     setFilterValorMin: (valor) => set({ filterValorMin: valor }),
@@ -143,7 +139,6 @@ export const useStore = create<AppState>((set) => ({
         filterCidade: [],
         filterUF: [],
         filterPais: [],
-        filterEstado: [],
         filterExibidora: [],
         filterTipos: [],
         filterValorMin: null,

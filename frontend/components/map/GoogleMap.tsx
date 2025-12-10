@@ -25,7 +25,6 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
     const pontos = useStore((state) => state.pontos);
     const filterExibidora = useStore((state) => state.filterExibidora);
     const filterPais = useStore((state) => state.filterPais);
-    const filterEstado = useStore((state) => state.filterEstado);
     const filterUF = useStore((state) => state.filterUF);
     const filterCidade = useStore((state) => state.filterCidade);
     const filterTipos = useStore((state) => state.filterTipos);
@@ -162,10 +161,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             // Filtro por país (multi-select)
             if (filterPais.length > 0 && !filterPais.includes(ponto.pais || '')) return false;
 
-            // Filtro por estado (multi-select)
-            if (filterEstado.length > 0 && !filterEstado.includes(ponto.estado || '')) return false;
-
-            // Filtro por UF (multi-select)
+            // Filtro por UF (multi-select) - opcional para países sem estados
             if (filterUF.length > 0 && !filterUF.includes(ponto.uf || '')) return false;
 
             // Filtro por cidade (multi-select)
@@ -279,7 +275,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             });
             googleMapRef.current.fitBounds(bounds);
         }
-    }, [pontos, filterExibidora, filterPais, filterEstado, filterUF, filterCidade, filterTipos, filterValorMin, filterValorMax, isLoaded, setSelectedPonto]);
+    }, [pontos, filterExibidora, filterPais, filterUF, filterCidade, filterTipos, filterValorMin, filterValorMax, isLoaded, setSelectedPonto]);
 
     // Centralizar mapa quando search location mudar
     useEffect(() => {
