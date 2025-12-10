@@ -52,10 +52,10 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <div className="bg-white rounded-xl shadow-2xl overflow-hidden card-shadow animate-in fade-in slide-in-from-bottom-2 duration-200">
+      <div className="bg-white rounded-xl shadow-2xl overflow-hidden card-shadow min-w-[250px] max-w-[400px] animate-in fade-in zoom-in-95 duration-200 ease-out">
         {/* Imagens com Carrossel */}
         {imagens.length > 0 && (
-          <div className="relative h-48 w-72 bg-gray-200">
+          <div className="relative h-48 w-full bg-gray-200">
             <img
               src={api.getImageUrl(imagens[currentImageIndex])}
               alt={ponto.codigo_ooh}
@@ -105,8 +105,8 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
             {ponto.codigo_ooh}
           </h3>
 
-          {/* Endereço */}
-          <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+          {/* Endereço com quebra de linha */}
+          <p className="text-sm text-gray-600 mb-2 break-words whitespace-normal line-clamp-3">
             {ponto.endereco}
           </p>
 

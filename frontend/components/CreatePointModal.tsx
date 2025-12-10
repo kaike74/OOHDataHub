@@ -172,9 +172,26 @@ export default function CreatePointModal() {
     setCustos(custos.filter((_, i) => i !== index));
   };
 
+  // Formatar moeda
+  const formatCurrency = (value: string): string => {
+    const numbers = value.replace(/\D/g, '');
+    if (!numbers) return '';
+    const amount = parseInt(numbers) / 100;
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(amount);
+  };
+
   const updateCusto = (index: number, field: keyof Custo, value: string) => {
     const newCustos = [...custos];
-    newCustos[index][field] = value;
+
+    // Formatar valor como moeda
+    if (field === 'valor') {
+      newCustos[index][field] = formatCurrency(value);
+    } else {
+      newCustos[index][field] = value;
+    }
 
     // Se mudou o produto e não é Locação, limpar período
     if (field === 'produto' && value !== 'Locação') {
@@ -553,8 +570,8 @@ export default function CreatePointModal() {
                       type="button"
                       onClick={() => toggleTipo(tipo)}
                       className={`px-3 py-2 rounded-lg border-2 transition font-medium text-sm ${tipos.includes(tipo)
-                          ? 'border-emidias-accent bg-pink-50 text-emidias-accent'
-                          : 'border-emidias-gray/30 hover:border-emidias-accent text-gray-700'
+                        ? 'border-emidias-accent bg-pink-50 text-emidias-accent'
+                        : 'border-emidias-gray/30 hover:border-emidias-accent text-gray-700'
                         }`}
                     >
                       {tipo}
