@@ -103,11 +103,12 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
         };
 
         initMap();
+        return undefined;
     }, []);
 
     // Atualizar markers quando pontos mudarem
     useEffect(() => {
-        if (!isLoaded || !googleMapRef.current) return;
+        if (!isLoaded || !googleMapRef.current) return undefined;
 
         // Limpar markers antigos
         markersRef.current.forEach((marker) => marker.setMap(null));
