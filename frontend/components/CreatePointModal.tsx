@@ -51,6 +51,7 @@ export default function CreatePointModal() {
   const [longitude, setLongitude] = useState('');
   const [cidade, setCidade] = useState('');
   const [uf, setUf] = useState('');
+  const [pais, setPais] = useState('');
   const [idExibidora, setIdExibidora] = useState('');
   const [medidas, setMedidas] = useState('');
   const [fluxo, setFluxo] = useState('');
@@ -139,11 +140,17 @@ export default function CreatePointModal() {
             setEndereco(result.results[0].formatted_address);
 
             const addressComponents = result.results[0].address_components;
-            const cidadeComponent = addressComponents.find(c => c.types.includes('administrative_area_level_2'));
+
+            // Priorizar locality (cidade) ao invés de administrative_area_level_2 (província/condado)
+            const cidadeComponent = addressComponents.find(c => c.types.includes('locality')) ||
+              addressComponents.find(c => c.types.includes('administrative_area_level_2'));
+
             const ufComponent = addressComponents.find(c => c.types.includes('administrative_area_level_1'));
+            const paisComponent = addressComponents.find(c => c.types.includes('country'));
 
             if (cidadeComponent) setCidade(cidadeComponent.long_name);
             if (ufComponent) setUf(ufComponent.short_name);
+            if (paisComponent) setPais(paisComponent.long_name);
           }
         } catch (error) {
           console.error('Erro no geocoding reverso:', error);
@@ -269,13 +276,19 @@ export default function CreatePointModal() {
         setLatitude(location.lat().toString());
         setLongitude(location.lng().toString());
 
-        // Extrair cidade e UF
+        // Extrair cidade, UF e país
         const addressComponents = result.results[0].address_components;
-        const cidadeComponent = addressComponents.find(c => c.types.includes('administrative_area_level_2'));
+
+        // Priorizar locality (cidade) ao invés de administrative_area_level_2 (província/condado)
+        const cidadeComponent = addressComponents.find(c => c.types.includes('locality')) ||
+          addressComponents.find(c => c.types.includes('administrative_area_level_2'));
+
         const ufComponent = addressComponents.find(c => c.types.includes('administrative_area_level_1'));
+        const paisComponent = addressComponents.find(c => c.types.includes('country'));
 
         if (cidadeComponent) setCidade(cidadeComponent.long_name);
         if (ufComponent) setUf(ufComponent.short_name);
+        if (paisComponent) setPais(paisComponent.long_name);
 
         setErrors({ ...errors, endereco: '' });
       } else {
@@ -331,6 +344,7 @@ export default function CreatePointModal() {
         longitude: parseFloat(longitude),
         cidade: cidade || null,
         uf: uf || null,
+        pais: pais || 'Brasil',
         id_exibidora: idExibidora ? parseInt(idExibidora) : null,
         medidas: medidas || null,
         fluxo: fluxo ? parseInt(fluxo) : null,
@@ -393,6 +407,7 @@ export default function CreatePointModal() {
       setLongitude('');
       setCidade('');
       setUf('');
+      setPais('');
       setIdExibidora('');
       setMedidas('');
       setFluxo('');
