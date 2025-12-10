@@ -19,7 +19,7 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
 
   // Auto-rotate imagens a cada 3 segundos
   useEffect(() => {
-    if (imagens.length <= 1) return;
+    if (imagens.length <= 1) return undefined;
 
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
