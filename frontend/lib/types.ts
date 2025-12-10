@@ -39,6 +39,7 @@ export interface Exibidora {
     endereco: string | null;
     telefone: string | null;
     email: string | null;
+    observacoes: string | null;
     logo_r2_key: string | null;
     created_at: string;
 }
