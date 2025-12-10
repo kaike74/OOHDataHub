@@ -4,7 +4,7 @@ import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function Sidebar() {
     const selectedPonto = useStore((state) => state.selectedPonto);
@@ -13,7 +13,9 @@ export default function Sidebar() {
     const setSidebarOpen = useStore((state) => state.setSidebarOpen);
     const setModalOpen = useStore((state) => state.setModalOpen);
     const setEditingPonto = useStore((state) => state.setEditingPonto);
+    const setStreetViewCoordinates = useStore((state) => state.setStreetViewCoordinates);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleEdit = () => {
         if (selectedPonto) {
@@ -30,8 +32,12 @@ export default function Sidebar() {
 
     const handleStreetView = () => {
         if (selectedPonto && selectedPonto.latitude && selectedPonto.longitude) {
-            const url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${selectedPonto.latitude},${selectedPonto.longitude}`;
-            window.open(url, '_blank');
+            // Open Street View in the map instead of external page
+            setStreetViewCoordinates({
+                lat: selectedPonto.latitude,
+                lng: selectedPonto.longitude
+            });
+            setSidebarOpen(false);
         }
     };
 
@@ -40,6 +46,30 @@ export default function Sidebar() {
 
     const imagens = selectedPonto.imagens || [];
     const produtos = selectedPonto.produtos || [];
+
+    // Auto-rotate images
+    useEffect(() => {
+        if (imagens.length <= 1) return;
+
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+        }
+
+        intervalRef.current = setInterval(() => {
+            setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
+        }, 3000);
+
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        };
+    }, [imagens.length]);
+
+    // Reset when point changes
+    useEffect(() => {
+        setCurrentImageIndex(0);
+    }, [selectedPonto.id]);
 
     const nextImage = () => {
         setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
@@ -59,23 +89,24 @@ export default function Sidebar() {
 
             {/* Sidebar */}
             <div className="fixed right-0 top-[70px] h-[calc(100vh-70px)] w-full sm:w-96 bg-white shadow-2xl z-30 transform transition-transform duration-300 ease-in-out overflow-y-auto">
+                {/* Sticky X Button - Always visible */}
+                <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="sticky top-3 right-3 ml-auto mr-3 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full shadow-lg hover:scale-105 transition-all z-50 block"
+                    title="Fechar"
+                    style={{ width: 'fit-content' }}
+                >
+                    <X size={20} strokeWidth={2} />
+                </button>
+
                 {/* Header com imagens */}
                 {imagens.length > 0 && (
-                    <div className="relative h-64 bg-gray-200">
+                    <div className="relative h-64 bg-gray-200 -mt-11">
                         <img
                             src={api.getImageUrl(imagens[currentImageIndex])}
                             alt={`Imagem ${currentImageIndex + 1}`}
                             className="w-full h-full object-cover"
                         />
-
-                        {/* Botão Fechar - Canto superior direito da imagem */}
-                        <button
-                            onClick={() => setSidebarOpen(false)}
-                            className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full shadow-lg hover:scale-105 transition-all z-10"
-                            title="Fechar"
-                        >
-                            <X size={20} strokeWidth={2} />
-                        </button>
 
                         {imagens.length > 1 && (
                             <>
