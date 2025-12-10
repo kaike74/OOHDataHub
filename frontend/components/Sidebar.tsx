@@ -17,6 +17,10 @@ export default function Sidebar() {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Precisa estar antes do return condicional
+    const imagens = selectedPonto?.imagens || [];
+    const produtos = selectedPonto?.produtos || [];
+
     const handleEdit = useCallback(() => {
         if (selectedPonto) {
             setEditingPonto(selectedPonto);
@@ -40,12 +44,6 @@ export default function Sidebar() {
         setSidebarOpen(false);
     }, [setSidebarOpen]);
 
-    // Só mostra se tiver ponto selecionado (não exibidora)
-    if (!selectedPonto || !isSidebarOpen || selectedExibidora) return null;
-
-    const imagens = selectedPonto.imagens || [];
-    const produtos = selectedPonto.produtos || [];
-
     const nextImage = useCallback(() => {
         setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
     }, [imagens.length]);
@@ -56,7 +54,7 @@ export default function Sidebar() {
 
     // Auto-rotate de imagens a cada 3 segundos
     useEffect(() => {
-        if (imagens.length <= 1) return;
+        if (!selectedPonto || !isSidebarOpen || imagens.length <= 1) return;
 
         // Clear any existing interval
         if (intervalRef.current) {
@@ -72,12 +70,17 @@ export default function Sidebar() {
                 clearInterval(intervalRef.current);
             }
         };
-    }, [imagens.length]);
+    }, [imagens.length, selectedPonto, isSidebarOpen]);
 
     // Reset quando o ponto mudar
     useEffect(() => {
-        setCurrentImageIndex(0);
+        if (selectedPonto) {
+            setCurrentImageIndex(0);
+        }
     }, [selectedPonto?.id]);
+
+    // Só mostra se tiver ponto selecionado (não exibidora)
+    if (!selectedPonto || !isSidebarOpen || selectedExibidora) return null;
 
     return (
         <>
