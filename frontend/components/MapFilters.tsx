@@ -81,6 +81,10 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
       });
     });
 
+    console.log('MapFilters - Países encontrados:', Array.from(paisesSet));
+    console.log('MapFilters - Total de pontos:', pontos.length);
+    console.log('MapFilters - Primeiro ponto:', pontos[0]);
+
     return {
       paises: Array.from(paisesSet).sort(),
       ufs: Array.from(ufsSet).sort(),
