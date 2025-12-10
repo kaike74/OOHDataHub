@@ -2,10 +2,12 @@
 
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye, ChevronLeft, ChevronRight, Phone, Mail } from 'lucide-react';
+import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye, ChevronLeft, ChevronRight, Phone, Mail, Trash2 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Contato } from '@/lib/types';
+import DeletePointModal from './DeletePointModal';
 
 // Componente para exibir contatos da exibidora
 function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undefined }) {
@@ -59,6 +61,7 @@ function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undef
 }
 
 export default function Sidebar() {
+    const { isMaster } = useAuth();
     const selectedPonto = useStore((state) => state.selectedPonto);
     const selectedExibidora = useStore((state) => state.selectedExibidora);
     const isSidebarOpen = useStore((state) => state.isSidebarOpen);
@@ -71,7 +74,10 @@ export default function Sidebar() {
     const setFilterExibidora = useStore((state) => state.setFilterExibidora);
     const setCurrentView = useStore((state) => state.setCurrentView);
     const exibidoras = useStore((state) => state.exibidoras);
+    const pontos = useStore((state) => state.pontos);
+    const setPontos = useStore((state) => state.setPontos);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
     // Precisa estar antes do return condicional
@@ -107,6 +113,26 @@ export default function Sidebar() {
             setSidebarOpen(false);
         }
     }, [selectedExibidora, setSelectedPonto, setSidebarOpen]);
+
+    const handleDelete = useCallback(async () => {
+        if (!selectedPonto) return;
+
+        try {
+            await api.deletePonto(selectedPonto.id);
+
+            // Remove ponto da lista local
+            const updatedPontos = pontos.filter(p => p.id !== selectedPonto.id);
+            setPontos(updatedPontos);
+
+            // Fecha modal e sidebar
+            setShowDeleteModal(false);
+            setSidebarOpen(false);
+            setSelectedPonto(null);
+        } catch (error) {
+            console.error('Erro ao deletar ponto:', error);
+            alert('Erro ao deletar ponto. Tente novamente.');
+        }
+    }, [selectedPonto, pontos, setPontos, setSidebarOpen, setSelectedPonto]);
 
     const handleExibidoraClick = useCallback(() => {
         if (selectedPonto && selectedPonto.id_exibidora) {
@@ -365,9 +391,30 @@ export default function Sidebar() {
                                 Histórico
                             </button>
                         </div>
+
+                        {/* Delete - Master Only */}
+                        {isMaster() && (
+                            <button
+                                onClick={() => setShowDeleteModal(true)}
+                                className="w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition flex items-center justify-center gap-2"
+                            >
+                                <Trash2 size={18} />
+                                Excluir Ponto
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* Delete Modal */}
+            {showDeleteModal && selectedPonto && (
+                <DeletePointModal
+                    pontoId={selectedPonto.id}
+                    codigoOOH={selectedPonto.codigo_ooh}
+                    onConfirm={handleDelete}
+                    onCancel={() => setShowDeleteModal(false)}
+                />
+            )}
         </>
     );
 }

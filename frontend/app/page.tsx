@@ -10,6 +10,7 @@ import MapFilters from '@/components/MapFilters';
 import AddressSearch from '@/components/AddressSearch';
 import NavigationMenu from '@/components/NavigationMenu';
 import ExibidorasView from '@/components/ExibidorasView';
+import UserMenu from '@/components/UserMenu';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
@@ -102,6 +103,9 @@ function HomePageContent() {
               </button>
             </>
           )}
+
+          {/* User Menu */}
+          <UserMenu />
 
           {/* Menu Hambúrguer */}
           <button
