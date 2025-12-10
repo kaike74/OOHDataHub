@@ -90,7 +90,7 @@ export default function ExibidoraSidebar() {
 
     const handleClose = () => {
         setSidebarOpen(false);
-        setFilterExibidora(null);
+        setFilterExibidora([]);
         setCurrentView('exibidoras');
     };
 
