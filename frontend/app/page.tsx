@@ -5,6 +5,7 @@ import GoogleMap from '@/components/map/GoogleMap';
 import Sidebar from '@/components/Sidebar';
 import ExibidoraSidebar from '@/components/ExibidoraSidebar';
 import CreatePointModal from '@/components/CreatePointModal';
+import ExibidoraModal from '@/components/ExibidoraModal';
 import MapFilters from '@/components/MapFilters';
 import AddressSearch from '@/components/AddressSearch';
 import NavigationMenu from '@/components/NavigationMenu';
@@ -152,6 +153,7 @@ export default function HomePage() {
 
         {/* Componentes Globais */}
         <CreatePointModal />
+        <ExibidoraModal />
         <MapFilters isOpen={isFiltersOpen} onClose={() => setIsFiltersOpen(false)} />
         <NavigationMenu />
       </main>

@@ -41,6 +41,10 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
     }),
+    updateExibidora: (id: number, data: any) => fetchAPI(`/api/exibidoras/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    }),
 
     // Upload
     uploadImage: async (file: File, pontoId?: string, ordem?: number, ehCapa?: boolean) => {
@@ -51,6 +55,23 @@ export const api = {
         if (ehCapa) formData.append('ehCapa', 'true');
 
         const response = await fetch(`${API_URL}/api/upload`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error('Upload failed');
+        }
+
+        return response.json();
+    },
+
+    uploadExibidoraLogo: async (file: File, exibidoraId: string) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('exibidoraId', exibidoraId);
+
+        const response = await fetch(`${API_URL}/api/upload-logo`, {
             method: 'POST',
             body: formData,
         });

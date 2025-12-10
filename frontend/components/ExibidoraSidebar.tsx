@@ -11,6 +11,8 @@ export default function ExibidoraSidebar() {
     const setSidebarOpen = useStore((state) => state.setSidebarOpen);
     const setCurrentView = useStore((state) => state.setCurrentView);
     const setFilterExibidora = useStore((state) => state.setFilterExibidora);
+    const setEditingExibidora = useStore((state) => state.setEditingExibidora);
+    const setExibidoraModalOpen = useStore((state) => state.setExibidoraModalOpen);
     const pontos = useStore((state) => state.pontos);
 
     // Calcular estatísticas da exibidora
@@ -36,8 +38,8 @@ export default function ExibidoraSidebar() {
 
     const handleEdit = () => {
         if (!selectedExibidora) return;
-        // TODO: Implementar modal de edição de exibidora
-        alert(`Editar exibidora: ${selectedExibidora.nome}\n\nFuncionalidade será implementada em breve.`);
+        setEditingExibidora(selectedExibidora);
+        setExibidoraModalOpen(true);
     };
 
     if (!selectedExibidora || !isSidebarOpen) return null;
