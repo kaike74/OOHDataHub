@@ -73,6 +73,7 @@ export default function CreatePointModal() {
       setLongitude(editingPonto.longitude?.toString() || '');
       setCidade(editingPonto.cidade || '');
       setUf(editingPonto.uf || '');
+      setPais(editingPonto.pais || 'Brasil');
       setIdExibidora(editingPonto.id_exibidora?.toString() || '');
       setMedidas(editingPonto.medidas || '');
       setFluxo(editingPonto.fluxo?.toString() || '');
@@ -541,8 +542,8 @@ export default function CreatePointModal() {
                 <p className="text-red-500 text-sm mt-1">{errors.coordenadas}</p>
               )}
 
-              {/* Cidade e UF */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Cidade, UF e País */}
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-emidias-primary mb-2">
                     Cidade
@@ -566,6 +567,18 @@ export default function CreatePointModal() {
                     className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
                     placeholder="SP"
                     maxLength={2}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                    País
+                  </label>
+                  <input
+                    type="text"
+                    value={pais}
+                    onChange={(e) => setPais(e.target.value)}
+                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
+                    placeholder="Brasil"
                   />
                 </div>
               </div>
