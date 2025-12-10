@@ -1,100 +1,51 @@
 import { Env } from '../index';
+import { verifyToken } from '../utils/auth';
 
 export interface AuthUser {
-    id: number;
+    userId: number;
     email: string;
-    name: string | null;
-    picture: string | null;
-    role: 'master' | 'viewer';
+    role: string;
 }
 
-export async function verifyGoogleToken(token: string, env: Env): Promise<any> {
-    try {
-        // Verify Google OAuth token
-        const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
-
-        if (!response.ok) {
-            throw new Error('Invalid token');
-        }
-
-        const data = await response.json();
-
-        // Check if email is from allowed domain
-        const email = data.email as string;
-        if (!email.endsWith('@hubradios.com')) {
-            throw new Error('Email domain not allowed');
-        }
-
-        return {
-            email: data.email,
-            name: data.name,
-            picture: data.picture,
-            email_verified: data.email_verified
-        };
-    } catch (error) {
-        console.error('Token verification failed:', error);
-        throw error;
+export async function requireAuth(request: Request, env: Env): Promise<AuthUser> {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        throw new Error('Unauthorized: No token provided');
     }
-}
 
-export async function getUserFromEmail(email: string, env: Env): Promise<AuthUser | null> {
+    const token = authHeader.replace('Bearer ', '');
+    const decoded = await verifyToken(token);
+
+    if (!decoded) {
+        throw new Error('Unauthorized: Invalid token');
+    }
+
+    // Verify user still exists and is active
     const user = await env.DB.prepare(
-        'SELECT id, email, name, picture, role FROM users WHERE email = ?'
-    ).bind(email).first();
+        'SELECT id, email, role, status FROM users WHERE id = ? AND status = ?'
+    ).bind(decoded.payload.userId, 'active').first();
 
-    if (!user) return null;
-
-    return user as AuthUser;
-}
-
-export async function createOrUpdateUser(
-    email: string,
-    name: string,
-    picture: string,
-    env: Env
-): Promise<AuthUser> {
-    // Check if user exists
-    let user = await getUserFromEmail(email, env);
-
-    if (user) {
-        // Update last login and user info
-        await env.DB.prepare(`
-      UPDATE users 
-      SET name = ?, picture = ?, last_login = CURRENT_TIMESTAMP 
-      WHERE email = ?
-    `).bind(name, picture, email).run();
-
-        user.name = name;
-        user.picture = picture;
-        return user;
+    if (!user) {
+        throw new Error('Unauthorized: User not found or inactive');
     }
-
-    // Create new user with viewer role by default
-    const result = await env.DB.prepare(`
-    INSERT INTO users (email, name, picture, role, last_login)
-    VALUES (?, ?, ?, 'viewer', CURRENT_TIMESTAMP)
-  `).bind(email, name, picture).run();
 
     return {
-        id: result.meta.last_row_id as number,
-        email,
-        name,
-        picture,
-        role: 'viewer'
+        userId: decoded.payload.userId,
+        email: decoded.payload.email,
+        role: decoded.payload.role
     };
 }
 
-export function requireAuth(request: Request): string | null {
-    // Get token from Authorization header
-    const authHeader = request.headers.get('Authorization');
+export async function requireRole(request: Request, env: Env, allowedRoles: string[]): Promise<AuthUser> {
+    const user = await requireAuth(request, env);
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return null;
+    if (!allowedRoles.includes(user.role)) {
+        throw new Error('Forbidden: Insufficient permissions');
     }
 
-    return authHeader.substring(7);
+    return user;
 }
 
-export function requireMaster(user: AuthUser | null): boolean {
-    return user?.role === 'master';
+export function isMaster(user: AuthUser): boolean {
+    return user.role === 'master';
 }

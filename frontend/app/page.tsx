@@ -10,20 +10,11 @@ import MapFilters from '@/components/MapFilters';
 import AddressSearch from '@/components/AddressSearch';
 import NavigationMenu from '@/components/NavigationMenu';
 import ExibidorasView from '@/components/ExibidorasView';
-import ProtectedRoute from '@/components/ProtectedRoute';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { Plus, Filter, Menu } from 'lucide-react';
 
 export default function HomePage() {
-  return (
-    <ProtectedRoute>
-      <HomePageContent />
-    </ProtectedRoute>
-  );
-}
-
-function HomePageContent() {
   const [isPontos, setIsPontos] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

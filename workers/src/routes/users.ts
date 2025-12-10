@@ -1,205 +1,181 @@
 import { Env } from '../index';
 import { corsHeaders } from '../utils/cors';
-import { verifyGoogleToken, createOrUpdateUser, getUserFromEmail, requireAuth, requireMaster, AuthUser } from '../middleware/auth';
+import { hashPassword, validateEmail, generateRandomPassword } from '../utils/auth';
+import { requireRole } from '../middleware/auth';
 
 export async function handleUsers(request: Request, env: Env, path: string): Promise<Response> {
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
 
-    // POST /api/auth/google - Login with Google
-    if (request.method === 'POST' && path === '/api/auth/google') {
-        try {
-            const { token } = await request.json() as { token: string };
-
-            // Verify Google token
-            const googleUser = await verifyGoogleToken(token, env);
-
-            // Create or update user in database
-            const user = await createOrUpdateUser(
-                googleUser.email,
-                googleUser.name,
-                googleUser.picture,
-                env
-            );
-
-            return new Response(JSON.stringify({
-                success: true,
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    picture: user.picture,
-                    role: user.role
-                }
-            }), { headers });
-        } catch (error: any) {
-            console.error('Google auth error:', error);
-            return new Response(JSON.stringify({
-                error: error.message || 'Authentication failed'
-            }), {
-                status: 401,
-                headers
-            });
-        }
-    }
-
-    // GET /api/auth/me - Get current user
-    if (request.method === 'GET' && path === '/api/auth/me') {
-        const token = requireAuth(request);
-
-        if (!token) {
-            return new Response(JSON.stringify({ error: 'Not authenticated' }), {
-                status: 401,
-                headers
-            });
-        }
-
-        try {
-            const googleUser = await verifyGoogleToken(token, env);
-            const user = await getUserFromEmail(googleUser.email, env);
-
-            if (!user) {
-                return new Response(JSON.stringify({ error: 'User not found' }), {
-                    status: 404,
-                    headers
-                });
-            }
-
-            return new Response(JSON.stringify({ user }), { headers });
-        } catch (error) {
-            return new Response(JSON.stringify({ error: 'Invalid token' }), {
-                status: 401,
-                headers
-            });
-        }
-    }
-
-    // GET /api/users - List all users (Master only)
+    // GET /api/users - List all users (master only)
     if (request.method === 'GET' && path === '/api/users') {
-        const token = requireAuth(request);
-
-        if (!token) {
-            return new Response(JSON.stringify({ error: 'Not authenticated' }), {
-                status: 401,
-                headers
-            });
-        }
-
         try {
-            const googleUser = await verifyGoogleToken(token, env);
-            const currentUser = await getUserFromEmail(googleUser.email, env);
-
-            if (!requireMaster(currentUser)) {
-                return new Response(JSON.stringify({ error: 'Forbidden' }), {
-                    status: 403,
-                    headers
-                });
-            }
+            await requireRole(request, env, ['master']);
 
             const { results } = await env.DB.prepare(`
-                SELECT id, email, name, picture, role, created_at, last_login
-                FROM users
-                ORDER BY created_at DESC
+                SELECT 
+                    u.id, u.email, u.name, u.role, u.status, u.created_at, u.last_login,
+                    inviter.name as invited_by_name
+                FROM users u
+                LEFT JOIN users inviter ON u.invited_by = inviter.id
+                ORDER BY u.created_at DESC
             `).all();
 
             return new Response(JSON.stringify(results), { headers });
-        } catch (error) {
-            return new Response(JSON.stringify({ error: 'Authentication failed' }), {
-                status: 401,
-                headers
+
+        } catch (error: any) {
+            return new Response(JSON.stringify({ error: error.message }), {
+                status: error.message.includes('Forbidden') ? 403 : 401,
+                headers,
             });
         }
     }
 
-    // PUT /api/users/:id/role - Update user role (Master only)
-    if (request.method === 'PUT' && path.match(/^\/api\/users\/\d+\/role$/)) {
-        const token = requireAuth(request);
+    // POST /api/users/invite - Invite new user (master only)
+    if (request.method === 'POST' && path === '/api/users/invite') {
+        try {
+            const authUser = await requireRole(request, env, ['master']);
+            const { email, name, role } = await request.json() as any;
 
-        if (!token) {
-            return new Response(JSON.stringify({ error: 'Not authenticated' }), {
-                status: 401,
-                headers
+            if (!email || !name || !role) {
+                return new Response(JSON.stringify({ error: 'Email, nome e nível são obrigatórios' }), {
+                    status: 400,
+                    headers,
+                });
+            }
+
+            if (!validateEmail(email)) {
+                return new Response(JSON.stringify({ error: 'Apenas emails @hubradios.com são permitidos' }), {
+                    status: 400,
+                    headers,
+                });
+            }
+
+            if (!['master', 'manager', 'editor', 'viewer'].includes(role)) {
+                return new Response(JSON.stringify({ error: 'Nível inválido' }), {
+                    status: 400,
+                    headers,
+                });
+            }
+
+            // Check if user already exists
+            const existing = await env.DB.prepare(
+                'SELECT id FROM users WHERE email = ?'
+            ).bind(email).first();
+
+            if (existing) {
+                return new Response(JSON.stringify({ error: 'Usuário já existe' }), {
+                    status: 409,
+                    headers,
+                });
+            }
+
+            // Generate random password
+            const tempPassword = generateRandomPassword();
+            const passwordHash = await hashPassword(tempPassword);
+
+            // Insert user
+            const result = await env.DB.prepare(`
+                INSERT INTO users (email, password_hash, name, role, status, invited_by)
+                VALUES (?, ?, ?, ?, 'pending', ?)
+            `).bind(email, passwordHash, name, role, authUser.userId).run();
+
+            // TODO: Send email with temporary password
+            console.log(`Temporary password for ${email}: ${tempPassword}`);
+
+            return new Response(JSON.stringify({
+                success: true,
+                userId: result.meta.last_row_id,
+                tempPassword // In production, this should be sent via email only
+            }), {
+                status: 201,
+                headers,
+            });
+
+        } catch (error: any) {
+            console.error('Invite user error:', error);
+            return new Response(JSON.stringify({ error: error.message || 'Erro ao convidar usuário' }), {
+                status: error.message.includes('Forbidden') ? 403 : 500,
+                headers,
             });
         }
+    }
 
+    // PUT /api/users/:id - Update user (master only)
+    if (request.method === 'PUT' && path.match(/^\/api\/users\/\d+$/)) {
         try {
-            const googleUser = await verifyGoogleToken(token, env);
-            const currentUser = await getUserFromEmail(googleUser.email, env);
+            await requireRole(request, env, ['master']);
+            const id = path.split('/').pop();
+            const { name, role, status } = await request.json() as any;
 
-            if (!requireMaster(currentUser)) {
-                return new Response(JSON.stringify({ error: 'Forbidden' }), {
-                    status: 403,
-                    headers
-                });
+            const updates: string[] = [];
+            const params: any[] = [];
+
+            if (name) {
+                updates.push('name = ?');
+                params.push(name);
+            }
+            if (role && ['master', 'manager', 'editor', 'viewer'].includes(role)) {
+                updates.push('role = ?');
+                params.push(role);
+            }
+            if (status && ['active', 'pending', 'inactive'].includes(status)) {
+                updates.push('status = ?');
+                params.push(status);
             }
 
-            const userId = path.split('/')[3];
-            const { role } = await request.json() as { role: string };
-
-            if (!['master', 'viewer'].includes(role)) {
-                return new Response(JSON.stringify({ error: 'Invalid role' }), {
+            if (updates.length === 0) {
+                return new Response(JSON.stringify({ error: 'Nenhum campo para atualizar' }), {
                     status: 400,
-                    headers
+                    headers,
                 });
             }
+
+            updates.push('updated_at = CURRENT_TIMESTAMP');
+            params.push(id);
 
             await env.DB.prepare(`
-                UPDATE users SET role = ? WHERE id = ?
-            `).bind(role, userId).run();
+                UPDATE users SET ${updates.join(', ')} WHERE id = ?
+            `).bind(...params).run();
 
             return new Response(JSON.stringify({ success: true }), { headers });
-        } catch (error) {
-            return new Response(JSON.stringify({ error: 'Failed to update role' }), {
-                status: 500,
-                headers
+
+        } catch (error: any) {
+            return new Response(JSON.stringify({ error: error.message }), {
+                status: error.message.includes('Forbidden') ? 403 : 500,
+                headers,
             });
         }
     }
 
-    // DELETE /api/users/:id - Delete user (Master only)
+    // DELETE /api/users/:id - Delete user (master only)
     if (request.method === 'DELETE' && path.match(/^\/api\/users\/\d+$/)) {
-        const token = requireAuth(request);
-
-        if (!token) {
-            return new Response(JSON.stringify({ error: 'Not authenticated' }), {
-                status: 401,
-                headers
-            });
-        }
-
         try {
-            const googleUser = await verifyGoogleToken(token, env);
-            const currentUser = await getUserFromEmail(googleUser.email, env);
+            await requireRole(request, env, ['master']);
+            const id = path.split('/').pop();
 
-            if (!requireMaster(currentUser)) {
-                return new Response(JSON.stringify({ error: 'Forbidden' }), {
-                    status: 403,
-                    headers
-                });
-            }
-
-            const userId = path.split('/')[3];
-
-            // Prevent deleting yourself
-            if (parseInt(userId) === currentUser.id) {
-                return new Response(JSON.stringify({ error: 'Cannot delete yourself' }), {
+            // Don't allow deleting yourself
+            const authUser = await requireRole(request, env, ['master']);
+            if (authUser.userId.toString() === id) {
+                return new Response(JSON.stringify({ error: 'Você não pode deletar sua própria conta' }), {
                     status: 400,
-                    headers
+                    headers,
                 });
             }
 
-            await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
+            await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id).run();
 
             return new Response(JSON.stringify({ success: true }), { headers });
-        } catch (error) {
-            return new Response(JSON.stringify({ error: 'Failed to delete user' }), {
-                status: 500,
-                headers
+
+        } catch (error: any) {
+            return new Response(JSON.stringify({ error: error.message }), {
+                status: error.message.includes('Forbidden') ? 403 : 500,
+                headers,
             });
         }
     }
 
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
-        headers
+        headers,
     });
 }
