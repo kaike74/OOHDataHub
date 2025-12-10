@@ -3,8 +3,60 @@
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye, ChevronLeft, ChevronRight, Phone, Mail } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import type { Contato } from '@/lib/types';
+
+// Componente para exibir contatos da exibidora
+function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undefined }) {
+    const [contatos, setContatos] = useState<Contato[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (!idExibidora) return;
+
+        const fetchContatos = async () => {
+            setLoading(true);
+            try {
+                const data = await api.getContatos(idExibidora);
+                setContatos(data);
+            } catch (error) {
+                console.error('Erro ao buscar contatos:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchContatos();
+    }, [idExibidora]);
+
+    if (loading || contatos.length === 0) return null;
+
+    return (
+        <div className="mt-3 space-y-2">
+            <p className="text-xs font-medium text-gray-600">Contatos:</p>
+            {contatos.map((contato) => (
+                <div key={contato.id} className="bg-gray-50 p-2 rounded text-sm">
+                    {contato.nome && (
+                        <p className="font-medium text-gray-900">{contato.nome}</p>
+                    )}
+                    {contato.telefone && (
+                        <div className="flex items-center gap-1 text-gray-600 mt-1">
+                            <Phone size={12} />
+                            <span className="text-xs">{contato.telefone}</span>
+                        </div>
+                    )}
+                    {contato.email && (
+                        <div className="flex items-center gap-1 text-gray-600 mt-1">
+                            <Mail size={12} />
+                            <span className="text-xs">{contato.email}</span>
+                        </div>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+}
 
 export default function Sidebar() {
     const selectedPonto = useStore((state) => state.selectedPonto);
@@ -188,7 +240,7 @@ export default function Sidebar() {
                         {selectedPonto.exibidora_nome && (
                             <div className="flex items-start gap-3">
                                 <Building2 className="text-blue-600 mt-1 flex-shrink-0" size={20} />
-                                <div>
+                                <div className="flex-1">
                                     <p className="font-medium text-gray-700">Exibidora</p>
                                     <button
                                         onClick={handleExibidoraClick}
@@ -201,6 +253,9 @@ export default function Sidebar() {
                                             CNPJ: {selectedPonto.exibidora_cnpj}
                                         </p>
                                     )}
+
+                                    {/* Contatos da Exibidora */}
+                                    <ContatosExibidora idExibidora={selectedPonto.id_exibidora} />
                                 </div>
                             </div>
                         )}
@@ -223,6 +278,17 @@ export default function Sidebar() {
                                 <div>
                                     <p className="font-medium text-gray-700">Fluxo</p>
                                     <p className="text-gray-900">{selectedPonto.fluxo.toLocaleString()} pessoas/dia</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Tipo */}
+                        {selectedPonto.tipo && (
+                            <div className="flex items-start gap-3">
+                                <FileText className="text-blue-600 mt-1 flex-shrink-0" size={20} />
+                                <div>
+                                    <p className="font-medium text-gray-700">Tipo</p>
+                                    <p className="text-gray-900">{selectedPonto.tipo}</p>
                                 </div>
                             </div>
                         )}

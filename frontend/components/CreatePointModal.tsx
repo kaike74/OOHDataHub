@@ -220,6 +220,20 @@ export default function CreatePointModal() {
       } else {
         newCustos[index][field] = '';
       }
+    } else if (field === 'produto') {
+      // Validar se já existe este produto
+      const produtoJaExiste = custos.some((c, i) => i !== index && c.produto === value && value !== '');
+      if (produtoJaExiste) {
+        setErrors({ ...errors, custos: `Produto "${value}" já foi adicionado` });
+        return;
+      } else {
+        // Limpar erro se havia
+        if (errors.custos) {
+          const { custos: _, ...rest } = errors;
+          setErrors(rest);
+        }
+      }
+      newCustos[index][field] = value;
     } else {
       newCustos[index][field] = value;
     }
@@ -558,11 +572,7 @@ export default function CreatePointModal() {
                         setIdExibidora(e.target.value);
                       }
                     }}
-                    className="w-full py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition appearance-none"
-                    style={{
-                      paddingLeft: idExibidora && idExibidora !== 'CREATE_NEW' && idExibidora !== '' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key ? '52px' : '16px',
-                      paddingRight: '16px'
-                    }}
+                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition appearance-none"
                   >
                     <option value="CREATE_NEW" className="text-gray-600" style={{ fontStyle: 'italic' }}>
                       + Cadastrar nova exibidora
@@ -573,16 +583,6 @@ export default function CreatePointModal() {
                       </option>
                     ))}
                   </select>
-                  {/* Logo preview next to selected */}
-                  {idExibidora && idExibidora !== 'CREATE_NEW' && idExibidora !== '' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key && (
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded overflow-hidden pointer-events-none">
-                      <img
-                        src={api.getImageUrl(exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key || '')}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
                 </div>
                 {errors.idExibidora && (
                   <p className="text-red-500 text-sm mt-1">{errors.idExibidora}</p>

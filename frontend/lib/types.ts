@@ -12,6 +12,7 @@ export interface Ponto {
     medidas: string | null;
     fluxo: number | null;
     tipos: string | null;
+    tipo: string | null; // Alias para tipos (nome da coluna no DB)
     observacoes: string | null;
     status: string;
     created_at: string;
