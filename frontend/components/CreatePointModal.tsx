@@ -360,6 +360,9 @@ export default function CreatePointModal() {
           }))
       };
 
+      console.log('CreatePointModal - Dados sendo enviados:', pontoData);
+      console.log('CreatePointModal - País:', pais, '-> Final:', pontoData.pais);
+
       let pontoId: number;
 
       if (editingPonto) {
