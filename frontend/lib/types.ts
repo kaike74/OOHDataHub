@@ -42,6 +42,16 @@ export interface Exibidora {
     created_at: string;
 }
 
+export interface Contato {
+    id: number;
+    id_exibidora: number;
+    nome: string | null;
+    telefone: string | null;
+    email: string | null;
+    observacoes: string | null;
+    created_at: string;
+}
+
 export interface Stats {
     total_pontos: number;
     total_exibidoras: number;

@@ -83,6 +83,20 @@ export const api = {
         return response.json();
     },
 
+    // Contatos
+    getContatos: (idExibidora: number) => fetchAPI(`/api/contatos?id_exibidora=${idExibidora}`),
+    createContato: (data: any) => fetchAPI('/api/contatos', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
+    updateContato: (id: number, data: any) => fetchAPI(`/api/contatos/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    }),
+    deleteContato: (id: number) => fetchAPI(`/api/contatos/${id}`, {
+        method: 'DELETE',
+    }),
+
     // Stats
     getStats: () => fetchAPI('/api/stats'),
 

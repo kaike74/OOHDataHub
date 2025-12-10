@@ -6,6 +6,7 @@ export interface Env {
 
 import { handlePontos } from './routes/pontos';
 import { handleExibidoras } from './routes/exibidoras';
+import { handleContatos } from './routes/contatos';
 import { handleUpload, handleImage } from './routes/upload';
 import { handleStats } from './routes/stats';
 import { corsHeaders, handleOptions } from './utils/cors';
@@ -28,6 +29,10 @@ export default {
 
             if (path.startsWith('/api/exibidoras')) {
                 return await handleExibidoras(request, env, path);
+            }
+
+            if (path.startsWith('/api/contatos')) {
+                return await handleContatos(request, env, path);
             }
 
             if (path === '/api/upload') {

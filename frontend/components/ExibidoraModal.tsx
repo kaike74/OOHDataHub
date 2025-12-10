@@ -3,8 +3,16 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { X, Upload, Loader2, Building2 } from 'lucide-react';
+import { X, Upload, Loader2, Building2, Plus, Trash2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
+
+interface Contato {
+    id?: number;
+    nome: string;
+    telefone: string;
+    email: string;
+    observacoes: string;
+}
 
 export default function ExibidoraModal() {
     const isModalOpen = useStore((state) => state.isExibidoraModalOpen);
@@ -24,6 +32,7 @@ export default function ExibidoraModal() {
     const [observacoes, setObservacoes] = useState('');
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string>('');
+    const [contatos, setContatos] = useState<Contato[]>([]);
 
     // Preencher formulário ao editar
     useEffect(() => {
@@ -38,6 +47,17 @@ export default function ExibidoraModal() {
             if (editingExibidora.logo_r2_key) {
                 setLogoPreview(api.getImageUrl(editingExibidora.logo_r2_key));
             }
+
+            // Carregar contatos
+            api.getContatos(editingExibidora.id).then((data: any) => {
+                setContatos(data.map((c: any) => ({
+                    id: c.id,
+                    nome: c.nome || '',
+                    telefone: c.telefone || '',
+                    email: c.email || '',
+                    observacoes: c.observacoes || ''
+                })));
+            }).catch(err => console.error('Erro ao carregar contatos:', err));
         }
     }, [editingExibidora, isModalOpen]);
 
@@ -85,6 +105,21 @@ export default function ExibidoraModal() {
         setCnpj(formatted);
     };
 
+    // Gerenciar contatos
+    const addContato = () => {
+        setContatos([...contatos, { nome: '', telefone: '', email: '', observacoes: '' }]);
+    };
+
+    const removeContato = (index: number) => {
+        setContatos(contatos.filter((_, i) => i !== index));
+    };
+
+    const updateContato = (index: number, field: keyof Contato, value: string) => {
+        const updated = [...contatos];
+        updated[index] = { ...updated[index], [field]: value };
+        setContatos(updated);
+    };
+
     // Validação
     const validate = () => {
         const newErrors: Record<string, string> = {};
@@ -127,6 +162,32 @@ export default function ExibidoraModal() {
             // Upload de logo se houver
             if (logoFile) {
                 await api.uploadExibidoraLogo(logoFile, exibidoraId.toString());
+            }
+
+            // Salvar contatos
+            if (contatos.length > 0) {
+                await Promise.all(
+                    contatos.map(c => {
+                        if (c.id) {
+                            // Atualizar contato existente
+                            return api.updateContato(c.id, {
+                                nome: c.nome || null,
+                                telefone: c.telefone || null,
+                                email: c.email || null,
+                                observacoes: c.observacoes || null
+                            });
+                        } else {
+                            // Criar novo contato
+                            return api.createContato({
+                                id_exibidora: exibidoraId,
+                                nome: c.nome || null,
+                                telefone: c.telefone || null,
+                                email: c.email || null,
+                                observacoes: c.observacoes || null
+                            });
+                        }
+                    })
+                );
             }
 
             // Atualizar lista de exibidoras
@@ -309,6 +370,77 @@ export default function ExibidoraModal() {
                                 className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition resize-none"
                                 placeholder="Informações adicionais sobre a exibidora..."
                             />
+                        </div>
+
+                        {/* Contatos */}
+                        <div>
+                            <div className="flex items-center justify-between mb-3">
+                                <label className="block text-sm font-semibold text-emidias-primary">
+                                    Contatos
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={addContato}
+                                    className="flex items-center gap-2 px-3 py-2 text-sm bg-emidias-accent text-white rounded-lg hover:bg-[#E01A6A] transition"
+                                >
+                                    <Plus size={16} />
+                                    Adicionar Contato
+                                </button>
+                            </div>
+
+                            {contatos.length === 0 ? (
+                                <p className="text-gray-500 text-sm italic">Nenhum contato cadastrado</p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {contatos.map((contato, index) => (
+                                        <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-sm font-medium text-gray-700">Contato {index + 1}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeContato(index)}
+                                                    className="text-red-500 hover:text-red-700 transition"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+
+                                            <input
+                                                type="text"
+                                                value={contato.nome}
+                                                onChange={(e) => updateContato(index, 'nome', e.target.value)}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition text-sm"
+                                                placeholder="Nome da pessoa"
+                                            />
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <input
+                                                    type="text"
+                                                    value={contato.telefone}
+                                                    onChange={(e) => updateContato(index, 'telefone', e.target.value)}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition text-sm"
+                                                    placeholder="Telefone"
+                                                />
+                                                <input
+                                                    type="email"
+                                                    value={contato.email}
+                                                    onChange={(e) => updateContato(index, 'email', e.target.value)}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition text-sm"
+                                                    placeholder="E-mail"
+                                                />
+                                            </div>
+
+                                            <textarea
+                                                value={contato.observacoes}
+                                                onChange={(e) => updateContato(index, 'observacoes', e.target.value)}
+                                                rows={2}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition resize-none text-sm"
+                                                placeholder="Observações sobre este contato..."
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 

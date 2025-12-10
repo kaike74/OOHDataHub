@@ -25,15 +25,14 @@ export async function handleExibidoras(request: Request, env: Env, path: string)
         }
 
         const result = await env.DB.prepare(`
-      INSERT INTO exibidoras (nome, cnpj, razao_social, endereco, telefone, email, logo_r2_key)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO exibidoras (nome, cnpj, razao_social, endereco, observacoes, logo_r2_key)
+      VALUES (?, ?, ?, ?, ?, ?)
     `).bind(
             data.nome,
             data.cnpj || null,
             data.razao_social || null,
             data.endereco || null,
-            data.telefone || null,
-            data.email || null,
+            data.observacoes || null,
             data.logo_r2_key || null
         ).run();
 
@@ -41,6 +40,34 @@ export async function handleExibidoras(request: Request, env: Env, path: string)
             status: 201,
             headers,
         });
+    }
+
+    // PUT /api/exibidoras/:id - Atualizar existente
+    if (request.method === 'PUT' && path.match(/^\/api\/exibidoras\/\d+$/)) {
+        const id = parseInt(path.split('/')[3]);
+        const data = await request.json() as any;
+
+        if (!data.nome) {
+            return new Response(JSON.stringify({ error: 'Nome é obrigatório' }), {
+                status: 400,
+                headers,
+            });
+        }
+
+        await env.DB.prepare(`
+      UPDATE exibidoras 
+      SET nome = ?, cnpj = ?, razao_social = ?, endereco = ?, observacoes = ?
+      WHERE id = ?
+    `).bind(
+            data.nome,
+            data.cnpj || null,
+            data.razao_social || null,
+            data.endereco || null,
+            data.observacoes || null,
+            id
+        ).run();
+
+        return new Response(JSON.stringify({ success: true }), { headers });
     }
 
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
