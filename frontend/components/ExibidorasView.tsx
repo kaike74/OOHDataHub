@@ -78,7 +78,7 @@ export default function ExibidorasView() {
 
     const handleExibidoraClick = (exibidora: typeof exibidorasComStats[0]) => {
         // Filtrar mapa por essa exibidora
-        setFilterExibidora(exibidora.id);
+        setFilterExibidora([exibidora.id]);
 
         // Selecionar exibidora para abrir gaveta
         setSelectedExibidora(exibidora);
