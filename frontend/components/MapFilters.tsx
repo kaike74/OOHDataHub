@@ -14,7 +14,6 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
   const exibidoras = useStore((state) => state.exibidoras);
 
   // Get current filters from store
-  const filterPais = useStore((state) => state.filterPais);
   const filterCidade = useStore((state) => state.filterCidade);
   const filterUF = useStore((state) => state.filterUF);
   const filterExibidora = useStore((state) => state.filterExibidora);
@@ -23,7 +22,6 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
   const filterValorMax = useStore((state) => state.filterValorMax);
 
   // Actions
-  const setFilterPais = useStore((state) => state.setFilterPais);
   const setFilterCidade = useStore((state) => state.setFilterCidade);
   const setFilterUF = useStore((state) => state.setFilterUF);
   const setFilterExibidora = useStore((state) => state.setFilterExibidora);
@@ -33,7 +31,6 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
   const clearFilters = useStore((state) => state.clearFilters);
 
   // Local state for UI
-  const [selectedPais, setSelectedPais] = useState<string | null>(filterPais);
   const [selectedCidade, setSelectedCidade] = useState<string | null>(filterCidade);
   const [selectedUF, setSelectedUF] = useState<string | null>(filterUF);
   const [selectedExibidora, setSelectedExibidora] = useState<number | null>(filterExibidora);
@@ -42,13 +39,11 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
   const [valorMax, setValorMax] = useState<string>(filterValorMax?.toString() || '');
 
   // Search queries
-  const [paisSearch, setPaisSearch] = useState('');
   const [ufSearch, setUfSearch] = useState('');
   const [cidadeSearch, setCidadeSearch] = useState('');
   const [exibidoraSearch, setExibidoraSearch] = useState('');
 
   const [expandedSections, setExpandedSections] = useState({
-    pais: true,
     localizacao: true,
     exibidora: true,
     tipo: false,
@@ -56,15 +51,13 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
   });
 
   // Extrair valores únicos dos pontos
-  const { paises, cidades, ufs, tipos, valores } = useMemo(() => {
-    const paisesSet = new Set<string>();
+  const { cidades, ufs, tipos, valores } = useMemo(() => {
     const cidadesSet = new Set<string>();
     const ufsSet = new Set<string>();
     const tiposSet = new Set<string>();
     const valoresArray: number[] = [];
 
     pontos.forEach(ponto => {
-      if (ponto.pais) paisesSet.add(ponto.pais);
       if (ponto.cidade) cidadesSet.add(ponto.cidade);
       if (ponto.uf) ufsSet.add(ponto.uf);
 
@@ -82,7 +75,6 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
     });
 
     return {
-      paises: Array.from(paisesSet).sort(),
       cidades: Array.from(cidadesSet).sort(),
       ufs: Array.from(ufsSet).sort(),
       tipos: Array.from(tiposSet).sort(),
@@ -94,11 +86,6 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
   }, [pontos]);
 
   // Filtrar listas com base na busca
-  const filteredPaises = useMemo(() =>
-    paises.filter(p => p.toLowerCase().includes(paisSearch.toLowerCase())),
-    [paises, paisSearch]
-  );
-
   const filteredUFs = useMemo(() =>
     ufs.filter(u => u.toLowerCase().includes(ufSearch.toLowerCase())),
     [ufs, ufSearch]
@@ -117,7 +104,6 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
   // Contar pontos filtrados
   const filteredCount = useMemo(() => {
     return pontos.filter(ponto => {
-      if (selectedPais && ponto.pais !== selectedPais) return false;
       if (selectedUF && ponto.uf !== selectedUF) return false;
       if (selectedCidade && ponto.cidade !== selectedCidade) return false;
       if (selectedExibidora && ponto.id_exibidora !== selectedExibidora) return false;
@@ -142,7 +128,7 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
 
       return true;
     }).length;
-  }, [pontos, selectedPais, selectedUF, selectedCidade, selectedExibidora, selectedTipos, valorMin, valorMax]);
+  }, [pontos, selectedUF, selectedCidade, selectedExibidora, selectedTipos, valorMin, valorMax]);
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -155,14 +141,12 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
   };
 
   const handleClearAll = () => {
-    setSelectedPais(null);
     setSelectedUF(null);
     setSelectedCidade(null);
     setSelectedExibidora(null);
     setSelectedTipos([]);
     setValorMin('');
     setValorMax('');
-    setPaisSearch('');
     setUfSearch('');
     setCidadeSearch('');
     setExibidoraSearch('');
@@ -171,7 +155,6 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
 
   const handleApply = () => {
     // Aplicar todos os filtros ao store
-    setFilterPais(selectedPais);
     setFilterUF(selectedUF);
     setFilterCidade(selectedCidade);
     setFilterExibidora(selectedExibidora);
@@ -216,48 +199,6 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
 
         {/* Filtros */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-          {/* País */}
-          <div className="border border-emidias-gray/20 rounded-lg overflow-hidden">
-            <button
-              onClick={() => toggleSection('pais')}
-              className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between transition"
-            >
-              <span className="font-semibold text-emidias-primary text-sm">País</span>
-              {expandedSections.pais ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-
-            {expandedSections.pais && (
-              <div className="p-4 space-y-3">
-                {/* Search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <input
-                    type="text"
-                    value={paisSearch}
-                    onChange={(e) => setPaisSearch(e.target.value)}
-                    placeholder="Buscar país..."
-                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emidias-primary focus:border-transparent"
-                  />
-                </div>
-
-                {/* List */}
-                <div className="space-y-1 max-h-40 overflow-y-auto">
-                  {filteredPaises.map(pais => (
-                    <label key={pais} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
-                      <input
-                        type="radio"
-                        checked={selectedPais === pais}
-                        onChange={() => setSelectedPais(selectedPais === pais ? null : pais)}
-                        className="rounded-full border-gray-300 text-emidias-primary focus:ring-emidias-primary"
-                      />
-                      <span className="text-sm text-gray-700">{pais}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Localização */}
           <div className="border border-emidias-gray/20 rounded-lg overflow-hidden">
             <button

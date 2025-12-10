@@ -24,6 +24,11 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
 
     const pontos = useStore((state) => state.pontos);
     const filterExibidora = useStore((state) => state.filterExibidora);
+    const filterUF = useStore((state) => state.filterUF);
+    const filterCidade = useStore((state) => state.filterCidade);
+    const filterTipos = useStore((state) => state.filterTipos);
+    const filterValorMin = useStore((state) => state.filterValorMin);
+    const filterValorMax = useStore((state) => state.filterValorMax);
     const setSelectedPonto = useStore((state) => state.setSelectedPonto);
     const setModalOpen = useStore((state) => state.setModalOpen);
     const setStreetViewCoordinates = useStore((state) => state.setStreetViewCoordinates);
@@ -150,21 +155,10 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             clustererRef.current.clearMarkers();
         }
 
-        // Obter filtros do store
-        const filterPais = useStore.getState().filterPais;
-        const filterUF = useStore.getState().filterUF;
-        const filterCidade = useStore.getState().filterCidade;
-        const filterTipos = useStore.getState().filterTipos;
-        const filterValorMin = useStore.getState().filterValorMin;
-        const filterValorMax = useStore.getState().filterValorMax;
-
         // Aplicar TODOS os filtros
         const filteredPontos = pontos.filter((ponto) => {
-            // Filtro por exibidora (já existente)
+            // Filtro por exibidora
             if (filterExibidora && ponto.id_exibidora !== filterExibidora) return false;
-
-            // Filtro por país
-            if (filterPais && ponto.pais !== filterPais) return false;
 
             // Filtro por UF
             if (filterUF && ponto.uf !== filterUF) return false;
@@ -277,7 +271,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             });
             googleMapRef.current.fitBounds(bounds);
         }
-    }, [pontos, filterExibidora, isLoaded, setSelectedPonto]);
+    }, [pontos, filterExibidora, filterUF, filterCidade, filterTipos, filterValorMin, filterValorMax, isLoaded, setSelectedPonto]);
 
     // Centralizar mapa quando search location mudar
     useEffect(() => {
