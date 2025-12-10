@@ -36,6 +36,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
     // Inicializar mapa
     useEffect(() => {
         const initMap = async () => {
+            console.log('GoogleMap loaded v2.0-fix-310-final');
             if (!mapRef.current || googleMapRef.current) return;
 
             // Carrega o Google Maps API manualmente

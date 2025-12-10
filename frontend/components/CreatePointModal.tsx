@@ -100,6 +100,7 @@ export default function CreatePointModal() {
         setImagesPreviews(editingPonto.imagens.map(img => api.getImageUrl(img)));
       }
     }
+    return undefined;
   }, [editingPonto, isModalOpen]);
 
   // Preencher coordenadas do Street View
@@ -133,6 +134,7 @@ export default function CreatePointModal() {
 
       reverseGeocode();
     }
+    return undefined;
   }, [streetViewCoordinates, isModalOpen]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
