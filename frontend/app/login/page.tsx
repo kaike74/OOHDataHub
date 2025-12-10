@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { Loader2 } from 'lucide-react';
 
 // Load Google OAuth library
@@ -91,13 +90,9 @@ export default function LoginPage() {
             <div className="hidden lg:flex lg:w-1/2 gradient-primary items-center justify-center p-12">
                 <div className="text-center">
                     <div className="mb-8">
-                        <Image
-                            src="/logo.png"
-                            alt="Logo"
-                            width={200}
-                            height={200}
-                            className="mx-auto"
-                        />
+                        <div className="w-48 h-48 mx-auto bg-white/10 rounded-full flex items-center justify-center">
+                            <span className="text-6xl font-bold text-white">OOH</span>
+                        </div>
                     </div>
                     <h1 className="text-4xl font-bold text-white mb-4">OOH DataHub</h1>
                     <p className="text-white/80 text-lg">
@@ -111,13 +106,9 @@ export default function LoginPage() {
                 <div className="w-full max-w-md">
                     {/* Mobile Logo */}
                     <div className="lg:hidden text-center mb-8">
-                        <Image
-                            src="/logo.png"
-                            alt="Logo"
-                            width={120}
-                            height={120}
-                            className="mx-auto mb-4"
-                        />
+                        <div className="w-24 h-24 mx-auto mb-4 bg-emidias-primary rounded-full flex items-center justify-center">
+                            <span className="text-3xl font-bold text-white">OOH</span>
+                        </div>
                         <h1 className="text-2xl font-bold text-emidias-primary">OOH DataHub</h1>
                     </div>
 
