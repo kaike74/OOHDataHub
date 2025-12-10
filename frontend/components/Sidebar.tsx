@@ -66,6 +66,7 @@ export default function Sidebar() {
     const setModalOpen = useStore((state) => state.setModalOpen);
     const setEditingPonto = useStore((state) => state.setEditingPonto);
     const setStreetViewRequest = useStore((state) => state.setStreetViewRequest);
+    const setSelectedPonto = useStore((state) => state.setSelectedPonto);
     const setSelectedExibidora = useStore((state) => state.setSelectedExibidora);
     const setFilterExibidora = useStore((state) => state.setFilterExibidora);
     const setCurrentView = useStore((state) => state.setCurrentView);
@@ -97,8 +98,15 @@ export default function Sidebar() {
     }, [selectedPonto, setStreetViewRequest]);
 
     const handleClose = useCallback(() => {
-        setSidebarOpen(false);
-    }, [setSidebarOpen]);
+        // Se há uma exibidora selecionada, voltar para os detalhes dela
+        if (selectedExibidora) {
+            setSelectedPonto(null);
+            // Sidebar permanece aberta mostrando ExibidoraSidebar
+        } else {
+            // Se não há exibidora, fechar completamente
+            setSidebarOpen(false);
+        }
+    }, [selectedExibidora, setSelectedPonto, setSidebarOpen]);
 
     const handleExibidoraClick = useCallback(() => {
         if (selectedPonto && selectedPonto.id_exibidora) {

@@ -3,7 +3,64 @@
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { X, Building2, FileText, MapPin, Phone, Mail, Pencil } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import type { Contato } from '@/lib/types';
+
+// Componente para exibir contatos da exibidora
+function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undefined }) {
+    const [contatos, setContatos] = useState<Contato[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (!idExibidora) return;
+
+        const fetchContatos = async () => {
+            setLoading(true);
+            try {
+                const data = await api.getContatos(idExibidora);
+                setContatos(data);
+            } catch (error) {
+                console.error('Erro ao buscar contatos:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchContatos();
+    }, [idExibidora]);
+
+    if (loading || contatos.length === 0) return null;
+
+    return (
+        <div className="mt-6">
+            <p className="font-medium text-gray-700 mb-3">Contatos</p>
+            <div className="space-y-3">
+                {contatos.map((contato) => (
+                    <div key={contato.id} className="bg-gray-50 p-3 rounded-lg">
+                        {contato.nome && (
+                            <p className="font-medium text-gray-900">{contato.nome}</p>
+                        )}
+                        {contato.telefone && (
+                            <div className="flex items-center gap-2 text-gray-600 mt-2">
+                                <Phone size={14} />
+                                <span className="text-sm">{contato.telefone}</span>
+                            </div>
+                        )}
+                        {contato.email && (
+                            <div className="flex items-center gap-2 text-gray-600 mt-1">
+                                <Mail size={14} />
+                                <span className="text-sm">{contato.email}</span>
+                            </div>
+                        )}
+                        {contato.observacoes && (
+                            <p className="text-xs text-gray-500 mt-2">{contato.observacoes}</p>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
 
 export default function ExibidoraSidebar() {
     const selectedExibidora = useStore((state) => state.selectedExibidora);
@@ -142,6 +199,9 @@ export default function ExibidoraSidebar() {
                                 </div>
                             </div>
                         )}
+
+                        {/* Contatos */}
+                        <ContatosExibidora idExibidora={selectedExibidora.id} />
                     </div>
 
                     {/* Ações */}
