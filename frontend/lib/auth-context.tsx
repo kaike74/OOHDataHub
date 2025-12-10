@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const verifyToken = async (token: string) => {
         try {
-            const response = await fetch(`${api.baseUrl}/auth/me`, {
+            const response = await fetch(`https://ooh-system.kaike-458.workers.dev/api/auth/me`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const login = async (token: string) => {
         try {
-            const response = await fetch(`${api.baseUrl}/auth/google`, {
+            const response = await fetch(`https://ooh-system.kaike-458.workers.dev/api/auth/google`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
