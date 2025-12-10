@@ -121,13 +121,24 @@ export default function ExibidoraModal() {
     };
 
     // Validação
-    const validate = () => {
+    const validate = async () => {
         const newErrors: Record<string, string> = {};
 
         if (!nome.trim()) newErrors.nome = 'Nome é obrigatório';
         if (!cnpj.trim()) newErrors.cnpj = 'CNPJ é obrigatório';
         if (cnpj.replace(/\D/g, '').length !== 14) {
             newErrors.cnpj = 'CNPJ inválido';
+        } else if (!editingExibidora) {
+            // Verificar se CNPJ já existe (apenas ao criar nova exibidora)
+            try {
+                const exibidoras = await api.getExibidoras();
+                const cnpjJaExiste = exibidoras.some((ex: any) => ex.cnpj === cnpj.replace(/\D/g, ''));
+                if (cnpjJaExiste) {
+                    newErrors.cnpj = 'Este CNPJ já está cadastrado';
+                }
+            } catch (error) {
+                console.error('Erro ao verificar CNPJ:', error);
+            }
         }
 
         setErrors(newErrors);
@@ -135,7 +146,7 @@ export default function ExibidoraModal() {
     };
 
     const handleSubmit = async () => {
-        if (!validate()) return;
+        if (!(await validate())) return;
 
         setIsLoading(true);
         try {
@@ -198,7 +209,12 @@ export default function ExibidoraModal() {
             handleClose();
         } catch (error: any) {
             console.error('Erro ao salvar exibidora:', error);
-            setErrors({ submit: error.message || 'Erro ao salvar exibidora' });
+            // Tratar erro de CNPJ duplicado
+            if (error.message && error.message.includes('UNIQUE constraint failed: exibidoras.cnpj')) {
+                setErrors({ cnpj: 'Este CNPJ já está cadastrado' });
+            } else {
+                setErrors({ submit: error.message || 'Erro ao salvar exibidora' });
+            }
         } finally {
             setIsLoading(false);
         }
@@ -216,6 +232,7 @@ export default function ExibidoraModal() {
             setObservacoes('');
             setLogoFile(null);
             setLogoPreview('');
+            setContatos([]); // Limpar contatos
             setErrors({});
         }, 300);
     };

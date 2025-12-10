@@ -77,8 +77,14 @@ export default function CreatePointModal() {
       setFluxo(editingPonto.fluxo?.toString() || '');
 
       // Parse tipos se existir
-      if (editingPonto.tipos) {
-        setTipos(editingPonto.tipos.split(', ').filter(Boolean));
+      if (editingPonto.tipo) {
+        // Usar 'tipo' (coluna do DB) ao invés de 'tipos'
+        const tiposArray = editingPonto.tipo.split(',').map(t => t.trim()).filter(Boolean);
+        setTipos(tiposArray);
+      } else if (editingPonto.tipos) {
+        // Fallback para 'tipos' se existir
+        const tiposArray = editingPonto.tipos.split(',').map(t => t.trim()).filter(Boolean);
+        setTipos(tiposArray);
       } else {
         setTipos([]);
       }
@@ -572,7 +578,11 @@ export default function CreatePointModal() {
                         setIdExibidora(e.target.value);
                       }
                     }}
-                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition appearance-none"
+                    className="w-full py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition appearance-none"
+                    style={{
+                      paddingLeft: idExibidora && idExibidora !== 'CREATE_NEW' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key ? '52px' : '16px',
+                      paddingRight: '16px'
+                    }}
                   >
                     <option value="CREATE_NEW" className="text-gray-600" style={{ fontStyle: 'italic' }}>
                       + Cadastrar nova exibidora
@@ -583,6 +593,16 @@ export default function CreatePointModal() {
                       </option>
                     ))}
                   </select>
+                  {/* Logo preview when filled */}
+                  {idExibidora && idExibidora !== 'CREATE_NEW' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key && (
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded overflow-hidden pointer-events-none bg-white">
+                      <img
+                        src={api.getImageUrl(exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key || '')}
+                        alt="Logo"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  )}
                 </div>
                 {errors.idExibidora && (
                   <p className="text-red-500 text-sm mt-1">{errors.idExibidora}</p>
