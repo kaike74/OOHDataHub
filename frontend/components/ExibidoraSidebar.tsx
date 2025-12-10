@@ -125,27 +125,6 @@ export default function ExibidoraSidebar() {
                             </div>
                         )}
 
-                        {/* Telefone */}
-                        {selectedExibidora.telefone && (
-                            <div className="flex items-start gap-3">
-                                <Phone className="text-blue-600 mt-1 flex-shrink-0" size={20} />
-                                <div>
-                                    <p className="font-medium text-gray-700">Telefone</p>
-                                    <p className="text-gray-900">{selectedExibidora.telefone}</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Email */}
-                        {selectedExibidora.email && (
-                            <div className="flex items-start gap-3">
-                                <Mail className="text-blue-600 mt-1 flex-shrink-0" size={20} />
-                                <div>
-                                    <p className="font-medium text-gray-700">E-mail</p>
-                                    <p className="text-gray-900">{selectedExibidora.email}</p>
-                                </div>
-                            </div>
-                        )}
 
                         {/* Regiões de Atuação */}
                         {stats && stats.cidades.length > 0 && (
