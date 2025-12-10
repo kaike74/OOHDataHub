@@ -9,6 +9,7 @@ export interface Ponto {
     cidade: string | null;
     uf: string | null;
     pais: string | null;
+    estado: string | null;
     id_exibidora: number | null;
     medidas: string | null;
     fluxo: number | null;

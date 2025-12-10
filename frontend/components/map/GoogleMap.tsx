@@ -24,6 +24,8 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
 
     const pontos = useStore((state) => state.pontos);
     const filterExibidora = useStore((state) => state.filterExibidora);
+    const filterPais = useStore((state) => state.filterPais);
+    const filterEstado = useStore((state) => state.filterEstado);
     const filterUF = useStore((state) => state.filterUF);
     const filterCidade = useStore((state) => state.filterCidade);
     const filterTipos = useStore((state) => state.filterTipos);
@@ -157,14 +159,20 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
 
         // Aplicar TODOS os filtros
         const filteredPontos = pontos.filter((ponto) => {
-            // Filtro por exibidora
-            if (filterExibidora && ponto.id_exibidora !== filterExibidora) return false;
+            // Filtro por país (multi-select)
+            if (filterPais.length > 0 && !filterPais.includes(ponto.pais || '')) return false;
 
-            // Filtro por UF
-            if (filterUF && ponto.uf !== filterUF) return false;
+            // Filtro por estado (multi-select)
+            if (filterEstado.length > 0 && !filterEstado.includes(ponto.estado || '')) return false;
 
-            // Filtro por cidade
-            if (filterCidade && ponto.cidade !== filterCidade) return false;
+            // Filtro por UF (multi-select)
+            if (filterUF.length > 0 && !filterUF.includes(ponto.uf || '')) return false;
+
+            // Filtro por cidade (multi-select)
+            if (filterCidade.length > 0 && !filterCidade.includes(ponto.cidade || '')) return false;
+
+            // Filtro por exibidora (multi-select)
+            if (filterExibidora.length > 0 && !filterExibidora.includes(ponto.id_exibidora || 0)) return false;
 
             // Filtro por tipos (verificar se o ponto tem algum dos tipos selecionados)
             if (filterTipos.length > 0) {
@@ -271,7 +279,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             });
             googleMapRef.current.fitBounds(bounds);
         }
-    }, [pontos, filterExibidora, filterUF, filterCidade, filterTipos, filterValorMin, filterValorMax, isLoaded, setSelectedPonto]);
+    }, [pontos, filterExibidora, filterPais, filterEstado, filterUF, filterCidade, filterTipos, filterValorMin, filterValorMax, isLoaded, setSelectedPonto]);
 
     // Centralizar mapa quando search location mudar
     useEffect(() => {

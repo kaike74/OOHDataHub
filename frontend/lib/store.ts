@@ -21,10 +21,11 @@ interface AppState {
     streetViewRequest: { lat: number; lng: number } | null;
 
     // Filters
-    filterCidade: string | null;
-    filterUF: string | null;
-    filterPais: string | null;
-    filterExibidora: number | null;
+    filterCidade: string[];
+    filterUF: string[];
+    filterPais: string[];
+    filterEstado: string[];
+    filterExibidora: number[];
     filterTipos: string[];
     filterValorMin: number | null;
     filterValorMax: number | null;
@@ -45,10 +46,11 @@ interface AppState {
     setCurrentView: (view: 'map' | 'exibidoras') => void;
     setStreetViewCoordinates: (coords: { lat: number; lng: number } | null) => void;
     setStreetViewRequest: (request: { lat: number; lng: number } | null) => void;
-    setFilterCidade: (cidade: string | null) => void;
-    setFilterUF: (uf: string | null) => void;
-    setFilterPais: (pais: string | null) => void;
-    setFilterExibidora: (id: number | null) => void;
+    setFilterCidade: (cidades: string[]) => void;
+    setFilterUF: (ufs: string[]) => void;
+    setFilterPais: (paises: string[]) => void;
+    setFilterEstado: (estados: string[]) => void;
+    setFilterExibidora: (ids: number[]) => void;
     setFilterTipos: (tipos: string[]) => void;
     setFilterValorMin: (valor: number | null) => void;
     setFilterValorMax: (valor: number | null) => void;
@@ -72,10 +74,11 @@ export const useStore = create<AppState>((set) => ({
     currentView: 'map',
     streetViewCoordinates: null,
     streetViewRequest: null,
-    filterCidade: null,
-    filterUF: null,
-    filterPais: null,
-    filterExibidora: null,
+    filterCidade: [],
+    filterUF: [],
+    filterPais: [],
+    filterEstado: [],
+    filterExibidora: [],
     filterTipos: [],
     filterValorMin: null,
     filterValorMax: null,
@@ -127,19 +130,21 @@ export const useStore = create<AppState>((set) => ({
     })),
     setStreetViewCoordinates: (coords) => set({ streetViewCoordinates: coords }),
     setStreetViewRequest: (request) => set({ streetViewRequest: request }),
-    setFilterCidade: (cidade) => set({ filterCidade: cidade }),
-    setFilterUF: (uf) => set({ filterUF: uf }),
-    setFilterPais: (pais) => set({ filterPais: pais }),
-    setFilterExibidora: (id) => set({ filterExibidora: id }),
+    setFilterCidade: (cidades) => set({ filterCidade: cidades }),
+    setFilterUF: (ufs) => set({ filterUF: ufs }),
+    setFilterPais: (paises) => set({ filterPais: paises }),
+    setFilterEstado: (estados) => set({ filterEstado: estados }),
+    setFilterExibidora: (ids) => set({ filterExibidora: ids }),
     setFilterTipos: (tipos) => set({ filterTipos: tipos }),
     setFilterValorMin: (valor) => set({ filterValorMin: valor }),
     setFilterValorMax: (valor) => set({ filterValorMax: valor }),
     setSearchQuery: (query) => set({ searchQuery: query }),
     clearFilters: () => set({
-        filterCidade: null,
-        filterUF: null,
-        filterPais: null,
-        filterExibidora: null,
+        filterCidade: [],
+        filterUF: [],
+        filterPais: [],
+        filterEstado: [],
+        filterExibidora: [],
         filterTipos: [],
         filterValorMin: null,
         filterValorMax: null,
