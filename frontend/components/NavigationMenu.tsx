@@ -1,20 +1,38 @@
 'use client';
 
 import { useStore } from '@/lib/store';
-import { X, Map, Building2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { X, Map, Building2, Settings, LogOut } from 'lucide-react';
 
 export default function NavigationMenu() {
+    const router = useRouter();
     const isMenuOpen = useStore((state) => state.isMenuOpen);
     const setMenuOpen = useStore((state) => state.setMenuOpen);
     const currentView = useStore((state) => state.currentView);
     const setCurrentView = useStore((state) => state.setCurrentView);
+    const user = useStore((state) => state.user);
+    const logout = useStore((state) => state.logout);
 
     if (!isMenuOpen) return null;
 
     const menuItems = [
-        { id: 'map' as const, icon: Map, label: 'Mapa de Pontos', description: 'Visualizar pontos OOH no mapa' },
-        { id: 'exibidoras' as const, icon: Building2, label: 'Exibidoras', description: 'Gerenciar exibidoras' },
+        { id: 'map' as const, icon: Map, label: 'Mapa de Pontos', description: 'Visualizar pontos OOH no mapa', type: 'view' as const },
+        { id: 'exibidoras' as const, icon: Building2, label: 'Exibidoras', description: 'Gerenciar exibidoras', type: 'view' as const },
     ];
+
+    const handleLogout = () => {
+        const confirmLogout = confirm('Tem certeza que deseja sair?');
+        if (confirmLogout) {
+            logout();
+            setMenuOpen(false);
+            router.push('/login');
+        }
+    };
+
+    const handleSettings = () => {
+        setMenuOpen(false);
+        router.push('/config');
+    };
 
     return (
         <>
@@ -69,6 +87,47 @@ export default function NavigationMenu() {
                             </button>
                         );
                     })}
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-200 my-4" />
+
+                    {/* Configurações - Apenas Master */}
+                    {user?.role === 'master' && (
+                        <button
+                            onClick={handleSettings}
+                            className="w-full p-4 rounded-lg text-left transition-all bg-gray-50 hover:bg-gray-100 text-gray-700"
+                        >
+                            <div className="flex items-start gap-3">
+                                <Settings size={24} className="text-emidias-accent" />
+                                <div className="flex-1">
+                                    <h3 className="font-semibold text-gray-900">
+                                        Configurações
+                                    </h3>
+                                    <p className="text-sm mt-1 text-gray-500">
+                                        Gerenciar usuários e conta
+                                    </p>
+                                </div>
+                            </div>
+                        </button>
+                    )}
+
+                    {/* Logout */}
+                    <button
+                        onClick={handleLogout}
+                        className="w-full p-4 rounded-lg text-left transition-all bg-red-50 hover:bg-red-100 text-red-700"
+                    >
+                        <div className="flex items-start gap-3">
+                            <LogOut size={24} className="text-red-600" />
+                            <div className="flex-1">
+                                <h3 className="font-semibold text-red-900">
+                                    Sair
+                                </h3>
+                                <p className="text-sm mt-1 text-red-600">
+                                    Fazer logout do sistema
+                                </p>
+                            </div>
+                        </div>
+                    </button>
                 </nav>
             </div>
         </>

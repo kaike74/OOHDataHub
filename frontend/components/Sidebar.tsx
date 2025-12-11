@@ -3,7 +3,7 @@
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye, ChevronLeft, ChevronRight, Phone, Mail } from 'lucide-react';
+import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye, ChevronLeft, ChevronRight, Phone, Mail, Trash2 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Contato } from '@/lib/types';
 
@@ -71,7 +71,11 @@ export default function Sidebar() {
     const setFilterExibidora = useStore((state) => state.setFilterExibidora);
     const setCurrentView = useStore((state) => state.setCurrentView);
     const exibidoras = useStore((state) => state.exibidoras);
+    const pontos = useStore((state) => state.pontos);
+    const setPontos = useStore((state) => state.setPontos);
+    const user = useStore((state) => state.user);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isDeleting, setIsDeleting] = useState(false);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
     // Precisa estar antes do return condicional
@@ -90,6 +94,36 @@ export default function Sidebar() {
         // TODO: Implementar modal de histórico
         alert('Funcionalidade de histórico será implementada em breve');
     }, []);
+
+    const handleDelete = useCallback(async () => {
+        if (!selectedPonto) return;
+
+        const confirmDelete = confirm(
+            `Tem certeza que deseja deletar o ponto ${selectedPonto.codigo_ooh}?\n\nEsta ação não pode ser desfeita.`
+        );
+
+        if (!confirmDelete) return;
+
+        setIsDeleting(true);
+        try {
+            await api.deletePonto(selectedPonto.id);
+
+            // Remove o ponto da lista local
+            const updatedPontos = pontos.filter(p => p.id !== selectedPonto.id);
+            setPontos(updatedPontos);
+
+            // Fecha a sidebar
+            setSidebarOpen(false);
+
+            // Mostra mensagem de sucesso
+            alert('Ponto deletado com sucesso!');
+        } catch (error: any) {
+            console.error('Erro ao deletar ponto:', error);
+            alert('Erro ao deletar ponto: ' + (error.message || 'Erro desconhecido'));
+        } finally {
+            setIsDeleting(false);
+        }
+    }, [selectedPonto, pontos, setPontos, setSidebarOpen]);
 
     const handleStreetView = useCallback(() => {
         if (selectedPonto && selectedPonto.latitude && selectedPonto.longitude) {
@@ -365,6 +399,18 @@ export default function Sidebar() {
                                 Histórico
                             </button>
                         </div>
+
+                        {/* Deletar - Apenas para Master */}
+                        {user?.role === 'master' && (
+                            <button
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                className="w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Trash2 size={18} />
+                                {isDeleting ? 'Deletando...' : 'Deletar Ponto'}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

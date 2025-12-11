@@ -2,13 +2,34 @@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8787';
 
+// Função helper para obter o token do localStorage
+function getToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    try {
+        const storage = localStorage.getItem('ooh-auth-storage');
+        if (!storage) return null;
+        const parsed = JSON.parse(storage);
+        return parsed?.state?.token || null;
+    } catch {
+        return null;
+    }
+}
+
 async function fetchAPI(endpoint: string, options?: RequestInit) {
+    const token = getToken();
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+    };
+
+    // Adiciona o token se existir
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_URL}${endpoint}`, {
         ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers,
-        },
+        headers,
     });
 
     if (!response.ok) {
@@ -20,6 +41,34 @@ async function fetchAPI(endpoint: string, options?: RequestInit) {
 }
 
 export const api = {
+    // Auth
+    login: (email: string, password: string) =>
+        fetchAPI('/api/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password }),
+        }),
+
+    getCurrentUser: () => fetchAPI('/api/users/me'),
+
+    changePassword: (currentPassword: string, newPassword: string) =>
+        fetchAPI('/api/auth/change-password', {
+            method: 'POST',
+            body: JSON.stringify({ currentPassword, newPassword }),
+        }),
+
+    // Users (master only)
+    getUsers: () => fetchAPI('/api/users'),
+
+    inviteUser: (email: string, name: string, role: 'master' | 'viewer') =>
+        fetchAPI('/api/users/invite', {
+            method: 'POST',
+            body: JSON.stringify({ email, name, role }),
+        }),
+
+    deleteUser: (id: number) => fetchAPI(`/api/users/${id}`, {
+        method: 'DELETE',
+    }),
+
     // Pontos
     getPontos: () => fetchAPI('/api/pontos'),
     getPonto: (id: number) => fetchAPI(`/api/pontos/${id}`),
@@ -48,15 +97,22 @@ export const api = {
 
     // Upload
     uploadImage: async (file: File, pontoId?: string, ordem?: number, ehCapa?: boolean) => {
+        const token = getToken();
         const formData = new FormData();
         formData.append('file', file);
         if (pontoId) formData.append('pontoId', pontoId);
         if (ordem !== undefined) formData.append('ordem', String(ordem));
         if (ehCapa) formData.append('ehCapa', 'true');
 
+        const headers: HeadersInit = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${API_URL}/api/upload`, {
             method: 'POST',
             body: formData,
+            headers,
         });
 
         if (!response.ok) {
@@ -67,13 +123,20 @@ export const api = {
     },
 
     uploadExibidoraLogo: async (file: File, exibidoraId: string) => {
+        const token = getToken();
         const formData = new FormData();
         formData.append('file', file);
         formData.append('exibidoraId', exibidoraId);
 
+        const headers: HeadersInit = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${API_URL}/api/upload-logo`, {
             method: 'POST',
             body: formData,
+            headers,
         });
 
         if (!response.ok) {
