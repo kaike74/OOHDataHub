@@ -17,9 +17,9 @@ function getToken(): string | null {
 
 async function fetchAPI(endpoint: string, options?: RequestInit) {
     const token = getToken();
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        ...options?.headers,
+        ...(options?.headers as Record<string, string> || {}),
     };
 
     // Adiciona o token se existir
@@ -104,7 +104,7 @@ export const api = {
         if (ordem !== undefined) formData.append('ordem', String(ordem));
         if (ehCapa) formData.append('ehCapa', 'true');
 
-        const headers: HeadersInit = {};
+        const headers: Record<string, string> = {};
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
@@ -128,7 +128,7 @@ export const api = {
         formData.append('file', file);
         formData.append('exibidoraId', exibidoraId);
 
-        const headers: HeadersInit = {};
+        const headers: Record<string, string> = {};
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
