@@ -10,7 +10,7 @@ interface UserData {
     id: number;
     email: string;
     name: string | null;
-    role: 'master' | 'viewer';
+    role: 'master' | 'editor' | 'viewer';
     created_at: string;
 }
 
@@ -25,8 +25,7 @@ export default function ConfigPage() {
 
     // Formulário de convite
     const [inviteEmail, setInviteEmail] = useState('');
-    const [inviteName, setInviteName] = useState('');
-    const [inviteRole, setInviteRole] = useState<'master' | 'viewer'>('viewer');
+    const [inviteRole, setInviteRole] = useState<'master' | 'editor' | 'viewer'>('viewer');
     const [inviteLoading, setInviteLoading] = useState(false);
 
     // Formulário de senha
@@ -61,10 +60,9 @@ export default function ConfigPage() {
         setInviteLoading(true);
 
         try {
-            await api.inviteUser(inviteEmail, inviteName, inviteRole);
-            alert('Usuário convidado com sucesso! A senha padrão foi enviada.');
+            await api.inviteUser(inviteEmail, '', inviteRole);
+            alert('Usuário convidado com sucesso! Senha padrão: HubRadios123!');
             setInviteEmail('');
-            setInviteName('');
             setInviteRole('viewer');
             setShowInviteForm(false);
             fetchUsers();
@@ -140,7 +138,7 @@ export default function ConfigPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+            <div className="bg-gradient-to-r from-pink-500 to-blue-600 text-white shadow-lg">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -174,14 +172,14 @@ export default function ConfigPage() {
                         <p className="text-gray-700">
                             <span className="font-medium">Email:</span> {user.email}
                         </p>
-                        <p className="text-gray-700">
-                            <span className="font-medium">Nome:</span> {user.name || 'Não informado'}
-                        </p>
                         <p className="text-gray-700 flex items-center gap-2">
                             <span className="font-medium">Nível:</span>
-                            <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 ${user.role === 'master' ? 'bg-purple-100 text-purple-800' :
+                                    user.role === 'editor' ? 'bg-blue-100 text-blue-800' :
+                                        'bg-gray-100 text-gray-800'
+                                }`}>
                                 <Shield size={14} />
-                                {user.role === 'master' ? 'Master' : 'Visualizador'}
+                                {user.role === 'master' ? 'Master' : user.role === 'editor' ? 'Editor' : 'Visualizador'}
                             </span>
                         </p>
                     </div>
@@ -237,7 +235,7 @@ export default function ConfigPage() {
                             <button
                                 type="submit"
                                 disabled={passwordLoading}
-                                className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                                className="w-full bg-gradient-to-r from-pink-500 to-blue-600 hover:from-pink-600 hover:to-blue-700 text-white py-2 rounded-lg font-medium transition disabled:opacity-50"
                             >
                                 {passwordLoading ? 'Alterando...' : 'Alterar Senha'}
                             </button>
@@ -254,7 +252,7 @@ export default function ConfigPage() {
                         </h2>
                         <button
                             onClick={() => setShowInviteForm(!showInviteForm)}
-                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                            className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-blue-600 hover:from-pink-600 hover:to-blue-700 text-white px-4 py-2 rounded-lg transition"
                         >
                             <UserPlus size={18} />
                             {showInviteForm ? 'Cancelar' : 'Convidar Usuário'}
@@ -278,34 +276,22 @@ export default function ConfigPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Nome
-                                </label>
-                                <input
-                                    type="text"
-                                    value={inviteName}
-                                    onChange={(e) => setInviteName(e.target.value)}
-                                    placeholder="Nome do usuário"
-                                    required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Nível de Acesso
                                 </label>
                                 <select
                                     value={inviteRole}
-                                    onChange={(e) => setInviteRole(e.target.value as 'master' | 'viewer')}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    onChange={(e) => setInviteRole(e.target.value as 'master' | 'editor' | 'viewer')}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                                 >
                                     <option value="viewer">Visualizador (apenas visualiza)</option>
+                                    <option value="editor">Editor (pode criar e editar, mas não deletar)</option>
                                     <option value="master">Master (acesso total)</option>
                                 </select>
                             </div>
                             <button
                                 type="submit"
                                 disabled={inviteLoading}
-                                className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                                className="w-full bg-gradient-to-r from-pink-500 to-blue-600 hover:from-pink-600 hover:to-blue-700 text-white py-2 rounded-lg font-medium transition disabled:opacity-50"
                             >
                                 {inviteLoading ? 'Convidando...' : 'Enviar Convite'}
                             </button>
@@ -330,20 +316,21 @@ export default function ConfigPage() {
                                                 {u.email[0].toUpperCase()}
                                             </div>
                                             <div>
-                                                <p className="font-medium text-gray-900">{u.name || 'Sem nome'}</p>
-                                                <p className="text-sm text-gray-600">{u.email}</p>
+                                                <p className="font-medium text-gray-900">{u.email}</p>
+                                                <p className="text-sm text-gray-600">Criado em {new Date(u.created_at).toLocaleDateString('pt-BR')}</p>
                                             </div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span
-                                            className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                                                u.role === 'master'
+                                            className={`px-3 py-1 rounded-full text-sm font-semibold ${u.role === 'master'
                                                     ? 'bg-purple-100 text-purple-800'
-                                                    : 'bg-gray-200 text-gray-800'
-                                            }`}
+                                                    : u.role === 'editor'
+                                                        ? 'bg-blue-100 text-blue-800'
+                                                        : 'bg-gray-200 text-gray-800'
+                                                }`}
                                         >
-                                            {u.role === 'master' ? 'Master' : 'Visualizador'}
+                                            {u.role === 'master' ? 'Master' : u.role === 'editor' ? 'Editor' : 'Visualizador'}
                                         </span>
                                         {u.id !== user.id && (
                                             <button

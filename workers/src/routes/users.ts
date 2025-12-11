@@ -7,6 +7,8 @@ import {
     requireAuth,
     requireMaster,
     validateEmailDomain,
+    generateResetToken,
+    sendPasswordResetEmail,
     User,
 } from '../utils/auth';
 
@@ -144,6 +146,108 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
             ).bind(newHash, user.id).run();
 
             return new Response(JSON.stringify({ success: true }), { headers });
+        }
+
+        // POST /api/auth/forgot-password - Request password reset
+        if (request.method === 'POST' && path === '/api/auth/forgot-password') {
+            const { email } = await request.json() as { email: string };
+
+            if (!email) {
+                return new Response(JSON.stringify({ error: 'Email required' }), {
+                    status: 400,
+                    headers,
+                });
+            }
+
+            // Validate email domain
+            if (!validateEmailDomain(email)) {
+                return new Response(JSON.stringify({ error: 'Only @hubradios.com emails are allowed' }), {
+                    status: 403,
+                    headers,
+                });
+            }
+
+            // Find user
+            const user = await env.DB.prepare(
+                'SELECT id FROM users WHERE email = ?'
+            ).bind(email).first() as any;
+
+            // Always return success to prevent email enumeration
+            if (!user) {
+                return new Response(JSON.stringify({
+                    success: true,
+                    message: 'If the email exists, a reset link will be sent'
+                }), { headers });
+            }
+
+            // Generate reset token
+            const resetToken = generateResetToken();
+            const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+            // Save token to database
+            await env.DB.prepare(
+                'UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE id = ?'
+            ).bind(resetToken, expiresAt.toISOString(), user.id).run();
+
+            // Send email
+            try {
+                await sendPasswordResetEmail(env, email, resetToken);
+            } catch (error) {
+                console.error('Error sending reset email:', error);
+                // Don't fail the request if email fails
+            }
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: 'If the email exists, a reset link will be sent'
+            }), { headers });
+        }
+
+        // POST /api/auth/reset-password - Reset password with token
+        if (request.method === 'POST' && path === '/api/auth/reset-password') {
+            const { token, newPassword } = await request.json() as {
+                token: string;
+                newPassword: string;
+            };
+
+            if (!token || !newPassword) {
+                return new Response(JSON.stringify({ error: 'Token and new password required' }), {
+                    status: 400,
+                    headers,
+                });
+            }
+
+            if (newPassword.length < 6) {
+                return new Response(JSON.stringify({ error: 'Password must be at least 6 characters' }), {
+                    status: 400,
+                    headers,
+                });
+            }
+
+            // Find user with valid token
+            const user = await env.DB.prepare(
+                'SELECT id FROM users WHERE reset_token = ? AND reset_token_expires > ?'
+            ).bind(token, new Date().toISOString()).first() as any;
+
+            if (!user) {
+                return new Response(JSON.stringify({ error: 'Invalid or expired reset token' }), {
+                    status: 400,
+                    headers,
+                });
+            }
+
+            // Hash new password
+            const passwordHash = await hashPassword(newPassword);
+
+            // Update password and clear reset token
+            await env.DB.prepare(
+                'UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+            ).bind(passwordHash, user.id).run();
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: 'Password reset successfully'
+            }), { headers });
         }
 
         // GET /api/users/me - Get current user

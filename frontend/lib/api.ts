@@ -56,10 +56,22 @@ export const api = {
             body: JSON.stringify({ currentPassword, newPassword }),
         }),
 
+    forgotPassword: (email: string) =>
+        fetchAPI('/api/auth/forgot-password', {
+            method: 'POST',
+            body: JSON.stringify({ email }),
+        }),
+
+    resetPassword: (token: string, newPassword: string) =>
+        fetchAPI('/api/auth/reset-password', {
+            method: 'POST',
+            body: JSON.stringify({ token, newPassword }),
+        }),
+
     // Users (master only)
     getUsers: () => fetchAPI('/api/users'),
 
-    inviteUser: (email: string, name: string, role: 'master' | 'viewer') =>
+    inviteUser: (email: string, name: string, role: 'master' | 'editor' | 'viewer') =>
         fetchAPI('/api/users/invite', {
             method: 'POST',
             body: JSON.stringify({ email, name, role }),

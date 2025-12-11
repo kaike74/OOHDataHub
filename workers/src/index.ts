@@ -2,6 +2,9 @@ export interface Env {
     DB: D1Database;
     R2: R2Bucket;
     ALLOWED_ORIGINS?: string;
+    GMAIL_USER?: string;
+    GMAIL_APP_PASSWORD?: string;
+    FRONTEND_URL?: string;
 }
 
 import { handlePontos } from './routes/pontos';

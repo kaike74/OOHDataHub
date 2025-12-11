@@ -73,7 +73,7 @@ export interface User {
     id: number;
     email: string;
     name: string | null;
-    role: 'master' | 'viewer';
+    role: 'master' | 'editor' | 'viewer';
     created_at: string;
 }
 

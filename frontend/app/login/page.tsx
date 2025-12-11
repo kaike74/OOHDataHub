@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -31,108 +32,105 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
-            <div className="w-full max-w-5xl flex bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl overflow-hidden">
-                {/* Logo Section */}
-                <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-blue-600 to-purple-600 p-12 flex-col justify-center items-center">
-                    <div className="text-center">
-                        <div className="mb-8">
-                            <div className="w-32 h-32 mx-auto bg-white rounded-full flex items-center justify-center shadow-xl">
-                                <span className="text-4xl font-bold text-blue-600">OOH</span>
-                            </div>
-                        </div>
-                        <h1 className="text-4xl font-bold text-white mb-4">
-                            OOH Data Hub
-                        </h1>
-                        <p className="text-blue-100 text-lg">
-                            Sistema de Gestão E-MÍDIAS
-                        </p>
-                        <div className="mt-8 space-y-3 text-left">
-                            <div className="flex items-center text-white">
-                                <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                                Gestão de Pontos OOH
-                            </div>
-                            <div className="flex items-center text-white">
-                                <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                                Controle de Exibidoras
-                            </div>
-                            <div className="flex items-center text-white">
-                                <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                                Visualização de Mapas
-                            </div>
-                        </div>
-                    </div>
+        <div className="min-h-screen bg-white flex">
+            {/* Left Side - Logo */}
+            <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-pink-50 to-blue-50 items-center justify-center p-12 relative overflow-hidden">
+                {/* Decorative circles */}
+                <div className="absolute top-20 left-20 w-64 h-64 bg-pink-200 rounded-full opacity-20 blur-3xl"></div>
+                <div className="absolute bottom-20 right-20 w-80 h-80 bg-blue-200 rounded-full opacity-20 blur-3xl"></div>
+
+                <div className="relative z-10">
+                    <Image
+                        src="/assets/logo.png"
+                        alt="E-MÍDIAS Logo"
+                        width={400}
+                        height={400}
+                        className="drop-shadow-2xl"
+                        priority
+                    />
                 </div>
+            </div>
 
-                {/* Login Form Section */}
-                <div className="w-full md:w-1/2 p-12 flex flex-col justify-center">
-                    <div className="mb-8 md:hidden text-center">
-                        <div className="w-20 h-20 mx-auto bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-xl mb-4">
-                            <span className="text-2xl font-bold text-white">OOH</span>
+            {/* Right Side - Login Form */}
+            <div className="flex-1 flex items-center justify-center p-8">
+                <div className="w-full max-w-md">
+                    {/* Mobile Logo */}
+                    <div className="lg:hidden mb-8 text-center">
+                        <Image
+                            src="/assets/logo.png"
+                            alt="E-MÍDIAS Logo"
+                            width={120}
+                            height={120}
+                            className="mx-auto"
+                            priority
+                        />
+                    </div>
+
+                    {/* Welcome Text */}
+                    <div className="mb-8">
+                        <h1 className="text-4xl font-bold text-gray-900 mb-2">Bem-vindo</h1>
+                        <p className="text-gray-600">Faça login para acessar o sistema</p>
+                    </div>
+
+                    {/* Login Form */}
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div>
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                                Email
+                            </label>
+                            <input
+                                id="email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="seuemail@hubradios.com"
+                                required
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition"
+                            />
                         </div>
-                        <h1 className="text-2xl font-bold text-white">OOH Data Hub</h1>
-                    </div>
 
-                    <div>
-                        <h2 className="text-3xl font-bold text-white mb-2">Bem-vindo</h2>
-                        <p className="text-gray-300 mb-8">Faça login para acessar o sistema</p>
+                        <div>
+                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                                Senha
+                            </label>
+                            <input
+                                id="password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                required
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition"
+                            />
+                        </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                                    Email
-                                </label>
-                                <input
-                                    id="email"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="seuemail@hubradios.com"
-                                    required
-                                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                                />
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                                {error}
                             </div>
+                        )}
 
-                            <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                                    Senha
-                                </label>
-                                <input
-                                    id="password"
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    required
-                                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                                />
-                            </div>
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full bg-gradient-to-r from-pink-500 to-blue-600 hover:from-pink-600 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                        >
+                            {isLoading ? 'Entrando...' : 'Entrar'}
+                        </button>
 
-                            {error && (
-                                <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg">
-                                    {error}
-                                </div>
-                            )}
-
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                        <div className="text-center">
+                            <Link
+                                href="/forgot-password"
+                                className="text-sm text-pink-600 hover:text-pink-700 font-medium transition"
                             >
-                                {isLoading ? 'Entrando...' : 'Entrar'}
-                            </button>
-                        </form>
+                                Esqueceu sua senha?
+                            </Link>
+                        </div>
+                    </form>
 
-                        <p className="mt-8 text-center text-sm text-gray-400">
-                            Apenas usuários autorizados com email @hubradios.com
-                        </p>
-                    </div>
+                    <p className="mt-8 text-center text-sm text-gray-500">
+                        Apenas usuários autorizados com email @hubradios.com
+                    </p>
                 </div>
             </div>
         </div>
