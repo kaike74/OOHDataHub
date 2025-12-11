@@ -1,9 +1,8 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import * as jose from 'jose';
 import { Env } from '../index';
 
 // JWT Secret - In production, use environment variable
-const JWT_SECRET = 'your-secret-key-change-in-production';
+const JWT_SECRET = new TextEncoder().encode('your-secret-key-change-in-production');
 const JWT_EXPIRES_IN = '7d';
 
 export interface User {
@@ -13,45 +12,54 @@ export interface User {
     role: 'master' | 'viewer';
 }
 
-export interface JWTPayload {
+export interface CustomJWTPayload {
     userId: number;
     email: string;
     role: string;
 }
 
 /**
- * Hash a password using bcrypt
+ * Hash a password using Web Crypto API (SHA-256)
  */
 export async function hashPassword(password: string): Promise<string> {
-    return bcrypt.hash(password, 10);
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 /**
  * Verify a password against a hash
  */
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-    return bcrypt.compare(password, hash);
+    const passwordHash = await hashPassword(password);
+    return passwordHash === hash;
 }
 
 /**
  * Generate a JWT token for a user
  */
-export function generateToken(user: User): string {
-    const payload: JWTPayload = {
+export async function generateToken(user: User): Promise<string> {
+    const payload = {
         userId: user.id,
         email: user.email,
         role: user.role,
     };
 
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    return await new jose.SignJWT(payload as any)
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime(JWT_EXPIRES_IN)
+        .sign(JWT_SECRET);
 }
 
 /**
  * Verify and decode a JWT token
  */
-export function verifyToken(token: string): JWTPayload | null {
+export async function verifyToken(token: string): Promise<CustomJWTPayload | null> {
     try {
-        return jwt.verify(token, JWT_SECRET) as JWTPayload;
+        const { payload } = await jose.jwtVerify(token, JWT_SECRET);
+        return payload as unknown as CustomJWTPayload;
     } catch (error) {
         return null;
     }
@@ -79,7 +87,7 @@ export async function requireAuth(request: Request, env: Env): Promise<User> {
         throw new Error('No token provided');
     }
 
-    const payload = verifyToken(token);
+    const payload = await verifyToken(token);
     if (!payload) {
         throw new Error('Invalid token');
     }

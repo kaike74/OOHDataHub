@@ -55,7 +55,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
             }
 
             // Generate token
-            const token = generateToken({
+            const token = await generateToken({
                 id: user.id,
                 email: user.email,
                 name: user.name,
