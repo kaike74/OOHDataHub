@@ -9,9 +9,7 @@ import { handleExibidoras } from './routes/exibidoras';
 import { handleContatos } from './routes/contatos';
 import { handleUpload, handleImage, handleUploadLogo } from './routes/upload';
 import { handleStats } from './routes/stats';
-import { handleAuth } from './routes/auth';
 import { handleUsers } from './routes/users';
-import { handleSetup } from './routes/setup';
 import { corsHeaders, handleOptions } from './utils/cors';
 
 export default {
@@ -25,6 +23,11 @@ export default {
         }
 
         try {
+            // Auth routes (no authentication required for login)
+            if (path.startsWith('/api/auth') || path.startsWith('/api/users')) {
+                return await handleUsers(request, env, path);
+            }
+
             // Routes
             if (path.startsWith('/api/pontos')) {
                 return await handlePontos(request, env, path);
@@ -48,18 +51,6 @@ export default {
 
             if (path.startsWith('/api/images/')) {
                 return await handleImage(request, env, path);
-            }
-
-            if (path.startsWith('/api/auth')) {
-                return await handleAuth(request, env, path);
-            }
-
-            if (path.startsWith('/api/users')) {
-                return await handleUsers(request, env, path);
-            }
-
-            if (path === '/api/setup') {
-                return await handleSetup(request, env);
             }
 
             if (path === '/api/stats') {

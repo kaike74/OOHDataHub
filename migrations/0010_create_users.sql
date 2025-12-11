@@ -1,31 +1,26 @@
--- Migration: Create users table
--- This table stores all system users with authentication and role information
+-- Migration: Create users table for authentication
+-- This table stores user credentials and roles
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
-  name TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'viewer', -- 'master', 'manager', 'editor', 'viewer'
-  status TEXT NOT NULL DEFAULT 'pending', -- 'active', 'pending', 'inactive'
-  invited_by INTEGER,
+  name TEXT,
+  role TEXT NOT NULL DEFAULT 'viewer', -- 'master' or 'viewer'
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  last_login DATETIME,
-  FOREIGN KEY (invited_by) REFERENCES users(id)
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_users_status ON users(status);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
--- Insert master user (password: Teste123)
--- Password hash generated with bcrypt rounds=10
-INSERT INTO users (email, password_hash, name, role, status) 
+-- Insert master user
+-- Email: kaike@hubradios.com
+-- Password: Teste123
+-- Hash generated with bcrypt (cost factor 10)
+INSERT INTO users (email, password_hash, name, role) 
 VALUES (
   'kaike@hubradios.com', 
-  '$2b$10$rnM.wIKmR.G7hgK527EkWOZ1mZGojqMAW2s8BWlUouKpjQAaaWAO1q',
-  'Kaike', 
-  'master', 
-  'active'
+  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  'Kaike',
+  'master'
 );

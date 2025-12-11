@@ -1,58 +1,156 @@
 import { Env } from '../index';
 import { corsHeaders } from '../utils/cors';
-import { hashPassword, validateEmail, generateRandomPassword } from '../utils/auth';
-import { requireRole } from '../middleware/auth';
+import {
+    hashPassword,
+    verifyPassword,
+    generateToken,
+    requireAuth,
+    requireMaster,
+    validateEmailDomain,
+    User,
+} from '../utils/auth';
 
 export async function handleUsers(request: Request, env: Env, path: string): Promise<Response> {
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
 
-    // GET /api/users - List all users (master only)
-    if (request.method === 'GET' && path === '/api/users') {
-        try {
-            await requireRole(request, env, ['master']);
+    try {
+        // POST /api/auth/login - Login
+        if (request.method === 'POST' && path === '/api/auth/login') {
+            const { email, password } = await request.json() as { email: string; password: string };
 
-            const { results } = await env.DB.prepare(`
-                SELECT 
-                    u.id, u.email, u.name, u.role, u.status, u.created_at, u.last_login,
-                    inviter.name as invited_by_name
-                FROM users u
-                LEFT JOIN users inviter ON u.invited_by = inviter.id
-                ORDER BY u.created_at DESC
-            `).all();
+            if (!email || !password) {
+                return new Response(JSON.stringify({ error: 'Email and password required' }), {
+                    status: 400,
+                    headers,
+                });
+            }
+
+            // Validate email domain
+            if (!validateEmailDomain(email)) {
+                return new Response(JSON.stringify({ error: 'Only @hubradios.com emails are allowed' }), {
+                    status: 403,
+                    headers,
+                });
+            }
+
+            // Find user
+            const user = await env.DB.prepare(
+                'SELECT id, email, password_hash, name, role FROM users WHERE email = ?'
+            ).bind(email).first() as any;
+
+            if (!user) {
+                return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
+                    status: 401,
+                    headers,
+                });
+            }
+
+            // Verify password
+            const isValid = await verifyPassword(password, user.password_hash);
+            if (!isValid) {
+                return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
+                    status: 401,
+                    headers,
+                });
+            }
+
+            // Generate token
+            const token = generateToken({
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+            });
+
+            return new Response(JSON.stringify({
+                token,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role,
+                },
+            }), { headers });
+        }
+
+        // POST /api/auth/change-password - Change own password
+        if (request.method === 'POST' && path === '/api/auth/change-password') {
+            const user = await requireAuth(request, env);
+            const { currentPassword, newPassword } = await request.json() as {
+                currentPassword: string;
+                newPassword: string;
+            };
+
+            if (!currentPassword || !newPassword) {
+                return new Response(JSON.stringify({ error: 'Current and new password required' }), {
+                    status: 400,
+                    headers,
+                });
+            }
+
+            // Get user with password hash
+            const userWithHash = await env.DB.prepare(
+                'SELECT password_hash FROM users WHERE id = ?'
+            ).bind(user.id).first() as any;
+
+            // Verify current password
+            const isValid = await verifyPassword(currentPassword, userWithHash.password_hash);
+            if (!isValid) {
+                return new Response(JSON.stringify({ error: 'Current password is incorrect' }), {
+                    status: 401,
+                    headers,
+                });
+            }
+
+            // Hash new password
+            const newHash = await hashPassword(newPassword);
+
+            // Update password
+            await env.DB.prepare(
+                'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+            ).bind(newHash, user.id).run();
+
+            return new Response(JSON.stringify({ success: true }), { headers });
+        }
+
+        // GET /api/users/me - Get current user
+        if (request.method === 'GET' && path === '/api/users/me') {
+            const user = await requireAuth(request, env);
+            return new Response(JSON.stringify(user), { headers });
+        }
+
+        // GET /api/users - List all users (Master only)
+        if (request.method === 'GET' && path === '/api/users') {
+            await requireMaster(request, env);
+
+            const { results } = await env.DB.prepare(
+                'SELECT id, email, name, role, created_at FROM users ORDER BY created_at DESC'
+            ).all();
 
             return new Response(JSON.stringify(results), { headers });
-
-        } catch (error: any) {
-            return new Response(JSON.stringify({ error: error.message }), {
-                status: error.message.includes('Forbidden') ? 403 : 401,
-                headers,
-            });
         }
-    }
 
-    // POST /api/users/invite - Invite new user (master only)
-    if (request.method === 'POST' && path === '/api/users/invite') {
-        try {
-            const authUser = await requireRole(request, env, ['master']);
-            const { email, name, role } = await request.json() as any;
+        // POST /api/users/invite - Invite new user (Master only)
+        if (request.method === 'POST' && path === '/api/users/invite') {
+            await requireMaster(request, env);
 
-            if (!email || !name || !role) {
-                return new Response(JSON.stringify({ error: 'Email, nome e nível são obrigatórios' }), {
+            const { email, name, role } = await request.json() as {
+                email: string;
+                name?: string;
+                role?: string;
+            };
+
+            if (!email) {
+                return new Response(JSON.stringify({ error: 'Email required' }), {
                     status: 400,
                     headers,
                 });
             }
 
-            if (!validateEmail(email)) {
-                return new Response(JSON.stringify({ error: 'Apenas emails @hubradios.com são permitidos' }), {
-                    status: 400,
-                    headers,
-                });
-            }
-
-            if (!['master', 'manager', 'editor', 'viewer'].includes(role)) {
-                return new Response(JSON.stringify({ error: 'Nível inválido' }), {
-                    status: 400,
+            // Validate email domain
+            if (!validateEmailDomain(email)) {
+                return new Response(JSON.stringify({ error: 'Only @hubradios.com emails are allowed' }), {
+                    status: 403,
                     headers,
                 });
             }
@@ -63,119 +161,67 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
             ).bind(email).first();
 
             if (existing) {
-                return new Response(JSON.stringify({ error: 'Usuário já existe' }), {
+                return new Response(JSON.stringify({ error: 'User already exists' }), {
                     status: 409,
                     headers,
                 });
             }
 
-            // Generate random password
-            const tempPassword = generateRandomPassword();
-            const passwordHash = await hashPassword(tempPassword);
+            // Generate default password (user will change it)
+            const defaultPassword = 'HubRadios123!';
+            const passwordHash = await hashPassword(defaultPassword);
 
             // Insert user
-            const result = await env.DB.prepare(`
-                INSERT INTO users (email, password_hash, name, role, status, invited_by)
-                VALUES (?, ?, ?, ?, 'pending', ?)
-            `).bind(email, passwordHash, name, role, authUser.userId).run();
-
-            // TODO: Send email with temporary password
-            console.log(`Temporary password for ${email}: ${tempPassword}`);
+            const result = await env.DB.prepare(
+                'INSERT INTO users (email, password_hash, name, role) VALUES (?, ?, ?, ?)'
+            ).bind(email, passwordHash, name || null, role || 'viewer').run();
 
             return new Response(JSON.stringify({
                 success: true,
                 userId: result.meta.last_row_id,
-                tempPassword // In production, this should be sent via email only
+                defaultPassword, // Return default password so admin can share it
             }), {
                 status: 201,
                 headers,
             });
-
-        } catch (error: any) {
-            console.error('Invite user error:', error);
-            return new Response(JSON.stringify({ error: error.message || 'Erro ao convidar usuário' }), {
-                status: error.message.includes('Forbidden') ? 403 : 500,
-                headers,
-            });
         }
-    }
 
-    // PUT /api/users/:id - Update user (master only)
-    if (request.method === 'PUT' && path.match(/^\/api\/users\/\d+$/)) {
-        try {
-            await requireRole(request, env, ['master']);
-            const id = path.split('/').pop();
-            const { name, role, status } = await request.json() as any;
+        // DELETE /api/users/:id - Delete user (Master only)
+        if (request.method === 'DELETE' && path.match(/^\/api\/users\/\d+$/)) {
+            const currentUser = await requireMaster(request, env);
+            const userId = parseInt(path.split('/').pop()!);
 
-            const updates: string[] = [];
-            const params: any[] = [];
-
-            if (name) {
-                updates.push('name = ?');
-                params.push(name);
-            }
-            if (role && ['master', 'manager', 'editor', 'viewer'].includes(role)) {
-                updates.push('role = ?');
-                params.push(role);
-            }
-            if (status && ['active', 'pending', 'inactive'].includes(status)) {
-                updates.push('status = ?');
-                params.push(status);
-            }
-
-            if (updates.length === 0) {
-                return new Response(JSON.stringify({ error: 'Nenhum campo para atualizar' }), {
+            // Prevent deleting yourself
+            if (userId === currentUser.id) {
+                return new Response(JSON.stringify({ error: 'Cannot delete your own account' }), {
                     status: 400,
                     headers,
                 });
             }
 
-            updates.push('updated_at = CURRENT_TIMESTAMP');
-            params.push(id);
-
-            await env.DB.prepare(`
-                UPDATE users SET ${updates.join(', ')} WHERE id = ?
-            `).bind(...params).run();
+            await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
 
             return new Response(JSON.stringify({ success: true }), { headers });
+        }
 
-        } catch (error: any) {
+        return new Response(JSON.stringify({ error: 'Not found' }), {
+            status: 404,
+            headers,
+        });
+    } catch (error: any) {
+        console.error('Error in handleUsers:', error);
+
+        // Handle authentication errors
+        if (error.message.includes('token') || error.message.includes('permissions')) {
             return new Response(JSON.stringify({ error: error.message }), {
-                status: error.message.includes('Forbidden') ? 403 : 500,
+                status: 401,
                 headers,
             });
         }
+
+        return new Response(JSON.stringify({ error: error.message || 'Internal server error' }), {
+            status: 500,
+            headers,
+        });
     }
-
-    // DELETE /api/users/:id - Delete user (master only)
-    if (request.method === 'DELETE' && path.match(/^\/api\/users\/\d+$/)) {
-        try {
-            await requireRole(request, env, ['master']);
-            const id = path.split('/').pop();
-
-            // Don't allow deleting yourself
-            const authUser = await requireRole(request, env, ['master']);
-            if (authUser.userId.toString() === id) {
-                return new Response(JSON.stringify({ error: 'Você não pode deletar sua própria conta' }), {
-                    status: 400,
-                    headers,
-                });
-            }
-
-            await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id).run();
-
-            return new Response(JSON.stringify({ success: true }), { headers });
-
-        } catch (error: any) {
-            return new Response(JSON.stringify({ error: error.message }), {
-                status: error.message.includes('Forbidden') ? 403 : 500,
-                headers,
-            });
-        }
-    }
-
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-        status: 405,
-        headers,
-    });
 }

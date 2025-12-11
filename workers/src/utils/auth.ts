@@ -1,46 +1,117 @@
 import bcrypt from 'bcryptjs';
-import jwt from '@tsndr/cloudflare-worker-jwt';
+import jwt from 'jsonwebtoken';
+import { Env } from '../index';
 
-const JWT_SECRET = 'ooh-system-secret-key-change-in-production'; // TODO: Move to env variable
+// JWT Secret - In production, use environment variable
+const JWT_SECRET = 'your-secret-key-change-in-production';
+const JWT_EXPIRES_IN = '7d';
 
+export interface User {
+    id: number;
+    email: string;
+    name: string | null;
+    role: 'master' | 'viewer';
+}
+
+export interface JWTPayload {
+    userId: number;
+    email: string;
+    role: string;
+}
+
+/**
+ * Hash a password using bcrypt
+ */
 export async function hashPassword(password: string): Promise<string> {
-    return await bcrypt.hash(password, 10);
+    return bcrypt.hash(password, 10);
 }
 
+/**
+ * Verify a password against a hash
+ */
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-    return await bcrypt.compare(password, hash);
+    return bcrypt.compare(password, hash);
 }
 
-export async function generateToken(userId: number, email: string, role: string): Promise<string> {
-    return await jwt.sign({
-        userId,
-        email,
-        role,
-        exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
-    }, JWT_SECRET);
+/**
+ * Generate a JWT token for a user
+ */
+export function generateToken(user: User): string {
+    const payload: JWTPayload = {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+    };
+
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 }
 
-export async function verifyToken(token: string): Promise<any> {
+/**
+ * Verify and decode a JWT token
+ */
+export function verifyToken(token: string): JWTPayload | null {
     try {
-        const isValid = await jwt.verify(token, JWT_SECRET);
-        if (!isValid) return null;
-        return jwt.decode(token);
+        return jwt.verify(token, JWT_SECRET) as JWTPayload;
     } catch (error) {
         return null;
     }
 }
 
-export function validateEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return false;
-    return email.endsWith('@hubradios.com');
+/**
+ * Extract token from Authorization header
+ */
+export function extractToken(request: Request): string | null {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return null;
+    }
+    return authHeader.substring(7);
 }
 
-export function generateRandomPassword(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
-    let password = '';
-    for (let i = 0; i < 12; i++) {
-        password += chars.charAt(Math.floor(Math.random() * chars.length));
+/**
+ * Middleware to require authentication
+ * Returns user if authenticated, throws error otherwise
+ */
+export async function requireAuth(request: Request, env: Env): Promise<User> {
+    const token = extractToken(request);
+
+    if (!token) {
+        throw new Error('No token provided');
     }
-    return password;
+
+    const payload = verifyToken(token);
+    if (!payload) {
+        throw new Error('Invalid token');
+    }
+
+    // Fetch user from database
+    const user = await env.DB.prepare(
+        'SELECT id, email, name, role FROM users WHERE id = ?'
+    ).bind(payload.userId).first() as User | null;
+
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    return user;
+}
+
+/**
+ * Middleware to require master role
+ */
+export async function requireMaster(request: Request, env: Env): Promise<User> {
+    const user = await requireAuth(request, env);
+
+    if (user.role !== 'master') {
+        throw new Error('Insufficient permissions');
+    }
+
+    return user;
+}
+
+/**
+ * Validate email domain
+ */
+export function validateEmailDomain(email: string): boolean {
+    return email.endsWith('@hubradios.com');
 }
