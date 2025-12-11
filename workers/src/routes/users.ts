@@ -14,6 +14,39 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
 
     try {
+        // POST /api/auth/setup - Initial setup (only works if no users exist)
+        if (request.method === 'POST' && path === '/api/auth/setup') {
+            // Check if any users exist
+            const existingUsers = await env.DB.prepare(
+                'SELECT COUNT(*) as count FROM users'
+            ).first() as { count: number } | null;
+
+            if (existingUsers && existingUsers.count > 0) {
+                return new Response(JSON.stringify({ error: 'Setup already completed' }), {
+                    status: 403,
+                    headers,
+                });
+            }
+
+            // Create master user
+            const masterEmail = 'kaike@hubradios.com';
+            const masterPassword = 'Teste123';
+            const passwordHash = await hashPassword(masterPassword);
+
+            await env.DB.prepare(
+                'INSERT INTO users (email, password_hash, name, role) VALUES (?, ?, ?, ?)'
+            ).bind(masterEmail, passwordHash, 'Kaike Master', 'master').run();
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: 'Master user created successfully',
+                email: masterEmail,
+            }), {
+                status: 201,
+                headers,
+            });
+        }
+
         // POST /api/auth/login - Login
         if (request.method === 'POST' && path === '/api/auth/login') {
             const { email, password } = await request.json() as { email: string; password: string };

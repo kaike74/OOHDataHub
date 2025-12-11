@@ -1,7 +1,13 @@
 import { create } from 'zustand';
-import { Ponto, Exibidora, Stats } from './types';
+import { persist } from 'zustand/middleware';
+import { Ponto, Exibidora, Stats, User } from './types';
 
 interface AppState {
+    // Auth
+    user: User | null;
+    token: string | null;
+    isAuthenticated: boolean;
+
     // Data
     pontos: Ponto[];
     exibidoras: Exibidora[];
@@ -30,6 +36,10 @@ interface AppState {
     filterValorMax: number | null;
     searchQuery: string;
 
+    // Auth Actions
+    setAuth: (user: User, token: string) => void;
+    logout: () => void;
+
     // Actions
     setPontos: (pontos: Ponto[]) => void;
     setExibidoras: (exibidoras: Exibidora[]) => void;
@@ -56,11 +66,18 @@ interface AppState {
     clearFilters: () => void;
 }
 
-export const useStore = create<AppState>((set) => ({
-    // Initial state
-    pontos: [],
-    exibidoras: [],
-    stats: null,
+export const useStore = create<AppState>()(
+    persist(
+        (set) => ({
+            // Auth initial state
+            user: null,
+            token: null,
+            isAuthenticated: false,
+
+            // Initial state
+            pontos: [],
+            exibidoras: [],
+            stats: null,
     selectedPonto: null,
     editingPonto: null,
     selectedExibidora: null,
@@ -80,6 +97,21 @@ export const useStore = create<AppState>((set) => ({
     filterValorMin: null,
     filterValorMax: null,
     searchQuery: '',
+
+    // Auth Actions
+    setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
+    logout: () => set({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        pontos: [],
+        exibidoras: [],
+        stats: null,
+        selectedPonto: null,
+        editingPonto: null,
+        selectedExibidora: null,
+        editingExibidora: null,
+    }),
 
     // Actions
     setPontos: (pontos) => set({ pontos }),
@@ -145,4 +177,14 @@ export const useStore = create<AppState>((set) => ({
         filterValorMax: null,
         searchQuery: '',
     }),
-}));
+        }),
+        {
+            name: 'ooh-auth-storage',
+            partialize: (state) => ({
+                user: state.user,
+                token: state.token,
+                isAuthenticated: state.isAuthenticated,
+            }),
+        }
+    )
+);

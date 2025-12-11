@@ -68,3 +68,16 @@ export interface MapBounds {
     east: number;
     west: number;
 }
+
+export interface User {
+    id: number;
+    email: string;
+    name: string | null;
+    role: 'master' | 'viewer';
+    created_at: string;
+}
+
+export interface AuthResponse {
+    token: string;
+    user: User;
+}
