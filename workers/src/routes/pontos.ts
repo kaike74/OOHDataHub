@@ -1,13 +1,23 @@
 import { Env } from '../index';
 import { corsHeaders } from '../utils/cors';
+import { getCache, setCache, CACHE_KEYS, CACHE_TTL, invalidatePontoCache } from '../utils/cache';
 
 export async function handlePontos(request: Request, env: Env, path: string): Promise<Response> {
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
 
     // GET /api/pontos - Lista todos os pontos
     if (request.method === 'GET' && path === '/api/pontos') {
+        // Try cache first
+        const cachedPontos = await getCache<any[]>(env, CACHE_KEYS.PONTOS_LIST);
+        if (cachedPontos) {
+            console.log('Pontos list served from cache');
+            return new Response(JSON.stringify(cachedPontos), { headers });
+        }
+
+        console.log('Pontos list cache miss - fetching from DB...');
+
         const { results } = await env.DB.prepare(`
-      SELECT 
+      SELECT
         p.*,
         e.nome as exibidora_nome,
         e.cnpj as exibidora_cnpj,
@@ -31,6 +41,9 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
                 return { tipo, valor: parseFloat(valor), periodo };
             }) : [],
         }));
+
+        // Cache the results
+        await setCache(env, CACHE_KEYS.PONTOS_LIST, pontos, CACHE_TTL.PONTOS_LIST);
 
         return new Response(JSON.stringify(pontos), { headers });
     }
@@ -119,6 +132,9 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
                 }
             }
 
+            // Invalidate cache
+            await invalidatePontoCache(env, Number(pontoId));
+
             return new Response(JSON.stringify({ id: pontoId, success: true }), {
                 status: 201,
                 headers,
@@ -189,6 +205,9 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
                 }
             }
 
+            // Invalidate cache
+            await invalidatePontoCache(env, Number(id));
+
             return new Response(JSON.stringify({ success: true }), { headers });
         } catch (error: any) {
             console.error('Erro ao atualizar ponto:', error);
@@ -209,6 +228,9 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
         await env.DB.prepare(
             "UPDATE pontos_ooh SET status = 'inativo' WHERE id = ?"
         ).bind(id).run();
+
+        // Invalidate cache
+        await invalidatePontoCache(env, Number(id));
 
         return new Response(JSON.stringify({ success: true }), { headers });
     }

@@ -190,12 +190,17 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
                 'UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE id = ?'
             ).bind(resetToken, expiresAt.toISOString(), user.id).run();
 
-            // Send email
+            // Enqueue email to background queue
             try {
-                await sendPasswordResetEmail(env, email, resetToken);
+                const { enqueueMessage, QueueMessageType } = await import('../utils/queue');
+                await enqueueMessage(env, {
+                    type: QueueMessageType.PASSWORD_RESET_EMAIL,
+                    email,
+                    resetToken,
+                });
             } catch (error) {
-                console.error('Error sending reset email:', error);
-                // Don't fail the request if email fails
+                console.error('Error enqueuing reset email:', error);
+                // Don't fail the request if queue fails
             }
 
             return new Response(JSON.stringify({

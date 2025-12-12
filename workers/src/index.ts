@@ -1,6 +1,8 @@
 export interface Env {
     DB: D1Database;
     R2: R2Bucket;
+    KV: KVNamespace;
+    QUEUE: Queue;
     ALLOWED_ORIGINS?: string;
     GMAIL_CLIENT_EMAIL?: string;
     GMAIL_PRIVATE_KEY?: string;
@@ -71,6 +73,20 @@ export default {
                 status: 500,
                 headers: { ...corsHeaders(request, env), 'Content-Type': 'application/json' },
             });
+        }
+    },
+
+    async queue(batch: MessageBatch<any>, env: Env): Promise<void> {
+        const { processQueueMessage } = await import('./utils/queue');
+
+        for (const message of batch.messages) {
+            try {
+                await processQueueMessage(message.body, env);
+                message.ack();
+            } catch (error) {
+                console.error('Error processing queue message:', error);
+                message.retry();
+            }
         }
     },
 };
