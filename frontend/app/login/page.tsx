@@ -106,27 +106,17 @@ export default function LoginPage() {
                         <path d="M 55,90 V 80 L 50,75 H 25" stroke="url(#cableGradient)" strokeWidth="0.4" fill="none" vectorEffect="non-scaling-stroke" />
                     </g>
 
-                    {/* Active Pulses - FAST & SPARCE */}
+                    {/* Active Pulses - Bright Pink Beams */}
                     <g className="signal-pulses" filter="url(#glow)">
-                        {/* FAST VERTICAL PULSE 1 */}
-                        <path d="M 95,0 V 10 L 90,15 H 70" stroke="url(#verticalPulse)" strokeWidth="0.8" fill="none" className="signal-flow"
-                            style={{ strokeDasharray: '30 70', animation: 'signalFlow 1.5s linear infinite' }} vectorEffect="non-scaling-stroke" />
-
-                        {/* FAST VERTICAL PULSE 2 */}
-                        <path d="M 80,0 V 25 L 75,30 H 50" stroke="url(#verticalPulse)" strokeWidth="0.8" fill="none" className="signal-flow"
-                            style={{ strokeDasharray: '25 75', animation: 'signalFlow 1.8s linear infinite', animationDelay: '0.4s' }} vectorEffect="non-scaling-stroke" />
-
-                        {/* FAST VERTICAL PULSE 3 */}
-                        <path d="M 65,0 V 40 L 60,45 H 20" stroke="url(#verticalPulse)" strokeWidth="0.8" fill="none" className="signal-flow"
-                            style={{ strokeDasharray: '40 60', animation: 'signalFlow 1.6s linear infinite', animationDelay: '0.8s' }} vectorEffect="non-scaling-stroke" />
-
-                        {/* FAST HORIZONTAL PULSE - Main Trunk */}
-                        <path d="M 100,50 H 85 L 80,55 H 40 L 35,60 H 0" stroke="url(#signalPulse)" strokeWidth="1" fill="none" className="signal-flow"
-                            style={{ strokeDasharray: '40 60', animation: 'signalFlow 1.2s linear infinite', animationDelay: '0s' }} vectorEffect="non-scaling-stroke" />
-
-                        {/* FAST HORIZONTAL PULSE - Bottom */}
-                        <path d="M 100,80 H 90 L 85,85 H 60 L 55,90 H 20" stroke="url(#signalPulse)" strokeWidth="0.8" fill="none" className="signal-flow"
-                            style={{ strokeDasharray: '30 70', animation: 'signalFlow 1.4s linear infinite', animationDelay: '0.5s' }} vectorEffect="non-scaling-stroke" />
+                        {/* Beam 1: fast initial, then slows */}
+                        <path d="M100,0 L0,80" stroke="url(#signalPulse)" strokeWidth="1.5" fill="none" className="signal-flow"
+                            style={{ strokeDasharray: '30 70', animation: 'signalFlow 0.6s ease-out infinite' }} vectorEffect="non-scaling-stroke" />
+                        {/* Beam 2: slightly delayed, slower */}
+                        <path d="M100,10 L0,70" stroke="url(#signalPulse)" strokeWidth="1.2" fill="none" className="signal-flow"
+                            style={{ strokeDasharray: '30 70', animation: 'signalFlow 1.2s ease-out infinite', animationDelay: '0.3s' }} vectorEffect="non-scaling-stroke" />
+                        {/* Small branches */}
+                        <path d="M70,30 L80,40" stroke="url(#cableGradient)" strokeWidth="0.5" fill="none" vectorEffect="non-scaling-stroke" />
+                        <path d="M50,50 L40,60" stroke="url(#cableGradient)" strokeWidth="0.5" fill="none" vectorEffect="non-scaling-stroke" />
                     </g>
                 </svg>
 
