@@ -521,6 +521,20 @@
   animation: float 6s ease-in-out infinite;
 }
 
+/* Float Slow */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+.animate-float-slow {
+  animation: floatSlow 8s ease-in-out infinite;
+}
+
 /* Glow Pulse */
 @keyframes glowPulse {
   0%, 100% {

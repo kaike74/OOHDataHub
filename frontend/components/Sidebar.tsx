@@ -405,50 +405,54 @@ export default function Sidebar() {
                 </div>
 
                 {/* Actions Footer - Fixed */}
-                <div className="flex-shrink-0 p-5 border-t border-emidias-gray-100 bg-white/80 backdrop-blur-sm space-y-3">
-                    {/* Street View - Primary CTA */}
-                    {selectedPonto.latitude && selectedPonto.longitude && (
-                        <button
-                            onClick={handleStreetView}
-                            className="w-full btn-base btn-accent py-3.5 text-base hover-glow-lg"
-                        >
-                            <Eye size={20} />
-                            Ver no Street View
-                        </button>
-                    )}
+                <div className="flex-shrink-0 p-4 border-t border-emidias-gray-100 bg-white/80 backdrop-blur-sm">
+                    {/* Icon-only action buttons in a compact row */}
+                    <div className="flex items-center justify-around gap-2">
+                        {/* Street View */}
+                        {selectedPonto.latitude && selectedPonto.longitude && (
+                            <button
+                                onClick={handleStreetView}
+                                className="flex items-center justify-center w-11 h-11 rounded-lg bg-emidias-accent/10 text-emidias-accent hover:bg-emidias-accent hover:text-white transition-all hover:scale-105"
+                                title="Ver no Street View"
+                            >
+                                <Eye size={20} />
+                            </button>
+                        )}
 
-                    {/* Secondary Actions */}
-                    <div className="flex gap-3">
+                        {/* Edit */}
                         <button
                             onClick={handleEdit}
-                            className="flex-1 btn-base btn-primary py-3"
+                            className="flex items-center justify-center w-11 h-11 rounded-lg bg-emidias-primary/10 text-emidias-primary hover:bg-emidias-primary hover:text-white transition-all hover:scale-105"
+                            title="Editar"
                         >
                             <Pencil size={18} />
-                            Editar
                         </button>
+
+                        {/* History */}
                         <button
                             onClick={handleHistory}
-                            className="btn-base btn-secondary py-3 px-5"
+                            className="flex items-center justify-center w-11 h-11 rounded-lg bg-emidias-gray-100 text-emidias-gray-600 hover:bg-emidias-gray-200 hover:text-emidias-gray-900 transition-all hover:scale-105"
+                            title="Histórico"
                         >
                             <History size={18} />
                         </button>
-                    </div>
 
-                    {/* Delete - Master Only */}
-                    {user?.role === 'master' && (
-                        <button
-                            onClick={handleDelete}
-                            disabled={isDeleting}
-                            className="w-full btn-base py-3 bg-emidias-danger/10 text-emidias-danger hover:bg-emidias-danger hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isDeleting ? (
-                                <Loader2 size={18} className="animate-spin" />
-                            ) : (
-                                <Trash2 size={18} />
-                            )}
-                            {isDeleting ? 'Deletando...' : 'Deletar Ponto'}
-                        </button>
-                    )}
+                        {/* Delete - Master Only */}
+                        {user?.role === 'master' && (
+                            <button
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                className="flex items-center justify-center w-11 h-11 rounded-lg bg-emidias-danger/10 text-emidias-danger hover:bg-emidias-danger hover:text-white transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Deletar Ponto"
+                            >
+                                {isDeleting ? (
+                                    <Loader2 size={18} className="animate-spin" />
+                                ) : (
+                                    <Trash2 size={18} />
+                                )}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </>

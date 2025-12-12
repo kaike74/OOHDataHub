@@ -208,14 +208,16 @@ export default function ExibidoraSidebar() {
 
                     {/* Ações */}
                     <div className="mt-8">
-                        {/* Editar */}
-                        <button
-                            onClick={handleEdit}
-                            className="w-full bg-emidias-accent text-white py-3 rounded-lg font-medium hover:bg-[#E01A6A] transition flex items-center justify-center gap-2 shadow-lg hover-lift"
-                        >
-                            <Pencil size={18} />
-                            Editar Exibidora
-                        </button>
+                        {/* Edit - Icon only */}
+                        <div className="flex justify-center">
+                            <button
+                                onClick={handleEdit}
+                                className="flex items-center justify-center w-11 h-11 rounded-lg bg-emidias-accent/10 text-emidias-accent hover:bg-emidias-accent hover:text-white transition-all hover:scale-105"
+                                title="Editar Exibidora"
+                            >
+                                <Pencil size={18} />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
