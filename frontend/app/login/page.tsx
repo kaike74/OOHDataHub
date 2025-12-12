@@ -41,21 +41,21 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
             {/* Animated Signal Lines Background - Tree-like branching from right to left */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute inset-y-0 right-0 w-1/2 overflow-hidden pointer-events-none">
                 <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">
                     <defs>
-                        {/* Pink gradient for signal pulse - more intense and visible */}
+                        {/* Pink gradient for signal pulse - softer opacity */}
                         <linearGradient id="signalPulse" x1="100%" y1="0%" x2="0%" y2="0%">
-                            <stop offset="0%" stopColor="rgba(252, 30, 117, 1)" />
-                            <stop offset="20%" stopColor="rgba(252, 30, 117, 1)" />
-                            <stop offset="50%" stopColor="rgba(252, 30, 117, 0.7)" />
+                            <stop offset="0%" stopColor="rgba(252, 30, 117, 0.5)" />
+                            <stop offset="20%" stopColor="rgba(252, 30, 117, 0.4)" />
+                            <stop offset="50%" stopColor="rgba(252, 30, 117, 0.25)" />
                             <stop offset="100%" stopColor="rgba(252, 30, 117, 0)" />
                         </linearGradient>
 
                         {/* Subtle cable color */}
                         <linearGradient id="cableGradient" x1="100%" y1="0%" x2="0%" y2="0%">
-                            <stop offset="0%" stopColor="rgba(106, 13, 173, 0.12)" />
-                            <stop offset="50%" stopColor="rgba(106, 13, 173, 0.08)" />
+                            <stop offset="0%" stopColor="rgba(106, 13, 173, 0.06)" />
+                            <stop offset="50%" stopColor="rgba(106, 13, 173, 0.04)" />
                             <stop offset="100%" stopColor="rgba(106, 13, 173, 0)" />
                         </linearGradient>
                     </defs>
@@ -66,7 +66,7 @@ export default function LoginPage() {
                         <path
                             d="M 100,12 L 85,12 L 85,18 L 70,18 L 70,24 L 55,24 L 55,28 L 40,28 L 40,32 L 25,32"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.216"
+                            strokeWidth="0.35"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -74,7 +74,7 @@ export default function LoginPage() {
                         <path
                             d="M 85,18 L 85,22 L 75,22 L 75,28 L 60,28 L 60,32 L 45,32 L 45,36 L 30,36"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.18"
+                            strokeWidth="0.28"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -82,7 +82,7 @@ export default function LoginPage() {
                         <path
                             d="M 70,24 L 70,30 L 58,30 L 58,34 L 43,34 L 43,38 L 28,38"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.144"
+                            strokeWidth="0.24"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -91,7 +91,7 @@ export default function LoginPage() {
                         <path
                             d="M 100,28 L 88,28 L 88,35 L 73,35 L 73,42 L 58,42 L 58,46 L 43,46 L 43,50 L 28,50"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.216"
+                            strokeWidth="0.35"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -99,7 +99,7 @@ export default function LoginPage() {
                         <path
                             d="M 88,35 L 88,40 L 78,40 L 78,46 L 63,46 L 63,50 L 48,50 L 48,54 L 33,54"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.18"
+                            strokeWidth="0.28"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -107,7 +107,7 @@ export default function LoginPage() {
                         <path
                             d="M 73,42 L 73,48 L 61,48 L 61,52 L 46,52 L 46,56 L 31,56"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.144"
+                            strokeWidth="0.24"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -115,7 +115,7 @@ export default function LoginPage() {
                         <path
                             d="M 78,40 L 78,44 L 68,44 L 68,48 L 53,48 L 53,52 L 38,52"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.108"
+                            strokeWidth="0.28"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -124,7 +124,7 @@ export default function LoginPage() {
                         <path
                             d="M 100,48 L 86,48 L 86,54 L 71,54 L 71,60 L 56,60 L 56,64 L 41,64 L 41,68 L 26,68"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.216"
+                            strokeWidth="0.35"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -132,7 +132,7 @@ export default function LoginPage() {
                         <path
                             d="M 86,54 L 86,59 L 76,59 L 76,65 L 61,65 L 61,69 L 46,69 L 46,73 L 31,73"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.18"
+                            strokeWidth="0.28"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -140,7 +140,7 @@ export default function LoginPage() {
                         <path
                             d="M 71,60 L 71,66 L 59,66 L 59,70 L 44,70 L 44,74 L 29,74"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.144"
+                            strokeWidth="0.24"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -149,7 +149,7 @@ export default function LoginPage() {
                         <path
                             d="M 100,68 L 90,68 L 90,74 L 75,74 L 75,80 L 60,80 L 60,84 L 45,84 L 45,88 L 30,88"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.216"
+                            strokeWidth="0.35"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -157,7 +157,7 @@ export default function LoginPage() {
                         <path
                             d="M 90,74 L 90,78 L 80,78 L 80,84 L 65,84 L 65,88 L 50,88 L 50,92 L 35,92"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.18"
+                            strokeWidth="0.28"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -165,7 +165,7 @@ export default function LoginPage() {
                         <path
                             d="M 75,80 L 75,86 L 63,86 L 63,90 L 48,90 L 48,94 L 33,94"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.144"
+                            strokeWidth="0.24"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -174,14 +174,14 @@ export default function LoginPage() {
                         <path
                             d="M 100,5 L 92,5 L 92,10 L 77,10 L 77,15 L 62,15 L 62,19 L 47,19 L 47,23 L 32,23"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.18"
+                            strokeWidth="0.28"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
                         <path
                             d="M 92,10 L 92,14 L 82,14 L 82,19 L 67,19 L 67,23 L 52,23 L 52,27 L 37,27"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.144"
+                            strokeWidth="0.24"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -190,14 +190,14 @@ export default function LoginPage() {
                         <path
                             d="M 100,88 L 88,88 L 88,92 L 73,92 L 73,96 L 58,96"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.18"
+                            strokeWidth="0.28"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
                         <path
                             d="M 88,92 L 88,95 L 78,95 L 78,98 L 63,98"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.108"
+                            strokeWidth="0.28"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -209,7 +209,7 @@ export default function LoginPage() {
                         <path
                             d="M 100,12 L 85,12 L 85,18 L 70,18 L 70,24 L 55,24"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.25"
+                            strokeWidth="0.45"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -223,7 +223,7 @@ export default function LoginPage() {
                         <path
                             d="M 85,18 L 85,22 L 75,22 L 75,28 L 60,28"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.2"
+                            strokeWidth="0.35"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -237,7 +237,7 @@ export default function LoginPage() {
                         <path
                             d="M 70,24 L 70,30 L 58,30"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.18"
+                            strokeWidth="0.28"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -252,7 +252,7 @@ export default function LoginPage() {
                         <path
                             d="M 100,28 L 88,28 L 88,35 L 73,35 L 73,42 L 58,42"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.25"
+                            strokeWidth="0.45"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -266,7 +266,7 @@ export default function LoginPage() {
                         <path
                             d="M 88,35 L 88,40 L 78,40 L 78,46 L 63,46"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.2"
+                            strokeWidth="0.35"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -280,7 +280,7 @@ export default function LoginPage() {
                         <path
                             d="M 73,42 L 73,48 L 61,48"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.18"
+                            strokeWidth="0.28"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -294,7 +294,7 @@ export default function LoginPage() {
                         <path
                             d="M 78,40 L 78,44 L 68,44"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.15"
+                            strokeWidth="0.28"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -309,7 +309,7 @@ export default function LoginPage() {
                         <path
                             d="M 100,48 L 86,48 L 86,54 L 71,54 L 71,60 L 56,60"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.25"
+                            strokeWidth="0.45"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -323,7 +323,7 @@ export default function LoginPage() {
                         <path
                             d="M 86,54 L 86,59 L 76,59 L 76,65 L 61,65"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.2"
+                            strokeWidth="0.35"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -337,7 +337,7 @@ export default function LoginPage() {
                         <path
                             d="M 71,60 L 71,66 L 59,66"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.18"
+                            strokeWidth="0.28"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -352,7 +352,7 @@ export default function LoginPage() {
                         <path
                             d="M 100,68 L 90,68 L 90,74 L 75,74 L 75,80 L 60,80"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.25"
+                            strokeWidth="0.45"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -366,7 +366,7 @@ export default function LoginPage() {
                         <path
                             d="M 90,74 L 90,78 L 80,78 L 80,84 L 65,84"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.2"
+                            strokeWidth="0.35"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -380,7 +380,7 @@ export default function LoginPage() {
                         <path
                             d="M 75,80 L 75,86 L 63,86"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.18"
+                            strokeWidth="0.28"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -395,7 +395,7 @@ export default function LoginPage() {
                         <path
                             d="M 100,5 L 92,5 L 92,10 L 77,10 L 77,15 L 62,15"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.22"
+                            strokeWidth="0.38"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -408,7 +408,7 @@ export default function LoginPage() {
                         <path
                             d="M 92,10 L 92,14 L 82,14 L 82,19 L 67,19"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.18"
+                            strokeWidth="0.28"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -423,7 +423,7 @@ export default function LoginPage() {
                         <path
                             d="M 100,88 L 88,88 L 88,92 L 73,92 L 73,96 L 58,96"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.22"
+                            strokeWidth="0.38"
                             fill="none"
                             className="signal-flow"
                             style={{
@@ -436,7 +436,7 @@ export default function LoginPage() {
                         <path
                             d="M 88,92 L 88,95 L 78,95"
                             stroke="url(#signalPulse)"
-                            strokeWidth="0.15"
+                            strokeWidth="0.28"
                             fill="none"
                             className="signal-flow"
                             style={{
