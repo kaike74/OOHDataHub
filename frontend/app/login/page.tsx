@@ -40,12 +40,12 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
-            {/* Animated Signal Lines Background - High Speed Cyberpunk Network */}
+            {/* Animated Signal Lines Background - Cyberpunk Circuit */}
             <div className="absolute inset-y-0 right-0 w-full overflow-hidden pointer-events-none select-none">
                 <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">
                     <defs>
-                        {/* Glow Filter */}
-                        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                        {/* Glow Filter for Neon Effect */}
+                        <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
                             <feGaussianBlur stdDeviation="1.5" result="coloredBlur" />
                             <feMerge>
                                 <feMergeNode in="coloredBlur" />
@@ -53,91 +53,109 @@ export default function LoginPage() {
                             </feMerge>
                         </filter>
 
-                        {/* Intense Pink Pulse - Fades out to left */}
-                        <linearGradient id="signalPulse" x1="100%" y1="0%" x2="0%" y2="0%">
+                        {/* Pink Gradient for Active Beams */}
+                        <linearGradient id="beamGradient" x1="100%" y1="0%" x2="0%" y2="100%">
                             <stop offset="0%" stopColor="rgba(252, 30, 117, 1)" />
-                            <stop offset="30%" stopColor="rgba(252, 30, 117, 0.9)" />
-                            <stop offset="70%" stopColor="rgba(252, 30, 117, 0.4)" />
+                            <stop offset="50%" stopColor="rgba(252, 30, 117, 0.8)" />
                             <stop offset="100%" stopColor="rgba(252, 30, 117, 0)" />
                         </linearGradient>
 
-                        {/* Visible Cable Trace - Fades out to left */}
-                        <linearGradient id="cableGradient" x1="100%" y1="0%" x2="0%" y2="0%">
-                            <stop offset="0%" stopColor="rgba(106, 13, 173, 0.35)" />
-                            <stop offset="40%" stopColor="rgba(106, 13, 173, 0.15)" />
-                            <stop offset="90%" stopColor="rgba(106, 13, 173, 0)" />
-                        </linearGradient>
-
-                        {/* Vertical Gradient for Top-Down flows */}
-                        <linearGradient id="verticalPulse" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="rgba(252, 30, 117, 1)" />
-                            <stop offset="50%" stopColor="rgba(252, 30, 117, 0.5)" />
-                            <stop offset="100%" stopColor="rgba(252, 30, 117, 0)" />
+                        {/* Subtle Gradient for Static Traces */}
+                        <linearGradient id="traceGradient" x1="100%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="rgba(106, 13, 173, 0.2)" />
+                            <stop offset="50%" stopColor="rgba(106, 13, 173, 0.1)" />
+                            <stop offset="100%" stopColor="rgba(106, 13, 173, 0)" />
                         </linearGradient>
                     </defs>
 
-                    {/* Complex Cable Network with Top-Down Lines */}
-                    <g className="cable-network">
-                        {/* --- TOP-DOWN TRUNK 1 (Right) --- */}
-                        <path d="M 95,0 V 10 L 90,15 H 70" stroke="url(#cableGradient)" strokeWidth="0.5" fill="none" vectorEffect="non-scaling-stroke" />
-                        {/* Branch */}
-                        <path d="M 90,15 V 30 L 85,35 H 65" stroke="url(#cableGradient)" strokeWidth="0.4" fill="none" vectorEffect="non-scaling-stroke" />
+                    {/* --- STATIC CIRCUIT TRACES (Background Network) --- */}
+                    <g className="circuit-traces" stroke="url(#traceGradient)" fill="none" strokeWidth="0.5" vectorEffect="non-scaling-stroke">
+                        {/* Main Trunk Network Originating from Top Right (100, 0-20) */}
+                        {/* Path A: Top Edge to Center */}
+                        <path d="M 100,5 H 95 L 90,10 H 80 L 75,15 H 60 L 50,25 H 40 L 35,30 H 20" />
+                        {/* Path A Branches */}
+                        <path d="M 90,10 V 20 L 85,25 H 80" />
+                        <path d="M 60,15 V 35 L 55,40 H 45" />
 
-                        {/* --- TOP-DOWN TRUNK 2 (Mid-Right) --- */}
-                        <path d="M 80,0 V 25 L 75,30 H 50" stroke="url(#cableGradient)" strokeWidth="0.5" fill="none" vectorEffect="non-scaling-stroke" />
-                        {/* Branch */}
-                        <path d="M 75,30 V 45 L 70,50 H 55" stroke="url(#cableGradient)" strokeWidth="0.4" fill="none" vectorEffect="non-scaling-stroke" />
+                        {/* Path B: Upper Mid to Center */}
+                        <path d="M 100,15 H 92 L 85,22 H 70 L 65,27 H 45 L 40,32 H 25" />
+                        {/* Path B Branches */}
+                        <path d="M 85,22 V 40 L 80,45 H 65" />
+                        <path d="M 85,22 L 88,25 V 35" />
 
-                        {/* --- TOP-DOWN TRUNK 3 (Center-Right) --- */}
-                        <path d="M 65,0 V 40 L 60,45 H 20" stroke="url(#cableGradient)" strokeWidth="0.5" fill="none" vectorEffect="non-scaling-stroke" />
+                        {/* Path C: Mid Right to Lower Center */}
+                        <path d="M 100,30 H 96 L 90,36 H 75 L 70,41 H 55 L 50,46 H 30" />
+                        {/* Path C Branches - Complex Web */}
+                        <path d="M 90,36 V 55 L 85,60 H 70" />
+                        <path d="M 70,41 V 65 L 65,70 H 40" />
+                        <path d="M 50,46 V 75 L 45,80 H 35" />
 
-                        {/* --- Horizontal Trunks (Existing but adjusted) --- */}
-                        {/* TRUNK A */}
-                        <path d="M 100,5 H 98 L 95,10" stroke="url(#cableGradient)" strokeWidth="0.5" fill="none" vectorEffect="non-scaling-stroke" />
+                        {/* Path D: Lower Right Swirls */}
+                        <path d="M 100,60 H 95 L 90,65 H 80 L 75,70 H 60" />
+                        <path d="M 90,65 V 85 L 85,90 H 75" />
 
-                        {/* TRUNK B */}
-                        <path d="M 100,50 H 85 L 80,55 H 40 L 35,60 H 0" stroke="url(#cableGradient)" strokeWidth="0.5" fill="none" vectorEffect="non-scaling-stroke" />
-
-                        {/* TRUNK C */}
-                        <path d="M 100,80 H 90 L 85,85 H 60 L 55,90 H 20" stroke="url(#cableGradient)" strokeWidth="0.5" fill="none" vectorEffect="non-scaling-stroke" />
-
-                        {/* Ramifications */}
-                        <path d="M 80,55 V 65 L 75,70 H 50" stroke="url(#cableGradient)" strokeWidth="0.4" fill="none" vectorEffect="non-scaling-stroke" />
-                        <path d="M 55,90 V 80 L 50,75 H 25" stroke="url(#cableGradient)" strokeWidth="0.4" fill="none" vectorEffect="non-scaling-stroke" />
+                        {/* Connecting Cross Lines for "Circuit" feel */}
+                        <path d="M 80,20 V 65" opacity="0.5" />
+                        <path d="M 60,15 V 70" opacity="0.5" />
                     </g>
 
-                    {/* Active Pulses - Bright Pink Beams */}
-                    <g className="signal-pulses" filter="url(#glow)">
-                        {/* Beam 1: fast initial, then slows */}
-                        <path d="M100,0 L0,80" stroke="url(#signalPulse)" strokeWidth="1.5" fill="none" className="signal-flow"
-                            style={{ strokeDasharray: '30 70', animation: 'signalFlow 0.6s ease-out infinite' }} vectorEffect="non-scaling-stroke" />
-                        {/* Beam 2: slightly delayed, slower */}
-                        <path d="M100,10 L0,70" stroke="url(#signalPulse)" strokeWidth="1.2" fill="none" className="signal-flow"
-                            style={{ strokeDasharray: '30 70', animation: 'signalFlow 1.2s ease-out infinite', animationDelay: '0.3s' }} vectorEffect="non-scaling-stroke" />
-                        {/* Small branches */}
-                        <path d="M70,30 L80,40" stroke="url(#cableGradient)" strokeWidth="0.5" fill="none" vectorEffect="non-scaling-stroke" />
-                        <path d="M50,50 L40,60" stroke="url(#cableGradient)" strokeWidth="0.5" fill="none" vectorEffect="non-scaling-stroke" />
+                    {/* --- ACTIVE PULSE BEAMS --- */}
+                    <g className="active-beams" filter="url(#neonGlow)">
+                        {/* Primary Beam (High Speed -> Slow -> Fade) on Path A */}
+                        <path d="M 100,5 H 95 L 90,10 H 80 L 75,15 H 60 L 50,25 H 40 L 35,30 H 20"
+                            stroke="url(#beamGradient)" strokeWidth="2" fill="none"
+                            style={{
+                                strokeDasharray: '40 100', // Long beam
+                                strokeLinecap: 'round',
+                                animation: 'circuitDash 3s cubic-bezier(0.1, 0.8, 0.2, 1) infinite'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+
+                        {/* Secondary Beam on Path B (Delayed) */}
+                        <path d="M 100,15 H 92 L 85,22 H 70 L 65,27 H 45 L 40,32 H 25"
+                            stroke="url(#beamGradient)" strokeWidth="1.5" fill="none"
+                            style={{
+                                strokeDasharray: '30 100',
+                                strokeLinecap: 'round',
+                                animation: 'circuitDash 4s cubic-bezier(0.1, 0.8, 0.2, 1) infinite',
+                                animationDelay: '1s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+
+                        {/* Tertiary Beam on a Deep Branch (Very fast burst) */}
+                        <path d="M 90,36 V 55 L 85,60 H 70"
+                            stroke="url(#beamGradient)" strokeWidth="1.5" fill="none"
+                            style={{
+                                strokeDasharray: '20 100',
+                                strokeLinecap: 'round',
+                                animation: 'circuitDash 5s cubic-bezier(0.1, 0.9, 0.2, 1) infinite',
+                                animationDelay: '2.5s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
                     </g>
                 </svg>
 
-                {/* Depth Orbs */}
-                <div className="absolute top-[20%] right-[10%] w-96 h-96 bg-gradient-to-br from-purple-500/5 to-transparent rounded-full blur-3xl opacity-50" />
-                <div className="absolute bottom-[20%] right-[30%] w-80 h-80 bg-gradient-to-br from-pink-500/5 to-transparent rounded-full blur-3xl opacity-50" />
+                {/* Depth/Glow Effects */}
+                <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none" />
+                <div className="absolute top-[20%] right-[10%] w-[300px] h-[300px] bg-pink-500/10 rounded-full blur-[80px] pointer-events-none" />
 
                 <style jsx>{`
-                    @keyframes signalFlow {
+                    @keyframes circuitDash {
                         0% {
-                            stroke-dashoffset: 0;
+                            stroke-dashoffset: 140; /* Start hidden (assuming length ~100) */
                             opacity: 0;
                         }
                         10% {
                             opacity: 1;
                         }
-                        70% {
-                           opacity: 1;
+                        50% {
+                            opacity: 1;
                         }
                         100% {
-                            stroke-dashoffset: -100;
+                            stroke-dashoffset: -140; /* End fully traversed */
                             opacity: 0;
                         }
                     }
