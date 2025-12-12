@@ -154,6 +154,9 @@ export async function sendPasswordResetEmail(
 
     const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
+    console.log('[PASSWORD RESET] Starting email send process...');
+    console.log('[PASSWORD RESET] Reset URL:', resetUrl);
+
     try {
         // Create JWT for Gmail API authentication
         const now = Math.floor(Date.now() / 1000);
@@ -162,15 +165,21 @@ export async function sendPasswordResetEmail(
             typ: 'JWT'
         };
 
+        // IMPORTANT: Add 'sub' field to impersonate a user from the domain
+        // Service Account needs to send email "as" a real user
         const jwtClaim = {
             iss: gmailClientEmail,
+            sub: 'emidias@hubradios.com', // User to impersonate - must exist in Google Workspace
             scope: 'https://www.googleapis.com/auth/gmail.send',
             aud: 'https://oauth2.googleapis.com/token',
             exp: now + 3600,
             iat: now
         };
 
+        console.log('[PASSWORD RESET] JWT Claim:', { ...jwtClaim, iss: jwtClaim.iss.substring(0, 20) + '...' });
+
         // Import private key for signing
+        console.log('[PASSWORD RESET] Importing private key...');
         const privateKeyPem = gmailPrivateKey.replace(/\\n/g, '\n');
         const privateKeyBuffer = pemToArrayBuffer(privateKeyPem);
 
@@ -184,6 +193,7 @@ export async function sendPasswordResetEmail(
             false,
             ['sign']
         );
+        console.log('[PASSWORD RESET] Private key imported successfully');
 
         // Create JWT
         const jwtHeaderB64 = base64UrlEncode(JSON.stringify(jwtHeader));
@@ -200,6 +210,7 @@ export async function sendPasswordResetEmail(
         const jwt = `${jwtUnsigned}.${jwtSignatureB64}`;
 
         // Exchange JWT for access token
+        console.log('[PASSWORD RESET] Exchanging JWT for access token...');
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
             headers: {
@@ -208,11 +219,17 @@ export async function sendPasswordResetEmail(
             body: `grant_type=urn:ietf:params:oauth:grant-type=jwt-bearer&assertion=${jwt}`,
         });
 
+        const tokenResponseText = await tokenResponse.text();
+        console.log('[PASSWORD RESET] Token response status:', tokenResponse.status);
+
         if (!tokenResponse.ok) {
-            throw new Error(`Failed to get access token: ${await tokenResponse.text()}`);
+            console.error('[PASSWORD RESET] Token error response:', tokenResponseText);
+            throw new Error(`Failed to get access token: ${tokenResponseText}`);
         }
 
-        const { access_token } = await tokenResponse.json() as { access_token: string };
+        const tokenData = JSON.parse(tokenResponseText);
+        const { access_token } = tokenData;
+        console.log('[PASSWORD RESET] Access token obtained successfully');
 
         // Create email content
         const subject = 'Redefinição de Senha - OOH Data Hub';
@@ -269,6 +286,7 @@ export async function sendPasswordResetEmail(
         const encodedEmail = base64UrlEncode(rawEmail);
 
         // Send email via Gmail API
+        console.log('[PASSWORD RESET] Sending email via Gmail API...');
         const sendResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
             method: 'POST',
             headers: {
@@ -280,14 +298,23 @@ export async function sendPasswordResetEmail(
             }),
         });
 
+        const sendResponseText = await sendResponse.text();
+        console.log('[PASSWORD RESET] Send response status:', sendResponse.status);
+
         if (!sendResponse.ok) {
-            throw new Error(`Failed to send email: ${await sendResponse.text()}`);
+            console.error('[PASSWORD RESET] Send error response:', sendResponseText);
+            throw new Error(`Failed to send email: ${sendResponseText}`);
         }
 
-        console.log('Password reset email sent successfully to:', email);
+        console.log('[PASSWORD RESET] ✅ Email sent successfully to:', email);
     } catch (error) {
-        console.error('Error sending email:', error);
-        console.error('Reset URL (manual):', resetUrl);
+        console.error('[PASSWORD RESET] ❌ Error:', error);
+        console.error('[PASSWORD RESET] Error details:', {
+            name: (error as any).name,
+            message: (error as any).message,
+            stack: (error as any).stack?.substring(0, 500)
+        });
+        console.error('[PASSWORD RESET] Manual reset URL:', resetUrl);
         // Don't throw - fail silently and log the URL
     }
 }
@@ -350,16 +377,21 @@ export async function sendWelcomeEmail(
     }
 
     try {
+        console.log('[WELCOME EMAIL] Starting email send process...');
+
         // Create JWT for Gmail API authentication
         const now = Math.floor(Date.now() / 1000);
         const jwtHeader = { alg: 'RS256', typ: 'JWT' };
         const jwtClaim = {
             iss: gmailClientEmail,
+            sub: 'emidias@hubradios.com', // User to impersonate
             scope: 'https://www.googleapis.com/auth/gmail.send',
             aud: 'https://oauth2.googleapis.com/token',
             exp: now + 3600,
             iat: now
         };
+
+        console.log('[WELCOME EMAIL] Importing private key...');
 
         const privateKeyPem = gmailPrivateKey.replace(/\\n/g, '\n');
         const privateKeyBuffer = pemToArrayBuffer(privateKeyPem);
@@ -391,11 +423,17 @@ export async function sendWelcomeEmail(
             body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
         });
 
+        const tokenResponseText = await tokenResponse.text();
+        console.log('[WELCOME EMAIL] Token response status:', tokenResponse.status);
+
         if (!tokenResponse.ok) {
-            throw new Error(`Failed to get access token: ${await tokenResponse.text()}`);
+            console.error('[WELCOME EMAIL] Token error response:', tokenResponseText);
+            throw new Error(`Failed to get access token: ${tokenResponseText}`);
         }
 
-        const { access_token } = await tokenResponse.json() as { access_token: string };
+        const tokenData = JSON.parse(tokenResponseText);
+        const { access_token } = tokenData;
+        console.log('[WELCOME EMAIL] Access token obtained successfully');
 
         // Create welcome email
         const subject = 'Bem-vindo ao OOH Data Hub!';
@@ -469,13 +507,21 @@ export async function sendWelcomeEmail(
             body: JSON.stringify({ raw: encodedEmail }),
         });
 
+        const sendResponseText = await sendResponse.text();
+        console.log('[WELCOME EMAIL] Send response status:', sendResponse.status);
+
         if (!sendResponse.ok) {
-            throw new Error(`Failed to send email: ${await sendResponse.text()}`);
+            console.error('[WELCOME EMAIL] Send error response:', sendResponseText);
+            throw new Error(`Failed to send email: ${sendResponseText}`);
         }
 
-        console.log('Welcome email sent successfully to:', email);
+        console.log('[WELCOME EMAIL] ✅ Email sent successfully to:', email);
     } catch (error) {
-        console.error('Error sending welcome email:', error);
-        console.error('User credentials (manual):', email, temporaryPassword);
+        console.error('[WELCOME EMAIL] ❌ Error:', error);
+        console.error('[WELCOME EMAIL] Error details:', {
+            name: (error as any).name,
+            message: (error as any).message
+        });
+        console.error('[WELCOME EMAIL] User credentials (manual):', email, temporaryPassword);
     }
 }
