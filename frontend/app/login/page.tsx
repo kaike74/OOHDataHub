@@ -40,176 +40,135 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
-            {/* Animated Signal Cables Background */}
+            {/* Animated Signal Cables Background - Invisible lines with neon pulses */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {/* Signal Cable Lines - Animated */}
+                {/* Signal Cable Lines - Invisible with pink pulses */}
                 <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
                     <defs>
-                        {/* Gradient for signal pulse */}
-                        <linearGradient id="signalGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                        {/* Gradient for signal pulse - right to left */}
+                        <linearGradient id="signalGradient" x1="100%" y1="0%" x2="0%" y2="0%">
                             <stop offset="0%" stopColor="rgba(252, 30, 117, 0)" />
-                            <stop offset="50%" stopColor="rgba(252, 30, 117, 0.6)" />
-                            <stop offset="100%" stopColor="rgba(252, 30, 117, 0)" />
-                        </linearGradient>
-                        <linearGradient id="signalGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="rgba(252, 30, 117, 0)" />
-                            <stop offset="50%" stopColor="rgba(252, 30, 117, 0.5)" />
+                            <stop offset="30%" stopColor="rgba(252, 30, 117, 0.7)" />
+                            <stop offset="70%" stopColor="rgba(252, 30, 117, 0.7)" />
                             <stop offset="100%" stopColor="rgba(252, 30, 117, 0)" />
                         </linearGradient>
                     </defs>
 
-                    {/* Cable 1 - Top Left to Bottom Right */}
+                    {/* Cable 1 - Top horizontal */}
                     <path
-                        d="M 0,20 Q 200,100 400,80 T 800,120 L 1200,200"
-                        stroke="rgba(6, 5, 91, 0.08)"
-                        strokeWidth="1.5"
+                        d="M 1400,150 L 600,150"
+                        stroke="transparent"
+                        strokeWidth="2"
                         fill="none"
-                        className="signal-cable"
                     />
                     <path
-                        d="M 0,20 Q 200,100 400,80 T 800,120 L 1200,200"
-                        stroke="url(#signalGradient1)"
-                        strokeWidth="2.5"
+                        d="M 1400,150 L 600,150"
+                        stroke="url(#signalGradient)"
+                        strokeWidth="3"
                         fill="none"
-                        className="signal-pulse"
+                        className="signal-pulse-rtl"
                         style={{ animationDelay: '0s' }}
+                        strokeLinecap="square"
                     />
 
-                    {/* Cable 2 - Bottom Left to Top Right */}
+                    {/* Cable 2 - Upper middle horizontal */}
                     <path
-                        d="M 0,600 Q 300,500 600,550 T 1200,400"
-                        stroke="rgba(6, 5, 91, 0.08)"
-                        strokeWidth="1.5"
+                        d="M 1400,280 L 600,280"
+                        stroke="transparent"
+                        strokeWidth="2"
                         fill="none"
-                        className="signal-cable"
                     />
                     <path
-                        d="M 0,600 Q 300,500 600,550 T 1200,400"
-                        stroke="url(#signalGradient1)"
-                        strokeWidth="2.5"
+                        d="M 1400,280 L 600,280"
+                        stroke="url(#signalGradient)"
+                        strokeWidth="3"
                         fill="none"
-                        className="signal-pulse"
-                        style={{ animationDelay: '2s' }}
-                    />
-
-                    {/* Cable 3 - Vertical Left */}
-                    <path
-                        d="M 100,0 Q 120,200 100,400 T 100,800"
-                        stroke="rgba(6, 5, 91, 0.08)"
-                        strokeWidth="1.5"
-                        fill="none"
-                        className="signal-cable"
-                    />
-                    <path
-                        d="M 100,0 Q 120,200 100,400 T 100,800"
-                        stroke="url(#signalGradient2)"
-                        strokeWidth="2.5"
-                        fill="none"
-                        className="signal-pulse-vertical"
-                        style={{ animationDelay: '1s' }}
-                    />
-
-                    {/* Cable 4 - Diagonal Center */}
-                    <path
-                        d="M 200,0 Q 400,300 600,400 T 1000,700"
-                        stroke="rgba(6, 5, 91, 0.08)"
-                        strokeWidth="1.5"
-                        fill="none"
-                        className="signal-cable"
-                    />
-                    <path
-                        d="M 200,0 Q 400,300 600,400 T 1000,700"
-                        stroke="url(#signalGradient1)"
-                        strokeWidth="2.5"
-                        fill="none"
-                        className="signal-pulse"
-                        style={{ animationDelay: '3.5s' }}
-                    />
-
-                    {/* Cable 5 - Top Right to Bottom */}
-                    <path
-                        d="M 1200,100 Q 1000,250 900,400 T 700,800"
-                        stroke="rgba(6, 5, 91, 0.08)"
-                        strokeWidth="1.5"
-                        fill="none"
-                        className="signal-cable"
-                    />
-                    <path
-                        d="M 1200,100 Q 1000,250 900,400 T 700,800"
-                        stroke="url(#signalGradient2)"
-                        strokeWidth="2.5"
-                        fill="none"
-                        className="signal-pulse-vertical"
+                        className="signal-pulse-rtl"
                         style={{ animationDelay: '1.5s' }}
+                        strokeLinecap="square"
                     />
 
-                    {/* Cable 6 - Horizontal Middle */}
+                    {/* Cable 3 - Center horizontal */}
                     <path
-                        d="M 0,400 Q 300,420 600,400 T 1200,400"
-                        stroke="rgba(6, 5, 91, 0.08)"
-                        strokeWidth="1.5"
+                        d="M 1400,400 L 600,400"
+                        stroke="transparent"
+                        strokeWidth="2"
                         fill="none"
-                        className="signal-cable"
                     />
                     <path
-                        d="M 0,400 Q 300,420 600,400 T 1200,400"
-                        stroke="url(#signalGradient1)"
-                        strokeWidth="2.5"
+                        d="M 1400,400 L 600,400"
+                        stroke="url(#signalGradient)"
+                        strokeWidth="3"
                         fill="none"
-                        className="signal-pulse"
-                        style={{ animationDelay: '4s' }}
+                        className="signal-pulse-rtl"
+                        style={{ animationDelay: '3s' }}
+                        strokeLinecap="square"
+                    />
+
+                    {/* Cable 4 - Lower middle horizontal */}
+                    <path
+                        d="M 1400,520 L 600,520"
+                        stroke="transparent"
+                        strokeWidth="2"
+                        fill="none"
+                    />
+                    <path
+                        d="M 1400,520 L 600,520"
+                        stroke="url(#signalGradient)"
+                        strokeWidth="3"
+                        fill="none"
+                        className="signal-pulse-rtl"
+                        style={{ animationDelay: '4.5s' }}
+                        strokeLinecap="square"
+                    />
+
+                    {/* Cable 5 - Bottom horizontal */}
+                    <path
+                        d="M 1400,650 L 600,650"
+                        stroke="transparent"
+                        strokeWidth="2"
+                        fill="none"
+                    />
+                    <path
+                        d="M 1400,650 L 600,650"
+                        stroke="url(#signalGradient)"
+                        strokeWidth="3"
+                        fill="none"
+                        className="signal-pulse-rtl"
+                        style={{ animationDelay: '6s' }}
+                        strokeLinecap="square"
                     />
                 </svg>
 
-                {/* Subtle gradient orbs for depth */}
-                <div className="absolute top-[20%] left-[10%] w-96 h-96 bg-gradient-to-br from-emidias-accent/3 to-transparent rounded-full blur-3xl" />
-                <div className="absolute bottom-[20%] right-[15%] w-80 h-80 bg-gradient-to-br from-emidias-primary/3 to-transparent rounded-full blur-3xl" />
+                {/* Very subtle gradient orbs for depth */}
+                <div className="absolute top-[20%] left-[10%] w-96 h-96 bg-gradient-to-br from-emidias-accent/2 to-transparent rounded-full blur-3xl" />
+                <div className="absolute bottom-[20%] right-[15%] w-80 h-80 bg-gradient-to-br from-emidias-primary/2 to-transparent rounded-full blur-3xl" />
             </div>
 
-            {/* Main Content */}
-            <div className={`relative z-10 w-full max-w-6xl flex flex-col lg:flex-row items-center gap-12 lg:gap-20 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-                {/* Left Side - Static Logo with Hover Effect */}
-                <div className="flex-1 flex flex-col items-center lg:items-start">
-                    {/* Logo with Hover Zoom and Shadow */}
-                    <div className="relative mb-8 lg:mb-10 group cursor-pointer">
-                        {/* Glow effect */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-emidias-accent/10 to-emidias-primary/10 rounded-full blur-2xl scale-110 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* Main Content - Centered Layout */}
+            <div className={`relative z-10 w-full max-w-6xl flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-16 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+                {/* Centered Logo with Very Subtle Hover Effect */}
+                <div className="flex items-center justify-center lg:flex-1">
+                    <div className="relative group cursor-pointer">
+                        {/* Very subtle glow on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-emidias-accent/5 to-emidias-primary/5 rounded-full blur-2xl scale-110 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
-                        {/* Static logo with hover effect */}
-                        <div className="relative transition-all duration-300 group-hover:scale-105 group-hover:drop-shadow-2xl">
+                        {/* Static logo with very subtle hover effect */}
+                        <div className="relative transition-all duration-500 ease-out group-hover:scale-[1.02]">
                             <Image
                                 src="/assets/logo.png"
                                 alt="E-MÍDIAS Logo"
                                 width={240}
                                 height={240}
-                                className="relative z-10 drop-shadow-lg lg:w-[320px] lg:h-[320px]"
+                                className="relative z-10 lg:w-[280px] lg:h-[280px]"
                                 priority
                             />
-                        </div>
-                    </div>
-
-                    {/* Brand Text */}
-                    <div className="hidden lg:block space-y-4 text-center lg:text-left">
-                        <h1 className="text-4xl xl:text-5xl font-bold text-emidias-gray-900 tracking-tight">
-                            OOH Data Hub
-                        </h1>
-                        <p className="text-lg text-emidias-gray-600 max-w-md leading-relaxed">
-                            Plataforma completa de gerenciamento de mídias Out of Home.
-                            Visualize, analise e gerencie seus pontos de forma inteligente.
-                        </p>
-                        <div className="flex gap-3 pt-4 justify-center lg:justify-start">
-                            <div className="px-4 py-2 bg-emidias-gray-50 border border-emidias-gray-200 rounded-full text-sm text-emidias-gray-700">
-                                <span className="text-emidias-accent font-semibold">+1000</span> Pontos
-                            </div>
-                            <div className="px-4 py-2 bg-emidias-gray-50 border border-emidias-gray-200 rounded-full text-sm text-emidias-gray-700">
-                                <span className="text-emidias-accent font-semibold">50+</span> Cidades
-                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Right Side - Login Card */}
-                <div className="w-full max-w-md">
+                <div className="w-full max-w-md lg:flex-1">
                     <div className="bg-white p-8 sm:p-10 rounded-2xl shadow-xl border border-emidias-gray-100 animate-fade-in-scale" style={{ animationDelay: '0.2s' }}>
                         {/* Welcome Text */}
                         <div className="mb-8 text-center lg:text-left">
@@ -316,16 +275,6 @@ export default function LoginPage() {
                             <p className="text-center text-xs text-emidias-gray-400 mt-1">
                                 @hubradios.com
                             </p>
-                        </div>
-                    </div>
-
-                    {/* Mobile Stats */}
-                    <div className="lg:hidden flex justify-center gap-3 mt-6">
-                        <div className="px-4 py-2 bg-emidias-gray-50 border border-emidias-gray-200 rounded-full text-sm text-emidias-gray-700">
-                            <span className="text-emidias-accent font-semibold">+1000</span> Pontos
-                        </div>
-                        <div className="px-4 py-2 bg-emidias-gray-50 border border-emidias-gray-200 rounded-full text-sm text-emidias-gray-700">
-                            <span className="text-emidias-accent font-semibold">50+</span> Cidades
                         </div>
                     </div>
                 </div>
