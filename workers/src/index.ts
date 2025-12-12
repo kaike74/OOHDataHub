@@ -7,6 +7,8 @@ export interface Env {
     FRONTEND_URL?: string;
     MASTER_PASSWORD?: string;
     DEFAULT_USER_PASSWORD?: string;
+    CLOUDFLARE_ACCOUNT_ID?: string;
+    CLOUDFLARE_IMAGES_TOKEN?: string;
 }
 
 import { handlePontos } from './routes/pontos';
