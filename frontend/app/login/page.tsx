@@ -42,32 +42,32 @@ export default function LoginPage() {
         <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
             {/* Circuit-Style Signal Lines Background */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">
                     <defs>
                         {/* Gradient purple to pink like logo */}
-                        <linearGradient id="signalGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="rgba(106, 13, 173, 0)" />
-                            <stop offset="30%" stopColor="rgba(106, 13, 173, 0.6)" />
-                            <stop offset="70%" stopColor="rgba(252, 30, 117, 0.6)" />
-                            <stop offset="100%" stopColor="rgba(252, 30, 117, 0)" />
+                        <linearGradient id="signalGradient" x1="0" y1="0" x2="100" y2="0">
+                            <stop offset="0" stopColor="rgba(106, 13, 173, 0)" />
+                            <stop offset="30" stopColor="rgba(106, 13, 173, 0.6)" />
+                            <stop offset="70" stopColor="rgba(252, 30, 117, 0.6)" />
+                            <stop offset="100" stopColor="rgba(252, 30, 117, 0)" />
                         </linearGradient>
                     </defs>
 
-                    {/* Main Circuit Lines - Starting from 100% (far right edge) */}
+                    {/* Main Circuit Lines - Starting from 100 (far right edge) */}
 
                     {/* Line 1 - Top path with multiple branches */}
                     <path
-                        d="M 100%,8% L 85%,8% L 85%,14% M 85%,14% L 73%,14% L 73%,19% L 63%,19% L 63%,26% L 52%,26% M 85%,14% L 85%,20% L 76%,20%"
+                        d="M 100,8 L 85,8 L 85,14 M 85,14 L 73,14 L 73,19 L 63,19 L 63,26 L 52,26 M 85,14 L 85,20 L 76,20"
                         stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="2"
+                        strokeWidth="0.15"
                         fill="none"
                         className="signal-cable"
                         vectorEffect="non-scaling-stroke"
                     />
                     <path
-                        d="M 100%,8% L 85%,8% L 85%,14% M 85%,14% L 73%,14% L 73%,19% L 63%,19% L 63%,26% L 52%,26% M 85%,14% L 85%,20% L 76%,20%"
+                        d="M 100,8 L 85,8 L 85,14 M 85,14 L 73,14 L 73,19 L 63,19 L 63,26 L 52,26 M 85,14 L 85,20 L 76,20"
                         stroke="url(#signalGradient)"
-                        strokeWidth="3"
+                        strokeWidth="0.2"
                         fill="none"
                         className="signal-pulse"
                         style={{ animationDelay: '0s' }}
@@ -76,17 +76,17 @@ export default function LoginPage() {
 
                     {/* Line 2 - Upper middle with splits */}
                     <path
-                        d="M 100%,18% L 88%,18% L 88%,26% M 88%,26% L 78%,26% L 78%,32% L 68%,32% M 88%,26% L 88%,31% L 81%,31% L 81%,37% L 70%,37%"
+                        d="M 100,18 L 88,18 L 88,26 M 88,26 L 78,26 L 78,32 L 68,32 M 88,26 L 88,31 L 81,31 L 81,37 L 70,37"
                         stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="2"
+                        strokeWidth="0.15"
                         fill="none"
                         className="signal-cable"
                         vectorEffect="non-scaling-stroke"
                     />
                     <path
-                        d="M 100%,18% L 88%,18% L 88%,26% M 88%,26% L 78%,26% L 78%,32% L 68%,32% M 88%,26% L 88%,31% L 81%,31% L 81%,37% L 70%,37%"
+                        d="M 100,18 L 88,18 L 88,26 M 88,26 L 78,26 L 78,32 L 68,32 M 88,26 L 88,31 L 81,31 L 81,37 L 70,37"
                         stroke="url(#signalGradient)"
-                        strokeWidth="3"
+                        strokeWidth="0.2"
                         fill="none"
                         className="signal-pulse"
                         style={{ animationDelay: '1.2s' }}
@@ -95,17 +95,17 @@ export default function LoginPage() {
 
                     {/* Line 3 - Middle complex branching */}
                     <path
-                        d="M 100%,32% L 86%,32% L 86%,39% M 86%,39% L 76%,39% L 76%,44% L 65%,44% L 65%,50% L 55%,50% M 86%,39% L 86%,46% L 78%,46% M 76%,44% L 76%,51% L 68%,51%"
+                        d="M 100,32 L 86,32 L 86,39 M 86,39 L 76,39 L 76,44 L 65,44 L 65,50 L 55,50 M 86,39 L 86,46 L 78,46 M 76,44 L 76,51 L 68,51"
                         stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="2"
+                        strokeWidth="0.15"
                         fill="none"
                         className="signal-cable"
                         vectorEffect="non-scaling-stroke"
                     />
                     <path
-                        d="M 100%,32% L 86%,32% L 86%,39% M 86%,39% L 76%,39% L 76%,44% L 65%,44% L 65%,50% L 55%,50% M 86%,39% L 86%,46% L 78%,46% M 76%,44% L 76%,51% L 68%,51%"
+                        d="M 100,32 L 86,32 L 86,39 M 86,39 L 76,39 L 76,44 L 65,44 L 65,50 L 55,50 M 86,39 L 86,46 L 78,46 M 76,44 L 76,51 L 68,51"
                         stroke="url(#signalGradient)"
-                        strokeWidth="3"
+                        strokeWidth="0.2"
                         fill="none"
                         className="signal-pulse"
                         style={{ animationDelay: '2.5s' }}
@@ -114,17 +114,17 @@ export default function LoginPage() {
 
                     {/* Line 4 - Center with dense branching */}
                     <path
-                        d="M 100%,46% L 91%,46% L 91%,52% M 91%,52% L 81%,52% L 81%,57% L 70%,57% M 91%,52% L 91%,58% L 83%,58% L 83%,63% L 73%,63% M 81%,57% L 81%,64% L 73%,64%"
+                        d="M 100,46 L 91,46 L 91,52 M 91,52 L 81,52 L 81,57 L 70,57 M 91,52 L 91,58 L 83,58 L 83,63 L 73,63 M 81,57 L 81,64 L 73,64"
                         stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="2"
+                        strokeWidth="0.15"
                         fill="none"
                         className="signal-cable"
                         vectorEffect="non-scaling-stroke"
                     />
                     <path
-                        d="M 100%,46% L 91%,46% L 91%,52% M 91%,52% L 81%,52% L 81%,57% L 70%,57% M 91%,52% L 91%,58% L 83%,58% L 83%,63% L 73%,63% M 81%,57% L 81%,64% L 73%,64%"
+                        d="M 100,46 L 91,46 L 91,52 M 91,52 L 81,52 L 81,57 L 70,57 M 91,52 L 91,58 L 83,58 L 83,63 L 73,63 M 81,57 L 81,64 L 73,64"
                         stroke="url(#signalGradient)"
-                        strokeWidth="3"
+                        strokeWidth="0.2"
                         fill="none"
                         className="signal-pulse"
                         style={{ animationDelay: '3.8s' }}
@@ -133,17 +133,17 @@ export default function LoginPage() {
 
                     {/* Line 5 - Lower middle with splits */}
                     <path
-                        d="M 100%,60% L 87%,60% L 87%,66% M 87%,66% L 77%,66% L 77%,71% L 67%,71% L 67%,76% L 57%,76% M 87%,66% L 87%,72% L 80%,72%"
+                        d="M 100,60 L 87,60 L 87,66 M 87,66 L 77,66 L 77,71 L 67,71 L 67,76 L 57,76 M 87,66 L 87,72 L 80,72"
                         stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="2"
+                        strokeWidth="0.15"
                         fill="none"
                         className="signal-cable"
                         vectorEffect="non-scaling-stroke"
                     />
                     <path
-                        d="M 100%,60% L 87%,60% L 87%,66% M 87%,66% L 77%,66% L 77%,71% L 67%,71% L 67%,76% L 57%,76% M 87%,66% L 87%,72% L 80%,72%"
+                        d="M 100,60 L 87,60 L 87,66 M 87,66 L 77,66 L 77,71 L 67,71 L 67,76 L 57,76 M 87,66 L 87,72 L 80,72"
                         stroke="url(#signalGradient)"
-                        strokeWidth="3"
+                        strokeWidth="0.2"
                         fill="none"
                         className="signal-pulse"
                         style={{ animationDelay: '1.8s' }}
@@ -152,17 +152,17 @@ export default function LoginPage() {
 
                     {/* Line 6 - Bottom path */}
                     <path
-                        d="M 100%,74% L 90%,74% L 90%,80% L 79%,80% L 79%,85% L 69%,85% L 69%,91% L 60%,91%"
+                        d="M 100,74 L 90,74 L 90,80 L 79,80 L 79,85 L 69,85 L 69,91 L 60,91"
                         stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="2"
+                        strokeWidth="0.15"
                         fill="none"
                         className="signal-cable"
                         vectorEffect="non-scaling-stroke"
                     />
                     <path
-                        d="M 100%,74% L 90%,74% L 90%,80% L 79%,80% L 79%,85% L 69%,85% L 69%,91% L 60%,91%"
+                        d="M 100,74 L 90,74 L 90,80 L 79,80 L 79,85 L 69,85 L 69,91 L 60,91"
                         stroke="url(#signalGradient)"
-                        strokeWidth="3"
+                        strokeWidth="0.2"
                         fill="none"
                         className="signal-pulse"
                         style={{ animationDelay: '4.5s' }}
@@ -171,17 +171,17 @@ export default function LoginPage() {
 
                     {/* Line 7 - Very top edge */}
                     <path
-                        d="M 100%,3% L 91%,3% L 91%,8% L 81%,8% L 81%,13% L 70%,13% L 70%,19% L 61%,19%"
+                        d="M 100,3 L 91,3 L 91,8 L 81,8 L 81,13 L 70,13 L 70,19 L 61,19"
                         stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="2"
+                        strokeWidth="0.15"
                         fill="none"
                         className="signal-cable"
                         vectorEffect="non-scaling-stroke"
                     />
                     <path
-                        d="M 100%,3% L 91%,3% L 91%,8% L 81%,8% L 81%,13% L 70%,13% L 70%,19% L 61%,19%"
+                        d="M 100,3 L 91,3 L 91,8 L 81,8 L 81,13 L 70,13 L 70,19 L 61,19"
                         stroke="url(#signalGradient)"
-                        strokeWidth="3"
+                        strokeWidth="0.2"
                         fill="none"
                         className="signal-pulse"
                         style={{ animationDelay: '0.8s' }}
@@ -190,17 +190,17 @@ export default function LoginPage() {
 
                     {/* Line 8 - Additional middle layer */}
                     <path
-                        d="M 100%,39% L 93%,39% L 93%,44% M 93%,44% L 82%,44% L 82%,49% L 72%,49% M 93%,44% L 93%,50% L 85%,50%"
+                        d="M 100,39 L 93,39 L 93,44 M 93,44 L 82,44 L 82,49 L 72,49 M 93,44 L 93,50 L 85,50"
                         stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="2"
+                        strokeWidth="0.15"
                         fill="none"
                         className="signal-cable"
                         vectorEffect="non-scaling-stroke"
                     />
                     <path
-                        d="M 100%,39% L 93%,39% L 93%,44% M 93%,44% L 82%,44% L 82%,49% L 72%,49% M 93%,44% L 93%,50% L 85%,50%"
+                        d="M 100,39 L 93,39 L 93,44 M 93,44 L 82,44 L 82,49 L 72,49 M 93,44 L 93,50 L 85,50"
                         stroke="url(#signalGradient)"
-                        strokeWidth="3"
+                        strokeWidth="0.2"
                         fill="none"
                         className="signal-pulse"
                         style={{ animationDelay: '3.2s' }}
@@ -209,33 +209,33 @@ export default function LoginPage() {
 
                     {/* Additional small connector branches */}
                     <path
-                        d="M 78%,26% L 78%,30% L 70%,30%"
+                        d="M 78,26 L 78,30 L 70,30"
                         stroke="rgba(6, 5, 91, 0.08)"
-                        strokeWidth="1.5"
+                        strokeWidth="0.1"
                         fill="none"
                         className="signal-cable"
                         vectorEffect="non-scaling-stroke"
                     />
                     <path
-                        d="M 76%,39% L 70%,39% L 70%,43%"
+                        d="M 76,39 L 70,39 L 70,43"
                         stroke="rgba(6, 5, 91, 0.08)"
-                        strokeWidth="1.5"
+                        strokeWidth="0.1"
                         fill="none"
                         className="signal-cable"
                         vectorEffect="non-scaling-stroke"
                     />
                     <path
-                        d="M 83%,58% L 78%,58% L 78%,62% L 73%,62%"
+                        d="M 83,58 L 78,58 L 78,62 L 73,62"
                         stroke="rgba(6, 5, 91, 0.08)"
-                        strokeWidth="1.5"
+                        strokeWidth="0.1"
                         fill="none"
                         className="signal-cable"
                         vectorEffect="non-scaling-stroke"
                     />
                     <path
-                        d="M 81%,52% L 76%,52% L 76%,56%"
+                        d="M 81,52 L 76,52 L 76,56"
                         stroke="rgba(6, 5, 91, 0.08)"
-                        strokeWidth="1.5"
+                        strokeWidth="0.1"
                         fill="none"
                         className="signal-cable"
                         vectorEffect="non-scaling-stroke"
@@ -243,8 +243,8 @@ export default function LoginPage() {
                 </svg>
 
                 {/* Subtle gradient orbs for depth */}
-                <div className="absolute top-[20%] left-[10%] w-96 h-96 bg-gradient-to-br from-purple-500/3 to-transparent rounded-full blur-3xl" />
-                <div className="absolute bottom-[20%] right-[15%] w-80 h-80 bg-gradient-to-br from-pink-500/3 to-transparent rounded-full blur-3xl" />
+                <div className="absolute top-[20] left-[10] w-96 h-96 bg-gradient-to-br from-purple-500/3 to-transparent rounded-full blur-3xl" />
+                <div className="absolute bottom-[20] right-[15] w-80 h-80 bg-gradient-to-br from-pink-500/3 to-transparent rounded-full blur-3xl" />
             </div>
 
             {/* Main Content */}
@@ -392,3 +392,4 @@ export default function LoginPage() {
         </div>
     );
 }
+
