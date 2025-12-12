@@ -134,7 +134,7 @@ export function generateResetToken(): string {
 }
 
 /**
- * Send password reset email using Gmail API
+ * Send password reset email using Gmail API with Service Account
  */
 export async function sendPasswordResetEmail(
     env: Env,
@@ -142,88 +142,191 @@ export async function sendPasswordResetEmail(
     resetToken: string
 ): Promise<void> {
     // Check if email configuration exists
-    const gmailUser = (env as any).GMAIL_USER;
-    const gmailPassword = (env as any).GMAIL_APP_PASSWORD;
+    const gmailClientEmail = (env as any).GMAIL_CLIENT_EMAIL;
+    const gmailPrivateKey = (env as any).GMAIL_PRIVATE_KEY;
     const frontendUrl = (env as any).FRONTEND_URL || 'http://localhost:3000';
 
-    if (!gmailUser || !gmailPassword) {
+    if (!gmailClientEmail || !gmailPrivateKey) {
         console.warn('Email not configured. Reset token:', resetToken);
+        console.warn('Reset URL would be:', `${frontendUrl}/reset-password?token=${resetToken}`);
         return; // Silently fail if email not configured
     }
 
     const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
-    // Create email content
-    const subject = 'Redefinição de Senha - OOH Data Hub';
-    const htmlBody = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-                .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-                .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
-                .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>Redefinição de Senha</h1>
-                </div>
-                <div class="content">
-                    <p>Olá,</p>
-                    <p>Você solicitou a redefinição de senha para sua conta no <strong>OOH Data Hub</strong>.</p>
-                    <p>Clique no botão abaixo para criar uma nova senha:</p>
-                    <p style="text-align: center;">
-                        <a href="${resetUrl}" class="button">Redefinir Senha</a>
-                    </p>
-                    <p>Ou copie e cole este link no seu navegador:</p>
-                    <p style="word-break: break-all; background: white; padding: 10px; border-radius: 5px;">${resetUrl}</p>
-                    <p><strong>Este link expira em 1 hora.</strong></p>
-                    <p>Se você não solicitou esta redefinição, ignore este email.</p>
-                </div>
-                <div class="footer">
-                    <p>OOH Data Hub - Sistema de Gestão E-MÍDIAS</p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
-
-    // Send email using Gmail SMTP via fetch to a relay service
-    // Note: Direct SMTP from Workers requires external service
-    // For now, we'll use a simple approach with fetch to Gmail API
-
     try {
-        // Create the email message in RFC 2822 format
-        const emailContent = [
+        // Create JWT for Gmail API authentication
+        const now = Math.floor(Date.now() / 1000);
+        const jwtHeader = {
+            alg: 'RS256',
+            typ: 'JWT'
+        };
+
+        const jwtClaim = {
+            iss: gmailClientEmail,
+            scope: 'https://www.googleapis.com/auth/gmail.send',
+            aud: 'https://oauth2.googleapis.com/token',
+            exp: now + 3600,
+            iat: now
+        };
+
+        // Import private key for signing
+        const privateKeyPem = gmailPrivateKey.replace(/\\n/g, '\n');
+        const privateKeyBuffer = pemToArrayBuffer(privateKeyPem);
+
+        const cryptoKey = await crypto.subtle.importKey(
+            'pkcs8',
+            privateKeyBuffer,
+            {
+                name: 'RSASSA-PKCS1-v1_5',
+                hash: 'SHA-256',
+            },
+            false,
+            ['sign']
+        );
+
+        // Create JWT
+        const jwtHeaderB64 = base64UrlEncode(JSON.stringify(jwtHeader));
+        const jwtClaimB64 = base64UrlEncode(JSON.stringify(jwtClaim));
+        const jwtUnsigned = `${jwtHeaderB64}.${jwtClaimB64}`;
+
+        const signature = await crypto.subtle.sign(
+            'RSASSA-PKCS1-v1_5',
+            cryptoKey,
+            new TextEncoder().encode(jwtUnsigned)
+        );
+
+        const jwtSignatureB64 = base64UrlEncode(signature);
+        const jwt = `${jwtUnsigned}.${jwtSignatureB64}`;
+
+        // Exchange JWT for access token
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `grant_type=urn:ietf:params:oauth:grant-type=jwt-bearer&assertion=${jwt}`,
+        });
+
+        if (!tokenResponse.ok) {
+            throw new Error(`Failed to get access token: ${await tokenResponse.text()}`);
+        }
+
+        const { access_token } = await tokenResponse.json() as { access_token: string };
+
+        // Create email content
+        const subject = 'Redefinição de Senha - OOH Data Hub';
+        const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #ec4899 0%, #2563eb 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+        .button { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #ec4899 0%, #2563eb 100%); color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Redefinição de Senha</h1>
+        </div>
+        <div class="content">
+            <p>Olá,</p>
+            <p>Você solicitou a redefinição de senha para sua conta no <strong>OOH Data Hub</strong>.</p>
+            <p>Clique no botão abaixo para criar uma nova senha:</p>
+            <p style="text-align: center;">
+                <a href="${resetUrl}" class="button">Redefinir Senha</a>
+            </p>
+            <p>Ou copie e cole este link no seu navegador:</p>
+            <p style="word-break: break-all; background: white; padding: 10px; border-radius: 5px;">${resetUrl}</p>
+            <p><strong>Este link expira em 1 hora.</strong></p>
+            <p>Se você não solicitou esta redefinição, ignore este email.</p>
+        </div>
+        <div class="footer">
+            <p>OOH Data Hub - Sistema de Gestão E-MÍDIAS</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+        // Create email in RFC 2822 format
+        const emailLines = [
             `To: ${email}`,
-            `From: ${gmailUser}`,
+            `From: ${gmailClientEmail}`,
             `Subject: ${subject}`,
             'MIME-Version: 1.0',
             'Content-Type: text/html; charset=utf-8',
             '',
             htmlBody
-        ].join('\r\n');
+        ];
+        const rawEmail = emailLines.join('\r\n');
 
-        // Base64 encode the email
-        const encodedEmail = btoa(unescape(encodeURIComponent(emailContent)))
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=+$/, '');
+        // Base64url encode the email
+        const encodedEmail = base64UrlEncode(rawEmail);
 
-        // Note: This requires Gmail API OAuth2 setup
-        // For production, user should configure a proper email service
-        console.log('Password reset email prepared for:', email);
-        console.log('Reset URL:', resetUrl);
+        // Send email via Gmail API
+        const sendResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${access_token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                raw: encodedEmail
+            }),
+        });
 
-        // TODO: Implement actual email sending via Gmail API or SMTP service
-        // For now, just log the token for development
+        if (!sendResponse.ok) {
+            throw new Error(`Failed to send email: ${await sendResponse.text()}`);
+        }
+
+        console.log('Password reset email sent successfully to:', email);
     } catch (error) {
         console.error('Error sending email:', error);
-        throw new Error('Failed to send reset email');
+        console.error('Reset URL (manual):', resetUrl);
+        // Don't throw - fail silently and log the URL
     }
+}
+
+/**
+ * Helper function to convert PEM to ArrayBuffer
+ */
+function pemToArrayBuffer(pem: string): ArrayBuffer {
+    const b64 = pem
+        .replace(/-----BEGIN PRIVATE KEY-----/, '')
+        .replace(/-----END PRIVATE KEY-----/, '')
+        .replace(/\s/g, '');
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+/**
+ * Helper function to base64url encode
+ */
+function base64UrlEncode(data: string | ArrayBuffer): string {
+    let base64: string;
+
+    if (typeof data === 'string') {
+        base64 = btoa(unescape(encodeURIComponent(data)));
+    } else {
+        const bytes = new Uint8Array(data);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        base64 = btoa(binary);
+    }
+
+    return base64
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
 }

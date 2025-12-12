@@ -2,8 +2,8 @@ export interface Env {
     DB: D1Database;
     R2: R2Bucket;
     ALLOWED_ORIGINS?: string;
-    GMAIL_USER?: string;
-    GMAIL_APP_PASSWORD?: string;
+    GMAIL_CLIENT_EMAIL?: string;
+    GMAIL_PRIVATE_KEY?: string;
     FRONTEND_URL?: string;
 }
 
