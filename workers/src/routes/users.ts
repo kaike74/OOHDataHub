@@ -271,9 +271,8 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
         if (request.method === 'POST' && path === '/api/users/invite') {
             await requireMaster(request, env);
 
-            const { email, name, role } = await request.json() as {
+            const { email, role } = await request.json() as {
                 email: string;
-                name?: string;
                 role?: string;
             };
 
@@ -310,8 +309,8 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // Insert user
             const result = await env.DB.prepare(
-                'INSERT INTO users (email, password_hash, name, role) VALUES (?, ?, ?, ?)'
-            ).bind(email, passwordHash, name || null, role || 'viewer').run();
+                'INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)'
+            ).bind(email, passwordHash, role || 'viewer').run();
 
             return new Response(JSON.stringify({
                 success: true,
