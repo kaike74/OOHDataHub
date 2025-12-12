@@ -660,20 +660,79 @@
 }
 
 /* Tooltip Appear */
-@keyframes tooltip-appear {
+@keyframes tooltipAppear {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.96);
+    transform: translateY(-5px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
-.animate-tooltip {
-  animation: tooltip-appear 0.2s ease-out forwards;
+.animate-tooltip-appear {
+  animation: tooltipAppear 0.2s ease-out;
+}
+
+/* Signal Cable Animations */
+@keyframes signalPulse {
+  0% {
+    stroke-dashoffset: 2000;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes signalPulseVertical {
+  0% {
+    stroke-dashoffset: 1500;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+.signal-pulse {
+  stroke-dasharray: 200 2000;
+  stroke-dashoffset: 2000;
+  animation: signalPulse 5s ease-in-out infinite;
+  stroke-linecap: round;
+}
+
+.signal-pulse-vertical {
+  stroke-dasharray: 150 1500;
+  stroke-dashoffset: 1500;
+  animation: signalPulseVertical 4s ease-in-out infinite;
+  stroke-linecap: round;
+}
+
+.signal-cable {
+  stroke-linecap: round;
 }
 
 /* Stagger Children Animation */

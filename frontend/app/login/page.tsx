@@ -40,50 +40,149 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
-            {/* Floating Tech Background Animations */}
+            {/* Animated Signal Cables Background */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {/* Floating geometric shapes */}
-                <div className="absolute top-[10%] left-[5%] w-20 h-20 border-2 border-emidias-accent/20 rounded-lg animate-float-slow rotate-45" />
-                <div className="absolute top-[60%] left-[10%] w-16 h-16 border-2 border-emidias-primary/15 rounded-full animate-float" style={{ animationDelay: '-2s' }} />
-                <div className="absolute top-[30%] right-[8%] w-24 h-24 border-2 border-emidias-accent/15 rounded-lg animate-float-slow" style={{ animationDelay: '-4s' }} />
-                <div className="absolute bottom-[20%] right-[15%] w-14 h-14 border-2 border-emidias-primary/20 rounded-full animate-float" style={{ animationDelay: '-1s' }} />
-                <div className="absolute top-[80%] left-[20%] w-10 h-10 bg-emidias-accent/5 rounded-full animate-float-slow" style={{ animationDelay: '-3s' }} />
-                <div className="absolute top-[15%] right-[25%] w-12 h-12 bg-emidias-primary/5 rounded-lg animate-float rotate-12" style={{ animationDelay: '-5s' }} />
+                {/* Signal Cable Lines - Animated */}
+                <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        {/* Gradient for signal pulse */}
+                        <linearGradient id="signalGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="rgba(252, 30, 117, 0)" />
+                            <stop offset="50%" stopColor="rgba(252, 30, 117, 0.6)" />
+                            <stop offset="100%" stopColor="rgba(252, 30, 117, 0)" />
+                        </linearGradient>
+                        <linearGradient id="signalGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="rgba(252, 30, 117, 0)" />
+                            <stop offset="50%" stopColor="rgba(252, 30, 117, 0.5)" />
+                            <stop offset="100%" stopColor="rgba(252, 30, 117, 0)" />
+                        </linearGradient>
+                    </defs>
 
-                {/* Subtle gradient orbs */}
-                <div className="absolute top-[40%] left-[15%] w-64 h-64 bg-gradient-to-br from-emidias-accent/5 to-transparent rounded-full blur-3xl animate-pulse-gentle" />
-                <div className="absolute bottom-[30%] right-[20%] w-72 h-72 bg-gradient-to-br from-emidias-primary/5 to-transparent rounded-full blur-3xl animate-pulse-gentle" style={{ animationDelay: '-2s' }} />
+                    {/* Cable 1 - Top Left to Bottom Right */}
+                    <path
+                        d="M 0,20 Q 200,100 400,80 T 800,120 L 1200,200"
+                        stroke="rgba(6, 5, 91, 0.08)"
+                        strokeWidth="1.5"
+                        fill="none"
+                        className="signal-cable"
+                    />
+                    <path
+                        d="M 0,20 Q 200,100 400,80 T 800,120 L 1200,200"
+                        stroke="url(#signalGradient1)"
+                        strokeWidth="2.5"
+                        fill="none"
+                        className="signal-pulse"
+                        style={{ animationDelay: '0s' }}
+                    />
 
-                {/* Grid pattern overlay */}
-                <div
-                    className="absolute inset-0 opacity-[0.015]"
-                    style={{
-                        backgroundImage: `
-                            linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)
-                        `,
-                        backgroundSize: '60px 60px'
-                    }}
-                />
+                    {/* Cable 2 - Bottom Left to Top Right */}
+                    <path
+                        d="M 0,600 Q 300,500 600,550 T 1200,400"
+                        stroke="rgba(6, 5, 91, 0.08)"
+                        strokeWidth="1.5"
+                        fill="none"
+                        className="signal-cable"
+                    />
+                    <path
+                        d="M 0,600 Q 300,500 600,550 T 1200,400"
+                        stroke="url(#signalGradient1)"
+                        strokeWidth="2.5"
+                        fill="none"
+                        className="signal-pulse"
+                        style={{ animationDelay: '2s' }}
+                    />
+
+                    {/* Cable 3 - Vertical Left */}
+                    <path
+                        d="M 100,0 Q 120,200 100,400 T 100,800"
+                        stroke="rgba(6, 5, 91, 0.08)"
+                        strokeWidth="1.5"
+                        fill="none"
+                        className="signal-cable"
+                    />
+                    <path
+                        d="M 100,0 Q 120,200 100,400 T 100,800"
+                        stroke="url(#signalGradient2)"
+                        strokeWidth="2.5"
+                        fill="none"
+                        className="signal-pulse-vertical"
+                        style={{ animationDelay: '1s' }}
+                    />
+
+                    {/* Cable 4 - Diagonal Center */}
+                    <path
+                        d="M 200,0 Q 400,300 600,400 T 1000,700"
+                        stroke="rgba(6, 5, 91, 0.08)"
+                        strokeWidth="1.5"
+                        fill="none"
+                        className="signal-cable"
+                    />
+                    <path
+                        d="M 200,0 Q 400,300 600,400 T 1000,700"
+                        stroke="url(#signalGradient1)"
+                        strokeWidth="2.5"
+                        fill="none"
+                        className="signal-pulse"
+                        style={{ animationDelay: '3.5s' }}
+                    />
+
+                    {/* Cable 5 - Top Right to Bottom */}
+                    <path
+                        d="M 1200,100 Q 1000,250 900,400 T 700,800"
+                        stroke="rgba(6, 5, 91, 0.08)"
+                        strokeWidth="1.5"
+                        fill="none"
+                        className="signal-cable"
+                    />
+                    <path
+                        d="M 1200,100 Q 1000,250 900,400 T 700,800"
+                        stroke="url(#signalGradient2)"
+                        strokeWidth="2.5"
+                        fill="none"
+                        className="signal-pulse-vertical"
+                        style={{ animationDelay: '1.5s' }}
+                    />
+
+                    {/* Cable 6 - Horizontal Middle */}
+                    <path
+                        d="M 0,400 Q 300,420 600,400 T 1200,400"
+                        stroke="rgba(6, 5, 91, 0.08)"
+                        strokeWidth="1.5"
+                        fill="none"
+                        className="signal-cable"
+                    />
+                    <path
+                        d="M 0,400 Q 300,420 600,400 T 1200,400"
+                        stroke="url(#signalGradient1)"
+                        strokeWidth="2.5"
+                        fill="none"
+                        className="signal-pulse"
+                        style={{ animationDelay: '4s' }}
+                    />
+                </svg>
+
+                {/* Subtle gradient orbs for depth */}
+                <div className="absolute top-[20%] left-[10%] w-96 h-96 bg-gradient-to-br from-emidias-accent/3 to-transparent rounded-full blur-3xl" />
+                <div className="absolute bottom-[20%] right-[15%] w-80 h-80 bg-gradient-to-br from-emidias-primary/3 to-transparent rounded-full blur-3xl" />
             </div>
 
             {/* Main Content */}
             <div className={`relative z-10 w-full max-w-6xl flex flex-col lg:flex-row items-center gap-12 lg:gap-20 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-                {/* Left Side - Logo with Spin Animation */}
+                {/* Left Side - Static Logo with Hover Effect */}
                 <div className="flex-1 flex flex-col items-center lg:items-start">
-                    {/* Logo with Spinning Animation */}
-                    <div className="relative mb-8 lg:mb-10">
+                    {/* Logo with Hover Zoom and Shadow */}
+                    <div className="relative mb-8 lg:mb-10 group cursor-pointer">
                         {/* Glow effect */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-emidias-accent/20 to-emidias-primary/20 rounded-full blur-2xl scale-125 animate-pulse-gentle" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-emidias-accent/10 to-emidias-primary/10 rounded-full blur-2xl scale-110 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                        {/* Spinning logo */}
-                        <div className="relative animate-spin-slow">
+                        {/* Static logo with hover effect */}
+                        <div className="relative transition-all duration-300 group-hover:scale-105 group-hover:drop-shadow-2xl">
                             <Image
                                 src="/assets/logo.png"
                                 alt="E-MÍDIAS Logo"
                                 width={240}
                                 height={240}
-                                className="relative z-10 drop-shadow-xl lg:w-[320px] lg:h-[320px]"
+                                className="relative z-10 drop-shadow-lg lg:w-[320px] lg:h-[320px]"
                                 priority
                             />
                         </div>
