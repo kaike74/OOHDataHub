@@ -1,5 +1,6 @@
 import { Env } from '../index';
 import { corsHeaders } from '../utils/cors';
+import { getCache, setCache, CACHE_KEYS, CACHE_TTL } from '../utils/cache';
 
 export async function handleStats(request: Request, env: Env): Promise<Response> {
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
@@ -10,6 +11,16 @@ export async function handleStats(request: Request, env: Env): Promise<Response>
             headers,
         });
     }
+
+    // Try to get from cache first
+    const cachedStats = await getCache<any>(env, CACHE_KEYS.STATS);
+    if (cachedStats) {
+        console.log('Stats served from cache');
+        return new Response(JSON.stringify(cachedStats), { headers });
+    }
+
+    // Cache miss - calculate stats
+    console.log('Stats cache miss - calculating...');
 
     // Total de pontos ativos
     const totalPontos = await env.DB.prepare(
@@ -51,6 +62,9 @@ export async function handleStats(request: Request, env: Env): Promise<Response>
         por_cidade: porCidade,
         por_tipo: porTipo,
     };
+
+    // Cache the results
+    await setCache(env, CACHE_KEYS.STATS, stats, CACHE_TTL.STATS);
 
     return new Response(JSON.stringify(stats), { headers });
 }

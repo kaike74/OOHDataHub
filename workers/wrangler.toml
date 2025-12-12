@@ -11,5 +11,18 @@ database_id = "79b92724-c85e-401b-a97e-4a77432b3398"
 binding = "R2"
 bucket_name = "ooh-bucket"
 
+[[kv_namespaces]]
+binding = "KV"
+id = "placeholder_kv_id"
+
+[[queues.producers]]
+queue = "ooh-jobs-queue"
+binding = "QUEUE"
+
+[[queues.consumers]]
+queue = "ooh-jobs-queue"
+max_batch_size = 10
+max_batch_timeout = 30
+
 [vars]
 ALLOWED_ORIGINS = "*"
