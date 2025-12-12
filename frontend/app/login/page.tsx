@@ -10,7 +10,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
     const router = useRouter();
-    const login = useStore((state) => state.login);
+    const setAuth = useStore((state) => state.setAuth);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -29,7 +29,7 @@ export default function LoginPage() {
 
         try {
             const response = await api.login(email, password);
-            login(response.user, response.token);
+            setAuth(response.user, response.token);
             router.push('/');
         } catch (err: any) {
             setError(err.message || 'Erro ao fazer login');
