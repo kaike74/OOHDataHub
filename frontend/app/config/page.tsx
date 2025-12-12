@@ -61,7 +61,7 @@ export default function ConfigPage() {
 
         try {
             await api.inviteUser(inviteEmail, '', inviteRole);
-            alert('Usuário convidado com sucesso! Senha padrão: HubRadios123!');
+            alert('Usuário convidado com sucesso! Um email foi enviado com as credenciais de acesso.');
             setInviteEmail('');
             setInviteRole('viewer');
             setShowInviteForm(false);
@@ -175,8 +175,8 @@ export default function ConfigPage() {
                         <p className="text-gray-700 flex items-center gap-2">
                             <span className="font-medium">Nível:</span>
                             <span className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 ${user.role === 'master' ? 'bg-purple-100 text-purple-800' :
-                                    user.role === 'editor' ? 'bg-blue-100 text-blue-800' :
-                                        'bg-gray-100 text-gray-800'
+                                user.role === 'editor' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-gray-100 text-gray-800'
                                 }`}>
                                 <Shield size={14} />
                                 {user.role === 'master' ? 'Master' : user.role === 'editor' ? 'Editor' : 'Visualizador'}
@@ -324,10 +324,10 @@ export default function ConfigPage() {
                                     <div className="flex items-center gap-3">
                                         <span
                                             className={`px-3 py-1 rounded-full text-sm font-semibold ${u.role === 'master'
-                                                    ? 'bg-purple-100 text-purple-800'
-                                                    : u.role === 'editor'
-                                                        ? 'bg-blue-100 text-blue-800'
-                                                        : 'bg-gray-200 text-gray-800'
+                                                ? 'bg-purple-100 text-purple-800'
+                                                : u.role === 'editor'
+                                                    ? 'bg-blue-100 text-blue-800'
+                                                    : 'bg-gray-200 text-gray-800'
                                                 }`}
                                         >
                                             {u.role === 'master' ? 'Master' : u.role === 'editor' ? 'Editor' : 'Visualizador'}

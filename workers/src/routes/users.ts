@@ -9,6 +9,7 @@ import {
     validateEmailDomain,
     generateResetToken,
     sendPasswordResetEmail,
+    sendWelcomeEmail,
     User,
 } from '../utils/auth';
 
@@ -312,10 +313,18 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
                 'INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)'
             ).bind(email, passwordHash, role || 'viewer').run();
 
+            // Send welcome email
+            try {
+                await sendWelcomeEmail(env, email, defaultPassword);
+            } catch (error) {
+                console.error('Error sending welcome email:', error);
+                // Don't fail the request if email fails
+            }
+
             return new Response(JSON.stringify({
                 success: true,
                 userId: result.meta.last_row_id,
-                defaultPassword, // Return default password so admin can share it
+                message: 'Usuário criado! Um email foi enviado com as credenciais de acesso.',
             }), {
                 status: 201,
                 headers,
