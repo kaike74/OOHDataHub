@@ -40,211 +40,429 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
-            {/* Circuit-Style Signal Lines Background */}
+            {/* Animated Signal Lines Background - Tree-like branching from right to left */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">
                     <defs>
-                        {/* Gradient purple to pink like logo */}
-                        <linearGradient id="signalGradient" x1="0" y1="0" x2="100" y2="0">
-                            <stop offset="0" stopColor="rgba(106, 13, 173, 0)" />
-                            <stop offset="30" stopColor="rgba(106, 13, 173, 0.6)" />
-                            <stop offset="70" stopColor="rgba(252, 30, 117, 0.6)" />
-                            <stop offset="100" stopColor="rgba(252, 30, 117, 0)" />
+                        {/* Pink gradient for signal pulse - fades out towards the left (middle of page) */}
+                        <linearGradient id="signalPulse" x1="100%" y1="0%" x2="0%" y2="0%">
+                            <stop offset="0%" stopColor="rgba(252, 30, 117, 0.9)" />
+                            <stop offset="40%" stopColor="rgba(252, 30, 117, 0.6)" />
+                            <stop offset="80%" stopColor="rgba(252, 30, 117, 0.2)" />
+                            <stop offset="100%" stopColor="rgba(252, 30, 117, 0)" />
+                        </linearGradient>
+
+                        {/* Subtle cable color */}
+                        <linearGradient id="cableGradient" x1="100%" y1="0%" x2="0%" y2="0%">
+                            <stop offset="0%" stopColor="rgba(106, 13, 173, 0.08)" />
+                            <stop offset="50%" stopColor="rgba(106, 13, 173, 0.05)" />
+                            <stop offset="100%" stopColor="rgba(106, 13, 173, 0)" />
                         </linearGradient>
                     </defs>
 
-                    {/* Main Circuit Lines - Starting from 100 (far right edge) */}
+                    {/* Cable paths - subtle static lines */}
+                    <g className="cable-network">
+                        {/* Main trunk line 1 */}
+                        <path
+                            d="M 100,12 L 85,12 L 85,18 L 70,18 L 70,24 L 55,24"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.12"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Branch 1a */}
+                        <path
+                            d="M 85,18 L 85,22 L 75,22 L 75,28 L 60,28"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.1"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Branch 1b */}
+                        <path
+                            d="M 70,24 L 70,30 L 58,30"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.08"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
 
-                    {/* Line 1 - Top path with multiple branches */}
-                    <path
-                        d="M 100,8 L 85,8 L 85,14 M 85,14 L 73,14 L 73,19 L 63,19 L 63,26 L 52,26 M 85,14 L 85,20 L 76,20"
-                        stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="0.15"
-                        fill="none"
-                        className="signal-cable"
-                        vectorEffect="non-scaling-stroke"
-                    />
-                    <path
-                        d="M 100,8 L 85,8 L 85,14 M 85,14 L 73,14 L 73,19 L 63,19 L 63,26 L 52,26 M 85,14 L 85,20 L 76,20"
-                        stroke="url(#signalGradient)"
-                        strokeWidth="0.2"
-                        fill="none"
-                        className="signal-pulse"
-                        style={{ animationDelay: '0s' }}
-                        vectorEffect="non-scaling-stroke"
-                    />
+                        {/* Main trunk line 2 */}
+                        <path
+                            d="M 100,28 L 88,28 L 88,35 L 73,35 L 73,42 L 58,42"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.12"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Branch 2a */}
+                        <path
+                            d="M 88,35 L 88,40 L 78,40 L 78,46 L 63,46"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.1"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Branch 2b */}
+                        <path
+                            d="M 73,42 L 73,48 L 61,48"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.08"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Branch 2c */}
+                        <path
+                            d="M 78,40 L 78,44 L 68,44"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.06"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
 
-                    {/* Line 2 - Upper middle with splits */}
-                    <path
-                        d="M 100,18 L 88,18 L 88,26 M 88,26 L 78,26 L 78,32 L 68,32 M 88,26 L 88,31 L 81,31 L 81,37 L 70,37"
-                        stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="0.15"
-                        fill="none"
-                        className="signal-cable"
-                        vectorEffect="non-scaling-stroke"
-                    />
-                    <path
-                        d="M 100,18 L 88,18 L 88,26 M 88,26 L 78,26 L 78,32 L 68,32 M 88,26 L 88,31 L 81,31 L 81,37 L 70,37"
-                        stroke="url(#signalGradient)"
-                        strokeWidth="0.2"
-                        fill="none"
-                        className="signal-pulse"
-                        style={{ animationDelay: '1.2s' }}
-                        vectorEffect="non-scaling-stroke"
-                    />
+                        {/* Main trunk line 3 */}
+                        <path
+                            d="M 100,48 L 86,48 L 86,54 L 71,54 L 71,60 L 56,60"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.12"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Branch 3a */}
+                        <path
+                            d="M 86,54 L 86,59 L 76,59 L 76,65 L 61,65"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.1"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Branch 3b */}
+                        <path
+                            d="M 71,60 L 71,66 L 59,66"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.08"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
 
-                    {/* Line 3 - Middle complex branching */}
-                    <path
-                        d="M 100,32 L 86,32 L 86,39 M 86,39 L 76,39 L 76,44 L 65,44 L 65,50 L 55,50 M 86,39 L 86,46 L 78,46 M 76,44 L 76,51 L 68,51"
-                        stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="0.15"
-                        fill="none"
-                        className="signal-cable"
-                        vectorEffect="non-scaling-stroke"
-                    />
-                    <path
-                        d="M 100,32 L 86,32 L 86,39 M 86,39 L 76,39 L 76,44 L 65,44 L 65,50 L 55,50 M 86,39 L 86,46 L 78,46 M 76,44 L 76,51 L 68,51"
-                        stroke="url(#signalGradient)"
-                        strokeWidth="0.2"
-                        fill="none"
-                        className="signal-pulse"
-                        style={{ animationDelay: '2.5s' }}
-                        vectorEffect="non-scaling-stroke"
-                    />
+                        {/* Main trunk line 4 */}
+                        <path
+                            d="M 100,68 L 90,68 L 90,74 L 75,74 L 75,80 L 60,80"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.12"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Branch 4a */}
+                        <path
+                            d="M 90,74 L 90,78 L 80,78 L 80,84 L 65,84"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.1"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Branch 4b */}
+                        <path
+                            d="M 75,80 L 75,86 L 63,86"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.08"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
 
-                    {/* Line 4 - Center with dense branching */}
-                    <path
-                        d="M 100,46 L 91,46 L 91,52 M 91,52 L 81,52 L 81,57 L 70,57 M 91,52 L 91,58 L 83,58 L 83,63 L 73,63 M 81,57 L 81,64 L 73,64"
-                        stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="0.15"
-                        fill="none"
-                        className="signal-cable"
-                        vectorEffect="non-scaling-stroke"
-                    />
-                    <path
-                        d="M 100,46 L 91,46 L 91,52 M 91,52 L 81,52 L 81,57 L 70,57 M 91,52 L 91,58 L 83,58 L 83,63 L 73,63 M 81,57 L 81,64 L 73,64"
-                        stroke="url(#signalGradient)"
-                        strokeWidth="0.2"
-                        fill="none"
-                        className="signal-pulse"
-                        style={{ animationDelay: '3.8s' }}
-                        vectorEffect="non-scaling-stroke"
-                    />
+                        {/* Additional top line */}
+                        <path
+                            d="M 100,5 L 92,5 L 92,10 L 77,10 L 77,15 L 62,15"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.1"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        <path
+                            d="M 92,10 L 92,14 L 82,14 L 82,19 L 67,19"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.08"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
 
-                    {/* Line 5 - Lower middle with splits */}
-                    <path
-                        d="M 100,60 L 87,60 L 87,66 M 87,66 L 77,66 L 77,71 L 67,71 L 67,76 L 57,76 M 87,66 L 87,72 L 80,72"
-                        stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="0.15"
-                        fill="none"
-                        className="signal-cable"
-                        vectorEffect="non-scaling-stroke"
-                    />
-                    <path
-                        d="M 100,60 L 87,60 L 87,66 M 87,66 L 77,66 L 77,71 L 67,71 L 67,76 L 57,76 M 87,66 L 87,72 L 80,72"
-                        stroke="url(#signalGradient)"
-                        strokeWidth="0.2"
-                        fill="none"
-                        className="signal-pulse"
-                        style={{ animationDelay: '1.8s' }}
-                        vectorEffect="non-scaling-stroke"
-                    />
+                        {/* Additional bottom line */}
+                        <path
+                            d="M 100,88 L 88,88 L 88,92 L 73,92 L 73,96 L 58,96"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.1"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        <path
+                            d="M 88,92 L 88,95 L 78,95"
+                            stroke="url(#cableGradient)"
+                            strokeWidth="0.06"
+                            fill="none"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                    </g>
 
-                    {/* Line 6 - Bottom path */}
-                    <path
-                        d="M 100,74 L 90,74 L 90,80 L 79,80 L 79,85 L 69,85 L 69,91 L 60,91"
-                        stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="0.15"
-                        fill="none"
-                        className="signal-cable"
-                        vectorEffect="non-scaling-stroke"
-                    />
-                    <path
-                        d="M 100,74 L 90,74 L 90,80 L 79,80 L 79,85 L 69,85 L 69,91 L 60,91"
-                        stroke="url(#signalGradient)"
-                        strokeWidth="0.2"
-                        fill="none"
-                        className="signal-pulse"
-                        style={{ animationDelay: '4.5s' }}
-                        vectorEffect="non-scaling-stroke"
-                    />
+                    {/* Animated signal pulses - running from right to left */}
+                    <g className="signal-pulses">
+                        {/* Pulse 1 - Main trunk 1 */}
+                        <path
+                            d="M 100,12 L 85,12 L 85,18 L 70,18 L 70,24 L 55,24"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.25"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '15 85',
+                                animation: 'signalFlow 3s linear infinite',
+                                animationDelay: '0s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Pulse 1a - Branch */}
+                        <path
+                            d="M 85,18 L 85,22 L 75,22 L 75,28 L 60,28"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.2"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '12 88',
+                                animation: 'signalFlow 2.8s linear infinite',
+                                animationDelay: '0.3s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Pulse 1b - Branch */}
+                        <path
+                            d="M 70,24 L 70,30 L 58,30"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.18"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '10 90',
+                                animation: 'signalFlow 2.5s linear infinite',
+                                animationDelay: '0.5s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
 
-                    {/* Line 7 - Very top edge */}
-                    <path
-                        d="M 100,3 L 91,3 L 91,8 L 81,8 L 81,13 L 70,13 L 70,19 L 61,19"
-                        stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="0.15"
-                        fill="none"
-                        className="signal-cable"
-                        vectorEffect="non-scaling-stroke"
-                    />
-                    <path
-                        d="M 100,3 L 91,3 L 91,8 L 81,8 L 81,13 L 70,13 L 70,19 L 61,19"
-                        stroke="url(#signalGradient)"
-                        strokeWidth="0.2"
-                        fill="none"
-                        className="signal-pulse"
-                        style={{ animationDelay: '0.8s' }}
-                        vectorEffect="non-scaling-stroke"
-                    />
+                        {/* Pulse 2 - Main trunk 2 */}
+                        <path
+                            d="M 100,28 L 88,28 L 88,35 L 73,35 L 73,42 L 58,42"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.25"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '15 85',
+                                animation: 'signalFlow 3.2s linear infinite',
+                                animationDelay: '1s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Pulse 2a - Branch */}
+                        <path
+                            d="M 88,35 L 88,40 L 78,40 L 78,46 L 63,46"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.2"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '12 88',
+                                animation: 'signalFlow 2.9s linear infinite',
+                                animationDelay: '1.3s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Pulse 2b - Branch */}
+                        <path
+                            d="M 73,42 L 73,48 L 61,48"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.18"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '10 90',
+                                animation: 'signalFlow 2.6s linear infinite',
+                                animationDelay: '1.5s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Pulse 2c - Small branch */}
+                        <path
+                            d="M 78,40 L 78,44 L 68,44"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.15"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '8 92',
+                                animation: 'signalFlow 2.3s linear infinite',
+                                animationDelay: '1.7s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
 
-                    {/* Line 8 - Additional middle layer */}
-                    <path
-                        d="M 100,39 L 93,39 L 93,44 M 93,44 L 82,44 L 82,49 L 72,49 M 93,44 L 93,50 L 85,50"
-                        stroke="rgba(6, 5, 91, 0.12)"
-                        strokeWidth="0.15"
-                        fill="none"
-                        className="signal-cable"
-                        vectorEffect="non-scaling-stroke"
-                    />
-                    <path
-                        d="M 100,39 L 93,39 L 93,44 M 93,44 L 82,44 L 82,49 L 72,49 M 93,44 L 93,50 L 85,50"
-                        stroke="url(#signalGradient)"
-                        strokeWidth="0.2"
-                        fill="none"
-                        className="signal-pulse"
-                        style={{ animationDelay: '3.2s' }}
-                        vectorEffect="non-scaling-stroke"
-                    />
+                        {/* Pulse 3 - Main trunk 3 */}
+                        <path
+                            d="M 100,48 L 86,48 L 86,54 L 71,54 L 71,60 L 56,60"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.25"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '15 85',
+                                animation: 'signalFlow 3.1s linear infinite',
+                                animationDelay: '2s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Pulse 3a - Branch */}
+                        <path
+                            d="M 86,54 L 86,59 L 76,59 L 76,65 L 61,65"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.2"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '12 88',
+                                animation: 'signalFlow 2.85s linear infinite',
+                                animationDelay: '2.3s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Pulse 3b - Branch */}
+                        <path
+                            d="M 71,60 L 71,66 L 59,66"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.18"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '10 90',
+                                animation: 'signalFlow 2.55s linear infinite',
+                                animationDelay: '2.5s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
 
-                    {/* Additional small connector branches */}
-                    <path
-                        d="M 78,26 L 78,30 L 70,30"
-                        stroke="rgba(6, 5, 91, 0.08)"
-                        strokeWidth="0.1"
-                        fill="none"
-                        className="signal-cable"
-                        vectorEffect="non-scaling-stroke"
-                    />
-                    <path
-                        d="M 76,39 L 70,39 L 70,43"
-                        stroke="rgba(6, 5, 91, 0.08)"
-                        strokeWidth="0.1"
-                        fill="none"
-                        className="signal-cable"
-                        vectorEffect="non-scaling-stroke"
-                    />
-                    <path
-                        d="M 83,58 L 78,58 L 78,62 L 73,62"
-                        stroke="rgba(6, 5, 91, 0.08)"
-                        strokeWidth="0.1"
-                        fill="none"
-                        className="signal-cable"
-                        vectorEffect="non-scaling-stroke"
-                    />
-                    <path
-                        d="M 81,52 L 76,52 L 76,56"
-                        stroke="rgba(6, 5, 91, 0.08)"
-                        strokeWidth="0.1"
-                        fill="none"
-                        className="signal-cable"
-                        vectorEffect="non-scaling-stroke"
-                    />
+                        {/* Pulse 4 - Main trunk 4 */}
+                        <path
+                            d="M 100,68 L 90,68 L 90,74 L 75,74 L 75,80 L 60,80"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.25"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '15 85',
+                                animation: 'signalFlow 3.3s linear infinite',
+                                animationDelay: '0.7s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Pulse 4a - Branch */}
+                        <path
+                            d="M 90,74 L 90,78 L 80,78 L 80,84 L 65,84"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.2"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '12 88',
+                                animation: 'signalFlow 2.95s linear infinite',
+                                animationDelay: '1.0s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        {/* Pulse 4b - Branch */}
+                        <path
+                            d="M 75,80 L 75,86 L 63,86"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.18"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '10 90',
+                                animation: 'signalFlow 2.65s linear infinite',
+                                animationDelay: '1.2s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+
+                        {/* Top pulses */}
+                        <path
+                            d="M 100,5 L 92,5 L 92,10 L 77,10 L 77,15 L 62,15"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.22"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '13 87',
+                                animation: 'signalFlow 2.7s linear infinite',
+                                animationDelay: '0.4s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        <path
+                            d="M 92,10 L 92,14 L 82,14 L 82,19 L 67,19"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.18"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '10 90',
+                                animation: 'signalFlow 2.4s linear infinite',
+                                animationDelay: '0.6s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+
+                        {/* Bottom pulses */}
+                        <path
+                            d="M 100,88 L 88,88 L 88,92 L 73,92 L 73,96 L 58,96"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.22"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '13 87',
+                                animation: 'signalFlow 2.75s linear infinite',
+                                animationDelay: '1.8s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        <path
+                            d="M 88,92 L 88,95 L 78,95"
+                            stroke="url(#signalPulse)"
+                            strokeWidth="0.15"
+                            fill="none"
+                            className="signal-flow"
+                            style={{
+                                strokeDasharray: '8 92',
+                                animation: 'signalFlow 2.2s linear infinite',
+                                animationDelay: '2.0s'
+                            }}
+                            vectorEffect="non-scaling-stroke"
+                        />
+                    </g>
                 </svg>
 
                 {/* Subtle gradient orbs for depth */}
-                <div className="absolute top-[20] left-[10] w-96 h-96 bg-gradient-to-br from-purple-500/3 to-transparent rounded-full blur-3xl" />
-                <div className="absolute bottom-[20] right-[15] w-80 h-80 bg-gradient-to-br from-pink-500/3 to-transparent rounded-full blur-3xl" />
+                <div className="absolute top-[20%] left-[10%] w-96 h-96 bg-gradient-to-br from-purple-500/3 to-transparent rounded-full blur-3xl" />
+                <div className="absolute bottom-[20%] right-[15%] w-80 h-80 bg-gradient-to-br from-pink-500/3 to-transparent rounded-full blur-3xl" />
+
+                <style jsx>{`
+                    @keyframes signalFlow {
+                        0% {
+                            stroke-dashoffset: 0;
+                        }
+                        100% {
+                            stroke-dashoffset: -100;
+                        }
+                    }
+                `}</style>
             </div>
 
             {/* Main Content */}
