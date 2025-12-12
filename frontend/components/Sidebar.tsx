@@ -230,15 +230,15 @@ export default function Sidebar() {
                                 <>
                                     <button
                                         onClick={prevImage}
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-all hover:scale-105 backdrop-blur-sm"
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 text-white rounded-full flex items-center justify-center transition-all hover:scale-110"
                                     >
-                                        <ChevronLeft size={22} />
+                                        <ChevronLeft size={28} strokeWidth={2.5} />
                                     </button>
                                     <button
                                         onClick={nextImage}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-all hover:scale-105 backdrop-blur-sm"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 text-white rounded-full flex items-center justify-center transition-all hover:scale-110"
                                     >
-                                        <ChevronRight size={22} />
+                                        <ChevronRight size={28} strokeWidth={2.5} />
                                     </button>
 
                                     {/* Dots Indicator */}
@@ -252,13 +252,6 @@ export default function Sidebar() {
                                         ))}
                                     </div>
                                 </>
-                            )}
-
-                            {/* Image Counter Badge */}
-                            {imagens.length > 1 && (
-                                <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/50 backdrop-blur-sm text-white text-sm rounded-full font-medium">
-                                    {currentImageIndex + 1} / {imagens.length}
-                                </div>
                             )}
                         </>
                     ) : (

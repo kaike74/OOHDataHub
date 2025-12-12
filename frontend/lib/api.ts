@@ -81,6 +81,12 @@ export const api = {
         method: 'DELETE',
     }),
 
+    updateUserRole: (id: number, role: 'master' | 'editor' | 'viewer') =>
+        fetchAPI(`/api/users/${id}/role`, {
+            method: 'PATCH',
+            body: JSON.stringify({ role }),
+        }),
+
     // Pontos
     getPontos: () => fetchAPI('/api/pontos'),
     getPonto: (id: number) => fetchAPI(`/api/pontos/${id}`),

@@ -331,6 +331,52 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
             });
         }
 
+        // PATCH /api/users/:id/role - Update user role (Master only)
+        if (request.method === 'PATCH' && path.match(/^\/api\/users\/\d+\/role$/)) {
+            const currentUser = await requireMaster(request, env);
+            const userId = parseInt(path.split('/')[3]);
+
+            // Prevent changing your own role
+            if (userId === currentUser.id) {
+                return new Response(JSON.stringify({ error: 'Cannot change your own role' }), {
+                    status: 400,
+                    headers,
+                });
+            }
+
+            const { role } = await request.json() as { role: string };
+
+            // Validate role
+            if (!['master', 'editor', 'viewer'].includes(role)) {
+                return new Response(JSON.stringify({ error: 'Invalid role. Must be master, editor, or viewer' }), {
+                    status: 400,
+                    headers,
+                });
+            }
+
+            // Check if user exists
+            const userExists = await env.DB.prepare(
+                'SELECT id FROM users WHERE id = ?'
+            ).bind(userId).first();
+
+            if (!userExists) {
+                return new Response(JSON.stringify({ error: 'User not found' }), {
+                    status: 404,
+                    headers,
+                });
+            }
+
+            // Update role
+            await env.DB.prepare(
+                'UPDATE users SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+            ).bind(role, userId).run();
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: 'User role updated successfully'
+            }), { headers });
+        }
+
         // DELETE /api/users/:id - Delete user (Master only)
         if (request.method === 'DELETE' && path.match(/^\/api\/users\/\d+$/)) {
             const currentUser = await requireMaster(request, env);

@@ -553,9 +553,30 @@ export default function ConfigPage() {
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-3">
-                                                            <span className={getRoleBadge(u.role)}>
-                                                                {getRoleLabel(u.role)}
-                                                            </span>
+                                                            {u.id === user.id ? (
+                                                                <span className={getRoleBadge(u.role)}>
+                                                                    {getRoleLabel(u.role)}
+                                                                </span>
+                                                            ) : (
+                                                                <select
+                                                                    value={u.role}
+                                                                    onChange={async (e) => {
+                                                                        const newRole = e.target.value as 'master' | 'editor' | 'viewer';
+                                                                        try {
+                                                                            await api.updateUserRole(u.id, newRole);
+                                                                            fetchUsers();
+                                                                        } catch (error: any) {
+                                                                            alert('Erro ao atualizar nível de acesso: ' + (error.message || 'Erro desconhecido'));
+                                                                        }
+                                                                    }}
+                                                                    className="text-sm px-3 py-1.5 rounded-lg border-2 border-emidias-gray-200 hover:border-emidias-accent focus:border-emidias-accent focus:outline-none transition-colors font-medium"
+                                                                    title="Alterar nível de acesso"
+                                                                >
+                                                                    <option value="viewer">Visualizador</option>
+                                                                    <option value="editor">Editor</option>
+                                                                    <option value="master">Master</option>
+                                                                </select>
+                                                            )}
                                                             {u.id !== user.id && (
                                                                 <button
                                                                     onClick={() => handleDeleteUser(u.id, u.email)}
