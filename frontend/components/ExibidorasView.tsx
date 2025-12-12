@@ -212,11 +212,6 @@ export default function ExibidorasView() {
                                         </div>
                                     </div>
                                 )}
-
-                                {/* Call to action */}
-                                <button className="mt-3 w-full py-1.5 bg-emidias-primary hover:bg-emidias-accent text-white rounded-lg font-medium transition text-xs">
-                                    Ver Pontos no Mapa
-                                </button>
                             </div>
                         </div>
                     ))}

@@ -119,30 +119,6 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
               onLoad={handleImageLoad}
             />
 
-            {/* Botões de navegação do carrossel */}
-            {imagens.length > 1 && (
-              <>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    prevImage();
-                  }}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full transition"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    nextImage();
-                  }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full transition"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </>
-            )}
-
             {/* Indicador de imagens */}
             {imagens.length > 1 && (
               <div className="absolute top-2 right-2 bg-black/60 text-white px-2 py-1 rounded-full text-xs font-medium">
