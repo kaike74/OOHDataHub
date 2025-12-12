@@ -5,6 +5,8 @@ export interface Env {
     GMAIL_CLIENT_EMAIL?: string;
     GMAIL_PRIVATE_KEY?: string;
     FRONTEND_URL?: string;
+    MASTER_PASSWORD?: string;
+    DEFAULT_USER_PASSWORD?: string;
 }
 
 import { handlePontos } from './routes/pontos';

@@ -33,7 +33,15 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // Create master user
             const masterEmail = 'kaike@hubradios.com';
-            const masterPassword = 'Teste123';
+            const masterPassword = env.MASTER_PASSWORD;
+
+            if (!masterPassword) {
+                return new Response(JSON.stringify({ error: 'MASTER_PASSWORD environment variable not configured' }), {
+                    status: 500,
+                    headers,
+                });
+            }
+
             const passwordHash = await hashPassword(masterPassword);
 
             await env.DB.prepare(
@@ -305,7 +313,15 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
             }
 
             // Generate default password (user will change it)
-            const defaultPassword = 'HubRadios123!';
+            const defaultPassword = env.DEFAULT_USER_PASSWORD;
+
+            if (!defaultPassword) {
+                return new Response(JSON.stringify({ error: 'DEFAULT_USER_PASSWORD environment variable not configured' }), {
+                    status: 500,
+                    headers,
+                });
+            }
+
             const passwordHash = await hashPassword(defaultPassword);
 
             // Insert user
