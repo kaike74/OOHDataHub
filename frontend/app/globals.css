@@ -1285,3 +1285,12 @@
     transform: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOGIN PAGE SIGNAL ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Efeito de brilho para os sinais animados */
+.signal-flow {
+  filter: drop-shadow(0 0 3px rgba(252, 30, 117, 0.8)) drop-shadow(0 0 6px rgba(252, 30, 117, 0.4));
+}

@@ -64,124 +64,124 @@ export default function LoginPage() {
                     <g className="cable-network">
                         {/* Main trunk line 1 */}
                         <path
-                            d="M 100,12 L 85,12 L 85,18 L 70,18 L 70,24 L 55,24"
+                            d="M 100,12 L 85,12 L 85,18 L 70,18 L 70,24 L 55,24 L 55,28 L 40,28"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.12"
+                            strokeWidth="0.216"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
                         {/* Branch 1a */}
                         <path
-                            d="M 85,18 L 85,22 L 75,22 L 75,28 L 60,28"
+                            d="M 85,18 L 85,22 L 75,22 L 75,28 L 60,28 L 60,32 L 45,32"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.1"
+                            strokeWidth="0.18"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
                         {/* Branch 1b */}
                         <path
-                            d="M 70,24 L 70,30 L 58,30"
+                            d="M 70,24 L 70,30 L 58,30 L 58,34 L 43,34"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.08"
+                            strokeWidth="0.144"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
 
                         {/* Main trunk line 2 */}
                         <path
-                            d="M 100,28 L 88,28 L 88,35 L 73,35 L 73,42 L 58,42"
+                            d="M 100,28 L 88,28 L 88,35 L 73,35 L 73,42 L 58,42 L 58,46 L 43,46"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.12"
+                            strokeWidth="0.216"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
                         {/* Branch 2a */}
                         <path
-                            d="M 88,35 L 88,40 L 78,40 L 78,46 L 63,46"
+                            d="M 88,35 L 88,40 L 78,40 L 78,46 L 63,46 L 63,50 L 48,50"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.1"
+                            strokeWidth="0.18"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
                         {/* Branch 2b */}
                         <path
-                            d="M 73,42 L 73,48 L 61,48"
+                            d="M 73,42 L 73,48 L 61,48 L 61,52 L 46,52"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.08"
+                            strokeWidth="0.144"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
                         {/* Branch 2c */}
                         <path
-                            d="M 78,40 L 78,44 L 68,44"
+                            d="M 78,40 L 78,44 L 68,44 L 68,48 L 53,48"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.06"
+                            strokeWidth="0.108"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
 
                         {/* Main trunk line 3 */}
                         <path
-                            d="M 100,48 L 86,48 L 86,54 L 71,54 L 71,60 L 56,60"
+                            d="M 100,48 L 86,48 L 86,54 L 71,54 L 71,60 L 56,60 L 56,64 L 41,64"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.12"
+                            strokeWidth="0.216"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
                         {/* Branch 3a */}
                         <path
-                            d="M 86,54 L 86,59 L 76,59 L 76,65 L 61,65"
+                            d="M 86,54 L 86,59 L 76,59 L 76,65 L 61,65 L 61,69 L 46,69"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.1"
+                            strokeWidth="0.18"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
                         {/* Branch 3b */}
                         <path
-                            d="M 71,60 L 71,66 L 59,66"
+                            d="M 71,60 L 71,66 L 59,66 L 59,70 L 44,70"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.08"
+                            strokeWidth="0.144"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
 
                         {/* Main trunk line 4 */}
                         <path
-                            d="M 100,68 L 90,68 L 90,74 L 75,74 L 75,80 L 60,80"
+                            d="M 100,68 L 90,68 L 90,74 L 75,74 L 75,80 L 60,80 L 60,84 L 45,84"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.12"
+                            strokeWidth="0.216"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
                         {/* Branch 4a */}
                         <path
-                            d="M 90,74 L 90,78 L 80,78 L 80,84 L 65,84"
+                            d="M 90,74 L 90,78 L 80,78 L 80,84 L 65,84 L 65,88 L 50,88"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.1"
+                            strokeWidth="0.18"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
                         {/* Branch 4b */}
                         <path
-                            d="M 75,80 L 75,86 L 63,86"
+                            d="M 75,80 L 75,86 L 63,86 L 63,90 L 48,90"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.08"
+                            strokeWidth="0.144"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
 
                         {/* Additional top line */}
                         <path
-                            d="M 100,5 L 92,5 L 92,10 L 77,10 L 77,15 L 62,15"
+                            d="M 100,5 L 92,5 L 92,10 L 77,10 L 77,15 L 62,15 L 62,19 L 47,19"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.1"
+                            strokeWidth="0.18"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
                         <path
-                            d="M 92,10 L 92,14 L 82,14 L 82,19 L 67,19"
+                            d="M 92,10 L 92,14 L 82,14 L 82,19 L 67,19 L 67,23 L 52,23"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.08"
+                            strokeWidth="0.144"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -190,14 +190,14 @@ export default function LoginPage() {
                         <path
                             d="M 100,88 L 88,88 L 88,92 L 73,92 L 73,96 L 58,96"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.1"
+                            strokeWidth="0.18"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
                         <path
-                            d="M 88,92 L 88,95 L 78,95"
+                            d="M 88,92 L 88,95 L 78,95 L 78,98 L 63,98"
                             stroke="url(#cableGradient)"
-                            strokeWidth="0.06"
+                            strokeWidth="0.108"
                             fill="none"
                             vectorEffect="non-scaling-stroke"
                         />
@@ -466,9 +466,9 @@ export default function LoginPage() {
             </div>
 
             {/* Main Content */}
-            <div className={`relative z-10 w-full max-w-6xl flex flex-col lg:flex-row items-center gap-12 lg:gap-16 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-                {/* Left Side - Centered Logo Only */}
-                <div className="flex-1 flex items-center justify-center lg:justify-end lg:pr-12">
+            <div className={`relative z-10 w-full max-w-6xl flex flex-col lg:flex-row items-center gap-12 lg:gap-20 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+                {/* Left Side - Logo positioned more to the left */}
+                <div className="flex-1 flex items-center justify-center lg:justify-start lg:pl-8">
                     {/* Logo with subtle hover effect */}
                     <div className="relative group cursor-pointer">
                         {/* Very subtle glow on hover */}
@@ -489,8 +489,11 @@ export default function LoginPage() {
                 </div>
 
                 {/* Right Side - Login Card */}
-                <div className="w-full max-w-md lg:pl-8">
-                    <div className="bg-white p-8 sm:p-10 rounded-2xl shadow-xl border border-emidias-gray-100 animate-fade-in-scale" style={{ animationDelay: '0.2s' }}>
+                <div className="w-full max-w-md lg:pl-12">
+                    <div className="bg-white p-8 sm:p-10 rounded-2xl shadow-xl border border-emidias-gray-100 animate-fade-in-scale group/card relative transition-all duration-500 hover:shadow-2xl" style={{ animationDelay: '0.2s' }}>
+                        {/* Subtle glow on hover - same as logo */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-2xl blur-2xl scale-110 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
                         {/* Welcome Text */}
                         <div className="mb-8 text-center lg:text-left">
                             <h2 className="text-2xl sm:text-3xl font-bold text-emidias-gray-900 mb-2">
