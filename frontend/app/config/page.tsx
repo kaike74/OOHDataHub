@@ -35,13 +35,18 @@ export default function ConfigPage() {
     const [passwordLoading, setPasswordLoading] = useState(false);
 
     useEffect(() => {
-        // Apenas master pode acessar configurações
-        if (user?.role !== 'master') {
-            router.push('/');
+        // All authenticated users can access settings
+        if (!user) {
+            router.push('/login');
             return;
         }
 
-        fetchUsers();
+        // Only master can see user list
+        if (user.role === 'master') {
+            fetchUsers();
+        } else {
+            setLoading(false);
+        }
     }, [user, router]);
 
     const fetchUsers = async () => {
@@ -131,7 +136,7 @@ export default function ConfigPage() {
         }
     };
 
-    if (!user || user.role !== 'master') {
+    if (!user) {
         return null;
     }
 
@@ -243,110 +248,112 @@ export default function ConfigPage() {
                     )}
                 </div>
 
-                {/* Users Management */}
-                <div className="bg-white rounded-xl shadow-md p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                            <User size={24} className="text-blue-600" />
-                            Gerenciar Usuários
-                        </h2>
-                        <button
-                            onClick={() => setShowInviteForm(!showInviteForm)}
-                            className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-blue-600 hover:from-pink-600 hover:to-blue-700 text-white px-4 py-2 rounded-lg transition"
-                        >
-                            <UserPlus size={18} />
-                            {showInviteForm ? 'Cancelar' : 'Convidar Usuário'}
-                        </button>
-                    </div>
-
-                    {showInviteForm && (
-                        <form onSubmit={handleInvite} className="mb-6 bg-gray-50 p-4 rounded-lg space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Email (@hubradios.com)
-                                </label>
-                                <input
-                                    type="email"
-                                    value={inviteEmail}
-                                    onChange={(e) => setInviteEmail(e.target.value)}
-                                    placeholder="usuario@hubradios.com"
-                                    required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Nível de Acesso
-                                </label>
-                                <select
-                                    value={inviteRole}
-                                    onChange={(e) => setInviteRole(e.target.value as 'master' | 'editor' | 'viewer')}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                                >
-                                    <option value="viewer">Visualizador (apenas visualiza)</option>
-                                    <option value="editor">Editor (pode criar e editar, mas não deletar)</option>
-                                    <option value="master">Master (acesso total)</option>
-                                </select>
-                            </div>
+                {/* Users Management - Master Only */}
+                {user.role === 'master' && (
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold flex items-center gap-2">
+                                <User size={24} className="text-blue-600" />
+                                Gerenciar Usuários
+                            </h2>
                             <button
-                                type="submit"
-                                disabled={inviteLoading}
-                                className="w-full bg-gradient-to-r from-pink-500 to-blue-600 hover:from-pink-600 hover:to-blue-700 text-white py-2 rounded-lg font-medium transition disabled:opacity-50"
+                                onClick={() => setShowInviteForm(!showInviteForm)}
+                                className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-blue-600 hover:from-pink-600 hover:to-blue-700 text-white px-4 py-2 rounded-lg transition"
                             >
-                                {inviteLoading ? 'Convidando...' : 'Enviar Convite'}
+                                <UserPlus size={18} />
+                                {showInviteForm ? 'Cancelar' : 'Convidar Usuário'}
                             </button>
-                        </form>
-                    )}
-
-                    {loading ? (
-                        <div className="text-center py-8">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                            <p className="text-gray-600 mt-4">Carregando usuários...</p>
                         </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {users.map((u) => (
-                                <div
-                                    key={u.id}
-                                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+
+                        {showInviteForm && (
+                            <form onSubmit={handleInvite} className="mb-6 bg-gray-50 p-4 rounded-lg space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Email (@hubradios.com)
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={inviteEmail}
+                                        onChange={(e) => setInviteEmail(e.target.value)}
+                                        placeholder="usuario@hubradios.com"
+                                        required
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Nível de Acesso
+                                    </label>
+                                    <select
+                                        value={inviteRole}
+                                        onChange={(e) => setInviteRole(e.target.value as 'master' | 'editor' | 'viewer')}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                    >
+                                        <option value="viewer">Visualizador (apenas visualiza)</option>
+                                        <option value="editor">Editor (pode criar e editar, mas não deletar)</option>
+                                        <option value="master">Master (acesso total)</option>
+                                    </select>
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={inviteLoading}
+                                    className="w-full bg-gradient-to-r from-pink-500 to-blue-600 hover:from-pink-600 hover:to-blue-700 text-white py-2 rounded-lg font-medium transition disabled:opacity-50"
                                 >
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                                                {u.email[0].toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-gray-900">{u.email}</p>
-                                                <p className="text-sm text-gray-600">Criado em {new Date(u.created_at).toLocaleDateString('pt-BR')}</p>
+                                    {inviteLoading ? 'Convidando...' : 'Enviar Convite'}
+                                </button>
+                            </form>
+                        )}
+
+                        {loading ? (
+                            <div className="text-center py-8">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                                <p className="text-gray-600 mt-4">Carregando usuários...</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {users.map((u) => (
+                                    <div
+                                        key={u.id}
+                                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+                                    >
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                                                    {u.email[0].toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-gray-900">{u.email}</p>
+                                                    <p className="text-sm text-gray-600">Criado em {new Date(u.created_at).toLocaleDateString('pt-BR')}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span
-                                            className={`px-3 py-1 rounded-full text-sm font-semibold ${u.role === 'master'
-                                                ? 'bg-purple-100 text-purple-800'
-                                                : u.role === 'editor'
-                                                    ? 'bg-blue-100 text-blue-800'
-                                                    : 'bg-gray-200 text-gray-800'
-                                                }`}
-                                        >
-                                            {u.role === 'master' ? 'Master' : u.role === 'editor' ? 'Editor' : 'Visualizador'}
-                                        </span>
-                                        {u.id !== user.id && (
-                                            <button
-                                                onClick={() => handleDeleteUser(u.id, u.email)}
-                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                                                title="Remover usuário"
+                                        <div className="flex items-center gap-3">
+                                            <span
+                                                className={`px-3 py-1 rounded-full text-sm font-semibold ${u.role === 'master'
+                                                    ? 'bg-purple-100 text-purple-800'
+                                                    : u.role === 'editor'
+                                                        ? 'bg-blue-100 text-blue-800'
+                                                        : 'bg-gray-200 text-gray-800'
+                                                    }`}
                                             >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        )}
+                                                {u.role === 'master' ? 'Master' : u.role === 'editor' ? 'Editor' : 'Visualizador'}
+                                            </span>
+                                            {u.id !== user.id && (
+                                                <button
+                                                    onClick={() => handleDeleteUser(u.id, u.email)}
+                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                                                    title="Remover usuário"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );
