@@ -42,7 +42,7 @@ export default function LoginPage() {
         <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
             {/* Circuit-Style Signal Lines Background */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMaxYMid slice">
                     <defs>
                         {/* Gradient for signal pulse */}
                         <linearGradient id="signalGradient" x1="0%" y1="0%" x2="100%" y2="0%">
