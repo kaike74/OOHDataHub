@@ -57,12 +57,6 @@ export default function LoginPage() {
                     {/* Cable 1 - Top horizontal */}
                     <path
                         d="M 1400,150 L 600,150"
-                        stroke="transparent"
-                        strokeWidth="2"
-                        fill="none"
-                    />
-                    <path
-                        d="M 1400,150 L 600,150"
                         stroke="url(#signalGradient)"
                         strokeWidth="3"
                         fill="none"
@@ -72,12 +66,6 @@ export default function LoginPage() {
                     />
 
                     {/* Cable 2 - Upper middle horizontal */}
-                    <path
-                        d="M 1400,280 L 600,280"
-                        stroke="transparent"
-                        strokeWidth="2"
-                        fill="none"
-                    />
                     <path
                         d="M 1400,280 L 600,280"
                         stroke="url(#signalGradient)"
@@ -91,12 +79,6 @@ export default function LoginPage() {
                     {/* Cable 3 - Center horizontal */}
                     <path
                         d="M 1400,400 L 600,400"
-                        stroke="transparent"
-                        strokeWidth="2"
-                        fill="none"
-                    />
-                    <path
-                        d="M 1400,400 L 600,400"
                         stroke="url(#signalGradient)"
                         strokeWidth="3"
                         fill="none"
@@ -108,12 +90,6 @@ export default function LoginPage() {
                     {/* Cable 4 - Lower middle horizontal */}
                     <path
                         d="M 1400,520 L 600,520"
-                        stroke="transparent"
-                        strokeWidth="2"
-                        fill="none"
-                    />
-                    <path
-                        d="M 1400,520 L 600,520"
                         stroke="url(#signalGradient)"
                         strokeWidth="3"
                         fill="none"
@@ -123,12 +99,6 @@ export default function LoginPage() {
                     />
 
                     {/* Cable 5 - Bottom horizontal */}
-                    <path
-                        d="M 1400,650 L 600,650"
-                        stroke="transparent"
-                        strokeWidth="2"
-                        fill="none"
-                    />
                     <path
                         d="M 1400,650 L 600,650"
                         stroke="url(#signalGradient)"
