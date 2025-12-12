@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import { Search, X, Loader2 } from 'lucide-react';
+import { Search, X, Loader2, MapPin } from 'lucide-react';
 
 interface AddressSearchProps {
   onLocationSelect: (location: { lat: number; lng: number; address: string }) => void;
@@ -17,14 +17,12 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
   useEffect(() => {
     if (!inputRef.current || !window.google) return;
 
-    // Inicializar autocomplete
     autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
       componentRestrictions: { country: 'br' },
       fields: ['address_components', 'geometry', 'formatted_address', 'name'],
       types: ['address']
     });
 
-    // Listener para quando um lugar é selecionado
     autocompleteRef.current.addListener('place_changed', () => {
       const place = autocompleteRef.current?.getPlace();
 
@@ -66,12 +64,13 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
   return (
     <div className="relative">
       <div
-        className={`flex items-center gap-2 bg-white rounded-lg shadow-lg border-2 transition-all ${isFocused
-            ? 'border-emidias-primary shadow-xl'
+        className={`map-search-bar flex items-center gap-3 transition-all ${
+          isFocused
+            ? 'border-emidias-accent shadow-accent'
             : 'border-transparent'
-          }`}
+        }`}
       >
-        <div className="pl-4 text-emidias-primary">
+        <div className={`flex-shrink-0 transition-colors ${isFocused ? 'text-emidias-accent' : 'text-emidias-gray-400'}`}>
           {isLoading ? (
             <Loader2 className="animate-spin" size={20} />
           ) : (
@@ -86,26 +85,34 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
           onChange={(e) => setSearchValue(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-          placeholder="Buscar endereço..."
-          className="flex-1 py-3 pr-2 outline-none text-emidias-primary placeholder-gray-400 bg-transparent"
+          placeholder="Buscar endereço, rua, bairro..."
+          className="flex-1 py-0.5 outline-none text-emidias-gray-900 placeholder-emidias-gray-400 bg-transparent text-sm font-medium"
         />
 
         {searchValue && (
           <button
             onClick={handleClear}
-            className="pr-3 text-gray-400 hover:text-emidias-primary transition"
+            className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-emidias-gray-400 hover:text-emidias-gray-600 hover:bg-emidias-gray-100 rounded-lg transition-all"
           >
             <X size={18} />
           </button>
         )}
       </div>
 
-      {/* Dica */}
+      {/* Hint Tooltip */}
       {isFocused && !searchValue && (
-        <div className="absolute top-full mt-2 left-0 right-0 bg-white rounded-lg shadow-lg border border-emidias-gray/20 p-3 z-50">
-          <p className="text-xs text-gray-500">
-            Digite um endereço, rua, bairro ou cidade para buscar
-          </p>
+        <div className="absolute top-full mt-2 left-0 right-0 glass-light rounded-xl shadow-emidias-lg p-4 z-50 animate-fade-in-up">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-emidias-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <MapPin size={16} className="text-emidias-accent" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-emidias-gray-900">Buscar localização</p>
+              <p className="text-xs text-emidias-gray-500 mt-0.5">
+                Digite um endereço, rua, bairro ou cidade para centralizar o mapa
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>
