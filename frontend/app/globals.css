@@ -739,27 +739,17 @@
 @keyframes signalPulseRTL {
   0% {
     stroke-dashoffset: 0;
-    opacity: 0;
-  }
-
-  10% {
-    opacity: 1;
-  }
-
-  90% {
-    opacity: 1;
   }
 
   100% {
     stroke-dashoffset: -1600;
-    opacity: 0;
   }
 }
 
 .signal-pulse-rtl {
   stroke-dasharray: 300 1600;
   stroke-dashoffset: 0;
-  animation: signalPulseRTL 4s ease-in-out infinite;
+  animation: signalPulseRTL 4s linear infinite;
   stroke-linecap: square;
 }
 
