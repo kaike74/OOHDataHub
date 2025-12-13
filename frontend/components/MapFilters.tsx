@@ -286,13 +286,23 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
     label: string;
   }) => (
     <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-emidias-gray-50 transition-all group">
-      <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${checked
-        ? 'bg-emidias-accent border-emidias-accent'
-        : 'border-emidias-gray-300 group-hover:border-emidias-accent/50'
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className="hidden"
+      />
+      <div
+        onClick={onChange}
+        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${checked
+          ? 'bg-emidias-accent border-emidias-accent'
+          : 'border-emidias-gray-300 group-hover:border-emidias-accent/50'
         }`}>
         {checked && <Check size={14} className="text-white" strokeWidth={3} />}
       </div>
-      <span className={`text-sm transition-colors ${checked ? 'text-emidias-gray-900 font-medium' : 'text-emidias-gray-600'}`}>
+      <span
+        onClick={onChange}
+        className={`text-sm transition-colors ${checked ? 'text-emidias-gray-900 font-medium' : 'text-emidias-gray-600'}`}>
         {label}
       </span>
     </label>
