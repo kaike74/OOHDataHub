@@ -130,7 +130,7 @@ export default function ExibidoraSidebar() {
                 </button>
 
                 {/* Header com Logo */}
-                <div className="relative h-32 bg-gradient-to-br from-emidias-primary to-emidias-accent flex-shrink-0">
+                <div className="relative h-40 bg-gradient-to-br from-emidias-primary to-emidias-accent flex-shrink-0">
                     {selectedExibidora.logo_r2_key ? (
                         <>
                             <img
