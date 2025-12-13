@@ -130,12 +130,10 @@ export default function HomePage() {
 
       {/* Search Bar - Map View Only */}
       {currentView === 'map' && !isLoading && (
-        <div className="fixed top-[86px] left-1/2 -translate-x-1/2 z-30 w-full max-w-xl px-4 animate-fade-in-down">
-          <div className="relative">
-            <AddressSearch
-              onLocationSelect={(location) => setSearchLocation(location)}
-            />
-          </div>
+        <div className="fixed top-[86px] left-1/2 -translate-x-1/2 z-30 w-full max-w-xl animate-fade-in-down">
+          <AddressSearch
+            onLocationSelect={(location) => setSearchLocation(location)}
+          />
         </div>
       )}
 
