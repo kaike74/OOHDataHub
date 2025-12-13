@@ -213,7 +213,7 @@ export default function Sidebar() {
                 </button>
 
                 {/* Header com imagens / Carrossel */}
-                <div className="relative h-32 bg-gradient-to-br from-emidias-primary to-emidias-accent flex-shrink-0">
+                <div className="relative h-40 bg-gradient-to-br from-emidias-primary to-emidias-accent flex-shrink-0">
                     {imagens.length > 0 ? (
                         <>
                             <img
