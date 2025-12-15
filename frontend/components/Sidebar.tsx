@@ -3,9 +3,9 @@
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye, ChevronLeft, ChevronRight, Phone, Mail, Trash2, DollarSign, Tag, Calendar, ExternalLink, Loader2 } from 'lucide-react';
+import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye, ChevronLeft, ChevronRight, Phone, Mail, Trash2, DollarSign, Tag, Calendar, ExternalLink, Loader2, Calculator, ShoppingCart } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { Contato } from '@/lib/types';
+import type { Contato, Proposta } from '@/lib/types';
 
 // Componente para exibir contatos da exibidora
 function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undefined }) {
@@ -81,6 +81,7 @@ export default function Sidebar() {
     const exibidoras = useStore((state) => state.exibidoras);
     const pontos = useStore((state) => state.pontos);
     const setPontos = useStore((state) => state.setPontos);
+    const selectedProposta = useStore((state) => state.selectedProposta);
     const user = useStore((state) => state.user);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -152,6 +153,53 @@ export default function Sidebar() {
             }
         }
     }, [selectedPonto, exibidoras, setSidebarOpen, setFilterExibidora, setSelectedExibidora, setCurrentView]);
+
+    const handleAddToProposal = async () => {
+        if (!selectedPonto || !selectedProposta) return;
+
+        try {
+            // Default item structure
+            const item = {
+                id_proposta: selectedProposta.id,
+                id_ooh: selectedPonto.id,
+                periodo_inicio: new Date().toISOString().split('T')[0],
+                periodo_fim: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +14 days default
+                valor_locacao: selectedPonto.produtos?.[0]?.valor || 0, // Default to first product price
+                valor_papel: 0,
+                valor_lona: 0,
+                periodo_comercializado: 'bissemanal',
+                observacoes: ''
+            };
+
+            // Call API to add item. For now, since we implemented 'updateCart' (bulk PUT) but not 'addItem',
+            // let's assume we need to fetch current items, append, and save?
+            // Actually, for efficiency, let's implement a direct ADD endpoint or use a helper.
+            // Since I only created `updateCart` (PUT /itens), I should probably fetch+update or quick-patch.
+            // But wait, the previous `handlePropostas` only supported GET/:id and PUT/:id/itens.
+            // I should stick to fetching ALL items, adding one to array, and PUTting back.
+            // OR even better: just implemented bulk update for simplicity in previous step.
+
+            // Let's rely on `api.updateCart`.
+            // First fetch current items.
+            const response = await api.getProposta(selectedProposta.id);
+            const data = await response.json();
+            const currentItens = data.itens || [];
+
+            // Check if already in cart
+            if (currentItens.some((i: any) => i.id_ooh === selectedPonto.id)) {
+                alert('Este ponto já está na proposta!');
+                return;
+            }
+
+            const newItens = [...currentItens, item];
+            await api.updateCart(selectedProposta.id, newItens);
+
+            alert('Ponto adicionado ao carrinho com sucesso!');
+        } catch (error) {
+            console.error('Erro ao adicionar ao carrinho:', error);
+            alert('Erro ao adicionar ponto à proposta.');
+        }
+    };
 
     const nextImage = useCallback(() => {
         setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
@@ -429,6 +477,18 @@ export default function Sidebar() {
                         >
                             <History size={18} />
                         </button>
+
+                        {/* Add to Proposal */}
+                        {selectedProposta && (
+                            <button
+                                onClick={handleAddToProposal}
+                                className="flex items-center justify-center w-auto px-4 h-11 rounded-lg bg-emidias-accent text-white hover:bg-emidias-accent-dark transition-all hover:scale-105 shadow-lg shadow-emidias-accent/20 gap-2 font-semibold"
+                                title={`Adicionar à ${selectedProposta.nome}`}
+                            >
+                                <ShoppingCart size={18} />
+                                <span className="hidden sm:inline">Adicionar</span>
+                            </button>
+                        )}
 
                         {/* Delete - Master Only */}
                         {user?.role === 'master' && (
