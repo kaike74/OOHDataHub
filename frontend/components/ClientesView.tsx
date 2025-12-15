@@ -17,7 +17,7 @@ export default function ClientesView() {
     const [clientes, setClientes] = useState<Cliente[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedCliente, setClienteSelected] = useState<Cliente | undefined>();
+    const [selectedCliente, setSelectedCliente] = useState<Cliente | undefined>();
 
     useEffect(() => {
         loadClientes();
