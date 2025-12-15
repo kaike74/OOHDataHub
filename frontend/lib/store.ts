@@ -22,7 +22,7 @@ interface AppState {
     isModalOpen: boolean;
     isExibidoraModalOpen: boolean;
     isMenuOpen: boolean;
-    currentView: 'map' | 'exibidoras' | 'clientes';
+    currentView: 'map' | 'exibidoras';
     streetViewCoordinates: { lat: number; lng: number } | null;
     streetViewRequest: { lat: number; lng: number } | null;
 
@@ -52,7 +52,7 @@ interface AppState {
     setModalOpen: (open: boolean) => void;
     setExibidoraModalOpen: (open: boolean) => void;
     setMenuOpen: (open: boolean) => void;
-    setCurrentView: (view: 'map' | 'exibidoras' | 'clientes') => void;
+    setCurrentView: (view: 'map' | 'exibidoras') => void;
     setStreetViewCoordinates: (coords: { lat: number; lng: number } | null) => void;
     setStreetViewRequest: (request: { lat: number; lng: number } | null) => void;
     setFilterCidade: (cidades: string[]) => void;
@@ -151,11 +151,11 @@ export const useStore = create<AppState>()(
             setCurrentView: (view) => set((state) => ({
                 currentView: view,
                 isMenuOpen: false,
-                // Só limpa sidebar e seleções ao ir para view de exibidoras ou clientes
+                // Só limpa sidebar e seleções ao ir para view de exibidoras
                 // Ao ir para o mapa, preserva selectedExibidora para abrir a gaveta
-                isSidebarOpen: (view === 'exibidoras' || view === 'clientes') ? false : state.isSidebarOpen,
-                selectedPonto: (view === 'exibidoras' || view === 'clientes') ? null : state.selectedPonto,
-                selectedExibidora: (view === 'exibidoras' || view === 'clientes') ? null : state.selectedExibidora,
+                isSidebarOpen: view === 'exibidoras' ? false : state.isSidebarOpen,
+                selectedPonto: view === 'exibidoras' ? null : state.selectedPonto,
+                selectedExibidora: view === 'exibidoras' ? null : state.selectedExibidora,
             })),
             setStreetViewCoordinates: (coords) => set({ streetViewCoordinates: coords }),
             setStreetViewRequest: (request) => set({ streetViewRequest: request }),

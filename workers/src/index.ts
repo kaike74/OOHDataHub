@@ -14,8 +14,6 @@ import { handleContatos } from './routes/contatos';
 import { handleUpload, handleImage, handleUploadLogo } from './routes/upload';
 import { handleStats } from './routes/stats';
 import { handleUsers } from './routes/users';
-import { handleClientes } from './routes/clientes';
-import { handlePropostas } from './routes/propostas';
 import { corsHeaders, handleOptions } from './utils/cors';
 
 export default {
@@ -61,14 +59,6 @@ export default {
 
             if (path === '/api/stats') {
                 return await handleStats(request, env);
-            }
-
-            if (path.startsWith('/api/clientes')) {
-                return await handleClientes(request, env, path);
-            }
-
-            if (path.startsWith('/api/propostas') || path.match(/^\/api\/clientes\/\d+\/propostas$/)) {
-                return await handlePropostas(request, env, path);
             }
 
             // Not found
