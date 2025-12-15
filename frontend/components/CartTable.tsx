@@ -119,7 +119,7 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
         if (inicio && fim) {
             const start = new Date(inicio);
             const end = new Date(fim);
-            const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+            const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
             const periodo = getItemValue(item, 'periodo_comercializado');
             if (periodo === 'bissemanal') {
@@ -130,15 +130,33 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
         }
 
         const investimento = (locacao + papel + lona) * quantidade;
-        return { investimento, quantidade, locacao, papel, lona };
+
+        // Calculate days in period for impacts
+        let diasPeriodo = 1;
+        if (inicio && fim) {
+            const start = new Date(inicio);
+            const end = new Date(fim);
+            diasPeriodo = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        }
+
+        // Impacts = Daily Flow × Days
+        const fluxoDiario = (item as any).fluxo_diario || 0;
+        const impactos = fluxoDiario * diasPeriodo;
+
+        // CPM = (Investment / Impacts) × 1000
+        const cpm = impactos > 0 ? (investimento / impactos) * 1000 : 0;
+
+        return { investimento, quantidade, locacao, papel, lona, impactos, cpm, diasPeriodo };
     };
 
     const totalGeral = itens.reduce((acc, item) => acc + calculateItemTotal(item).investimento, 0);
+    const totalImpactos = itens.reduce((acc, item) => acc + calculateItemTotal(item).impactos, 0);
+    const cpmMedio = totalImpactos > 0 ? (totalGeral / totalImpactos) * 1000 : 0;
     const hasChanges = Object.keys(editedItems).length > 0;
 
     return (
         <div
-            className={`fixed bottom-0 left-0 right-0 bg-white border-t border-emidias-gray-200 shadow-2xl transition-transform duration-300 z-30 flex flex-col ${isOpen ? 'translate-y-0 h-[450px]' : 'translate-y-[400px] h-[450px]'}`}
+            className={`fixed bottom-0 left-0 right-0 bg-white border-t border-emidias-gray-200 shadow-2xl transition-transform duration-300 z-20 flex flex-col ${isOpen ? 'translate-y-0 h-[500px]' : 'translate-y-[450px] h-[500px]'}`}
         >
             {/* Header / Handle */}
             <div
@@ -152,11 +170,25 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
                         <span className="badge bg-emidias-accent text-white border-none">{proposta.comissao}</span>
                     </div>
                     <div className="w-px h-6 bg-white/20" />
-                    <div className="flex items-center gap-4 text-sm">
-                        <span>{itens.length} pontos</span>
-                        <span className="font-mono text-emidias-accent font-bold">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral)}
-                        </span>
+                    <div className="flex items-center gap-6 text-sm">
+                        <div className="flex flex-col">
+                            <span className="text-xs text-white/60">Pontos</span>
+                            <span className="font-bold">{itens.length}</span>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-xs text-white/60">Investimento</span>
+                            <span className="font-mono text-emidias-accent font-bold">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral)}
+                            </span>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-xs text-white/60">Impactos</span>
+                            <span className="font-bold">{new Intl.NumberFormat('pt-BR').format(totalImpactos)}</span>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-xs text-white/60">CPM Médio</span>
+                            <span className="font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cpmMedio)}</span>
+                        </div>
                     </div>
                     {hasChanges && (
                         <div className="flex items-center gap-2 ml-4">
@@ -179,71 +211,99 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
 
             {/* Table Content */}
             <div className="flex-1 overflow-auto bg-emidias-gray-50">
-                <table className="w-full text-sm text-left whitespace-nowrap">
+                <table className="w-full text-xs text-left whitespace-nowrap">
                     <thead className="bg-emidias-gray-100 text-emidias-gray-600 font-semibold sticky top-0 z-10 shadow-sm">
                         <tr>
-                            <th className="p-3">Cidade/UF</th>
-                            <th className="p-3">Endereço</th>
-                            <th className="p-3">Exibidora</th>
-                            <th className="p-3">Código</th>
-                            <th className="p-3">Período</th>
-                            <th className="p-3 text-right">Locação ({proposta.comissao})</th>
-                            <th className="p-3 text-right">Produção (+25%)</th>
-                            <th className="p-3 text-center">Qtd</th>
-                            <th className="p-3 text-right">Total</th>
-                            <th className="p-3 w-10"></th>
+                            <th className="p-2">País/UF/Cidade</th>
+                            <th className="p-2">Endereço</th>
+                            <th className="p-2">Exibidora</th>
+                            <th className="p-2">Código</th>
+                            <th className="p-2">Produto</th>
+                            <th className="p-2">Medidas</th>
+                            <th className="p-2">Período</th>
+                            <th className="p-2 text-right">Locação ({proposta.comissao})</th>
+                            <th className="p-2 text-right">Papel/Lona</th>
+                            <th className="p-2 text-center">Tipo</th>
+                            <th className="p-2 text-center">Qtd</th>
+                            <th className="p-2 text-right">Invest.</th>
+                            <th className="p-2 text-right">Impactos</th>
+                            <th className="p-2 text-right">CPM</th>
+                            <th className="p-2 w-8"></th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-emidias-gray-200">
                         {itens.map((item) => {
-                            const { investimento, quantidade, locacao, papel, lona } = calculateItemTotal(item);
+                            const { investimento, quantidade, locacao, papel, lona, impactos, cpm } = calculateItemTotal(item);
                             return (
                                 <tr key={item.id} className="bg-white hover:bg-emidias-blue-50/50 transition-colors">
-                                    <td className="p-3">
+                                    <td className="p-2">
+                                        <div className="text-[10px] text-gray-500">BR</div>
                                         <div className="font-semibold">{item.cidade}</div>
-                                        <div className="text-xs text-gray-500">{item.uf}</div>
+                                        <div className="text-[10px] text-gray-500">{item.uf}</div>
                                     </td>
-                                    <td className="p-3 max-w-[200px] truncate" title={item.endereco}>
+                                    <td className="p-2 max-w-[150px] truncate text-[11px]" title={item.endereco}>
                                         {item.endereco}
                                     </td>
-                                    <td className="p-3">{item.exibidora_nome}</td>
-                                    <td className="p-3 font-mono text-xs bg-gray-50 px-2 py-1 rounded inline-block">
-                                        {item.codigo_ooh}
+                                    <td className="p-2 text-[11px]">{item.exibidora_nome}</td>
+                                    <td className="p-2">
+                                        <span className="font-mono text-[10px] bg-gray-100 px-1 py-0.5 rounded">
+                                            {item.codigo_ooh}
+                                        </span>
                                     </td>
-                                    <td className="p-3">
-                                        <div className="flex flex-col gap-1">
+                                    <td className="p-2 text-[11px]">{(item as any).tipo || '-'}</td>
+                                    <td className="p-2 text-[11px]">{(item as any).medidas || '-'}</td>
+                                    <td className="p-2">
+                                        <div className="flex flex-col gap-0.5">
                                             <input
                                                 type="date"
                                                 value={String(getItemValue(item, 'periodo_inicio') || '').split('T')[0]}
                                                 onChange={(e) => updateItemField(item.id, 'periodo_inicio', e.target.value)}
-                                                className="input-xs border rounded px-1 text-xs"
+                                                className="border rounded px-1 py-0.5 text-[10px] w-28"
                                             />
                                             <input
                                                 type="date"
                                                 value={String(getItemValue(item, 'periodo_fim') || '').split('T')[0]}
                                                 onChange={(e) => updateItemField(item.id, 'periodo_fim', e.target.value)}
-                                                className="input-xs border rounded px-1 text-xs"
+                                                className="border rounded px-1 py-0.5 text-[10px] w-28"
                                             />
                                         </div>
                                     </td>
-                                    <td className="p-3 text-right font-mono">
+                                    <td className="p-2 text-right font-mono text-[11px]">
                                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(locacao)}
                                     </td>
-                                    <td className="p-3 text-right font-mono text-xs text-gray-500">
-                                        <div>P: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(papel)}</div>
-                                        <div>L: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(lona)}</div>
+                                    <td className="p-2 text-right">
+                                        <div className="font-mono text-[10px] text-gray-600">
+                                            <div>P: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(papel)}</div>
+                                            <div>L: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(lona)}</div>
+                                        </div>
                                     </td>
-                                    <td className="p-3 text-center font-bold">{quantidade}</td>
-                                    <td className="p-3 text-right font-bold text-emidias-primary">
-                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(investimento)}
+                                    <td className="p-2 text-center">
+                                        <select
+                                            value={String(getItemValue(item, 'periodo_comercializado') || 'mensal')}
+                                            onChange={(e) => updateItemField(item.id, 'periodo_comercializado', e.target.value)}
+                                            className="border rounded px-1 py-0.5 text-[10px] w-20"
+                                        >
+                                            <option value="bissemanal">Bi</option>
+                                            <option value="mensal">Mensal</option>
+                                        </select>
                                     </td>
-                                    <td className="p-3 text-center">
+                                    <td className="p-2 text-center font-bold">{quantidade}</td>
+                                    <td className="p-2 text-right font-bold text-emidias-primary text-[11px]">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 }).format(investimento)}
+                                    </td>
+                                    <td className="p-2 text-right text-[11px]">
+                                        {new Intl.NumberFormat('pt-BR').format(Math.round(impactos))}
+                                    </td>
+                                    <td className="p-2 text-right text-[11px]">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cpm)}
+                                    </td>
+                                    <td className="p-2 text-center">
                                         <button
                                             onClick={() => removeItem(item.id)}
                                             disabled={isSaving}
                                             className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
                                         >
-                                            <Trash2 size={16} />
+                                            <Trash2 size={14} />
                                         </button>
                                     </td>
                                 </tr>
@@ -251,7 +311,7 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
                         })}
                         {itens.length === 0 && (
                             <tr>
-                                <td colSpan={10} className="p-12 text-center text-gray-400">
+                                <td colSpan={15} className="p-12 text-center text-gray-400">
                                     Nenhum ponto selecionado nesta proposta.
                                     <br />
                                     <span className="text-xs">Navegue pelo mapa e clique em "Adicionar" nos pontos desejados.</span>
