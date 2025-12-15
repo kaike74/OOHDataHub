@@ -54,7 +54,13 @@ export default function NavigationMenu() {
         router.push('/config');
     };
 
+    const setSelectedProposta = useStore((state) => state.setSelectedProposta);
+
     const handleViewChange = (viewId: 'map' | 'exibidoras' | 'clientes' | 'propostas') => {
+        // If we're leaving proposal editing mode (map with cart), clear the proposta
+        if (selectedProposta && viewId !== 'clientes') {
+            setSelectedProposta(null);
+        }
         setCurrentView(viewId);
         setMenuOpen(false);
     };
