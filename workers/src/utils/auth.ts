@@ -118,6 +118,42 @@ export async function requireMaster(request: Request, env: Env): Promise<User> {
 }
 
 /**
+ * Verify authentication and return authorization status
+ * Returns object with authorized flag and user data if authorized
+ */
+export async function verifyAuth(
+    request: Request,
+    env: Env
+): Promise<{ authorized: boolean; user?: User; error?: string }> {
+    try {
+        const token = extractToken(request);
+
+        if (!token) {
+            return { authorized: false, error: 'No token provided' };
+        }
+
+        const payload = await verifyToken(token);
+        if (!payload) {
+            return { authorized: false, error: 'Invalid token' };
+        }
+
+        // Fetch user from database
+        const user = await env.DB.prepare(
+            'SELECT id, email, name, role FROM users WHERE id = ?'
+        ).bind(payload.userId).first() as User | null;
+
+        if (!user) {
+            return { authorized: false, error: 'User not found' };
+        }
+
+        return { authorized: true, user };
+    } catch (error: any) {
+        return { authorized: false, error: error.message || 'Authentication failed' };
+    }
+}
+
+
+/**
  * Validate email domain
  */
 export function validateEmailDomain(email: string): boolean {
