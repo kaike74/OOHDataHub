@@ -22,7 +22,9 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         // Including all fields needed for calculation
         const { results: itens } = await env.DB.prepare(`
         SELECT 
-            pi.*, 
+            pi.id, pi.id_proposta, pi.id_ooh, pi.periodo_inicio, pi.periodo_fim, 
+            pi.valor_locacao, pi.valor_papel, pi.valor_lona, 
+            pi.periodo_comercializado, pi.observacoes,
             p.endereco, p.cidade, p.uf, p.codigo_ooh,
             e.nome as exibidora_nome
         FROM proposta_itens pi
