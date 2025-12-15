@@ -4,6 +4,7 @@ import { useStore } from '@/lib/store';
 import { ArrowLeft, Plus, Calendar, Coins, FileText, Loader2 } from 'lucide-react';
 import { Proposta } from '@/lib/types';
 import PropostaModal from './PropostaModal';
+import { api } from '@/lib/api';
 
 export default function PropostasView() {
     const [propostas, setPropostas] = useState<Proposta[]>([]);
@@ -27,14 +28,15 @@ export default function PropostasView() {
 
         try {
             setIsLoading(true);
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/clientes/${selectedCliente.id}/propostas`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setPropostas(data);
+            const response = await api.getClientProposals(selectedCliente.id);
+            if (response) {
+                // api.getClientProposals returns the JSON directly now? 
+                // Wait, api.ts fetchAPI returns `response.json()`.
+                // So `response` is the data array.
+                // NOTE: fetchAPIHelper usually returns parsed JSON.
+                // Let's assume it returns the array or object.
+                // Checking api.ts: `return response.json()`.
+                setPropostas(response);
             }
         } catch (error) {
             console.error('Erro ao carregar propostas:', error);
@@ -77,7 +79,7 @@ export default function PropostasView() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         {selectedCliente.logo_url && (
-                            <img src={selectedCliente.logo_url} alt="Logo" className="w-12 h-12 object-contain" />
+                            <img src={api.getImageUrl(selectedCliente.logo_url)} alt="Logo" className="w-12 h-12 object-contain" />
                         )}
                         <div>
                             <h1 className="text-2xl font-bold text-emidias-gray-900">Propostas: {selectedCliente.nome}</h1>

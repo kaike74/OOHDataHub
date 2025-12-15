@@ -89,7 +89,7 @@ export default function ClientesView() {
                                 <div className="flex items-center gap-4">
                                     <div className="w-16 h-16 rounded-lg bg-emidias-gray-50 flex items-center justify-center border border-emidias-gray-100 overflow-hidden">
                                         {cliente.logo_url ? (
-                                            <img src={cliente.logo_url} alt={cliente.nome} className="w-full h-full object-contain" />
+                                            <img src={api.getImageUrl(cliente.logo_url)} alt={cliente.nome} className="w-full h-full object-contain" />
                                         ) : (
                                             <Building2 className="text-emidias-gray-400" size={24} />
                                         )}

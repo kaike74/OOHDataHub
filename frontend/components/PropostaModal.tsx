@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { X, Loader2, Coins } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { Proposta } from '@/lib/types';
+import { api } from '@/lib/api';
 
 interface PropostaModalProps {
     isOpen: boolean;
@@ -24,37 +25,25 @@ export default function PropostaModal({ isOpen, onClose, clienteId, onSuccess }:
         setIsSubmitting(true);
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/propostas`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    id_cliente: clienteId,
-                    nome,
-                    comissao
-                })
+            const result = await api.createProposta({
+                id_cliente: clienteId,
+                nome,
+                comissao
             });
 
-            if (response.ok) {
-                const result = await response.json();
-                // Create minimal proposal object to pass back
-                const newProposta: Proposta = {
-                    id: result.id,
-                    id_cliente: clienteId,
-                    nome,
-                    comissao,
-                    status: 'rascunho',
-                    created_at: new Date().toISOString()
-                };
-                onSuccess(newProposta);
-                onClose();
-                setNome('');
-                setComissao('V2');
-            } else {
-                alert('Erro ao criar proposta');
-            }
+            // Create minimal proposal object to pass back
+            const newProposta: Proposta = {
+                id: result.id,
+                id_cliente: clienteId,
+                nome,
+                comissao,
+                status: 'rascunho',
+                created_at: new Date().toISOString()
+            };
+            onSuccess(newProposta);
+            onClose();
+            setNome('');
+            setComissao('V2');
         } catch (error) {
             console.error('Erro:', error);
         } finally {
