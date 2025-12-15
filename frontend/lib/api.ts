@@ -164,6 +164,30 @@ export const api = {
         return response.json();
     },
 
+    uploadClientLogo: async (file: File, clienteId: string) => {
+        const token = getToken();
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('clienteId', clienteId);
+
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${API_URL}/api/upload-client-logo`, {
+            method: 'POST',
+            body: formData,
+            headers,
+        });
+
+        if (!response.ok) {
+            throw new Error('Upload failed');
+        }
+
+        return response.json();
+    },
+
     // Contatos
     getContatos: (idExibidora: number) => fetchAPI(`/api/contatos?id_exibidora=${idExibidora}`),
     createContato: (data: any) => fetchAPI('/api/contatos', {

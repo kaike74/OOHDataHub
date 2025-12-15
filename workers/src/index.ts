@@ -11,7 +11,7 @@ export interface Env {
 import { handlePontos } from './routes/pontos';
 import { handleExibidoras } from './routes/exibidoras';
 import { handleContatos } from './routes/contatos';
-import { handleUpload, handleImage, handleUploadLogo } from './routes/upload';
+import { handleUpload, handleImage, handleUploadLogo, handleUploadClientLogo } from './routes/upload';
 import { handleStats } from './routes/stats';
 import { handleUsers } from './routes/users';
 import { handleClientes } from './routes/clientes';
@@ -61,6 +61,10 @@ export default {
 
             if (path === '/api/upload-logo') {
                 return await handleUploadLogo(request, env);
+            }
+
+            if (path === '/api/upload-client-logo') {
+                return await handleUploadClientLogo(request, env);
             }
 
             if (path.startsWith('/api/images/')) {

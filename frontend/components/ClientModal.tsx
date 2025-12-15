@@ -1,7 +1,7 @@
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { X, Upload, Loader2, Building2 } from 'lucide-react';
-import { useStore } from '@/lib/store';
+import { api } from '@/lib/api';
 
 interface ClientModalProps {
     isOpen: boolean;
@@ -12,35 +12,44 @@ interface ClientModalProps {
 export default function ClientModal({ isOpen, onClose, onSuccess }: ClientModalProps) {
     const [nome, setNome] = useState('');
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const token = useStore((state) => state.token);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     if (!isOpen) return null;
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+            const objectUrl = URL.createObjectURL(file);
+            setLogoPreview(objectUrl);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/clientes`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ nome, logo_url: logoPreview }) // Assuming logo is handled or just passing null
-            });
+            // 1. Create Client
+            const newClient = await api.createCliente({ nome });
 
-            if (response.ok) {
-                onSuccess();
-                onClose();
-                setNome('');
-                setLogoPreview(null);
-            } else {
-                alert('Erro ao criar cliente');
+            // 2. Upload Logo if selected
+            if (selectedFile && newClient.id) {
+                const uploadResult = await api.uploadClientLogo(selectedFile, String(newClient.id));
+                // Update local object if needed, but we reload list anyway
             }
+
+            onSuccess();
+            onClose();
+            setNome('');
+            setLogoPreview(null);
+            setSelectedFile(null);
+
         } catch (error) {
             console.error('Erro:', error);
+            alert('Erro ao criar cliente');
         } finally {
             setIsSubmitting(false);
         }
@@ -61,13 +70,22 @@ export default function ClientModal({ isOpen, onClose, onSuccess }: ClientModalP
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     {/* Logo Upload Placeholder */}
                     <div className="flex flex-col items-center justify-center gap-3">
-                        <div className="w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center relative overflow-hidden group hover:border-emidias-accent hover:bg-emidias-accent/5 transition-all cursor-pointer">
+                        <div
+                            className="w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center relative overflow-hidden group hover:border-emidias-accent hover:bg-emidias-accent/5 transition-all cursor-pointer"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
                             {logoPreview ? (
                                 <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
                             ) : (
                                 <Building2 className="text-gray-400 group-hover:text-emidias-accent" size={32} />
                             )}
-                            {/* Input for file would go here, omitting for simplicity in Phase 1 */}
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                accept="image/*"
+                                className="hidden"
+                            />
                         </div>
                         <span className="text-sm text-gray-500">Logo do Cliente</span>
                     </div>

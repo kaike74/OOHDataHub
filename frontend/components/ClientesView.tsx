@@ -23,15 +23,8 @@ export default function ClientesView() {
         try {
             setIsLoading(true);
             // We need to implement api.getClientes()
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/clientes`, {
-                headers: {
-                    'Authorization': `Bearer ${useStore.getState().token}`
-                }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setClientes(data);
-            }
+            const data = await api.getClientes();
+            setClientes(data);
         } catch (error) {
             console.error('Erro ao carregar clientes:', error);
         } finally {
