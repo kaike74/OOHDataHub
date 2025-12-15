@@ -22,7 +22,7 @@ interface AppState {
     isModalOpen: boolean;
     isExibidoraModalOpen: boolean;
     isMenuOpen: boolean;
-    currentView: 'map' | 'exibidoras';
+    currentView: 'map' | 'exibidoras' | 'clientes';
     streetViewCoordinates: { lat: number; lng: number } | null;
     streetViewRequest: { lat: number; lng: number } | null;
 
@@ -52,7 +52,7 @@ interface AppState {
     setModalOpen: (open: boolean) => void;
     setExibidoraModalOpen: (open: boolean) => void;
     setMenuOpen: (open: boolean) => void;
-    setCurrentView: (view: 'map' | 'exibidoras') => void;
+    setCurrentView: (view: 'map' | 'exibidoras' | 'clientes') => void;
     setStreetViewCoordinates: (coords: { lat: number; lng: number } | null) => void;
     setStreetViewRequest: (request: { lat: number; lng: number } | null) => void;
     setFilterCidade: (cidades: string[]) => void;
@@ -78,105 +78,105 @@ export const useStore = create<AppState>()(
             pontos: [],
             exibidoras: [],
             stats: null,
-    selectedPonto: null,
-    editingPonto: null,
-    selectedExibidora: null,
-    editingExibidora: null,
-    isSidebarOpen: false,
-    isModalOpen: false,
-    isExibidoraModalOpen: false,
-    isMenuOpen: false,
-    currentView: 'map',
-    streetViewCoordinates: null,
-    streetViewRequest: null,
-    filterCidade: [],
-    filterUF: [],
-    filterPais: [],
-    filterExibidora: [],
-    filterTipos: [],
-    filterValorMin: null,
-    filterValorMax: null,
-    searchQuery: '',
+            selectedPonto: null,
+            editingPonto: null,
+            selectedExibidora: null,
+            editingExibidora: null,
+            isSidebarOpen: false,
+            isModalOpen: false,
+            isExibidoraModalOpen: false,
+            isMenuOpen: false,
+            currentView: 'map',
+            streetViewCoordinates: null,
+            streetViewRequest: null,
+            filterCidade: [],
+            filterUF: [],
+            filterPais: [],
+            filterExibidora: [],
+            filterTipos: [],
+            filterValorMin: null,
+            filterValorMax: null,
+            searchQuery: '',
 
-    // Auth Actions
-    setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
-    logout: () => set({
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        pontos: [],
-        exibidoras: [],
-        stats: null,
-        selectedPonto: null,
-        editingPonto: null,
-        selectedExibidora: null,
-        editingExibidora: null,
-    }),
+            // Auth Actions
+            setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
+            logout: () => set({
+                user: null,
+                token: null,
+                isAuthenticated: false,
+                pontos: [],
+                exibidoras: [],
+                stats: null,
+                selectedPonto: null,
+                editingPonto: null,
+                selectedExibidora: null,
+                editingExibidora: null,
+            }),
 
-    // Actions
-    setPontos: (pontos) => set({ pontos }),
-    setExibidoras: (exibidoras) => set({ exibidoras }),
-    setStats: (stats) => set({ stats }),
-    setSelectedPonto: (ponto) => set((state) => ({
-        selectedPonto: ponto,
-        // Manter sidebar aberta se há exibidora selecionada (para voltar aos detalhes dela)
-        isSidebarOpen: !!ponto || !!state.selectedExibidora,
-        // SEMPRE preservar selectedExibidora - não limpar quando ponto é fechado
-        // Isso permite voltar aos detalhes da exibidora após fechar detalhes do ponto
-        selectedExibidora: state.selectedExibidora,
-    })),
-    setEditingPonto: (ponto) => set({ editingPonto: ponto }),
-    setSelectedExibidora: (exibidora) => set({
-        selectedExibidora: exibidora,
-        isSidebarOpen: !!exibidora,
-        selectedPonto: null,
-    }),
-    setEditingExibidora: (exibidora) => set({ editingExibidora: exibidora }),
-    setSidebarOpen: (open) => set({
-        isSidebarOpen: open,
-        selectedPonto: open ? undefined : null,
-        selectedExibidora: open ? undefined : null,
-    }),
-    setModalOpen: (open) => set((state) => ({
-        isModalOpen: open,
-        // Só limpa editingPonto ao FECHAR o modal
-        editingPonto: open ? state.editingPonto : null,
-    })),
-    setExibidoraModalOpen: (open) => set((state) => ({
-        isExibidoraModalOpen: open,
-        // Só limpa editingExibidora ao FECHAR o modal
-        editingExibidora: open ? state.editingExibidora : null,
-    })),
-    setMenuOpen: (open) => set({ isMenuOpen: open }),
-    setCurrentView: (view) => set((state) => ({
-        currentView: view,
-        isMenuOpen: false,
-        // Só limpa sidebar e seleções ao ir para view de exibidoras
-        // Ao ir para o mapa, preserva selectedExibidora para abrir a gaveta
-        isSidebarOpen: view === 'exibidoras' ? false : state.isSidebarOpen,
-        selectedPonto: view === 'exibidoras' ? null : state.selectedPonto,
-        selectedExibidora: view === 'exibidoras' ? null : state.selectedExibidora,
-    })),
-    setStreetViewCoordinates: (coords) => set({ streetViewCoordinates: coords }),
-    setStreetViewRequest: (request) => set({ streetViewRequest: request }),
-    setFilterCidade: (cidades) => set({ filterCidade: cidades }),
-    setFilterUF: (ufs) => set({ filterUF: ufs }),
-    setFilterPais: (paises) => set({ filterPais: paises }),
-    setFilterExibidora: (ids) => set({ filterExibidora: ids }),
-    setFilterTipos: (tipos) => set({ filterTipos: tipos }),
-    setFilterValorMin: (valor) => set({ filterValorMin: valor }),
-    setFilterValorMax: (valor) => set({ filterValorMax: valor }),
-    setSearchQuery: (query) => set({ searchQuery: query }),
-    clearFilters: () => set({
-        filterCidade: [],
-        filterUF: [],
-        filterPais: [],
-        filterExibidora: [],
-        filterTipos: [],
-        filterValorMin: null,
-        filterValorMax: null,
-        searchQuery: '',
-    }),
+            // Actions
+            setPontos: (pontos) => set({ pontos }),
+            setExibidoras: (exibidoras) => set({ exibidoras }),
+            setStats: (stats) => set({ stats }),
+            setSelectedPonto: (ponto) => set((state) => ({
+                selectedPonto: ponto,
+                // Manter sidebar aberta se há exibidora selecionada (para voltar aos detalhes dela)
+                isSidebarOpen: !!ponto || !!state.selectedExibidora,
+                // SEMPRE preservar selectedExibidora - não limpar quando ponto é fechado
+                // Isso permite voltar aos detalhes da exibidora após fechar detalhes do ponto
+                selectedExibidora: state.selectedExibidora,
+            })),
+            setEditingPonto: (ponto) => set({ editingPonto: ponto }),
+            setSelectedExibidora: (exibidora) => set({
+                selectedExibidora: exibidora,
+                isSidebarOpen: !!exibidora,
+                selectedPonto: null,
+            }),
+            setEditingExibidora: (exibidora) => set({ editingExibidora: exibidora }),
+            setSidebarOpen: (open) => set({
+                isSidebarOpen: open,
+                selectedPonto: open ? undefined : null,
+                selectedExibidora: open ? undefined : null,
+            }),
+            setModalOpen: (open) => set((state) => ({
+                isModalOpen: open,
+                // Só limpa editingPonto ao FECHAR o modal
+                editingPonto: open ? state.editingPonto : null,
+            })),
+            setExibidoraModalOpen: (open) => set((state) => ({
+                isExibidoraModalOpen: open,
+                // Só limpa editingExibidora ao FECHAR o modal
+                editingExibidora: open ? state.editingExibidora : null,
+            })),
+            setMenuOpen: (open) => set({ isMenuOpen: open }),
+            setCurrentView: (view) => set((state) => ({
+                currentView: view,
+                isMenuOpen: false,
+                // Só limpa sidebar e seleções ao ir para view de exibidoras ou clientes
+                // Ao ir para o mapa, preserva selectedExibidora para abrir a gaveta
+                isSidebarOpen: (view === 'exibidoras' || view === 'clientes') ? false : state.isSidebarOpen,
+                selectedPonto: (view === 'exibidoras' || view === 'clientes') ? null : state.selectedPonto,
+                selectedExibidora: (view === 'exibidoras' || view === 'clientes') ? null : state.selectedExibidora,
+            })),
+            setStreetViewCoordinates: (coords) => set({ streetViewCoordinates: coords }),
+            setStreetViewRequest: (request) => set({ streetViewRequest: request }),
+            setFilterCidade: (cidades) => set({ filterCidade: cidades }),
+            setFilterUF: (ufs) => set({ filterUF: ufs }),
+            setFilterPais: (paises) => set({ filterPais: paises }),
+            setFilterExibidora: (ids) => set({ filterExibidora: ids }),
+            setFilterTipos: (tipos) => set({ filterTipos: tipos }),
+            setFilterValorMin: (valor) => set({ filterValorMin: valor }),
+            setFilterValorMax: (valor) => set({ filterValorMax: valor }),
+            setSearchQuery: (query) => set({ searchQuery: query }),
+            clearFilters: () => set({
+                filterCidade: [],
+                filterUF: [],
+                filterPais: [],
+                filterExibidora: [],
+                filterTipos: [],
+                filterValorMin: null,
+                filterValorMax: null,
+                searchQuery: '',
+            }),
         }),
         {
             name: 'ooh-auth-storage',

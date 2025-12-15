@@ -10,6 +10,7 @@ import MapFilters from '@/components/MapFilters';
 import AddressSearch from '@/components/AddressSearch';
 import NavigationMenu from '@/components/NavigationMenu';
 import ExibidorasView from '@/components/ExibidorasView';
+import ClientesView from '@/components/ClientesView';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { Plus, Filter, Menu, MapPin, Building2, Loader2 } from 'lucide-react';
@@ -208,6 +209,8 @@ export default function HomePage() {
         )}
 
         {currentView === 'exibidoras' && !isLoading && !error && <ExibidorasView />}
+
+        {currentView === 'clientes' && !isLoading && !error && <ClientesView />}
 
         {/* Global Components */}
         <CreatePointModal />
