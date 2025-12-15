@@ -13,6 +13,7 @@ export default function NavigationMenu() {
     const user = useStore((state) => state.user);
     const logout = useStore((state) => state.logout);
     const selectedProposta = useStore((state) => state.selectedProposta);
+    const setSelectedProposta = useStore((state) => state.setSelectedProposta);
 
     if (!isMenuOpen) return null;
 
@@ -54,7 +55,7 @@ export default function NavigationMenu() {
         router.push('/config');
     };
 
-    const setSelectedProposta = useStore((state) => state.setSelectedProposta);
+
 
     const handleViewChange = (viewId: 'map' | 'exibidoras' | 'clientes' | 'propostas') => {
         // If we're leaving proposal editing mode (map with cart), clear the proposta
