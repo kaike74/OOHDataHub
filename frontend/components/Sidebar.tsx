@@ -181,8 +181,7 @@ export default function Sidebar() {
 
             // Let's rely on `api.updateCart`.
             // First fetch current items.
-            const response = await api.getProposta(selectedProposta.id);
-            const data = await response.json();
+            const data = await api.getProposta(selectedProposta.id);
             const currentItens = data.itens || [];
 
             // Check if already in cart

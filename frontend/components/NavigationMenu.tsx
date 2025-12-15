@@ -12,6 +12,7 @@ export default function NavigationMenu() {
     const setCurrentView = useStore((state) => state.setCurrentView);
     const user = useStore((state) => state.user);
     const logout = useStore((state) => state.logout);
+    const selectedProposta = useStore((state) => state.selectedProposta);
 
     if (!isMenuOpen) return null;
 
@@ -124,7 +125,10 @@ export default function NavigationMenu() {
                     <div className="space-y-2">
                         {menuItems.map((item) => {
                             const Icon = item.icon;
-                            const isActive = currentView === item.id;
+                            // If there's a selected proposal and we're on map view, consider "Clientes" as active
+                            const isActive = selectedProposta && currentView === 'map'
+                                ? item.id === 'clientes'
+                                : currentView === item.id;
 
                             return (
                                 <button
