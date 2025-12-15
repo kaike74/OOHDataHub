@@ -2,7 +2,7 @@
 
 import { useStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
-import { X, Map, Building2, Settings, LogOut, User, ChevronRight, Shield } from 'lucide-react';
+import { X, Map, Building2, Settings, LogOut, User, ChevronRight, Shield, Users } from 'lucide-react';
 
 export default function NavigationMenu() {
     const router = useRouter();
@@ -30,6 +30,13 @@ export default function NavigationMenu() {
             description: 'Gerenciar empresas exibidoras',
             type: 'view' as const
         },
+        {
+            id: 'clientes' as const,
+            icon: Users,
+            label: 'Clientes',
+            description: 'Gerenciar clientes e propostas',
+            type: 'view' as const
+        },
     ];
 
     const handleLogout = () => {
@@ -46,7 +53,7 @@ export default function NavigationMenu() {
         router.push('/config');
     };
 
-    const handleViewChange = (viewId: 'map' | 'exibidoras') => {
+    const handleViewChange = (viewId: 'map' | 'exibidoras' | 'clientes') => {
         setCurrentView(viewId);
         setMenuOpen(false);
     };

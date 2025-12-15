@@ -81,3 +81,39 @@ export interface AuthResponse {
     token: string;
     user: User;
 }
+
+export interface Cliente {
+    id: number;
+    nome: string;
+    logo_url: string | null;
+    created_at: string;
+}
+
+export interface Proposta {
+    id: number;
+    id_cliente: number;
+    nome: string;
+    comissao: 'V2' | 'V3' | 'V4';
+    status: string;
+    created_at: string;
+    itens?: PropostaItem[];
+}
+
+export interface PropostaItem {
+    id: number;
+    id_proposta: number;
+    id_ooh: number;
+    periodo_inicio: string | null;
+    periodo_fim: string | null;
+    valor_locacao: number;
+    valor_papel: number;
+    valor_lona: number;
+    periodo_comercializado: 'bissemanal' | 'mensal' | null;
+    observacoes: string | null;
+    // Enhanced fields from join
+    endereco?: string;
+    cidade?: string;
+    uf?: string;
+    codigo_ooh?: string;
+    exibidora_nome?: string;
+}

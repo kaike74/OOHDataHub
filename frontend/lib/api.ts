@@ -178,6 +178,25 @@ export const api = {
         method: 'DELETE',
     }),
 
+    // Clientes
+    getClientes: () => fetchAPI('/api/clientes'),
+    createCliente: (data: any) => fetchAPI('/api/clientes', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
+    getClientProposals: (id: number) => fetchAPI(`/api/clientes/${id}/propostas`),
+
+    // Propostas
+    getProposta: (id: number) => fetchAPI(`/api/propostas/${id}`),
+    createProposta: (data: any) => fetchAPI('/api/propostas', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
+    updateCart: (idProposta: number, itens: any[]) => fetchAPI(`/api/propostas/${idProposta}/itens`, {
+        method: 'PUT',
+        body: JSON.stringify({ itens }),
+    }),
+
     // Stats
     getStats: () => fetchAPI('/api/stats'),
 

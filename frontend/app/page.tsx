@@ -10,6 +10,9 @@ import MapFilters from '@/components/MapFilters';
 import AddressSearch from '@/components/AddressSearch';
 import NavigationMenu from '@/components/NavigationMenu';
 import ExibidorasView from '@/components/ExibidorasView';
+import ClientesView from '@/components/ClientesView';
+import PropostasView from '@/components/PropostasView';
+import CartTable from '@/components/CartTable';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { Plus, Filter, Menu, MapPin, Building2, Loader2 } from 'lucide-react';
@@ -19,6 +22,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [searchLocation, setSearchLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [isCartOpen, setIsCartOpen] = useState(true);
 
   const setPontos = useStore((state) => state.setPontos);
   const setExibidoras = useStore((state) => state.setExibidoras);
@@ -27,6 +31,7 @@ export default function HomePage() {
   const currentView = useStore((state) => state.currentView);
   const pontos = useStore((state) => state.pontos);
   const exibidoras = useStore((state) => state.exibidoras);
+  const selectedProposta = useStore((state) => state.selectedProposta);
   const filterExibidora = useStore((state) => state.filterExibidora);
   const filterCidade = useStore((state) => state.filterCidade);
   const filterTipos = useStore((state) => state.filterTipos);
@@ -204,10 +209,20 @@ export default function HomePage() {
             {/* Sidebars */}
             <Sidebar />
             <ExibidoraSidebar />
+            {/* Cart Table Overlay */}
+            {selectedProposta && (
+              <CartTable
+                proposta={selectedProposta}
+                isOpen={isCartOpen}
+                onToggle={() => setIsCartOpen(!isCartOpen)}
+              />
+            )}
           </div>
         )}
 
         {currentView === 'exibidoras' && !isLoading && !error && <ExibidorasView />}
+        {currentView === 'clientes' && !isLoading && !error && <ClientesView />}
+        {currentView === 'propostas' && !isLoading && !error && <PropostasView />}
 
         {/* Global Components */}
         <CreatePointModal />

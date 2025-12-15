@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Ponto, Exibidora, Stats, User } from './types';
+import { Ponto, Exibidora, Stats, User, Cliente, Proposta } from './types';
 
 interface AppState {
     // Auth
@@ -22,7 +22,9 @@ interface AppState {
     isModalOpen: boolean;
     isExibidoraModalOpen: boolean;
     isMenuOpen: boolean;
-    currentView: 'map' | 'exibidoras';
+    currentView: 'map' | 'exibidoras' | 'clientes' | 'propostas';
+    selectedCliente: Cliente | null;
+    selectedProposta: Proposta | null;
     streetViewCoordinates: { lat: number; lng: number } | null;
     streetViewRequest: { lat: number; lng: number } | null;
 
@@ -48,6 +50,8 @@ interface AppState {
     setEditingPonto: (ponto: Ponto | null) => void;
     setSelectedExibidora: (exibidora: Exibidora | null) => void;
     setEditingExibidora: (exibidora: Exibidora | null) => void;
+    setSelectedCliente: (cliente: Cliente | null) => void;
+    setSelectedProposta: (proposta: Proposta | null) => void;
     setSidebarOpen: (open: boolean) => void;
     setModalOpen: (open: boolean) => void;
     setExibidoraModalOpen: (open: boolean) => void;
@@ -82,6 +86,8 @@ export const useStore = create<AppState>()(
             editingPonto: null,
             selectedExibidora: null,
             editingExibidora: null,
+            selectedCliente: null,
+            selectedProposta: null,
             isSidebarOpen: false,
             isModalOpen: false,
             isExibidoraModalOpen: false,
@@ -111,6 +117,8 @@ export const useStore = create<AppState>()(
                 editingPonto: null,
                 selectedExibidora: null,
                 editingExibidora: null,
+                selectedCliente: null,
+                selectedProposta: null,
             }),
 
             // Actions
@@ -132,6 +140,8 @@ export const useStore = create<AppState>()(
                 selectedPonto: null,
             }),
             setEditingExibidora: (exibidora) => set({ editingExibidora: exibidora }),
+            setSelectedCliente: (cliente) => set({ selectedCliente: cliente }),
+            setSelectedProposta: (proposta) => set({ selectedProposta: proposta }),
             setSidebarOpen: (open) => set({
                 isSidebarOpen: open,
                 selectedPonto: open ? undefined : null,
