@@ -1,8 +1,8 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useStore } from '@/lib/store';
 import { Proposta, PropostaItem } from '@/lib/types';
-import { X, Save, Trash2, ChevronUp, ChevronDown, Calculator } from 'lucide-react';
+import { api } from '@/lib/api';
+import { ChevronUp, ChevronDown, Calculator, Trash2, Save, Loader2 } from 'lucide-react';
 
 interface CartTableProps {
     proposta: Proposta;
@@ -13,6 +13,8 @@ interface CartTableProps {
 export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps) {
     const [itens, setItens] = useState<PropostaItem[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [editedItems, setEditedItems] = useState<Record<number, Partial<PropostaItem>>>({});
 
     // Commission multipliers
     const multipliers = { V2: 1.25, V3: 1.5625, V4: 1.9531 };
@@ -25,16 +27,10 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
 
     const loadItens = async () => {
         setIsLoading(true);
-        // Assuming details endpoint returns items or we use a separate one
-        // Check propostas.ts: GET /api/propostas/:id returns { ...proposta, itens: [] }
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/propostas/${proposta.id}`, {
-                headers: { 'Authorization': `Bearer ${useStore.getState().token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setItens(data.itens || []);
-            }
+            const data = await api.getProposta(proposta.id);
+            setItens(data.itens || []);
+            setEditedItems({});
         } catch (error) {
             console.error('Erro ao carregar itens:', error);
         } finally {
@@ -42,27 +38,93 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
         }
     };
 
+    // Update item field
+    const updateItemField = (itemId: number, field: keyof PropostaItem, value: any) => {
+        setEditedItems(prev => ({
+            ...prev,
+            [itemId]: {
+                ...prev[itemId],
+                [field]: value
+            }
+        }));
+    };
+
+    // Get current item value (prioritize edited, fallback to original)
+    const getItemValue = (item: PropostaItem, field: keyof PropostaItem) => {
+        if (editedItems[item.id] && field in editedItems[item.id]) {
+            return editedItems[item.id][field];
+        }
+        return item[field];
+    };
+
+    // Save changes
+    const saveChanges = useCallback(async () => {
+        if (Object.keys(editedItems).length === 0) return;
+
+        setIsSaving(true);
+        try {
+            // Merge changes with current items
+            const updatedItems = itens.map(item => {
+                if (editedItems[item.id]) {
+                    return { ...item, ...editedItems[item.id] };
+                }
+                return item;
+            });
+
+            // Send to backend
+            await api.updateCart(proposta.id, updatedItems);
+
+            // Reload to get fresh data
+            await loadItens();
+
+        } catch (error) {
+            console.error('Erro ao salvar carrinho:', error);
+            alert('Erro ao salvar alterações');
+        } finally {
+            setIsSaving(false);
+        }
+    }, [editedItems, itens, proposta.id]);
+
+    // Remove item
+    const removeItem = async (itemId: number) => {
+        if (!confirm('Remover este ponto do carrinho?')) return;
+
+        setIsSaving(true);
+        try {
+            const updatedItems = itens.filter(item => item.id !== itemId);
+            await api.updateCart(proposta.id, updatedItems);
+            await loadItens();
+        } catch (error) {
+            console.error('Erro ao remover item:', error);
+            alert('Erro ao remover item');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     // Calculate totals
     const calculateItemTotal = (item: PropostaItem) => {
-        // Apply multipliers
-        // Valor Locação * Comissão
-        // Papel/Lona * 1.25 (Fixed)
+        const locacaoBase = Number(getItemValue(item, 'valor_locacao') || 0);
+        const papelBase = Number(getItemValue(item, 'valor_papel') || 0);
+        const lonaBase = Number(getItemValue(item, 'valor_lona') || 0);
 
-        const locacao = (item.valor_locacao || 0) * currentMultiplier;
-        const papel = (item.valor_papel || 0) * 1.25;
-        const lona = (item.valor_lona || 0) * 1.25;
+        const locacao = locacaoBase * currentMultiplier;
+        const papel = papelBase * 1.25;
+        const lona = lonaBase * 1.25;
 
-        // Calculate Quantity (Bi/Meses) based on dates or manual input
-        // Prompt says: Calculated from Period.
         let quantidade = 1;
-        if (item.periodo_inicio && item.periodo_fim) {
-            const start = new Date(item.periodo_inicio);
-            const end = new Date(item.periodo_fim);
+        const inicio = getItemValue(item, 'periodo_inicio');
+        const fim = getItemValue(item, 'periodo_fim');
+
+        if (inicio && fim) {
+            const start = new Date(inicio);
+            const end = new Date(fim);
             const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 
-            if (item.periodo_comercializado === 'bissemanal') {
+            const periodo = getItemValue(item, 'periodo_comercializado');
+            if (periodo === 'bissemanal') {
                 quantidade = Math.max(1, Math.ceil(days / 14));
-            } else if (item.periodo_comercializado === 'mensal') {
+            } else if (periodo === 'mensal') {
                 quantidade = Math.max(1, Math.ceil(days / 30));
             }
         }
@@ -72,10 +134,11 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
     };
 
     const totalGeral = itens.reduce((acc, item) => acc + calculateItemTotal(item).investimento, 0);
+    const hasChanges = Object.keys(editedItems).length > 0;
 
     return (
         <div
-            className={`fixed bottom-0 left-0 right-0 bg-white border-t border-emidias-gray-200 shadow-2xl transition-transform duration-300 z-30 flex flex-col ${isOpen ? 'translate-y-0 h-[400px]' : 'translate-y-[350px] h-[400px]'}`}
+            className={`fixed bottom-0 left-0 right-0 bg-white border-t border-emidias-gray-200 shadow-2xl transition-transform duration-300 z-30 flex flex-col ${isOpen ? 'translate-y-0 h-[450px]' : 'translate-y-[400px] h-[450px]'}`}
         >
             {/* Header / Handle */}
             <div
@@ -95,6 +158,21 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGeral)}
                         </span>
                     </div>
+                    {hasChanges && (
+                        <div className="flex items-center gap-2 ml-4">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    saveChanges();
+                                }}
+                                disabled={isSaving}
+                                className="flex items-center gap-1 bg-emidias-accent hover:bg-emidias-accent-dark px-3 py-1 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                            >
+                                {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                Salvar
+                            </button>
+                        </div>
+                    )}
                 </div>
                 {isOpen ? <ChevronDown /> : <ChevronUp />}
             </div>
@@ -136,14 +214,15 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
                                         <div className="flex flex-col gap-1">
                                             <input
                                                 type="date"
-                                                defaultValue={item.periodo_inicio?.split('T')[0]}
-                                                className="input-xs border rounded px-1"
-                                            // Implement onChange to update local state and debounced save
+                                                value={String(getItemValue(item, 'periodo_inicio') || '').split('T')[0]}
+                                                onChange={(e) => updateItemField(item.id, 'periodo_inicio', e.target.value)}
+                                                className="input-xs border rounded px-1 text-xs"
                                             />
                                             <input
                                                 type="date"
-                                                defaultValue={item.periodo_fim?.split('T')[0]}
-                                                className="input-xs border rounded px-1"
+                                                value={String(getItemValue(item, 'periodo_fim') || '').split('T')[0]}
+                                                onChange={(e) => updateItemField(item.id, 'periodo_fim', e.target.value)}
+                                                className="input-xs border rounded px-1 text-xs"
                                             />
                                         </div>
                                     </td>
@@ -159,7 +238,11 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
                                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(investimento)}
                                     </td>
                                     <td className="p-3 text-center">
-                                        <button className="text-gray-400 hover:text-red-500 transition-colors">
+                                        <button
+                                            onClick={() => removeItem(item.id)}
+                                            disabled={isSaving}
+                                            className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                                        >
                                             <Trash2 size={16} />
                                         </button>
                                     </td>
@@ -170,6 +253,8 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
                             <tr>
                                 <td colSpan={10} className="p-12 text-center text-gray-400">
                                     Nenhum ponto selecionado nesta proposta.
+                                    <br />
+                                    <span className="text-xs">Navegue pelo mapa e clique em "Adicionar" nos pontos desejados.</span>
                                 </td>
                             </tr>
                         )}
