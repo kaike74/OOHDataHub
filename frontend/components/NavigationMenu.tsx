@@ -53,7 +53,7 @@ export default function NavigationMenu() {
         router.push('/config');
     };
 
-    const handleViewChange = (viewId: 'map' | 'exibidoras' | 'clientes') => {
+    const handleViewChange = (viewId: 'map' | 'exibidoras' | 'clientes' | 'propostas') => {
         setCurrentView(viewId);
         setMenuOpen(false);
     };

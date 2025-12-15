@@ -56,7 +56,7 @@ interface AppState {
     setModalOpen: (open: boolean) => void;
     setExibidoraModalOpen: (open: boolean) => void;
     setMenuOpen: (open: boolean) => void;
-    setCurrentView: (view: 'map' | 'exibidoras') => void;
+    setCurrentView: (view: 'map' | 'exibidoras' | 'clientes' | 'propostas') => void;
     setStreetViewCoordinates: (coords: { lat: number; lng: number } | null) => void;
     setStreetViewRequest: (request: { lat: number; lng: number } | null) => void;
     setFilterCidade: (cidades: string[]) => void;
