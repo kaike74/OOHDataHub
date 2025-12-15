@@ -1,0 +1,10 @@
+# Cloudflare Pages configuration for Next.js
+name = "ooh-datahub-frontend"
+compatibility_date = "2024-12-15"
+
+[build]
+command = "npm run build"
+cwd = "frontend"
+
+[[pages_build_output_dir]]
+directory = ".next"
