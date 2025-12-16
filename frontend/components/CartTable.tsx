@@ -241,40 +241,30 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             id: 'periodo',
             size: 220,
             cell: ({ row }) => {
-                const inicio = row.original.periodo_inicio || '';
-                const fim = row.original.periodo_fim || '';
-
-                const handleDateChange = (field: 'periodo_inicio' | 'periodo_fim', value: string) => {
-                    updateItem(row.original.id, field, value);
-
-                    // Auto-update qtd_bi_mes when period changes
-                    const newInicio = field === 'periodo_inicio' ? value : inicio;
-                    const newFim = field === 'periodo_fim' ? value : fim;
-
-                    if (newInicio && newFim) {
-                        const dataInicio = new Date(newInicio);
-                        const dataFim = new Date(newFim);
-                        const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
-
-                        const qtd = row.original.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                        updateItem(row.original.id, 'qtd_bi_mes', qtd);
-                    }
-                };
-
                 return (
                     <div className="flex items-center gap-1">
                         <input
                             type="date"
                             className="w-[105px] bg-transparent border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-[11px]"
-                            value={inicio}
-                            onChange={(e) => handleDateChange('periodo_inicio', e.target.value)}
+                            defaultValue={row.original.periodo_inicio || ''}
+                            key={`inicio-${row.original.id}-${row.original.periodo_inicio}`}
+                            onBlur={(e) => {
+                                if (e.target.value !== row.original.periodo_inicio) {
+                                    updateItem(row.original.id, 'periodo_inicio', e.target.value);
+                                }
+                            }}
                         />
                         <span className="text-gray-400 text-xs">→</span>
                         <input
                             type="date"
                             className="w-[105px] bg-transparent border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-[11px]"
-                            value={fim}
-                            onChange={(e) => handleDateChange('periodo_fim', e.target.value)}
+                            defaultValue={row.original.periodo_fim || ''}
+                            key={`fim-${row.original.id}-${row.original.periodo_fim}`}
+                            onBlur={(e) => {
+                                if (e.target.value !== row.original.periodo_fim) {
+                                    updateItem(row.original.id, 'periodo_fim', e.target.value);
+                                }
+                            }}
                         />
                     </div>
                 );
@@ -332,8 +322,14 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     <input
                         type="number"
                         className="w-20 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                        value={row.original.valor_locacao || 0}
-                        onChange={(e) => updateItem(row.original.id, 'valor_locacao', Number(e.target.value))}
+                        defaultValue={row.original.valor_locacao || 0}
+                        key={`locacao-${row.original.id}-${row.original.valor_locacao}`}
+                        onBlur={(e) => {
+                            const newValue = Number(e.target.value);
+                            if (newValue !== row.original.valor_locacao) {
+                                updateItem(row.original.id, 'valor_locacao', newValue);
+                            }
+                        }}
                     />
                 </div>
             )
@@ -348,8 +344,14 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     <input
                         type="number"
                         className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                        value={row.original.valor_papel || 0}
-                        onChange={(e) => updateItem(row.original.id, 'valor_papel', Number(e.target.value))}
+                        defaultValue={row.original.valor_papel || 0}
+                        key={`papel-${row.original.id}-${row.original.valor_papel}`}
+                        onBlur={(e) => {
+                            const newValue = Number(e.target.value);
+                            if (newValue !== row.original.valor_papel) {
+                                updateItem(row.original.id, 'valor_papel', newValue);
+                            }
+                        }}
                     />
                 </div>
             )
@@ -364,8 +366,14 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     <input
                         type="number"
                         className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                        value={row.original.valor_lona || 0}
-                        onChange={(e) => updateItem(row.original.id, 'valor_lona', Number(e.target.value))}
+                        defaultValue={row.original.valor_lona || 0}
+                        key={`lona-${row.original.id}-${row.original.valor_lona}`}
+                        onBlur={(e) => {
+                            const newValue = Number(e.target.value);
+                            if (newValue !== row.original.valor_lona) {
+                                updateItem(row.original.id, 'valor_lona', newValue);
+                            }
+                        }}
                     />
                 </div>
             )
@@ -379,8 +387,14 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     type="number"
                     className="w-full bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs text-gray-600"
                     placeholder="0"
-                    value={row.original.fluxo_diario || ''}
-                    onChange={(e) => updateItem(row.original.id, 'fluxo_diario', Number(e.target.value))}
+                    defaultValue={row.original.fluxo_diario || ''}
+                    key={`fluxo-${row.original.id}-${row.original.fluxo_diario}`}
+                    onBlur={(e) => {
+                        const newValue = Number(e.target.value);
+                        if (newValue !== row.original.fluxo_diario) {
+                            updateItem(row.original.id, 'fluxo_diario', newValue);
+                        }
+                    }}
                 />
             )
         },
@@ -440,10 +454,16 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             size: 200,
             cell: ({ row }) => (
                 <input
+                    type="text"
                     className="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-sm placeholder-gray-300"
-                    value={row.original.ponto_referencia || ''}
+                    defaultValue={row.original.ponto_referencia || ''}
                     placeholder="Adicionar referência..."
-                    onChange={(e) => updateItem(row.original.id, 'ponto_referencia', e.target.value)}
+                    key={`ref-${row.original.id}-${row.original.ponto_referencia}`}
+                    onBlur={(e) => {
+                        if (e.target.value !== row.original.ponto_referencia) {
+                            updateItem(row.original.id, 'ponto_referencia', e.target.value);
+                        }
+                    }}
                 />
             )
         },
@@ -455,9 +475,14 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 <textarea
                     className="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs resize-none"
                     rows={2}
-                    value={row.original.observacoes || ''}
+                    defaultValue={row.original.observacoes || ''}
                     placeholder="Adicionar observação..."
-                    onChange={(e) => updateItem(row.original.id, 'observacoes', e.target.value)}
+                    key={`obs-${row.original.id}-${row.original.observacoes}`}
+                    onBlur={(e) => {
+                        if (e.target.value !== row.original.observacoes) {
+                            updateItem(row.original.id, 'observacoes', e.target.value);
+                        }
+                    }}
                 />
             )
         },
