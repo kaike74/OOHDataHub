@@ -25,10 +25,34 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
   const [showDropdown, setShowDropdown] = useState(false);
   const placesServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
 
-  // Initialize Google Places AutocompleteService
+  // Initialize Google Places AutocompleteService with polling
   useEffect(() => {
-    if (window.google && window.google.maps && window.google.maps.places) {
-      placesServiceRef.current = new google.maps.places.AutocompleteService();
+    let attempts = 0;
+    const maxAttempts = 50; // 5 seconds max
+
+    const initGooglePlaces = () => {
+      if (window.google && window.google.maps && window.google.maps.places) {
+        placesServiceRef.current = new google.maps.places.AutocompleteService();
+        console.log('Google Places AutocompleteService initialized');
+        return true;
+      }
+      return false;
+    };
+
+    // Try immediately
+    if (!initGooglePlaces()) {
+      // Poll every 100ms until loaded or timeout
+      const interval = setInterval(() => {
+        attempts++;
+        if (initGooglePlaces() || attempts >= maxAttempts) {
+          clearInterval(interval);
+          if (attempts >= maxAttempts) {
+            console.warn('Google Places API took too long to load');
+          }
+        }
+      }, 100);
+
+      return () => clearInterval(interval);
     }
   }, []);
 
