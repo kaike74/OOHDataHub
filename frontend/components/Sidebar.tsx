@@ -216,6 +216,8 @@ export default function Sidebar() {
                 fluxo_diario: selectedPonto.fluxo || 0 // Store current fluxo for consistent calculations
             };
 
+            console.log('📦 Item que será enviado ao backend:', item);
+
             // Fetch current items
             const data = await api.getProposta(selectedProposta.id);
             const currentItens = data.itens || [];
@@ -227,10 +229,14 @@ export default function Sidebar() {
             }
 
             const newItens = [...currentItens, item];
+
+            console.log('📤 Enviando para o backend:', newItens);
             await api.updateCart(selectedProposta.id, newItens);
 
             // Refetch to get updated proposal with normalized data
             const updatedProposta = await api.getProposta(selectedProposta.id);
+            console.log('📥 Resposta do backend:', updatedProposta);
+
             // Update global store to trigger UI updates (Map pins, CartTable)
             useStore.getState().refreshProposta(updatedProposta);
 
