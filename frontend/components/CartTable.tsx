@@ -36,6 +36,20 @@ const formatNumber = (value: number) => {
     return new Intl.NumberFormat('pt-BR').format(value);
 }
 
+const formatDecimal = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value);
+}
+
+// Helper to handle Enter/Tab to blur (save and move to next field)
+const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' || e.key === 'Tab') {
+        e.currentTarget.blur();
+    }
+}
+
 interface CartTableProps {
     proposta?: Proposta;
     isOpen: boolean;
@@ -58,6 +72,15 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
     // UI State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+    // Drag-to-Fill State
+    const [dragState, setDragState] = useState<{
+        isDragging: boolean;
+        startRowId: number | null;
+        currentRowId: number | null;
+        columnKey: string | null;
+        startValue: any;
+    }>({ isDragging: false, startRowId: null, currentRowId: null, columnKey: null, startValue: null });
 
     // Height Resizing State
     const [tableHeight, setTableHeight] = useState(500);
@@ -131,6 +154,61 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             console.error("Failed to update item", error);
         }
     }, [itens, refreshProposta, selectedProposta]);
+
+    // Drag-to-Fill Handlers
+    const startDragging = useCallback((rowId: number, columnKey: string, value: any) => {
+        setDragState({
+            isDragging: true,
+            startRowId: rowId,
+            currentRowId: rowId,
+            columnKey,
+            startValue: value
+        });
+        document.addEventListener('mouseup', handleDragEnd);
+    }, []);
+
+    const handleDragOver = useCallback((rowId: number) => {
+        if (dragState.isDragging && rowId !== dragState.currentRowId) {
+            setDragState(prev => ({ ...prev, currentRowId: rowId }));
+        }
+    }, [dragState.isDragging, dragState.currentRowId]);
+
+    const handleDragEnd = useCallback(() => {
+        if (dragState.isDragging && dragState.startRowId !== null && dragState.currentRowId !== null && dragState.columnKey) {
+            const startIdx = itens.findIndex(item => item.id === dragState.startRowId);
+            const endIdx = itens.findIndex(item => item.id === dragState.currentRowId);
+
+            if (startIdx !== -1 && endIdx !== -1 && startIdx !== endIdx) {
+                const [minIdx, maxIdx] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+                const updatedItens = [...itens];
+
+                for (let i = minIdx; i <= maxIdx; i++) {
+                    updatedItens[i] = { ...updatedItens[i], [dragState.columnKey]: dragState.startValue };
+                }
+
+                setItens(updatedItens);
+                refreshProposta({ ...selectedProposta!, itens: updatedItens });
+                api.updateCart(selectedProposta!.id, updatedItens).catch(console.error);
+            }
+        }
+
+        setDragState({ isDragging: false, startRowId: null, currentRowId: null, columnKey: null, startValue: null });
+        document.removeEventListener('mouseup', handleDragEnd);
+    }, [dragState, itens, refreshProposta, selectedProposta]);
+
+    // Check if a row is in the drag range
+    const isInDragRange = useCallback((rowId: number) => {
+        if (!dragState.isDragging || dragState.startRowId === null || dragState.currentRowId === null) return false;
+
+        const startIdx = itens.findIndex(item => item.id === dragState.startRowId);
+        const endIdx = itens.findIndex(item => item.id === dragState.currentRowId);
+        const currentIdx = itens.findIndex(item => item.id === rowId);
+
+        if (startIdx === -1 || endIdx === -1 || currentIdx === -1) return false;
+
+        const [minIdx, maxIdx] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+        return currentIdx >= minIdx && currentIdx <= maxIdx;
+    }, [dragState, itens]);
 
     const removeItem = useCallback(async (id: number) => {
         const updatedItens = itens.filter(item => item.id !== id);
@@ -248,6 +326,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                             className="w-[105px] bg-transparent border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-[11px]"
                             defaultValue={row.original.periodo_inicio || ''}
                             key={`inicio-${row.original.id}-${row.original.periodo_inicio}`}
+                            onKeyDown={handleKeyDown}
                             onBlur={(e) => {
                                 if (e.target.value !== row.original.periodo_inicio) {
                                     updateItem(row.original.id, 'periodo_inicio', e.target.value);
@@ -260,6 +339,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                             className="w-[105px] bg-transparent border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-[11px]"
                             defaultValue={row.original.periodo_fim || ''}
                             key={`fim-${row.original.id}-${row.original.periodo_fim}`}
+                            onKeyDown={handleKeyDown}
                             onBlur={(e) => {
                                 if (e.target.value !== row.original.periodo_fim) {
                                     updateItem(row.original.id, 'periodo_fim', e.target.value);
@@ -278,6 +358,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 <select
                     className="w-full bg-transparent text-xs outline-none cursor-pointer"
                     value={row.original.periodo_comercializado || 'bissemanal'}
+                    key={`periodo-com-${row.original.id}-${row.original.periodo_comercializado}`}
                     onChange={(e) => {
                         updateItem(row.original.id, 'periodo_comercializado', e.target.value);
 
@@ -320,15 +401,17 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 <div className="flex items-center justify-end font-medium text-gray-900">
                     <span className="text-xs text-gray-400 mr-1">R$</span>
                     <input
-                        type="number"
+                        type="text"
                         className="w-20 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                        defaultValue={row.original.valor_locacao || 0}
+                        defaultValue={formatDecimal(row.original.valor_locacao || 0)}
                         key={`locacao-${row.original.id}-${row.original.valor_locacao}`}
+                        onKeyDown={handleKeyDown}
                         onBlur={(e) => {
-                            const newValue = Number(e.target.value);
-                            if (newValue !== row.original.valor_locacao) {
+                            const newValue = Number(e.target.value.replace(/\./g, '').replace(',', '.'));
+                            if (!isNaN(newValue) && newValue !== row.original.valor_locacao) {
                                 updateItem(row.original.id, 'valor_locacao', newValue);
                             }
+                            e.target.value = formatDecimal(row.original.valor_locacao || 0);
                         }}
                     />
                 </div>
@@ -342,15 +425,17 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 <div className="flex items-center justify-end text-gray-600 text-xs">
                     <span className="text-gray-400 mr-1">R$</span>
                     <input
-                        type="number"
+                        type="text"
                         className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                        defaultValue={row.original.valor_papel || 0}
+                        defaultValue={formatDecimal(row.original.valor_papel || 0)}
                         key={`papel-${row.original.id}-${row.original.valor_papel}`}
+                        onKeyDown={handleKeyDown}
                         onBlur={(e) => {
-                            const newValue = Number(e.target.value);
-                            if (newValue !== row.original.valor_papel) {
+                            const newValue = Number(e.target.value.replace(/\./g, '').replace(',', '.'));
+                            if (!isNaN(newValue) && newValue !== row.original.valor_papel) {
                                 updateItem(row.original.id, 'valor_papel', newValue);
                             }
+                            e.target.value = formatDecimal(row.original.valor_papel || 0);
                         }}
                     />
                 </div>
@@ -364,15 +449,17 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 <div className="flex items-center justify-end text-gray-600 text-xs">
                     <span className="text-gray-400 mr-1">R$</span>
                     <input
-                        type="number"
+                        type="text"
                         className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                        defaultValue={row.original.valor_lona || 0}
+                        defaultValue={formatDecimal(row.original.valor_lona || 0)}
                         key={`lona-${row.original.id}-${row.original.valor_lona}`}
+                        onKeyDown={handleKeyDown}
                         onBlur={(e) => {
-                            const newValue = Number(e.target.value);
-                            if (newValue !== row.original.valor_lona) {
+                            const newValue = Number(e.target.value.replace(/\./g, '').replace(',', '.'));
+                            if (!isNaN(newValue) && newValue !== row.original.valor_lona) {
                                 updateItem(row.original.id, 'valor_lona', newValue);
                             }
+                            e.target.value = formatDecimal(row.original.valor_lona || 0);
                         }}
                     />
                 </div>
@@ -384,16 +471,18 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             size: 110,
             cell: ({ row }) => (
                 <input
-                    type="number"
+                    type="text"
                     className="w-full bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs text-gray-600"
                     placeholder="0"
-                    defaultValue={row.original.fluxo_diario || ''}
+                    defaultValue={row.original.fluxo_diario ? formatNumber(row.original.fluxo_diario) : ''}
                     key={`fluxo-${row.original.id}-${row.original.fluxo_diario}`}
+                    onKeyDown={handleKeyDown}
                     onBlur={(e) => {
-                        const newValue = Number(e.target.value);
-                        if (newValue !== row.original.fluxo_diario) {
+                        const newValue = Number(e.target.value.replace(/\./g, ''));
+                        if (!isNaN(newValue) && newValue !== row.original.fluxo_diario) {
                             updateItem(row.original.id, 'fluxo_diario', newValue);
                         }
+                        e.target.value = row.original.fluxo_diario ? formatNumber(row.original.fluxo_diario) : '';
                     }}
                 />
             )
@@ -459,6 +548,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     defaultValue={row.original.ponto_referencia || ''}
                     placeholder="Adicionar referência..."
                     key={`ref-${row.original.id}-${row.original.ponto_referencia}`}
+                    onKeyDown={handleKeyDown}
                     onBlur={(e) => {
                         if (e.target.value !== row.original.ponto_referencia) {
                             updateItem(row.original.id, 'ponto_referencia', e.target.value);
@@ -478,6 +568,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     defaultValue={row.original.observacoes || ''}
                     placeholder="Adicionar observação..."
                     key={`obs-${row.original.id}-${row.original.observacoes}`}
+                    onKeyDown={handleKeyDown}
                     onBlur={(e) => {
                         if (e.target.value !== row.original.observacoes) {
                             updateItem(row.original.id, 'observacoes', e.target.value);
@@ -682,14 +773,33 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                             <div
                                 key={row.id}
                                 className={`flex items-center hover:bg-blue-50/20 transition-colors group ${row.getIsSelected() ? 'bg-blue-50/60' : ''}`}
+                                onMouseEnter={() => dragState.isDragging && handleDragOver(row.original.id)}
                             >
                                 {row.getVisibleCells().map(cell => (
                                     <div
                                         key={cell.id}
-                                        className="px-3 py-2.5 text-sm text-gray-700 border-r border-transparent group-hover:border-gray-100 truncate flex items-center"
+                                        className="px-3 py-2.5 text-sm text-gray-700 border-r border-transparent group-hover:border-gray-100 truncate flex items-center relative"
                                         style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
                                     >
                                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        {/* Drag handle for editable cells */}
+                                        {['valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '') && (
+                                            <div
+                                                className={`absolute bottom-0 right-0 w-2 h-2 bg-blue-500 rounded-tl cursor-crosshair opacity-0 group-hover:opacity-100 transition-opacity ${dragState.isDragging && dragState.startRowId === row.original.id && dragState.columnKey === cell.column.id ? 'opacity-100' : ''
+                                                    } ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? 'opacity-100 bg-blue-400' : ''
+                                                    }`}
+                                                onMouseDown={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    const value = (row.original as any)[cell.column.id!];
+                                                    startDragging(row.original.id, cell.column.id!, value);
+                                                }}
+                                            />
+                                        )}
+                                        {/* Highlight border during drag */}
+                                        {isInDragRange(row.original.id) && dragState.columnKey === cell.column.id && (
+                                            <div className="absolute inset-0 border-2 border-blue-400 pointer-events-none rounded" />
+                                        )}
                                     </div>
                                 ))}
                             </div>
