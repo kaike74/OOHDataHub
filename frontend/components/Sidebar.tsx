@@ -185,19 +185,14 @@ export default function Sidebar() {
             const data = await api.getProposta(selectedProposta.id);
             const currentItens = data.itens || [];
 
-            // Check if already in cart
-            if (currentItens.some((i: any) => i.id_ooh === selectedPonto.id)) {
-                alert('Este ponto já está na proposta!');
-                return;
-            }
-
             const newItens = [...currentItens, item];
             await api.updateCart(selectedProposta.id, newItens);
 
-            alert('Ponto adicionado ao carrinho com sucesso!');
+            // Reload proposal to update UI in real-time
+            const updatedProposta = await api.getProposta(selectedProposta.id);
+            refreshProposta(updatedProposta);
         } catch (error) {
             console.error('Erro ao adicionar ao carrinho:', error);
-            alert('Erro ao adicionar ponto à proposta.');
         }
     };
 
