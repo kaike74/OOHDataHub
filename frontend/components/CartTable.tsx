@@ -107,6 +107,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
     // Optimistic Update Helper
     const updateItem = useCallback(async (id: number, field: string, value: any) => {
+        console.log(`📝 CartTable updateItem called:`, { id, field, value });
+
         const updatedItens = itens.map(item => {
             if (item.id === id) {
                 const updatedItem = { ...item, [field]: value };
@@ -115,6 +117,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         updatedItem.impactos = (value || 0) * 30;
                     }
                 }
+                console.log(`✅ Updated item:`, updatedItem);
                 return updatedItem;
             }
             return item;
@@ -123,6 +126,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         refreshProposta({ ...selectedProposta!, itens: updatedItens });
         try {
             await api.updateCart(selectedProposta!.id, updatedItens);
+            console.log(`✅ API updateCart successful`);
         } catch (error) {
             console.error("Failed to update item", error);
         }
