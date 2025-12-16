@@ -16,6 +16,7 @@ import { handleStats } from './routes/stats';
 import { handleUsers } from './routes/users';
 import { handleClientes } from './routes/clientes';
 import { handlePropostas } from './routes/propostas';
+import { handleSearch } from './routes/search';
 import { corsHeaders, handleOptions } from './utils/cors';
 
 export default {
@@ -73,6 +74,10 @@ export default {
 
             if (path === '/api/stats') {
                 return await handleStats(request, env);
+            }
+
+            if (path === '/api/search') {
+                return await handleSearch(request, env);
             }
 
             // Not found

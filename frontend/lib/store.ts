@@ -37,6 +37,7 @@ interface AppState {
     filterValorMin: number | null;
     filterValorMax: number | null;
     searchQuery: string;
+    filterText: string; // For real-time search filtering
 
     // Auth Actions
     setAuth: (user: User, token: string) => void;
@@ -67,6 +68,7 @@ interface AppState {
     setFilterValorMin: (valor: number | null) => void;
     setFilterValorMax: (valor: number | null) => void;
     setSearchQuery: (query: string) => void;
+    setFilterText: (text: string) => void;
     clearFilters: () => void;
 }
 
@@ -103,6 +105,7 @@ export const useStore = create<AppState>()(
             filterValorMin: null,
             filterValorMax: null,
             searchQuery: '',
+            filterText: '',
 
             // Auth Actions
             setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
@@ -177,6 +180,7 @@ export const useStore = create<AppState>()(
             setFilterValorMin: (valor) => set({ filterValorMin: valor }),
             setFilterValorMax: (valor) => set({ filterValorMax: valor }),
             setSearchQuery: (query) => set({ searchQuery: query }),
+            setFilterText: (text) => set({ filterText: text }),
             clearFilters: () => set({
                 filterCidade: [],
                 filterUF: [],
@@ -186,6 +190,7 @@ export const useStore = create<AppState>()(
                 filterValorMin: null,
                 filterValorMax: null,
                 searchQuery: '',
+                filterText: '',
             }),
         }),
         {
