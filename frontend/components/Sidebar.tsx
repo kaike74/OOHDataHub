@@ -82,6 +82,7 @@ export default function Sidebar() {
     const pontos = useStore((state) => state.pontos);
     const setPontos = useStore((state) => state.setPontos);
     const selectedProposta = useStore((state) => state.selectedProposta);
+    const refreshProposta = useStore((state) => state.refreshProposta);
     const user = useStore((state) => state.user);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isDeleting, setIsDeleting] = useState(false);
