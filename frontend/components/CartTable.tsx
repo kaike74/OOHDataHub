@@ -7,13 +7,10 @@ import { Proposta, PropostaItem } from '@/lib/types';
 import {
     Trash2,
     Settings,
-    MoreHorizontal,
     ChevronDown,
     ArrowUpDown,
     Check,
-    X,
     Calendar as CalendarIcon,
-    GripHorizontal
 } from 'lucide-react';
 import {
     useReactTable,
@@ -25,10 +22,8 @@ import {
     SortingState,
     VisibilityState,
     RowSelectionState,
-    ColumnResizeMode,
 } from '@tanstack/react-table';
 
-// Helper for formatted money
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -39,13 +34,6 @@ const formatCurrency = (value: number) => {
 const formatNumber = (value: number) => {
     return new Intl.NumberFormat('pt-BR').format(value);
 }
-
-// Date Parser/Formatter
-// Assumes format DD/MM/AAAA or similar. 
-// Ideally we store ISO in DB (periodo_inicio, periodo_fim) but display clean string.
-// The `periodo` string field is a legacy/display field. 
-// We should prefer using `periodo_inicio` and `periodo_fim` if possible.
-// But for now, let's parse the string "DD/MM - DD/MM" if that's what's used.
 
 interface CartTableProps {
     proposta?: Proposta;
@@ -61,17 +49,14 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     const pontos = useStore((state) => state.pontos);
 
     const [itens, setItens] = useState<PropostaItem[]>([]);
-
-    // Table State
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const [columnSizing, setColumnSizing] = useState({});
-
-    // UI State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-    // Height Resizing State (Direct DOM manipulation)
+    // Height state for resize
+    const [tableHeight, setTableHeight] = useState(500);
     const containerRef = useRef<HTMLDivElement>(null);
     const isResizingRef = useRef(false);
     const startYRef = useRef(0);
@@ -81,10 +66,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     const [isBatchPeriodOpen, setIsBatchPeriodOpen] = useState(false);
     const [batchPeriodValue, setBatchPeriodValue] = useState('');
 
-    // Date Popover State (tracking which row is open)
-    const [datePopoverOpenId, setDatePopoverOpenId] = useState<number | null>(null);
-
-    // Initial Load
     useEffect(() => {
         if (selectedProposta) {
             setItens(selectedProposta.itens || []);
@@ -93,55 +74,42 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         }
     }, [selectedProposta]);
 
-    // Resizing Handlers (Optimized)
-    const startResizing = (e: React.MouseEvent) => {
+    // Optimized resizing handlers
+    const startResizing = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!isOpen) return; // Can't resize if closed
+        if (!isOpen) return;
 
         isResizingRef.current = true;
         startYRef.current = e.clientY;
-        // Get current height from DOM
-        const rect = containerRef.current?.getBoundingClientRect();
-        startHeightRef.current = rect ? rect.height : 500;
+        startHeightRef.current = tableHeight;
 
-        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mousemove', handleMouseMove as any);
         document.addEventListener('mouseup', stopResizing);
         document.body.style.cursor = 'row-resize';
         document.body.style.userSelect = 'none';
-    };
+    }, [isOpen, tableHeight]);
 
     const handleMouseMove = useCallback((e: MouseEvent) => {
-        if (!isResizingRef.current || !containerRef.current) return;
+        if (!isResizingRef.current) return;
 
-        const deltaY = startYRef.current - e.clientY; // Upward movement increases height
+        const deltaY = startYRef.current - e.clientY;
         const newHeight = Math.max(200, Math.min(window.innerHeight - 100, startHeightRef.current + deltaY));
-
-        // Direct DOM update - NO RE-RENDER
-        containerRef.current.style.height = `${newHeight}px`;
+        setTableHeight(newHeight);
     }, []);
 
     const stopResizing = useCallback(() => {
         isResizingRef.current = false;
-        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mousemove', handleMouseMove as any);
         document.removeEventListener('mouseup', stopResizing);
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
-        // Optional: Save height to localStorage or state here if persistence needed
     }, [handleMouseMove]);
 
-
-    // Optimistic Update Helper
     const updateItem = useCallback(async (id: number, field: string, value: any) => {
         const updatedItens = itens.map(item => {
             if (item.id === id) {
-                const updatedItem = { ...item, [field]: value };
-                if (['fluxo_diario', 'qtd_bi_mes', 'valor', 'valor_papel', 'valor_lona'].includes(field)) {
-                    if (field === 'fluxo_diario') {
-                        updatedItem.impactos = (value || 0) * 30;
-                    }
-                }
-                return updatedItem;
+                return { ...item, [field]: value };
             }
             return item;
         });
@@ -188,8 +156,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         }
     }, [batchPeriodValue, itens, rowSelection, refreshProposta, selectedProposta]);
 
-
-    // Columns Definition
     const columns = useMemo<ColumnDef<PropostaItem>[]>(() => [
         {
             id: 'select',
@@ -246,26 +212,23 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             size: 250,
             cell: ({ row }) => (
                 <button
-                    className="truncate block text-left text-blue-600 hover:text-blue-800 hover:underline font-medium w-full"
+                    className="truncate block text-left text-blue-600 hover:text-blue-800 underline font-bold w-full"
                     title="Ver detalhes do ponto"
-                    onClick={async () => {
+                    onClick={async (e) => {
+                        e.stopPropagation();
                         let ponto = pontos.find(p => p.id === row.original.id_ooh);
                         if (!ponto) {
-                            // Try to fetch if not in store
                             try {
-                                const data = await api.getPonto(row.original.id_ooh);
-                                ponto = data;
-                            } catch (e) {
-                                console.error("Failed to fetch point details", e);
+                                ponto = await api.getPonto(row.original.id_ooh);
+                            } catch (err) {
+                                console.error("Failed to fetch point", err);
+                                return;
                             }
                         }
 
                         if (ponto) {
                             setSelectedPonto(ponto);
                             setSidebarOpen(true);
-                        } else {
-                            // Only if absolutely failed
-                            console.warn("Ponto details not found for ID", row.original.id_ooh);
                         }
                     }}
                 >
@@ -293,7 +256,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             cell: ({ row }) => <span className="text-gray-600 truncate">{row.original.exibidora_nome || row.original.exibidora}</span>
         },
         {
-            accessorKey: 'produto',
+            accessorKey: 'tipo',
             header: 'Produto',
             size: 100,
             cell: ({ row }) => <span className="text-gray-600">{row.original.tipo}</span>
@@ -308,73 +271,25 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             header: 'Período',
             accessorKey: 'periodo',
             size: 180,
-            cell: ({ row }) => {
-                const isOpen = datePopoverOpenId === row.original.id;
-
-                // Parse helper
-                const getDates = () => {
-                    // Try to get from item if we store separated, or fallback to parsing string
-                    // Ideally we'd store `periodo_inicio` and `periodo_fim` in the item
-                    // Let's assume the string is "DD/MM/YYYY - DD/MM/YYYY" or similar
-                    // But if we want actual date inputs, we need YYYY-MM-DD
-                    return { start: '', end: '' }; // Placeholder. In real app, bind to Item.periodo_inicio
-                }
-
-                return (
-                    <div className="relative">
-                        <button
-                            onClick={() => setDatePopoverOpenId(isOpen ? null : row.original.id)}
-                            className="w-full text-left bg-transparent hover:bg-gray-50 rounded px-2 py-1 text-sm text-gray-700 flex items-center justify-between group/date"
-                        >
-                            <span className="truncate">{row.original.periodo || 'Selecionar data'}</span>
-                            <CalendarIcon size={12} className="text-gray-400 group-hover/date:text-blue-500" />
-                        </button>
-
-                        {isOpen && (
-                            <>
-                                <div
-                                    className="fixed inset-0 z-30"
-                                    onClick={() => setDatePopoverOpenId(null)}
-                                />
-                                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow-xl rounded-lg p-3 z-40 w-64 animate-in fade-in zoom-in-95 cursor-default">
-                                    <div className="flex gap-2 mb-2">
-                                        <div className="flex-1">
-                                            <label className="text-[10px] uppercase font-bold text-gray-400 mb-0.5 block">Início</label>
-                                            <input
-                                                type="date"
-                                                className="w-full border border-gray-300 rounded px-1 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
-                                                // Value binding would go here (e.g., ISO string)
-                                                onChange={(e) => {
-                                                    // Logic to format "DD/MM - DD/MM" string and update row
-                                                    // For now, let's just let user type in the main input if they prefer, 
-                                                    // but ideally this replaces the main input.
-                                                    // We'll update the 'periodo' string for now.
-                                                    // A real implementation needs `periodo_inicio` prop.
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="flex-1">
-                                            <label className="text-[10px] uppercase font-bold text-gray-400 mb-0.5 block">Fim</label>
-                                            <input
-                                                type="date"
-                                                className="w-full border border-gray-300 rounded px-1 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-end pt-1 border-t border-gray-100">
-                                        <button
-                                            onClick={() => setDatePopoverOpenId(null)}
-                                            className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-                                        >
-                                            Confirmar
-                                        </button>
-                                    </div>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                );
-            }
+            cell: ({ row }) => (
+                <div className="flex gap-1 items-center">
+                    <input
+                        type="text"
+                        className="w-16 bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs"
+                        placeholder="DD/MM"
+                        value={row.original.periodo_inicio || ''}
+                        onChange={(e) => updateItem(row.original.id, 'periodo_inicio', e.target.value)}
+                    />
+                    <span className="text-gray-400 text-xs">-</span>
+                    <input
+                        type="text"
+                        className="w-16 bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs"
+                        placeholder="DD/MM"
+                        value={row.original.periodo_fim || ''}
+                        onChange={(e) => updateItem(row.original.id, 'periodo_fim', e.target.value)}
+                    />
+                </div>
+            )
         },
         {
             header: 'Período Com.',
@@ -398,7 +313,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             cell: ({ row }) => (
                 <input
                     type="number"
-                    className="w-full bg-transparent border-none focus:outline-none text-right px-1"
+                    className="w-full bg-transparent border-none focus:outline-none text-right px-1 text-sm"
                     value={row.original.qtd_bi_mes || 1}
                     onChange={(e) => updateItem(row.original.id, 'qtd_bi_mes', Number(e.target.value))}
                 />
@@ -406,16 +321,16 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         },
         {
             header: 'Locação',
-            accessorKey: 'valor',
+            accessorKey: 'valor_locacao',
             size: 110,
             cell: ({ row }) => (
                 <div className="flex items-center justify-end font-medium text-gray-900">
                     <span className="text-xs text-gray-400 mr-1">R$</span>
                     <input
                         type="number"
-                        className="w-20 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                        value={row.original.valor || 0}
-                        onChange={(e) => updateItem(row.original.id, 'valor', Number(e.target.value))}
+                        className="w-20 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-sm"
+                        value={row.original.valor_locacao || 0}
+                        onChange={(e) => updateItem(row.original.id, 'valor_locacao', Number(e.target.value))}
                     />
                 </div>
             )
@@ -429,7 +344,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     <span className="text-gray-400 mr-1">R$</span>
                     <input
                         type="number"
-                        className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                        className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs"
                         value={row.original.valor_papel || 0}
                         onChange={(e) => updateItem(row.original.id, 'valor_papel', Number(e.target.value))}
                     />
@@ -445,7 +360,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     <span className="text-gray-400 mr-1">R$</span>
                     <input
                         type="number"
-                        className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                        className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs"
                         value={row.original.valor_lona || 0}
                         onChange={(e) => updateItem(row.original.id, 'valor_lona', Number(e.target.value))}
                     />
@@ -477,10 +392,10 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         },
         {
             header: 'Total Invest.',
-            accessorKey: 'total_investimento',
+            id: 'total_investimento',
             size: 130,
             cell: ({ row }) => {
-                const total = ((row.original.valor || 0) + (row.original.valor_papel || 0) + (row.original.valor_lona || 0)) * (row.original.qtd_bi_mes || 1);
+                const total = ((row.original.valor_locacao || 0) + (row.original.valor_papel || 0) + (row.original.valor_lona || 0)) * (row.original.qtd_bi_mes || 1);
                 return (
                     <div className="text-right font-semibold text-emerald-700 bg-emerald-50 px-2 rounded-md">
                         {formatCurrency(total)}
@@ -494,14 +409,14 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             size: 90,
             cell: ({ row }) => {
                 const impacts = (row.original.fluxo_diario || 0) * 30 * (row.original.qtd_bi_mes || 1);
-                const total = ((row.original.valor || 0) + (row.original.valor_papel || 0) + (row.original.valor_lona || 0)) * (row.original.qtd_bi_mes || 1);
+                const total = ((row.original.valor_locacao || 0) + (row.original.valor_papel || 0) + (row.original.valor_lona || 0)) * (row.original.qtd_bi_mes || 1);
 
                 if (impacts === 0) return <span className="text-xs text-gray-300">-</span>;
 
                 const cpm = (total / impacts) * 1000;
                 return (
                     <div className="text-right text-xs bg-gray-100 rounded px-1.5 py-0.5 font-mono text-gray-700">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cpm)}
+                        {formatCurrency(cpm)}
                     </div>
                 )
             }
@@ -522,7 +437,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 </div>
             )
         }
-    ], [updateItem, removeItem, pontos, setSelectedPonto, setSidebarOpen, datePopoverOpenId]);
+    ], [updateItem, removeItem, pontos, setSelectedPonto, setSidebarOpen]);
 
 
     const table = useReactTable({
@@ -551,31 +466,9 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     return (
         <div
             ref={containerRef}
-            className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.15)] z-40 transition-all duration-300 ease-in-out flex flex-col`}
-            // Use style for height directly, but default via CSS if not set
-            style={{
-                height: isOpen ? undefined : '50px',
-                // If Open, we let the ref drive logic, but React re-render needs a base?
-                // Actually, if we use direct DOM manip, we should set initial height
-            }}
+            className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.15)] z-40 flex flex-col transition-all duration-200 ease-out"
+            style={{ height: isOpen ? `${tableHeight}px` : '50px' }}
         >
-            {/* Only show/set height if isOpen is true. If false, fixed 50px class usually wins or style overrides.
-                We need to ensure it's 50px when closed.
-             */}
-            <style jsx>{`
-                div[ref="containerRef"] {
-                    height: ${isOpen ? '500px' : '50px'}; /* Initial Render */
-                }
-             `}</style>
-
-            {/* 
-                Correction: We can't use style jsx easily here. 
-                Let's just use the style prop with state fallbacks.
-                When resizing, the inline style 'height' on the element will override this.
-                When toggled closed, we want 50px.
-             */}
-
-            {/* Resizer Handle */}
             {isOpen && (
                 <div
                     className="absolute -top-1 left-0 right-0 h-3 bg-transparent cursor-row-resize z-50 hover:bg-blue-500/10 flex items-center justify-center group/resizer"
@@ -585,7 +478,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 </div>
             )}
 
-            {/* Toolbar */}
             <div
                 className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white shadow-sm z-20 cursor-pointer flex-shrink-0"
                 onClick={onToggle}
@@ -599,10 +491,9 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     </button>
                     <h3 className="font-semibold text-gray-800 text-sm">Carrinho ({itens.length})</h3>
 
-                    {/* Bulk Actions */}
                     {Object.keys(rowSelection).length > 0 && (
                         <div
-                            className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md animate-in fade-in slide-in-from-left-2 shadow-sm border border-blue-100 relative"
+                            className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md shadow-sm border border-blue-100 relative"
                             onClick={e => e.stopPropagation()}
                         >
                             <span className="text-xs font-bold">{Object.keys(rowSelection).length}</span>
@@ -615,11 +506,10 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                 <CalendarIcon size={14} /> Aplicar Período
                             </button>
 
-                            {/* Apply Period Popover */}
                             {isBatchPeriodOpen && (
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setIsBatchPeriodOpen(false)} />
-                                    <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-3 z-50 w-64 animate-in fade-in zoom-in-95 cursor-default">
+                                    <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-3 z-50 w-64">
                                         <label className="block text-xs font-semibold text-gray-500 mb-1">Novo Período para selecionados</label>
                                         <input
                                             autoFocus
@@ -670,11 +560,11 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     onClick={e => e.stopPropagation()}
                 >
                     {!isOpen && (
-                        <div className="flex items-center gap-4 text-sm animate-fade-in">
+                        <div className="flex items-center gap-4 text-sm">
                             <div className="flex flex-col items-end">
                                 <span className="text-[10px] text-gray-500">Total</span>
                                 <span className="font-bold text-emerald-600">
-                                    {formatCurrency(itens.reduce((sum, item) => sum + ((item.valor || 0) + (item.valor_papel || 0) + (item.valor_lona || 0)) * (item.qtd_bi_mes || 1), 0))}
+                                    {formatCurrency(itens.reduce((sum, item) => sum + ((item.valor_locacao || 0) + (item.valor_papel || 0) + (item.valor_lona || 0)) * (item.qtd_bi_mes || 1), 0))}
                                 </span>
                             </div>
                         </div>
@@ -691,7 +581,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     {isSettingsOpen && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
-                            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
+                            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2">
                                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Colunas Visíveis</h4>
                                 <div className="max-h-60 overflow-y-auto px-1">
                                     {table.getAllLeafColumns().map(column => {
@@ -718,13 +608,11 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 </div>
             </div>
 
-            {/* Table Area - Hidden when collapsed */}
             <div className={`flex-1 overflow-auto relative bg-gray-50/50 ${!isOpen ? 'hidden' : ''}`}>
                 <div
                     className="min-w-full inline-block align-top"
                     style={{ width: table.getTotalSize() }}
                 >
-                    {/* Head */}
                     <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200 font-semibold text-xs text-gray-500 uppercase text-left flex shadow-sm group/header">
                         {table.getHeaderGroups().map(headerGroup => (
                             <div key={headerGroup.id} className="flex flex-row w-full">
@@ -758,7 +646,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         ))}
                     </div>
 
-                    {/* Body */}
                     <div className="divide-y divide-gray-100 bg-white">
                         {table.getRowModel().rows.map(row => (
                             <div
@@ -768,7 +655,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                 {row.getVisibleCells().map(cell => (
                                     <div
                                         key={cell.id}
-                                        className="px-3 py-2.5 text-sm text-gray-700 border-r border-transparent group-hover:border-gray-100 truncate flex items-center"
+                                        className="px-3 py-2.5 text-sm text-gray-700 border-r border-transparent group-hover:border-gray-100 flex items-center"
                                         style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
                                     >
                                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -789,7 +676,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 </div>
             </div>
 
-            {/* Footer Summary - Always visible if open */}
             {isOpen && (
                 <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-sm shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 flex-shrink-0">
                     <div className="text-gray-500 text-xs text-left">
@@ -799,7 +685,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         <div className="flex flex-col items-end">
                             <span className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Investimento Total</span>
                             <span className="font-bold text-lg text-emerald-600 leading-none">
-                                {formatCurrency(itens.reduce((sum, item) => sum + ((item.valor || 0) + (item.valor_papel || 0) + (item.valor_lona || 0)) * (item.qtd_bi_mes || 1), 0))}
+                                {formatCurrency(itens.reduce((sum, item) => sum + ((item.valor_locacao || 0) + (item.valor_papel || 0) + (item.valor_lona || 0)) * (item.qtd_bi_mes || 1), 0))}
                             </span>
                         </div>
                     </div>
