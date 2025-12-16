@@ -228,6 +228,7 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
                             <th className="p-2 text-right">Invest.</th>
                             <th className="p-2 text-right">Impactos</th>
                             <th className="p-2 text-right">CPM</th>
+                            <th className="p-2">Ponto Ref.</th>
                             <th className="p-2 w-8"></th>
                         </tr>
                     </thead>
@@ -297,6 +298,9 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
                                     <td className="p-2 text-right text-[11px]">
                                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cpm)}
                                     </td>
+                                    <td className="p-2 max-w-[150px] truncate text-[11px] text-gray-600" title={item.ponto_referencia || ''}>
+                                        {item.ponto_referencia || '-'}
+                                    </td>
                                     <td className="p-2 text-center">
                                         <button
                                             onClick={() => removeItem(item.id)}
@@ -311,7 +315,7 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
                         })}
                         {itens.length === 0 && (
                             <tr>
-                                <td colSpan={15} className="p-12 text-center text-gray-400">
+                                <td colSpan={16} className="p-12 text-center text-gray-400">
                                     Nenhum ponto selecionado nesta proposta.
                                     <br />
                                     <span className="text-xs">Navegue pelo mapa e clique em "Adicionar" nos pontos desejados.</span>
