@@ -394,7 +394,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 return (
                     <select
                         className="w-full bg-transparent text-xs outline-none cursor-pointer"
-                        value={row.original.periodo_comercializado || 'bissemanal'}
+                        defaultValue={row.original.periodo_comercializado || 'bissemanal'}
+                        key={`periodo-com-${row.original.id}-${row.original.periodo_comercializado}`}
                         data-row-id={row.original.id}
                         data-column-id="periodo_comercializado"
                         onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'periodo_comercializado' })}
