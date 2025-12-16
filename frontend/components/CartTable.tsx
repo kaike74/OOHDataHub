@@ -46,7 +46,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     const selectedProposta = useStore((state) => state.selectedProposta);
     const refreshProposta = useStore((state) => state.refreshProposta);
     const setSelectedPonto = useStore((state) => state.setSelectedPonto);
-    const setSidebarOpen = useStore((state) => state.setSidebarOpen);
     const pontos = useStore((state) => state.pontos);
 
     const [itens, setItens] = useState<PropostaItem[]>([]);
@@ -227,11 +226,9 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         const ponto = pontos.find(p => p.id === row.original.id_ooh);
                         if (ponto) {
                             setSelectedPonto(ponto);
-                            setSidebarOpen(true);
                         } else {
                             console.warn("Ponto details not found in store for ID", row.original.id_ooh);
                             setSelectedPonto({ id: row.original.id_ooh } as any);
-                            setSidebarOpen(true);
                         }
                     }}
                 >
@@ -429,7 +426,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 </div>
             )
         }
-    ], [updateItem, removeItem, pontos, setSelectedPonto, setSidebarOpen]);
+    ], [updateItem, removeItem, pontos, setSelectedPonto]);
 
 
     const table = useReactTable({
