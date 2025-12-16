@@ -93,9 +93,12 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     const handleMouseMove = useCallback((e: MouseEvent) => {
         if (!isResizingRef.current) return;
 
-        const deltaY = startYRef.current - e.clientY;
-        const newHeight = Math.max(200, Math.min(window.innerHeight - 100, startHeightRef.current + deltaY));
-        setTableHeight(newHeight);
+        // Use requestAnimationFrame for smoother performance
+        requestAnimationFrame(() => {
+            const deltaY = startYRef.current - e.clientY;
+            const newHeight = Math.max(200, Math.min(window.innerHeight - 100, startHeightRef.current + deltaY));
+            setTableHeight(newHeight);
+        });
     }, []);
 
     const stopResizing = useCallback(() => {
@@ -269,16 +272,31 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         },
         {
             header: 'Período',
-            accessorKey: 'periodo',
-            size: 160,
-            cell: ({ row }) => (
-                <input
-                    className="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-sm"
-                    value={row.original.periodo || ''}
-                    placeholder="DD/MM - DD/MM"
-                    onChange={(e) => updateItem(row.original.id, 'periodo', e.target.value)}
-                />
-            )
+            id: 'periodo',
+            size: 200,
+            cell: ({ row }) => {
+                // Parse dates from ISO format or use defaults
+                const inicio = row.original.periodo_inicio || '';
+                const fim = row.original.periodo_fim || '';
+
+                return (
+                    <div className="flex items-center gap-1">
+                        <input
+                            type="date"
+                            className="w-[90px] bg-transparent border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs"
+                            value={inicio}
+                            onChange={(e) => updateItem(row.original.id, 'periodo_inicio', e.target.value)}
+                        />
+                        <span className="text-gray-400 text-xs">→</span>
+                        <input
+                            type="date"
+                            className="w-[90px] bg-transparent border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs"
+                            value={fim}
+                            onChange={(e) => updateItem(row.original.id, 'periodo_fim', e.target.value)}
+                        />
+                    </div>
+                );
+            }
         },
         {
             header: 'Período Com.',
