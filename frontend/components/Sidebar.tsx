@@ -159,17 +159,35 @@ export default function Sidebar() {
 
         try {
             // Default item structure
+            // Commission Logic
+            const comissao = selectedProposta.comissao || 'V2';
+            let multiplier = 1.0;
+            if (comissao === 'V2') multiplier = 1.25;
+            else if (comissao === 'V3') multiplier = 1.25 * 1.25; // Compound
+            else if (comissao === 'V4') multiplier = 1.25 * 1.25 * 1.25; // Compound
+
+            const baseValor = selectedPonto.produtos?.[0]?.valor || 0;
+            const valorLocacao = baseValor * multiplier;
+
+            // Production logic: User said "what is in DB + 25%". 
+            // Since we don't have paper/canvas in DB, we assume 0 or derived? 
+            // If we assume the "first value" refers to some base cost, but we lack it.
+            // We will set to 0 for now as per current schema, to be editable.
+            // Or if we interpret "first value" as the rental value? Unlikely.
+            const valorPapel = 0;
+            const valorLona = 0;
+
             const item = {
                 id_proposta: selectedProposta.id,
                 id_ooh: selectedPonto.id,
                 periodo_inicio: new Date().toISOString().split('T')[0],
-                periodo_fim: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +14 days default
-                valor_locacao: selectedPonto.produtos?.[0]?.valor || 0, // Default to first product price
-                valor_papel: 0,
-                valor_lona: 0,
+                periodo_fim: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                valor_locacao: valorLocacao,
+                valor_papel: valorPapel,
+                valor_lona: valorLona,
                 periodo_comercializado: 'bissemanal',
                 observacoes: '',
-                fluxo_diario: selectedPonto.fluxo || 0 // Store current fluxo for consistent calculations
+                fluxo_diario: selectedPonto.fluxo || 0
             };
 
             // Fetch current items

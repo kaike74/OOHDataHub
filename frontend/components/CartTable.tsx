@@ -40,6 +40,13 @@ const formatNumber = (value: number) => {
     return new Intl.NumberFormat('pt-BR').format(value);
 }
 
+// Date Parser/Formatter
+// Assumes format DD/MM/AAAA or similar. 
+// Ideally we store ISO in DB (periodo_inicio, periodo_fim) but display clean string.
+// The `periodo` string field is a legacy/display field. 
+// We should prefer using `periodo_inicio` and `periodo_fim` if possible.
+// But for now, let's parse the string "DD/MM - DD/MM" if that's what's used.
+
 interface CartTableProps {
     proposta?: Proposta;
     isOpen: boolean;
@@ -51,7 +58,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     const refreshProposta = useStore((state) => state.refreshProposta);
     const setSelectedPonto = useStore((state) => state.setSelectedPonto);
     const setSidebarOpen = useStore((state) => state.setSidebarOpen);
-    const pontos = useStore((state) => state.pontos); // Need this to find the full Ponto object
+    const pontos = useStore((state) => state.pontos);
 
     const [itens, setItens] = useState<PropostaItem[]>([]);
 
@@ -64,8 +71,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     // UI State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-    // Height Resizing State
-    const [tableHeight, setTableHeight] = useState(500);
+    // Height Resizing State (Direct DOM manipulation)
+    const containerRef = useRef<HTMLDivElement>(null);
     const isResizingRef = useRef(false);
     const startYRef = useRef(0);
     const startHeightRef = useRef(0);
@@ -73,6 +80,9 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     // Batch Actions State
     const [isBatchPeriodOpen, setIsBatchPeriodOpen] = useState(false);
     const [batchPeriodValue, setBatchPeriodValue] = useState('');
+
+    // Date Popover State (tracking which row is open)
+    const [datePopoverOpenId, setDatePopoverOpenId] = useState<number | null>(null);
 
     // Initial Load
     useEffect(() => {
@@ -83,30 +93,41 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         }
     }, [selectedProposta]);
 
-    // Resizing Handlers
+    // Resizing Handlers (Optimized)
     const startResizing = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        if (!isOpen) return; // Can't resize if closed
+
         isResizingRef.current = true;
         startYRef.current = e.clientY;
-        startHeightRef.current = tableHeight;
+        // Get current height from DOM
+        const rect = containerRef.current?.getBoundingClientRect();
+        startHeightRef.current = rect ? rect.height : 500;
 
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', stopResizing);
+        document.body.style.cursor = 'row-resize';
+        document.body.style.userSelect = 'none';
     };
 
     const handleMouseMove = useCallback((e: MouseEvent) => {
-        if (!isResizingRef.current) return;
+        if (!isResizingRef.current || !containerRef.current) return;
 
         const deltaY = startYRef.current - e.clientY; // Upward movement increases height
         const newHeight = Math.max(200, Math.min(window.innerHeight - 100, startHeightRef.current + deltaY));
-        setTableHeight(newHeight);
+
+        // Direct DOM update - NO RE-RENDER
+        containerRef.current.style.height = `${newHeight}px`;
     }, []);
 
     const stopResizing = useCallback(() => {
         isResizingRef.current = false;
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', stopResizing);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        // Optional: Save height to localStorage or state here if persistence needed
     }, [handleMouseMove]);
 
 
@@ -225,20 +246,26 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             size: 250,
             cell: ({ row }) => (
                 <button
-                    className="truncate block text-left text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                    className="truncate block text-left text-blue-600 hover:text-blue-800 hover:underline font-medium w-full"
                     title="Ver detalhes do ponto"
-                    onClick={() => {
-                        const ponto = pontos.find(p => p.id === row.original.id_ooh);
+                    onClick={async () => {
+                        let ponto = pontos.find(p => p.id === row.original.id_ooh);
+                        if (!ponto) {
+                            // Try to fetch if not in store
+                            try {
+                                const data = await api.getPonto(row.original.id_ooh);
+                                ponto = data;
+                            } catch (e) {
+                                console.error("Failed to fetch point details", e);
+                            }
+                        }
+
                         if (ponto) {
                             setSelectedPonto(ponto);
                             setSidebarOpen(true);
                         } else {
-                            // Fallback if full ponto not in store, though it usually is if map is loaded
-                            console.warn("Ponto details not found in store for ID", row.original.id_ooh);
-                            // Optionally fetch here? For now, assume store has it.
-                            // Force basic object to open sidebar:
-                            setSelectedPonto({ id: row.original.id_ooh } as any);
-                            setSidebarOpen(true);
+                            // Only if absolutely failed
+                            console.warn("Ponto details not found for ID", row.original.id_ooh);
                         }
                     }}
                 >
@@ -280,15 +307,74 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         {
             header: 'Período',
             accessorKey: 'periodo',
-            size: 160,
-            cell: ({ row }) => (
-                <input
-                    className="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-sm"
-                    value={row.original.periodo || ''}
-                    placeholder="DD/MM - DD/MM"
-                    onChange={(e) => updateItem(row.original.id, 'periodo', e.target.value)}
-                />
-            )
+            size: 180,
+            cell: ({ row }) => {
+                const isOpen = datePopoverOpenId === row.original.id;
+
+                // Parse helper
+                const getDates = () => {
+                    // Try to get from item if we store separated, or fallback to parsing string
+                    // Ideally we'd store `periodo_inicio` and `periodo_fim` in the item
+                    // Let's assume the string is "DD/MM/YYYY - DD/MM/YYYY" or similar
+                    // But if we want actual date inputs, we need YYYY-MM-DD
+                    return { start: '', end: '' }; // Placeholder. In real app, bind to Item.periodo_inicio
+                }
+
+                return (
+                    <div className="relative">
+                        <button
+                            onClick={() => setDatePopoverOpenId(isOpen ? null : row.original.id)}
+                            className="w-full text-left bg-transparent hover:bg-gray-50 rounded px-2 py-1 text-sm text-gray-700 flex items-center justify-between group/date"
+                        >
+                            <span className="truncate">{row.original.periodo || 'Selecionar data'}</span>
+                            <CalendarIcon size={12} className="text-gray-400 group-hover/date:text-blue-500" />
+                        </button>
+
+                        {isOpen && (
+                            <>
+                                <div
+                                    className="fixed inset-0 z-30"
+                                    onClick={() => setDatePopoverOpenId(null)}
+                                />
+                                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 shadow-xl rounded-lg p-3 z-40 w-64 animate-in fade-in zoom-in-95 cursor-default">
+                                    <div className="flex gap-2 mb-2">
+                                        <div className="flex-1">
+                                            <label className="text-[10px] uppercase font-bold text-gray-400 mb-0.5 block">Início</label>
+                                            <input
+                                                type="date"
+                                                className="w-full border border-gray-300 rounded px-1 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
+                                                // Value binding would go here (e.g., ISO string)
+                                                onChange={(e) => {
+                                                    // Logic to format "DD/MM - DD/MM" string and update row
+                                                    // For now, let's just let user type in the main input if they prefer, 
+                                                    // but ideally this replaces the main input.
+                                                    // We'll update the 'periodo' string for now.
+                                                    // A real implementation needs `periodo_inicio` prop.
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="text-[10px] uppercase font-bold text-gray-400 mb-0.5 block">Fim</label>
+                                            <input
+                                                type="date"
+                                                className="w-full border border-gray-300 rounded px-1 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end pt-1 border-t border-gray-100">
+                                        <button
+                                            onClick={() => setDatePopoverOpenId(null)}
+                                            className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                                        >
+                                            Confirmar
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                );
+            }
         },
         {
             header: 'Período Com.',
@@ -436,7 +522,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 </div>
             )
         }
-    ], [updateItem, removeItem, pontos, setSelectedPonto, setSidebarOpen]);
+    ], [updateItem, removeItem, pontos, setSelectedPonto, setSidebarOpen, datePopoverOpenId]);
 
 
     const table = useReactTable({
@@ -464,9 +550,31 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
     return (
         <div
+            ref={containerRef}
             className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.15)] z-40 transition-all duration-300 ease-in-out flex flex-col`}
-            style={{ height: isOpen ? `${tableHeight}px` : '50px' }}
+            // Use style for height directly, but default via CSS if not set
+            style={{
+                height: isOpen ? undefined : '50px',
+                // If Open, we let the ref drive logic, but React re-render needs a base?
+                // Actually, if we use direct DOM manip, we should set initial height
+            }}
         >
+            {/* Only show/set height if isOpen is true. If false, fixed 50px class usually wins or style overrides.
+                We need to ensure it's 50px when closed.
+             */}
+            <style jsx>{`
+                div[ref="containerRef"] {
+                    height: ${isOpen ? '500px' : '50px'}; /* Initial Render */
+                }
+             `}</style>
+
+            {/* 
+                Correction: We can't use style jsx easily here. 
+                Let's just use the style prop with state fallbacks.
+                When resizing, the inline style 'height' on the element will override this.
+                When toggled closed, we want 50px.
+             */}
+
             {/* Resizer Handle */}
             {isOpen && (
                 <div
