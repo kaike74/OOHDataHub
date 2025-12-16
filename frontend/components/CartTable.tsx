@@ -172,12 +172,12 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         {
             id: 'select',
             header: ({ table }) => (
-                <div className="px-1 h-full flex items-center justify-center opacity-0 group-hover/header:opacity-100 transition-opacity">
+                <div className="w-full h-full flex items-center justify-center opacity-0 group-hover/header:opacity-100 transition-opacity">
                     <input
                         type="checkbox"
                         checked={table.getIsAllPageRowsSelected()}
                         onChange={(e) => table.toggleAllPageRowsSelected(!!e.target.checked)}
-                        className="cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
                     />
                 </div>
             ),
@@ -191,7 +191,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     />
                 </div>
             ),
-            size: 40,
+            size: 50,
             enableResizing: false,
         },
         {
@@ -254,6 +254,20 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             )
         },
         {
+            header: 'Observações',
+            accessorKey: 'observacoes',
+            size: 200,
+            cell: ({ row }) => (
+                <textarea
+                    className="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs resize-none"
+                    rows={2}
+                    value={row.original.observacoes || ''}
+                    placeholder="Adicionar observação..."
+                    onChange={(e) => updateItem(row.original.id, 'observacoes', e.target.value)}
+                />
+            )
+        },
+        {
             accessorKey: 'exibidora_nome',
             header: 'Exibidora',
             size: 120,
@@ -274,26 +288,42 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         {
             header: 'Período',
             id: 'periodo',
-            size: 200,
+            size: 220,
             cell: ({ row }) => {
-                // Parse dates from ISO format or use defaults
                 const inicio = row.original.periodo_inicio || '';
                 const fim = row.original.periodo_fim || '';
+
+                const handleDateChange = (field: 'periodo_inicio' | 'periodo_fim', value: string) => {
+                    updateItem(row.original.id, field, value);
+
+                    // Auto-update qtd_bi_mes when period changes
+                    const newInicio = field === 'periodo_inicio' ? value : inicio;
+                    const newFim = field === 'periodo_fim' ? value : fim;
+
+                    if (newInicio && newFim) {
+                        const dataInicio = new Date(newInicio);
+                        const dataFim = new Date(newFim);
+                        const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+
+                        const qtd = row.original.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                        updateItem(row.original.id, 'qtd_bi_mes', qtd);
+                    }
+                };
 
                 return (
                     <div className="flex items-center gap-1">
                         <input
                             type="date"
-                            className="w-[90px] bg-transparent border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs"
+                            className="w-[105px] bg-transparent border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-[11px]"
                             value={inicio}
-                            onChange={(e) => updateItem(row.original.id, 'periodo_inicio', e.target.value)}
+                            onChange={(e) => handleDateChange('periodo_inicio', e.target.value)}
                         />
                         <span className="text-gray-400 text-xs">→</span>
                         <input
                             type="date"
-                            className="w-[90px] bg-transparent border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs"
+                            className="w-[105px] bg-transparent border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-[11px]"
                             value={fim}
-                            onChange={(e) => updateItem(row.original.id, 'periodo_fim', e.target.value)}
+                            onChange={(e) => handleDateChange('periodo_fim', e.target.value)}
                         />
                     </div>
                 );
@@ -307,7 +337,18 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 <select
                     className="w-full bg-transparent text-xs outline-none cursor-pointer"
                     value={row.original.periodo_comercializado || 'bissemanal'}
-                    onChange={(e) => updateItem(row.original.id, 'periodo_comercializado', e.target.value)}
+                    onChange={(e) => {
+                        updateItem(row.original.id, 'periodo_comercializado', e.target.value);
+
+                        // Recalculate qtd when period comercializado changes
+                        if (row.original.periodo_inicio && row.original.periodo_fim) {
+                            const dataInicio = new Date(row.original.periodo_inicio);
+                            const dataFim = new Date(row.original.periodo_fim);
+                            const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+                            const qtd = e.target.value === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                            updateItem(row.original.id, 'qtd_bi_mes', qtd);
+                        }
+                    }}
                 >
                     <option value="bissemanal">Bissemanal</option>
                     <option value="mensal">Mensal</option>
@@ -316,16 +357,19 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         },
         {
             header: 'Qtd Bi/Mes',
-            accessorKey: 'qtd_bi_mes',
+            id: 'qtd_bi_mes',
             size: 80,
-            cell: ({ row }) => (
-                <input
-                    type="number"
-                    className="w-full bg-transparent border-none focus:outline-none text-right px-1"
-                    value={row.original.qtd_bi_mes || 1}
-                    onChange={(e) => updateItem(row.original.id, 'qtd_bi_mes', Number(e.target.value))}
-                />
-            )
+            cell: ({ row }) => {
+                // Auto-calculate based on period
+                let qtd = 1;
+                if (row.original.periodo_inicio && row.original.periodo_fim) {
+                    const dataInicio = new Date(row.original.periodo_inicio);
+                    const dataFim = new Date(row.original.periodo_fim);
+                    const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+                    qtd = row.original.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                }
+                return <div className="text-right text-sm text-gray-700 font-mono px-1">{qtd}</div>;
+            }
         },
         {
             header: 'Locação',
@@ -400,10 +444,20 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         },
         {
             header: 'Total Invest.',
-            accessorKey: 'total_investimento',
+            id: 'total_investimento',
             size: 130,
             cell: ({ row }) => {
-                const total = ((row.original.valor || 0) + (row.original.valor_papel || 0) + (row.original.valor_lona || 0)) * (row.original.qtd_bi_mes || 1);
+                // Calculate qtd
+                let qtd = 1;
+                if (row.original.periodo_inicio && row.original.periodo_fim) {
+                    const dataInicio = new Date(row.original.periodo_inicio);
+                    const dataFim = new Date(row.original.periodo_fim);
+                    const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+                    qtd = row.original.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                }
+
+                // Only locação × qtd (NOT papel/lona)
+                const total = (row.original.valor_locacao || 0) * qtd;
                 return (
                     <div className="text-right font-semibold text-emerald-700 bg-emerald-50 px-2 rounded-md">
                         {formatCurrency(total)}
