@@ -205,6 +205,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
     // Drag-to-Fill Handlers
     const startDragging = useCallback((rowId: number, columnKey: string, value: any) => {
+        console.log('🎯 Starting drag from row:', rowId, 'column:', columnKey, 'value:', value);
         setDragState({
             isDragging: true,
             startRowId: rowId,
@@ -212,14 +213,45 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             columnKey,
             startValue: value
         });
-        document.addEventListener('mouseup', handleDragEnd);
     }, []);
 
     const handleDragOver = useCallback((rowId: number) => {
         if (dragState.isDragging && rowId !== dragState.currentRowId) {
+            console.log('📍 Dragging over row:', rowId);
             setDragState(prev => ({ ...prev, currentRowId: rowId }));
         }
     }, [dragState.isDragging, dragState.currentRowId]);
+
+    // Global mouse move handler for drag-fill
+    useEffect(() => {
+        if (!dragState.isDragging) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            // Find which row the mouse is over
+            const element = document.elementFromPoint(e.clientX, e.clientY);
+            if (!element) return;
+
+            const row = element.closest('[data-row-id]');
+            if (row) {
+                const rowId = parseInt(row.getAttribute('data-row-id') || '0');
+                if (rowId && rowId !== dragState.currentRowId) {
+                    setDragState(prev => ({ ...prev, currentRowId: rowId }));
+                }
+            }
+        };
+
+        const handleMouseUp = () => {
+            handleDragEnd();
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [dragState.isDragging, dragState.currentRowId, handleDragEnd]);
 
     const handleDragEnd = useCallback(() => {
         if (dragState.isDragging && dragState.startRowId !== null && dragState.currentRowId !== null && dragState.columnKey) {
@@ -753,7 +785,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 </div>
             )
         }
-    ], [updateItem, removeItem, pontos, setSelectedPonto]);
+    ], [updateItem, removeItem, pontos, setSelectedPonto, itens, focusedCell]);
 
 
     const table = useReactTable({
@@ -1021,8 +1053,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                             {!isCollapsed && groupRows.map(row => (
                                                 <div
                                                     key={row.id}
-                                                    className={`flex items-center hover:bg-blue-50/20 transition-colors group ${row.getIsSelected() ? 'bg-blue-50/60' : ''}`}
-                                                    onMouseEnter={() => dragState.isDragging && handleDragOver(row.original.id)}
+                                                    data-row-id={row.original.id}
+                                                    className={`flex items-center hover:bg-blue-50/20 transition-colors group ${row.getIsSelected() ? 'bg-blue-50/60' : ''} ${isInDragRange(row.original.id) ? 'bg-blue-100 ring-2 ring-blue-400' : ''}`}
                                                 >
                                                     {row.getVisibleCells().map(cell => (
                                                         <div
@@ -1060,10 +1092,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                                                         }}
                                                                     />
                                                                 )}
-                                                            {/* Highlight border during drag */}
-                                                            {isInDragRange(row.original.id) && dragState.columnKey === cell.column.id && (
-                                                                <div className="absolute inset-0 border-2 border-blue-400 bg-blue-50/30 pointer-events-none rounded" />
-                                                            )}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -1078,8 +1106,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                 {table.getRowModel().rows.map(row => (
                                     <div
                                         key={row.id}
-                                        className={`flex items-center hover:bg-blue-50/20 transition-colors group ${row.getIsSelected() ? 'bg-blue-50/60' : ''}`}
-                                        onMouseEnter={() => dragState.isDragging && handleDragOver(row.original.id)}
+                                        data-row-id={row.original.id}
+                                        className={`flex items-center hover:bg-blue-50/20 transition-colors group ${row.getIsSelected() ? 'bg-blue-50/60' : ''} ${isInDragRange(row.original.id) ? 'bg-blue-100 ring-2 ring-blue-400' : ''}`}
                                     >
                                         {row.getVisibleCells().map(cell => (
                                             <div
@@ -1117,10 +1145,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                                             }}
                                                         />
                                                     )}
-                                                {/* Highlight border during drag */}
-                                                {isInDragRange(row.original.id) && dragState.columnKey === cell.column.id && (
-                                                    <div className="absolute inset-0 border-2 border-blue-400 bg-blue-50/30 pointer-events-none rounded" />
-                                                )}
                                             </div>
                                         ))}
                                     </div>
