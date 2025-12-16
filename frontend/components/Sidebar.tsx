@@ -82,7 +82,6 @@ export default function Sidebar() {
     const pontos = useStore((state) => state.pontos);
     const setPontos = useStore((state) => state.setPontos);
     const selectedProposta = useStore((state) => state.selectedProposta);
-    const refreshProposta = useStore((state) => state.refreshProposta);
     const user = useStore((state) => state.user);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -186,14 +185,19 @@ export default function Sidebar() {
             const data = await api.getProposta(selectedProposta.id);
             const currentItens = data.itens || [];
 
+            // Check if already in cart
+            if (currentItens.some((i: any) => i.id_ooh === selectedPonto.id)) {
+                alert('Este ponto já está na proposta!');
+                return;
+            }
+
             const newItens = [...currentItens, item];
             await api.updateCart(selectedProposta.id, newItens);
 
-            // Reload proposal to update UI in real-time
-            const updatedProposta = await api.getProposta(selectedProposta.id);
-            refreshProposta(updatedProposta);
+            alert('Ponto adicionado ao carrinho com sucesso!');
         } catch (error) {
             console.error('Erro ao adicionar ao carrinho:', error);
+            alert('Erro ao adicionar ponto à proposta.');
         }
     };
 
