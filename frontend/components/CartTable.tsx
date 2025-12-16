@@ -328,7 +328,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         },
         {
             header: 'Locação',
-            accessorKey: 'valor',
+            accessorKey: 'valor_locacao',
             size: 110,
             cell: ({ row }) => (
                 <div className="flex items-center justify-end font-medium text-gray-900">
@@ -336,8 +336,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     <input
                         type="number"
                         className="w-20 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                        value={row.original.valor || 0}
-                        onChange={(e) => updateItem(row.original.id, 'valor', Number(e.target.value))}
+                        value={row.original.valor_locacao || 0}
+                        onChange={(e) => updateItem(row.original.id, 'valor_locacao', Number(e.target.value))}
                     />
                 </div>
             )
