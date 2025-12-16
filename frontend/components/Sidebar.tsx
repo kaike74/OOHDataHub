@@ -3,10 +3,8 @@
 import { useEffect, useCallback } from 'react';
 import { useStore } from '@/lib/store';
 import { Ponto, Exibidora } from '@/lib/types';
-import { getImageUrl } from '@/lib/api';
-import { X, ExternalLink, Plus, MapPin, Phone, Mail, Building2, Router } from 'lucide-react';
-import { PointDetailsSidebar } from './PointDetailsSidebar';
-import { ExibidoraSidebar } from './ExibidoraSidebar';
+import { X } from 'lucide-react';
+import ExibidoraSidebar from './ExibidoraSidebar';
 import { api } from '@/lib/api';
 
 export default function Sidebar() {
@@ -120,6 +118,9 @@ export default function Sidebar() {
 
             console.log('Final item:', item);
 
+            // TEMPORARY DEBUG - REMOVE LATER
+            alert(`VALORES CALCULADOS:\nLocação: R$${item.valor_locacao}\nPapel: R$${item.valor_papel}\nLona: R$${item.valor_lona}\nComissão: ${comissao}`);
+
             // Fetch current items
             const data = await api.getProposta(selectedProposta.id);
             const currentItens = data.itens || [];
@@ -166,14 +167,20 @@ export default function Sidebar() {
                 </button>
 
                 {selectedPonto ? (
-                    <>
-                        <PointDetailsSidebar
-                            ponto={selectedPonto}
-                            onAddToProposal={selectedProposta ? handleAddToProposal : undefined}
-                        />
-                    </>
+                    <div className="p-6">
+                        <h2 className="text-2xl font-bold mb-4">{selectedPonto.codigo_ooh}</h2>
+                        <p className="mb-4">{selectedPonto.endereco}</p>
+                        {selectedProposta && (
+                            <button
+                                onClick={handleAddToProposal}
+                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            >
+                                Adicionar ao Carrinho
+                            </button>
+                        )}
+                    </div>
                 ) : selectedExibidora ? (
-                    <ExibidoraSidebar exibidora={selectedExibidora} />
+                    <ExibidoraSidebar />
                 ) : null}
             </div>
         </>

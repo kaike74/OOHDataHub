@@ -216,6 +216,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     title="Ver detalhes do ponto"
                     onClick={async (e) => {
                         e.stopPropagation();
+                        alert('CLICOU NO ENDEREÇO! ID: ' + row.original.id_ooh);
                         let ponto = pontos.find(p => p.id === row.original.id_ooh);
                         if (!ponto) {
                             try {
