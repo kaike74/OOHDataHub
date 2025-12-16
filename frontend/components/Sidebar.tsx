@@ -158,24 +158,28 @@ export default function Sidebar() {
         if (!selectedPonto || !selectedProposta) return;
 
         try {
-            // Default item structure
             // Commission Logic
             const comissao = selectedProposta.comissao || 'V2';
-            let multiplier = 1.0;
-            if (comissao === 'V2') multiplier = 1.25;
-            else if (comissao === 'V3') multiplier = 1.25 * 1.25; // Compound
-            else if (comissao === 'V4') multiplier = 1.25 * 1.25 * 1.25; // Compound
-
             const baseValor = selectedPonto.produtos?.[0]?.valor || 0;
-            const valorLocacao = baseValor * multiplier;
 
-            // Production logic: User said "what is in DB + 25%". 
-            // Since we don't have paper/canvas in DB, we assume 0 or derived? 
-            // If we assume the "first value" refers to some base cost, but we lack it.
-            // We will set to 0 for now as per current schema, to be editable.
-            // Or if we interpret "first value" as the rental value? Unlikely.
-            const valorPapel = 0;
-            const valorLona = 0;
+            // Calculate rental value with commission
+            let valorLocacao = baseValor;
+            if (comissao === 'V2') {
+                valorLocacao = baseValor * 1.25;
+            } else if (comissao === 'V3') {
+                valorLocacao = baseValor * 1.25 * 1.25; // V2 + 25%
+            } else if (comissao === 'V4') {
+                valorLocacao = baseValor * 1.25 * 1.25 * 1.25; // V3 + 25%
+            }
+
+            // For Papel and Lona: always base + 25%, independent of commission
+            // Since we don't have separate base values for papel/lona in the Ponto schema,
+            // we'll use a reasonable estimate based on the rental value
+            // Typical production costs are ~15-20% of rental value
+            const papalBase = baseValor * 0.15; // 15% of rental as base cost for paper
+            const lonaBase = baseValor * 0.20; // 20% of rental as base cost for canvas
+            const valorPapel = papalBase * 1.25; // Always +25% regardless of commission
+            const valorLona = lonaBase * 1.25; // Always +25% regardless of commission
 
             const item = {
                 id_proposta: selectedProposta.id,
