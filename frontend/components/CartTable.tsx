@@ -226,6 +226,10 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     useEffect(() => {
         if (!dragState.isDragging) return;
 
+        // Change cursor to crosshair during drag
+        document.body.style.cursor = 'crosshair';
+        document.body.style.userSelect = 'none';
+
         const handleMouseMove = (e: MouseEvent) => {
             // Find which row the mouse is over
             const element = document.elementFromPoint(e.clientX, e.clientY);
@@ -241,6 +245,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         };
 
         const handleMouseUp = () => {
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
             handleDragEnd();
         };
 
@@ -248,6 +254,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         document.addEventListener('mouseup', handleMouseUp);
 
         return () => {
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
         };
