@@ -8,9 +8,11 @@ import {
     Trash2,
     Settings,
     ChevronDown,
+    ChevronRight,
     ArrowUpDown,
     Check,
     Calendar as CalendarIcon,
+    Layers,
 } from 'lucide-react';
 import {
     useReactTable,
@@ -76,7 +78,13 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
     // UI State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isGroupMenuOpen, setIsGroupMenuOpen] = useState(false);
     const [focusedCell, setFocusedCell] = useState<{ rowId: number | null; columnId: string | null }>({ rowId: null, columnId: null });
+
+    // Grouping State
+    type GroupByField = 'none' | 'pais' | 'uf' | 'cidade' | 'exibidora_nome';
+    const [groupBy, setGroupBy] = useState<GroupByField>('none');
+    const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
     // Drag-to-Fill State
     const [dragState, setDragState] = useState<{
@@ -102,6 +110,41 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             setItens([]);
         }
     }, [selectedProposta]);
+
+    // Group items by selected field
+    const groupedData = useMemo(() => {
+        if (groupBy === 'none') {
+            return null;
+        }
+
+        const groups = new Map<string, PropostaItem[]>();
+
+        itens.forEach(item => {
+            const groupKey = (item[groupBy as keyof PropostaItem] || 'Sem categoria') as string;
+            if (!groups.has(groupKey)) {
+                groups.set(groupKey, []);
+            }
+            groups.get(groupKey)!.push(item);
+        });
+
+        // Convert to array and sort by group name
+        return Array.from(groups.entries())
+            .map(([name, items]) => ({ name, items, count: items.length }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [itens, groupBy]);
+
+    // Toggle group collapse
+    const toggleGroupCollapse = useCallback((groupName: string) => {
+        setCollapsedGroups(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(groupName)) {
+                newSet.delete(groupName);
+            } else {
+                newSet.add(groupName);
+            }
+            return newSet;
+        });
+    }, []);
 
     // Resizing Handlers
     const startResizing = (e: React.MouseEvent) => {
@@ -187,10 +230,18 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 const [minIdx, maxIdx] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
                 const updatedItens = [...itens];
 
+                console.log('🎯 Drag-fill applying:', {
+                    columnKey: dragState.columnKey,
+                    value: dragState.startValue,
+                    fromRow: minIdx,
+                    toRow: maxIdx,
+                    totalRows: maxIdx - minIdx + 1
+                });
+
                 // Apply the value to all rows in range
                 for (let i = minIdx; i <= maxIdx; i++) {
                     // Handle período specially (it has two date fields)
-                    if (dragState.columnKey === 'periodo_wrapper' && typeof dragState.startValue === 'object') {
+                    if (dragState.columnKey === 'periodo' && typeof dragState.startValue === 'object') {
                         updatedItens[i] = {
                             ...updatedItens[i],
                             periodo_inicio: dragState.startValue.periodo_inicio,
@@ -201,7 +252,12 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     }
                 }
 
-                console.log('Drag-fill applying:', { columnKey: dragState.columnKey, value: dragState.startValue, rows: [minIdx, maxIdx] });
+                const columnKey = dragState.columnKey!; // We know it's not null here
+                console.log('✅ Drag-fill completed. Updated items:', updatedItens.slice(minIdx, maxIdx + 1).map(item => ({
+                    id: item.id,
+                    [columnKey]: (item as any)[columnKey]
+                })));
+
                 setItens(updatedItens);
                 refreshProposta({ ...selectedProposta!, itens: updatedItens });
                 api.updateCart(selectedProposta!.id, updatedItens).catch(console.error);
@@ -388,44 +444,49 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             header: 'Período Com.',
             id: 'periodo_comercializado',
             accessorKey: 'periodo_comercializado',
-            size: 110,
+            size: 130,
             cell: ({ row }) => {
                 const rowIndex = itens.findIndex(item => item.id === row.original.id);
+                const currentItem = itens.find(item => item.id === row.original.id);
+                const currentValue = currentItem?.periodo_comercializado || 'bissemanal';
+
                 return (
-                    <select
-                        className="w-full bg-transparent text-xs outline-none cursor-pointer"
-                        defaultValue={row.original.periodo_comercializado || 'bissemanal'}
-                        key={`periodo-com-${row.original.id}-${row.original.periodo_comercializado}`}
-                        data-row-id={row.original.id}
-                        data-column-id="periodo_comercializado"
-                        onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'periodo_comercializado' })}
-                        onBlur={() => setFocusedCell({ rowId: null, columnId: null })}
-                        onChange={(e) => {
-                            const newValue = e.target.value;
-                            updateItem(row.original.id, 'periodo_comercializado', newValue);
+                    <div className="relative w-full h-full flex items-center pr-3">
+                        <select
+                            className="w-[calc(100%-12px)] bg-transparent text-xs outline-none cursor-pointer hover:bg-gray-50 rounded px-1 py-0.5 transition-colors"
+                            value={currentValue}
+                            data-row-id={row.original.id}
+                            data-column-id="periodo_comercializado"
+                            onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'periodo_comercializado' })}
+                            onBlur={() => setFocusedCell({ rowId: null, columnId: null })}
+                            onChange={(e) => {
+                                const newValue = e.target.value;
+                                console.log('🔄 Período Com. changed:', { id: row.original.id, from: currentValue, to: newValue });
+                                updateItem(row.original.id, 'periodo_comercializado', newValue);
 
-                            // Recalculate qtd when period comercializado changes
-                            if (row.original.periodo_inicio && row.original.periodo_fim) {
-                                const dataInicio = new Date(row.original.periodo_inicio);
-                                const dataFim = new Date(row.original.periodo_fim);
-                                const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
-                                const qtd = newValue === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                                updateItem(row.original.id, 'qtd_bi_mes', qtd);
-                            }
+                                // Recalculate qtd when period comercializado changes
+                                if (currentItem?.periodo_inicio && currentItem?.periodo_fim) {
+                                    const dataInicio = new Date(currentItem.periodo_inicio);
+                                    const dataFim = new Date(currentItem.periodo_fim);
+                                    const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+                                    const qtd = newValue === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                                    updateItem(row.original.id, 'qtd_bi_mes', qtd);
+                                }
 
-                            // Force focus on next row's select
-                            const nextRow = itens[rowIndex + 1];
-                            if (nextRow) {
-                                setTimeout(() => {
-                                    const nextSelect = document.querySelector(`select[data-row-id="${nextRow.id}"][data-column-id="periodo_comercializado"]`) as HTMLSelectElement;
-                                    nextSelect?.focus();
-                                }, 10);
-                            }
-                        }}
-                    >
-                        <option value="bissemanal">Bissemanal</option>
-                        <option value="mensal">Mensal</option>
-                    </select>
+                                // Force focus on next row's select
+                                const nextRow = itens[rowIndex + 1];
+                                if (nextRow) {
+                                    setTimeout(() => {
+                                        const nextSelect = document.querySelector(`select[data-row-id="${nextRow.id}"][data-column-id="periodo_comercializado"]`) as HTMLSelectElement;
+                                        nextSelect?.focus();
+                                    }, 10);
+                                }
+                            }}
+                        >
+                            <option value="bissemanal">Bissemanal</option>
+                            <option value="mensal">Mensal</option>
+                        </select>
+                    </div>
                 )
             }
         },
@@ -788,6 +849,58 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         </div>
                     )}
 
+                    {/* Grouping Menu */}
+                    <button
+                        onClick={() => setIsGroupMenuOpen(!isGroupMenuOpen)}
+                        className={`p-1.5 rounded-md transition-all flex items-center gap-1 ${isGroupMenuOpen || groupBy !== 'none' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 border border-transparent'}`}
+                        title="Agrupar por"
+                    >
+                        <Layers size={16} />
+                        {groupBy !== 'none' && (
+                            <span className="text-[10px] font-semibold uppercase tracking-wide">
+                                {groupBy === 'pais' && 'País'}
+                                {groupBy === 'uf' && 'UF'}
+                                {groupBy === 'cidade' && 'Cidade'}
+                                {groupBy === 'exibidora_nome' && 'Exibidora'}
+                            </span>
+                        )}
+                    </button>
+
+                    {/* Grouping Dropdown */}
+                    {isGroupMenuOpen && (
+                        <>
+                            <div className="fixed inset-0 z-40" onClick={() => setIsGroupMenuOpen(false)} />
+                            <div className="absolute right-28 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
+                                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Agrupar Por</h4>
+                                <div className="px-1">
+                                    {[
+                                        { value: 'none' as GroupByField, label: 'Sem agrupamento', icon: '—' },
+                                        { value: 'pais' as GroupByField, label: 'País', icon: '🌍' },
+                                        { value: 'uf' as GroupByField, label: 'UF', icon: '📍' },
+                                        { value: 'cidade' as GroupByField, label: 'Cidade', icon: '🏙️' },
+                                        { value: 'exibidora_nome' as GroupByField, label: 'Exibidora', icon: '🏢' },
+                                    ].map((option) => (
+                                        <div
+                                            key={option.value}
+                                            className={`px-2 py-2 flex items-center gap-3 hover:bg-gray-50 rounded cursor-pointer transition-colors ${groupBy === option.value ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}
+                                            onClick={() => {
+                                                setGroupBy(option.value);
+                                                setIsGroupMenuOpen(false);
+                                                setCollapsedGroups(new Set()); // Reset collapsed groups
+                                            }}
+                                        >
+                                            <span className="text-base">{option.icon}</span>
+                                            <span className="text-sm font-medium flex-1">{option.label}</span>
+                                            {groupBy === option.value && (
+                                                <Check size={14} className="text-blue-600" strokeWidth={3} />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </>
+                    )}
+
                     <button
                         onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                         className={`p-1.5 rounded-md transition-all ${isSettingsOpen ? 'bg-gray-100 text-gray-900 shadow-inner' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}
@@ -868,46 +981,152 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
                     {/* Body */}
                     <div className="divide-y divide-gray-100 bg-white">
-                        {table.getRowModel().rows.map(row => (
-                            <div
-                                key={row.id}
-                                className={`flex items-center hover:bg-blue-50/20 transition-colors group ${row.getIsSelected() ? 'bg-blue-50/60' : ''}`}
-                                onMouseEnter={() => dragState.isDragging && handleDragOver(row.original.id)}
-                            >
-                                {row.getVisibleCells().map(cell => (
-                                    <div
-                                        key={cell.id}
-                                        className="px-3 py-2.5 text-sm text-gray-700 border-r border-transparent group-hover:border-gray-100 truncate flex items-center relative"
-                                        style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
-                                    >
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        {/* Drag handle for ONLY specified editable cells */}
-                                        {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
-                                            focusedCell.rowId === row.original.id &&
-                                            (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
+                        {/* Grouped View */}
+                        {groupedData ? (
+                            <>
+                                {groupedData.map((group) => {
+                                    const isCollapsed = collapsedGroups.has(group.name);
+                                    const groupRows = table.getRowModel().rows.filter(row => {
+                                        const groupKey = (row.original[groupBy as keyof PropostaItem] || 'Sem categoria') as string;
+                                        return groupKey === group.name;
+                                    });
+
+                                    // Calculate group total
+                                    const groupTotal = group.items.reduce((sum, item) =>
+                                        sum + ((item.valor_locacao || 0) + (item.valor_papel || 0) + (item.valor_lona || 0)) * (item.qtd_bi_mes || 1), 0
+                                    );
+
+                                    return (
+                                        <div key={group.name} className="border-b border-gray-200">
+                                            {/* Group Header */}
+                                            <div
+                                                className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors sticky top-[41px] z-[5] border-b border-gray-200"
+                                                onClick={() => toggleGroupCollapse(group.name)}
+                                            >
+                                                {isCollapsed ? (
+                                                    <ChevronRight size={16} className="text-gray-500 flex-shrink-0" />
+                                                ) : (
+                                                    <ChevronDown size={16} className="text-gray-500 flex-shrink-0" />
+                                                )}
+                                                <span className="font-semibold text-sm text-gray-700">{group.name}</span>
+                                                <span className="text-xs text-gray-500 bg-white px-2 py-0.5 rounded-full border border-gray-200">
+                                                    {group.count}
+                                                </span>
+                                                <span className="text-xs text-emerald-700 font-semibold ml-auto">
+                                                    {formatCurrency(groupTotal)}
+                                                </span>
+                                            </div>
+
+                                            {/* Group Rows */}
+                                            {!isCollapsed && groupRows.map(row => (
                                                 <div
-                                                    className="absolute bottom-0 right-0 w-2 h-2 bg-blue-500 rounded-tl cursor-crosshair opacity-100 transition-opacity"
-                                                    onMouseDown={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        const columnId = cell.column.id!;
-                                                        let value = (row.original as any)[columnId];
-                                                        // For período, use both values
-                                                        if (columnId === 'periodo') {
-                                                            value = { periodo_inicio: row.original.periodo_inicio, periodo_fim: row.original.periodo_fim };
-                                                        }
-                                                        startDragging(row.original.id, columnId, value);
-                                                    }}
-                                                />
-                                            )}
-                                        {/* Highlight border during drag */}
-                                        {isInDragRange(row.original.id) && dragState.columnKey === cell.column.id && (
-                                            <div className="absolute inset-0 border-2 border-blue-400 pointer-events-none rounded" />
-                                        )}
+                                                    key={row.id}
+                                                    className={`flex items-center hover:bg-blue-50/20 transition-colors group ${row.getIsSelected() ? 'bg-blue-50/60' : ''}`}
+                                                    onMouseEnter={() => dragState.isDragging && handleDragOver(row.original.id)}
+                                                >
+                                                    {row.getVisibleCells().map(cell => (
+                                                        <div
+                                                            key={cell.id}
+                                                            className="px-3 py-2.5 text-sm text-gray-700 border-r border-transparent group-hover:border-gray-100 truncate flex items-center relative"
+                                                            style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
+                                                        >
+                                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                            {/* Drag handle for ONLY specified editable cells */}
+                                                            {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
+                                                                focusedCell.rowId === row.original.id &&
+                                                                (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
+                                                                    <div
+                                                                        className="absolute bottom-0 right-0 w-3 h-3 bg-blue-600 hover:bg-blue-700 border border-white rounded-tl cursor-crosshair opacity-100 transition-all z-50 shadow-sm hover:w-4 hover:h-4"
+                                                                        title="Arrastar para preencher"
+                                                                        onMouseDown={(e) => {
+                                                                            e.preventDefault();
+                                                                            e.stopPropagation();
+                                                                            const columnId = cell.column.id!;
+
+                                                                            // Get current value from itens state for real-time accuracy
+                                                                            const currentItem = itens.find(item => item.id === row.original.id);
+                                                                            let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
+
+                                                                            // For período, use both values
+                                                                            if (columnId === 'periodo') {
+                                                                                value = {
+                                                                                    periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
+                                                                                    periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
+                                                                                };
+                                                                            }
+
+                                                                            console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
+                                                                            startDragging(row.original.id, columnId, value);
+                                                                        }}
+                                                                    />
+                                                                )}
+                                                            {/* Highlight border during drag */}
+                                                            {isInDragRange(row.original.id) && dragState.columnKey === cell.column.id && (
+                                                                <div className="absolute inset-0 border-2 border-blue-400 bg-blue-50/30 pointer-events-none rounded" />
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                })}
+                            </>
+                        ) : (
+                            /* Flat View */
+                            <>
+                                {table.getRowModel().rows.map(row => (
+                                    <div
+                                        key={row.id}
+                                        className={`flex items-center hover:bg-blue-50/20 transition-colors group ${row.getIsSelected() ? 'bg-blue-50/60' : ''}`}
+                                        onMouseEnter={() => dragState.isDragging && handleDragOver(row.original.id)}
+                                    >
+                                        {row.getVisibleCells().map(cell => (
+                                            <div
+                                                key={cell.id}
+                                                className="px-3 py-2.5 text-sm text-gray-700 border-r border-transparent group-hover:border-gray-100 truncate flex items-center relative"
+                                                style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
+                                            >
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                {/* Drag handle for ONLY specified editable cells */}
+                                                {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
+                                                    focusedCell.rowId === row.original.id &&
+                                                    (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
+                                                        <div
+                                                            className="absolute bottom-0 right-0 w-3 h-3 bg-blue-600 hover:bg-blue-700 border border-white rounded-tl cursor-crosshair opacity-100 transition-all z-50 shadow-sm hover:w-4 hover:h-4"
+                                                            title="Arrastar para preencher"
+                                                            onMouseDown={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                const columnId = cell.column.id!;
+
+                                                                // Get current value from itens state for real-time accuracy
+                                                                const currentItem = itens.find(item => item.id === row.original.id);
+                                                                let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
+
+                                                                // For período, use both values
+                                                                if (columnId === 'periodo') {
+                                                                    value = {
+                                                                        periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
+                                                                        periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
+                                                                    };
+                                                                }
+
+                                                                console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
+                                                                startDragging(row.original.id, columnId, value);
+                                                            }}
+                                                        />
+                                                    )}
+                                                {/* Highlight border during drag */}
+                                                {isInDragRange(row.original.id) && dragState.columnKey === cell.column.id && (
+                                                    <div className="absolute inset-0 border-2 border-blue-400 bg-blue-50/30 pointer-events-none rounded" />
+                                                )}
+                                            </div>
+                                        ))}
                                     </div>
                                 ))}
-                            </div>
-                        ))}
+                            </>
+                        )}
 
                         {table.getRowModel().rows.length === 0 && (
                             <div className="p-12 text-center text-gray-400 text-sm w-full flex flex-col items-center gap-3">
