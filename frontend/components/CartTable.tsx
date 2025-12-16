@@ -17,6 +17,8 @@ import {
     getCoreRowModel,
     getSortedRowModel,
     getFilteredRowModel,
+    getGroupedRowModel,
+    getExpandedRowModel,
     ColumnDef,
     flexRender,
     SortingState,
@@ -55,6 +57,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const [columnSizing, setColumnSizing] = useState({});
+    const [grouping, setGrouping] = useState<string[]>([]); // Group By state
 
     // UI State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -238,33 +241,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 >
                     {row.original.endereco}
                 </button>
-            )
-        },
-        {
-            accessorKey: 'ponto_referencia',
-            header: 'Ponto de Referência',
-            size: 200,
-            cell: ({ row }) => (
-                <input
-                    className="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-sm placeholder-gray-300"
-                    value={row.original.ponto_referencia || ''}
-                    placeholder="Adicionar referência..."
-                    onChange={(e) => updateItem(row.original.id, 'ponto_referencia', e.target.value)}
-                />
-            )
-        },
-        {
-            header: 'Observações',
-            accessorKey: 'observacoes',
-            size: 200,
-            cell: ({ row }) => (
-                <textarea
-                    className="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs resize-none"
-                    rows={2}
-                    value={row.original.observacoes || ''}
-                    placeholder="Adicionar observação..."
-                    onChange={(e) => updateItem(row.original.id, 'observacoes', e.target.value)}
-                />
             )
         },
         {
@@ -484,6 +460,33 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             }
         },
         {
+            accessorKey: 'ponto_referencia',
+            header: 'Ponto de Referência',
+            size: 200,
+            cell: ({ row }) => (
+                <input
+                    className="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-sm placeholder-gray-300"
+                    value={row.original.ponto_referencia || ''}
+                    placeholder="Adicionar referência..."
+                    onChange={(e) => updateItem(row.original.id, 'ponto_referencia', e.target.value)}
+                />
+            )
+        },
+        {
+            header: 'Observações',
+            accessorKey: 'observacoes',
+            size: 200,
+            cell: ({ row }) => (
+                <textarea
+                    className="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs resize-none"
+                    rows={2}
+                    value={row.original.observacoes || ''}
+                    placeholder="Adicionar observação..."
+                    onChange={(e) => updateItem(row.original.id, 'observacoes', e.target.value)}
+                />
+            )
+        },
+        {
             id: 'actions',
             size: 40,
             enableResizing: false,
@@ -510,6 +513,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             columnVisibility,
             rowSelection,
             columnSizing,
+            grouping,
         },
         columnResizeMode: 'onChange',
         enableRowSelection: true,
@@ -518,9 +522,12 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,
         onColumnSizingChange: setColumnSizing,
+        onGroupingChange: setGrouping,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
+        getGroupedRowModel: getGroupedRowModel(),
+        getExpandedRowModel: getExpandedRowModel(),
     });
 
     if (!selectedProposta) return null;
@@ -666,6 +673,49 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                             </div>
                                         )
                                     })}
+                                </div>
+
+                                {/* Group By Section */}
+                                <div className="border-t border-gray-200 mt-2 pt-2">
+                                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Agrupar Por</h4>
+                                    <div className="px-1">
+                                        <div
+                                            className={`px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors ${grouping.length === 0 ? 'bg-blue-50' : ''}`}
+                                            onClick={() => setGrouping([])}
+                                        >
+                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${grouping.length === 0 ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
+                                                {grouping.length === 0 && <Check size={10} strokeWidth={3} />}
+                                            </div>
+                                            <span className="text-sm text-gray-700">Sem agrupamento</span>
+                                        </div>
+                                        <div
+                                            className={`px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors ${grouping.includes('cidade') ? 'bg-blue-50' : ''}`}
+                                            onClick={() => setGrouping(['cidade'])}
+                                        >
+                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${grouping.includes('cidade') ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
+                                                {grouping.includes('cidade') && <Check size={10} strokeWidth={3} />}
+                                            </div>
+                                            <span className="text-sm text-gray-700">Por Cidade</span>
+                                        </div>
+                                        <div
+                                            className={`px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors ${grouping.includes('uf') ? 'bg-blue-50' : ''}`}
+                                            onClick={() => setGrouping(['uf'])}
+                                        >
+                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${grouping.includes('uf') ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
+                                                {grouping.includes('uf') && <Check size={10} strokeWidth={3} />}
+                                            </div>
+                                            <span className="text-sm text-gray-700">Por UF</span>
+                                        </div>
+                                        <div
+                                            className={`px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors ${grouping.includes('exibidora_nome') ? 'bg-blue-50' : ''}`}
+                                            onClick={() => setGrouping(['exibidora_nome'])}
+                                        >
+                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${grouping.includes('exibidora_nome') ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
+                                                {grouping.includes('exibidora_nome') && <Check size={10} strokeWidth={3} />}
+                                            </div>
+                                            <span className="text-sm text-gray-700">Por Exibidora</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </>
