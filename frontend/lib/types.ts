@@ -112,7 +112,8 @@ export interface PropostaItem {
     periodo_comercializado: 'bissemanal' | 'mensal' | null;
     observacoes: string | null;
     fluxo_diario: number | null;
-    // Enhanced fields from join
+
+    // Enhanced fields from join with Ponto
     endereco?: string;
     cidade?: string;
     uf?: string;
@@ -121,15 +122,18 @@ export interface PropostaItem {
     exibidora_nome?: string;
     tipo?: string;
     medidas?: string;
-    ponto_referencia?: string;
 
-    // Added for CartTable
-    periodo?: string; // Generic period field
-    valor?: number; // Generic value field
+    // Additional Cart Fields
+    ponto_referencia?: string;
+    periodo?: string;
+    valor?: number;
+    valor_negociado?: number;
     desconto_padrao?: number;
     total_investimento?: number;
     impactos?: number;
+    cpm?: number;
     bairro?: string;
     exibidora?: string;
-    valor_negociado?: number;
+    produto?: string;
+    qtd_bi_mes?: number;
 }

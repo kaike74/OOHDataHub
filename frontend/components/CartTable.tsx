@@ -35,6 +35,10 @@ const formatCurrency = (value: number) => {
     }).format(value);
 };
 
+const formatNumber = (value: number) => {
+    return new Intl.NumberFormat('pt-BR').format(value);
+}
+
 interface CartTableProps {
     proposta?: Proposta;
     isOpen: boolean;
@@ -70,16 +74,31 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
     // Optimistic Update Helper
     const updateItem = useCallback(async (id: number, field: string, value: any) => {
-        // Immediate local update
-        const updatedItens = itens.map(item =>
-            item.id === id ? { ...item, [field]: value } : item
-        );
+        const updatedItens = itens.map(item => {
+            if (item.id === id) {
+                const updatedItem = { ...item, [field]: value };
+
+                // Recalculate derived fields if necessary
+                if (['fluxo_diario', 'qtd_bi_mes', 'valor', 'valor_papel', 'valor_lona'].includes(field)) {
+                    // Logic for recalculation can be expanded here if needed
+                    // For now, simpler calculations are done in render or server-side
+
+                    // Example: Recalculate impacts if flow changes
+                    if (field === 'fluxo_diario') {
+                        updatedItem.impactos = (value || 0) * 30; // Assuming 30 days for now
+                    }
+                }
+                return updatedItem;
+            }
+            return item;
+        });
+
         setItens(updatedItens);
 
         // Propagate to global store
         refreshProposta({ ...selectedProposta!, itens: updatedItens });
 
-        // Debounced API call could live here, but for now we do direct updates
+        // Debounced API call could live here
         try {
             await api.updateCart(selectedProposta!.id, updatedItens);
         } catch (error) {
@@ -137,7 +156,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         {
             id: 'select',
             header: ({ table }) => (
-                <div className="px-1">
+                <div className="px-1 opacity-0 group-hover/header:opacity-100 transition-opacity">
                     <input
                         type="checkbox"
                         checked={table.getIsAllPageRowsSelected()}
@@ -147,7 +166,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 </div>
             ),
             cell: ({ row }) => (
-                <div className="px-1">
+                <div className={`px-1 transition-opacity ${row.getIsSelected() ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                     <input
                         type="checkbox"
                         checked={row.getIsSelected()}
@@ -156,103 +175,229 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     />
                 </div>
             ),
-            size: 40,
+            size: 30,
             enableResizing: false,
         },
         {
-            accessorKey: 'codigo_ooh',
-            header: 'Código',
-            size: 100,
-            cell: ({ row }) => <span className="font-mono text-xs">{row.original.codigo_ooh}</span>
+            accessorKey: 'pais',
+            header: 'País',
+            size: 80,
+            cell: ({ row }) => <span className="text-gray-600">{row.original.pais}</span>
+        },
+        {
+            accessorKey: 'uf',
+            header: 'UF',
+            size: 50,
+            cell: ({ row }) => <span className="text-gray-600">{row.original.uf}</span>
         },
         {
             accessorKey: 'cidade',
-            header: 'Cidade/UF',
-            size: 140,
-            cell: ({ row }) => <span>{row.original.cidade}/{row.original.uf}</span>
+            header: 'Cidade',
+            size: 120,
+            cell: ({ row }) => <span className="text-gray-900 font-medium">{row.original.cidade}</span>
+        },
+        {
+            accessorKey: 'codigo_ooh',
+            header: 'Código OOH',
+            size: 100,
+            cell: ({ row }) => <span className="font-mono text-xs bg-gray-50 px-1 py-0.5 rounded border border-gray-100">{row.original.codigo_ooh}</span>
         },
         {
             accessorKey: 'endereco',
             header: 'Endereço',
-            size: 250,
-            cell: ({ row }) => <span className="truncate block" title={row.original.endereco}>{row.original.endereco}</span>
+            size: 200,
+            cell: ({ row }) => <span className="truncate block text-gray-600" title={row.original.endereco}>{row.original.endereco}</span>
         },
         {
-            accessorKey: 'bairro',
-            header: 'Bairro',
-            size: 120,
+            accessorKey: 'ponto_referencia',
+            header: 'Ponto de Referência',
+            size: 200,
+            cell: ({ row }) => (
+                <input
+                    className="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-sm placeholder-gray-300"
+                    value={row.original.ponto_referencia || ''}
+                    placeholder="Adicionar referência..."
+                    onChange={(e) => updateItem(row.original.id, 'ponto_referencia', e.target.value)}
+                />
+            )
         },
         {
-            accessorKey: 'exibidora',
+            accessorKey: 'exibidora_nome',
             header: 'Exibidora',
             size: 120,
+            cell: ({ row }) => <span className="text-gray-600 truncate">{row.original.exibidora_nome || row.original.exibidora}</span>
         },
         {
-            accessorKey: 'tipo',
-            header: 'Tipo',
+            accessorKey: 'produto',
+            header: 'Produto',
             size: 100,
+            cell: ({ row }) => <span className="text-gray-600">{row.original.tipo}</span> // Using tipo for now
         },
         {
-            header: 'Periodo',
+            accessorKey: 'medidas',
+            header: 'Medidas',
+            size: 100,
+            cell: ({ row }) => <span className="text-xs text-gray-500">{row.original.medidas}</span>
+        },
+        {
+            header: 'Período',
             accessorKey: 'periodo',
-            size: 180,
+            size: 160,
             cell: ({ row }) => (
                 <input
                     className="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-sm"
                     value={row.original.periodo || ''}
-                    placeholder="DD/MM/AAAA - DD/MM/AAAA"
+                    placeholder="DD/MM - DD/MM"
                     onChange={(e) => updateItem(row.original.id, 'periodo', e.target.value)}
                 />
             )
         },
         {
-            header: 'Valor Tabela',
-            accessorKey: 'valor',
-            size: 120,
+            header: 'Período Com.',
+            accessorKey: 'periodo_comercializado',
+            size: 110,
             cell: ({ row }) => (
-                <div className="text-right">
-                    {formatCurrency(row.original.valor || 0)}
+                <select
+                    className="w-full bg-transparent text-xs outline-none cursor-pointer"
+                    value={row.original.periodo_comercializado || 'bissemanal'}
+                    onChange={(e) => updateItem(row.original.id, 'periodo_comercializado', e.target.value)}
+                >
+                    <option value="bissemanal">Bissemanal</option>
+                    <option value="mensal">Mensal</option>
+                </select>
+            )
+        },
+        {
+            header: 'Qtd Bi/Mes',
+            accessorKey: 'qtd_bi_mes',
+            size: 80,
+            cell: ({ row }) => (
+                <input
+                    type="number"
+                    className="w-full bg-transparent border-none focus:outline-none text-right px-1"
+                    value={row.original.qtd_bi_mes || 1}
+                    onChange={(e) => updateItem(row.original.id, 'qtd_bi_mes', Number(e.target.value))}
+                />
+            )
+        },
+        {
+            header: 'Locação',
+            accessorKey: 'valor',
+            size: 110,
+            cell: ({ row }) => (
+                <div className="flex items-center justify-end font-medium text-gray-900">
+                    <span className="text-xs text-gray-400 mr-1">R$</span>
+                    <input
+                        type="number"
+                        className="w-20 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                        value={row.original.valor || 0}
+                        onChange={(e) => updateItem(row.original.id, 'valor', Number(e.target.value))}
+                    />
                 </div>
             )
         },
         {
-            header: 'Desc %',
-            accessorKey: 'desconto_padrao',
-            size: 80,
+            header: 'Papel',
+            accessorKey: 'valor_papel',
+            size: 100,
             cell: ({ row }) => (
-                <div className="flex items-center justify-end">
+                <div className="flex items-center justify-end text-gray-600 text-xs">
+                    <span className="text-gray-400 mr-1">R$</span>
                     <input
                         type="number"
                         className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                        value={row.original.desconto_padrao || 0}
-                        onChange={(e) => updateItem(row.original.id, 'desconto_padrao', Number(e.target.value))}
+                        value={row.original.valor_papel || 0}
+                        onChange={(e) => updateItem(row.original.id, 'valor_papel', Number(e.target.value))}
                     />
-                    <span className="ml-1 text-gray-500">%</span>
                 </div>
             )
+        },
+        {
+            header: 'Lona',
+            accessorKey: 'valor_lona',
+            size: 100,
+            cell: ({ row }) => (
+                <div className="flex items-center justify-end text-gray-600 text-xs">
+                    <span className="text-gray-400 mr-1">R$</span>
+                    <input
+                        type="number"
+                        className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                        value={row.original.valor_lona || 0}
+                        onChange={(e) => updateItem(row.original.id, 'valor_lona', Number(e.target.value))}
+                    />
+                </div>
+            )
+        },
+        {
+            header: 'Fluxo Diário',
+            accessorKey: 'fluxo_diario',
+            size: 110,
+            cell: ({ row }) => (
+                <input
+                    type="number"
+                    className="w-full bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs text-gray-600"
+                    placeholder="0"
+                    value={row.original.fluxo_diario || ''}
+                    onChange={(e) => updateItem(row.original.id, 'fluxo_diario', Number(e.target.value))}
+                />
+            )
+        },
+        {
+            header: 'Impactos',
+            id: 'impactos',
+            size: 100,
+            cell: ({ row }) => {
+                // Calculation: Fluxo Diario * 30 (approx for now) * Qtd
+                const impacts = (row.original.fluxo_diario || 0) * 30 * (row.original.qtd_bi_mes || 1);
+                return <div className="text-right text-xs text-gray-600">{formatNumber(impacts)}</div>
+            }
         },
         {
             header: 'Total Invest.',
             accessorKey: 'total_investimento',
             size: 130,
-            cell: ({ row }) => (
-                <div className="text-right font-semibold text-gray-900">
-                    {formatCurrency(row.original.total_investimento || 0)}
-                </div>
-            )
+            cell: ({ row }) => {
+                // Calculation: (Valor Locacao + Papel + Lona) * Qtd
+                const total = ((row.original.valor || 0) + (row.original.valor_papel || 0) + (row.original.valor_lona || 0)) * (row.original.qtd_bi_mes || 1);
+
+                return (
+                    <div className="text-right font-semibold text-emerald-700 bg-emerald-50 px-2 rounded-md">
+                        {formatCurrency(total)}
+                    </div>
+                )
+            }
+        },
+        {
+            header: 'CPM',
+            id: 'cpm',
+            size: 90,
+            cell: ({ row }) => {
+                // Calculation: (Total Invest / Impactos) * 1000
+                const impacts = (row.original.fluxo_diario || 0) * 30 * (row.original.qtd_bi_mes || 1);
+                const total = ((row.original.valor || 0) + (row.original.valor_papel || 0) + (row.original.valor_lona || 0)) * (row.original.qtd_bi_mes || 1);
+
+                if (impacts === 0) return <span className="text-xs text-gray-300">-</span>;
+
+                const cpm = (total / impacts) * 1000;
+                return (
+                    <div className="text-right text-xs bg-gray-100 rounded px-1.5 py-0.5 font-mono text-gray-700">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cpm)}
+                    </div>
+                )
+            }
         },
         {
             id: 'actions',
-            size: 50,
+            size: 40,
             enableResizing: false,
             cell: ({ row }) => (
-                <div className="flex justify-center">
+                <div className="flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                         onClick={() => removeItem(row.original.id)}
                         className="text-gray-400 hover:text-red-500 p-1 rounded transition-colors"
                         title="Remover Item"
                     >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                     </button>
                 </div>
             )
@@ -285,7 +430,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
     return (
         <div
-            className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.15)] z-40 transition-all duration-300 ease-in-out flex flex-col ${isOpen ? 'h-[400px]' : 'h-[50px]'}`}
+            className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.15)] z-40 transition-all duration-300 ease-in-out flex flex-col ${isOpen ? 'h-[500px]' : 'h-[50px]'}`}
         >
             {/* Toolbar */}
             <div
@@ -380,7 +525,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                             <div className="flex flex-col items-end">
                                 <span className="text-[10px] text-gray-500">Total</span>
                                 <span className="font-bold text-emerald-600">
-                                    {formatCurrency(itens.reduce((sum, item) => sum + (item.total_investimento || item.valor || 0), 0))}
+                                    {formatCurrency(itens.reduce((sum, item) => sum + ((item.valor || 0) + (item.valor_papel || 0) + (item.valor_lona || 0)) * (item.qtd_bi_mes || 1), 0))}
                                 </span>
                             </div>
                         </div>
@@ -433,7 +578,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     style={{ width: table.getTotalSize() }}
                 >
                     {/* Head */}
-                    <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200 font-semibold text-xs text-gray-500 uppercase text-left flex shadow-sm">
+                    <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200 font-semibold text-xs text-gray-500 uppercase text-left flex shadow-sm group/header">
                         {table.getHeaderGroups().map(headerGroup => (
                             <div key={headerGroup.id} className="flex flex-row w-full">
                                 {headerGroup.headers.map(header => (
@@ -508,7 +653,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         <div className="flex flex-col items-end">
                             <span className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Investimento Total</span>
                             <span className="font-bold text-lg text-emerald-600 leading-none">
-                                {formatCurrency(itens.reduce((sum, item) => sum + (item.total_investimento || item.valor || 0), 0))}
+                                {formatCurrency(itens.reduce((sum, item) => sum + ((item.valor || 0) + (item.valor_papel || 0) + (item.valor_lona || 0)) * (item.qtd_bi_mes || 1), 0))}
                             </span>
                         </div>
                     </div>
