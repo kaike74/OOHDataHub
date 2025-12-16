@@ -87,16 +87,24 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
 
     // Remove item
     const removeItem = async (itemId: number) => {
-        if (!confirm('Remover este ponto do carrinho?')) return;
+        // Optimistic Update: Remove immediately from local state
+        const updatedItems = itens.filter(item => item.id !== itemId);
+        setItens(updatedItems);
+
+        // Update global store immediately so Map markers turn blue
+        useStore.getState().refreshProposta({
+            ...proposta,
+            itens: updatedItems
+        });
 
         setIsSaving(true);
         try {
-            const updatedItems = itens.filter(item => item.id !== itemId);
             await api.updateCart(proposta.id, updatedItems);
-            await loadItens();
         } catch (error) {
             console.error('Erro ao remover item:', error);
-            alert('Erro ao remover item');
+            // Revert on error
+            alert('Erro ao remover item do servidor');
+            await loadItens();
         } finally {
             setIsSaving(false);
         }

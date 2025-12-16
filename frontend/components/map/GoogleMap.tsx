@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { useStore } from '@/lib/store';
 import { Ponto } from '@/lib/types';
@@ -145,11 +145,62 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
         initMap();
     }, []);
 
-    // Atualizar markers quando pontos mudarem
-    useEffect(() => {
-        if (!isLoaded || !googleMapRef.current) return;
+    // 1. Memoize filtered points to avoid recalculating on every render
+    const filteredPontos = useMemo(() => {
+        if (!isLoaded) return [];
 
-        // Limpar markers antigos
+        return pontos.filter((ponto: Ponto) => {
+            // Filtro por país
+            if (filterPais.length > 0 && !filterPais.includes(ponto.pais || '')) return false;
+            // Filtro por UF
+            if (filterUF.length > 0 && !filterUF.includes(ponto.uf || '')) return false;
+            // Filtro por cidade
+            if (filterCidade.length > 0 && !filterCidade.includes(ponto.cidade || '')) return false;
+            // Filtro por exibidora
+            if (filterExibidora.length > 0 && !filterExibidora.includes(ponto.id_exibidora || 0)) return false;
+            // Filtro por tipos
+            if (filterTipos.length > 0) {
+                const pontoTipos = ponto.tipo?.split(',').map(t => t.trim()) || [];
+                if (!filterTipos.some(t => pontoTipos.includes(t))) return false;
+            }
+            // Filtro por faixa de valor
+            if (filterValorMin !== null || filterValorMax !== null) {
+                const locacaoProdutos = ponto.produtos?.filter(p => p.tipo === 'Locação') || [];
+                if (locacaoProdutos.length === 0) return false;
+                const valores = locacaoProdutos.map(p => p.valor);
+                const maxValor = Math.max(...valores);
+                const minValor = Math.min(...valores);
+                if (filterValorMin !== null && maxValor < filterValorMin) return false;
+                if (filterValorMax !== null && minValor > filterValorMax) return false;
+            }
+            return true;
+        });
+    }, [pontos, filterExibidora, filterPais, filterUF, filterCidade, filterTipos, filterValorMin, filterValorMax, isLoaded]);
+
+    // 2. Effect for Fitting Bounds (Run ONLY when filtered points change)
+    useEffect(() => {
+        if (!googleMapRef.current || filteredPontos.length === 0) return;
+
+        const bounds = new google.maps.LatLngBounds();
+        let hasValidPoints = false;
+
+        filteredPontos.forEach((ponto) => {
+            if (ponto.latitude && ponto.longitude) {
+                bounds.extend({ lat: ponto.latitude, lng: ponto.longitude });
+                hasValidPoints = true;
+            }
+        });
+
+        if (hasValidPoints) {
+            googleMapRef.current.fitBounds(bounds);
+        }
+    }, [filteredPontos]);
+
+    // 3. Effect for Rendering Markers (Run when points OR proposal/cart changes)
+    useEffect(() => {
+        if (!googleMapRef.current) return;
+
+        // Clear old markers
         markersRef.current.forEach((marker) => marker.setMap(null));
         markersRef.current = [];
 
@@ -157,56 +208,15 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             clustererRef.current.clearMarkers();
         }
 
-        // Aplicar TODOS os filtros
-        const filteredPontos = pontos.filter((ponto) => {
-            // Filtro por país (multi-select)
-            if (filterPais.length > 0 && !filterPais.includes(ponto.pais || '')) return false;
-
-            // Filtro por UF (multi-select) - opcional para países sem estados
-            if (filterUF.length > 0 && !filterUF.includes(ponto.uf || '')) return false;
-
-            // Filtro por cidade (multi-select)
-            if (filterCidade.length > 0 && !filterCidade.includes(ponto.cidade || '')) return false;
-
-            // Filtro por exibidora (multi-select)
-            if (filterExibidora.length > 0 && !filterExibidora.includes(ponto.id_exibidora || 0)) return false;
-
-            // Filtro por tipos (verificar se o ponto tem algum dos tipos selecionados)
-            if (filterTipos.length > 0) {
-                const pontoTipos = ponto.tipo?.split(',').map(t => t.trim()) || [];
-                const hasMatchingTipo = filterTipos.some(filterTipo =>
-                    pontoTipos.includes(filterTipo)
-                );
-                if (!hasMatchingTipo) return false;
-            }
-
-            // Filtro por faixa de valor (apenas produtos de "Locação")
-            if (filterValorMin !== null || filterValorMax !== null) {
-                const locacaoProdutos = ponto.produtos?.filter(p => p.tipo === 'Locação') || [];
-
-                if (locacaoProdutos.length === 0) return false;
-
-                const valores = locacaoProdutos.map(p => p.valor);
-                const maxValor = Math.max(...valores);
-                const minValor = Math.min(...valores);
-
-                if (filterValorMin !== null && maxValor < filterValorMin) return false;
-                if (filterValorMax !== null && minValor > filterValorMax) return false;
-            }
-
-            return true;
-        });
-
-        // Get cart item IDs if there's an active proposal
+        // Get cart item IDs
         const cartItemIds = new Set(
             selectedProposta?.itens?.map((item: any) => item.id_ooh) || []
         );
 
-        // Criar novos markers
+        // Create new markers
         const markers = filteredPontos
-            .filter((ponto) => ponto.latitude && ponto.longitude)
-            .map((ponto) => {
-                // Check if point is in cart
+            .filter((ponto: Ponto) => ponto.latitude && ponto.longitude)
+            .map((ponto: Ponto) => {
                 const isInCart = cartItemIds.has(ponto.id);
 
                 const marker = new google.maps.Marker({
@@ -216,58 +226,39 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                     icon: {
                         path: google.maps.SymbolPath.CIRCLE,
                         scale: 8,
-                        fillColor: isInCart ? '#10B981' : '#3B82F6', // Green if in cart, blue otherwise
+                        fillColor: isInCart ? '#10B981' : '#3B82F6', // Green if in cart
                         fillOpacity: 0.9,
                         strokeColor: '#FFFFFF',
                         strokeWeight: 2
                     }
                 });
 
-                // Click handler
-                marker.addListener('click', () => {
-                    setSelectedPonto(ponto);
-                });
+                marker.addListener('click', () => setSelectedPonto(ponto));
 
-                // Hover handler - mostrar tooltip
-                marker.addListener('mouseover', (event: google.maps.MapMouseEvent) => {
-                    if (hoverTimeoutRef.current) {
-                        clearTimeout(hoverTimeoutRef.current);
-                    }
-
+                // Hover logic
+                marker.addListener('mouseover', () => {
+                    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
                     hoverTimeoutRef.current = setTimeout(() => {
                         setHoveredPonto(ponto);
-
-                        // Calcular posição do tooltip na tela
                         const scale = Math.pow(2, googleMapRef.current!.getZoom()!);
-                        const nw = new google.maps.LatLng(
-                            googleMapRef.current!.getBounds()!.getNorthEast().lat(),
-                            googleMapRef.current!.getBounds()!.getSouthWest().lng()
-                        );
-                        const worldCoordinateNW = googleMapRef.current!.getProjection()!.fromLatLngToPoint(nw);
-                        const worldCoordinate = googleMapRef.current!.getProjection()!.fromLatLngToPoint(marker.getPosition()!);
-
-                        if (worldCoordinate && worldCoordinateNW) {
-                            const pixelOffset = new google.maps.Point(
-                                Math.floor((worldCoordinate.x - worldCoordinateNW.x) * scale),
-                                Math.floor((worldCoordinate.y - worldCoordinateNW.y) * scale)
-                            );
-
-                            setTooltipPosition({
-                                x: pixelOffset.x,
-                                y: pixelOffset.y
-                            });
+                        const bounds = googleMapRef.current!.getBounds();
+                        if (bounds) {
+                            const nw = new google.maps.LatLng(bounds.getNorthEast().lat(), bounds.getSouthWest().lng());
+                            const worldCoordinateNW = googleMapRef.current!.getProjection()!.fromLatLngToPoint(nw);
+                            const worldCoordinate = googleMapRef.current!.getProjection()!.fromLatLngToPoint(marker.getPosition()!);
+                            if (worldCoordinate && worldCoordinateNW) {
+                                setTooltipPosition({
+                                    x: Math.floor((worldCoordinate.x - worldCoordinateNW.x) * scale),
+                                    y: Math.floor((worldCoordinate.y - worldCoordinateNW.y) * scale)
+                                });
+                            }
                         }
                     }, 200);
                 });
 
                 marker.addListener('mouseout', () => {
-                    if (hoverTimeoutRef.current) {
-                        clearTimeout(hoverTimeoutRef.current);
-                    }
-                    // Delay maior para permitir que o usuário mova o mouse para o tooltip
-                    hoverTimeoutRef.current = setTimeout(() => {
-                        setHoveredPonto(null);
-                    }, 300);
+                    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+                    hoverTimeoutRef.current = setTimeout(() => setHoveredPonto(null), 300);
                 });
 
                 return marker;
@@ -275,7 +266,6 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
 
         markersRef.current = markers;
 
-        // Criar cluster
         if (markers.length > 0) {
             clustererRef.current = new MarkerClusterer({
                 map: googleMapRef.current,
@@ -283,16 +273,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             });
         }
 
-        // Ajustar bounds se houver pontos
-        if (markers.length > 0) {
-            const bounds = new google.maps.LatLngBounds();
-            markers.forEach((marker) => {
-                const pos = marker.getPosition();
-                if (pos) bounds.extend(pos);
-            });
-            googleMapRef.current.fitBounds(bounds);
-        }
-    }, [pontos, filterExibidora, filterPais, filterUF, filterCidade, filterTipos, filterValorMin, filterValorMax, isLoaded, setSelectedPonto, selectedProposta]);
+    }, [filteredPontos, selectedProposta, setSelectedPonto]);
 
     // Centralizar mapa quando search location mudar
     useEffect(() => {
@@ -301,7 +282,6 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             googleMapRef.current.setCenter(location);
             googleMapRef.current.setZoom(17);
 
-            // Adicionar marker temporário
             const marker = new google.maps.Marker({
                 position: location,
                 map: googleMapRef.current,
@@ -316,7 +296,6 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                 }
             });
 
-            // Remover marker após 3 segundos
             setTimeout(() => {
                 marker.setMap(null);
             }, 3000);
@@ -329,7 +308,6 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             const position = new google.maps.LatLng(streetViewRequest.lat, streetViewRequest.lng);
             streetViewRef.current.setPosition(position);
             streetViewRef.current.setVisible(true);
-            // Limpar o request após processar
             setStreetViewRequest(null);
         }
     }, [streetViewRequest, isLoaded, setStreetViewRequest]);
@@ -345,7 +323,6 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
     const handleCadastrarAqui = useCallback(() => {
         if (!streetViewPosition) return;
 
-        // Passar coordenadas para o modal via Zustand
         setStreetViewCoordinates(streetViewPosition);
         setModalOpen(true);
     }, [streetViewPosition, setStreetViewCoordinates, setModalOpen]);
@@ -353,13 +330,11 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
     const handleCadastrarNoMapa = useCallback(() => {
         if (!contextMenu) return;
 
-        // Passar coordenadas para o modal via Zustand
         setStreetViewCoordinates({ lat: contextMenu.lat, lng: contextMenu.lng });
         setModalOpen(true);
         setContextMenu(null);
     }, [contextMenu, setStreetViewCoordinates, setModalOpen]);
 
-    // Fechar context menu ao clicar em qualquer lugar
     useEffect(() => {
         const handleClick = () => setContextMenu(null);
         if (contextMenu) {
@@ -379,19 +354,17 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                     position={tooltipPosition}
                     onStreetViewClick={() => handleStreetViewClick(hoveredPonto)}
                     onMouseEnter={() => {
-                        // Cancela o timeout de fechar quando o mouse entra no tooltip
                         if (hoverTimeoutRef.current) {
                             clearTimeout(hoverTimeoutRef.current);
                         }
                     }}
                     onMouseLeave={() => {
-                        // Fecha o tooltip quando o mouse sai
                         setHoveredPonto(null);
                     }}
                 />
             )}
 
-            {/* Context Menu - Botão Direito no Mapa */}
+            {/* Context Menu */}
             {contextMenu && !isStreetViewMode && (
                 <div
                     className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden"
@@ -402,7 +375,6 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                     }}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Header com coordenadas */}
                     <div className="px-4 py-2 bg-gray-50 border-b border-gray-200">
                         <p className="text-xs font-mono text-gray-600">
                             {contextMenu.lat.toFixed(6)}, {contextMenu.lng.toFixed(6)}
@@ -411,8 +383,6 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                             {contextMenu.address}
                         </p>
                     </div>
-
-                    {/* Botão de cadastrar */}
                     <button
                         onClick={handleCadastrarNoMapa}
                         className="w-full px-4 py-3 text-left hover:bg-gray-50 transition flex items-center gap-3 text-sm font-medium text-gray-700"
@@ -423,7 +393,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                 </div>
             )}
 
-            {/* Botão Cadastrar Aqui - Street View */}
+            {/* Botão Street View */}
             {isStreetViewMode && streetViewPosition && (
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
                     <button
