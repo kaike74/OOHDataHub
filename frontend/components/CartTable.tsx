@@ -43,10 +43,14 @@ const formatDecimal = (value: number) => {
     }).format(value);
 }
 
-// Helper to handle Enter/Tab to blur (save and move to next field)
-const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' || e.key === 'Tab') {
+// Helper to handle Enter to move to next row, Tab for regular behavior
+const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, moveToNext?: () => void) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
         e.currentTarget.blur();
+        if (moveToNext) {
+            setTimeout(() => moveToNext(), 10);
+        }
     }
 }
 
@@ -72,6 +76,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
     // UI State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [focusedCell, setFocusedCell] = useState<{ rowId: number | null; columnId: string | null }>({ rowId: null, columnId: null });
 
     // Drag-to-Fill State
     const [dragState, setDragState] = useState<{
@@ -178,14 +183,25 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             const startIdx = itens.findIndex(item => item.id === dragState.startRowId);
             const endIdx = itens.findIndex(item => item.id === dragState.currentRowId);
 
-            if (startIdx !== -1 && endIdx !== -1 && startIdx !== endIdx) {
+            if (startIdx !== -1 && endIdx !== -1) {
                 const [minIdx, maxIdx] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
                 const updatedItens = [...itens];
 
+                // Apply the value to all rows in range
                 for (let i = minIdx; i <= maxIdx; i++) {
-                    updatedItens[i] = { ...updatedItens[i], [dragState.columnKey]: dragState.startValue };
+                    // Handle período specially (it has two date fields)
+                    if (dragState.columnKey === 'periodo_wrapper' && typeof dragState.startValue === 'object') {
+                        updatedItens[i] = {
+                            ...updatedItens[i],
+                            periodo_inicio: dragState.startValue.periodo_inicio,
+                            periodo_fim: dragState.startValue.periodo_fim
+                        };
+                    } else {
+                        updatedItens[i] = { ...updatedItens[i], [dragState.columnKey]: dragState.startValue };
+                    }
                 }
 
+                console.log('Drag-fill applying:', { columnKey: dragState.columnKey, value: dragState.startValue, rows: [minIdx, maxIdx] });
                 setItens(updatedItens);
                 refreshProposta({ ...selectedProposta!, itens: updatedItens });
                 api.updateCart(selectedProposta!.id, updatedItens).catch(console.error);
@@ -317,21 +333,35 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         {
             header: 'Período',
             id: 'periodo',
+            accessorKey: 'periodo_wrapper', // For drag-fill identification
             size: 220,
             cell: ({ row }) => {
+                const rowIndex = itens.findIndex(item => item.id === row.original.id);
+                const moveToNextRow = () => {
+                    const nextRow = itens[rowIndex + 1];
+                    if (nextRow) {
+                        const nextInput = document.querySelector(`input[data-row-id="${nextRow.id}"][data-column-id="periodo_inicio"]`) as HTMLInputElement;
+                        nextInput?.focus();
+                    }
+                };
+
                 return (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 relative">
                         <input
                             type="date"
                             className="w-[105px] bg-transparent border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-[11px]"
                             defaultValue={row.original.periodo_inicio || ''}
                             key={`inicio-${row.original.id}-${row.original.periodo_inicio}`}
-                            onKeyDown={handleKeyDown}
+                            data-row-id={row.original.id}
+                            data-column-id="periodo_inicio"
+                            onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'periodo' })}
                             onBlur={(e) => {
+                                setFocusedCell({ rowId: null, columnId: null });
                                 if (e.target.value !== row.original.periodo_inicio) {
                                     updateItem(row.original.id, 'periodo_inicio', e.target.value);
                                 }
                             }}
+                            onKeyDown={(e) => handleKeyDown(e, moveToNextRow)}
                         />
                         <span className="text-gray-400 text-xs">→</span>
                         <input
@@ -339,12 +369,16 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                             className="w-[105px] bg-transparent border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-[11px]"
                             defaultValue={row.original.periodo_fim || ''}
                             key={`fim-${row.original.id}-${row.original.periodo_fim}`}
-                            onKeyDown={handleKeyDown}
+                            data-row-id={row.original.id}
+                            data-column-id="periodo_fim"
+                            onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'periodo' })}
                             onBlur={(e) => {
+                                setFocusedCell({ rowId: null, columnId: null });
                                 if (e.target.value !== row.original.periodo_fim) {
                                     updateItem(row.original.id, 'periodo_fim', e.target.value);
                                 }
                             }}
+                            onKeyDown={(e) => handleKeyDown(e, moveToNextRow)}
                         />
                     </div>
                 );
@@ -352,30 +386,47 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         },
         {
             header: 'Período Com.',
+            id: 'periodo_comercializado',
             accessorKey: 'periodo_comercializado',
             size: 110,
-            cell: ({ row }) => (
-                <select
-                    className="w-full bg-transparent text-xs outline-none cursor-pointer"
-                    value={row.original.periodo_comercializado || 'bissemanal'}
-                    key={`periodo-com-${row.original.id}-${row.original.periodo_comercializado}`}
-                    onChange={(e) => {
-                        updateItem(row.original.id, 'periodo_comercializado', e.target.value);
+            cell: ({ row }) => {
+                const rowIndex = itens.findIndex(item => item.id === row.original.id);
+                return (
+                    <select
+                        className="w-full bg-transparent text-xs outline-none cursor-pointer"
+                        value={row.original.periodo_comercializado || 'bissemanal'}
+                        data-row-id={row.original.id}
+                        data-column-id="periodo_comercializado"
+                        onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'periodo_comercializado' })}
+                        onBlur={() => setFocusedCell({ rowId: null, columnId: null })}
+                        onChange={(e) => {
+                            const newValue = e.target.value;
+                            updateItem(row.original.id, 'periodo_comercializado', newValue);
 
-                        // Recalculate qtd when period comercializado changes
-                        if (row.original.periodo_inicio && row.original.periodo_fim) {
-                            const dataInicio = new Date(row.original.periodo_inicio);
-                            const dataFim = new Date(row.original.periodo_fim);
-                            const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
-                            const qtd = e.target.value === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                            updateItem(row.original.id, 'qtd_bi_mes', qtd);
-                        }
-                    }}
-                >
-                    <option value="bissemanal">Bissemanal</option>
-                    <option value="mensal">Mensal</option>
-                </select>
-            )
+                            // Recalculate qtd when period comercializado changes
+                            if (row.original.periodo_inicio && row.original.periodo_fim) {
+                                const dataInicio = new Date(row.original.periodo_inicio);
+                                const dataFim = new Date(row.original.periodo_fim);
+                                const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+                                const qtd = newValue === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                                updateItem(row.original.id, 'qtd_bi_mes', qtd);
+                            }
+
+                            // Force focus on next row's select
+                            const nextRow = itens[rowIndex + 1];
+                            if (nextRow) {
+                                setTimeout(() => {
+                                    const nextSelect = document.querySelector(`select[data-row-id="${nextRow.id}"][data-column-id="periodo_comercializado"]`) as HTMLSelectElement;
+                                    nextSelect?.focus();
+                                }, 10);
+                            }
+                        }}
+                    >
+                        <option value="bissemanal">Bissemanal</option>
+                        <option value="mensal">Mensal</option>
+                    </select>
+                )
+            }
         },
         {
             header: 'Qtd Bi/Mes',
@@ -395,75 +446,123 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         },
         {
             header: 'Locação',
+            id: 'valor_locacao',
             accessorKey: 'valor_locacao',
             size: 110,
-            cell: ({ row }) => (
-                <div className="flex items-center justify-end font-medium text-gray-900">
-                    <span className="text-xs text-gray-400 mr-1">R$</span>
-                    <input
-                        type="text"
-                        className="w-20 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                        defaultValue={formatDecimal(row.original.valor_locacao || 0)}
-                        key={`locacao-${row.original.id}-${row.original.valor_locacao}`}
-                        onKeyDown={handleKeyDown}
-                        onBlur={(e) => {
-                            const newValue = Number(e.target.value.replace(/\./g, '').replace(',', '.'));
-                            if (!isNaN(newValue) && newValue !== row.original.valor_locacao) {
-                                updateItem(row.original.id, 'valor_locacao', newValue);
-                            }
-                            e.target.value = formatDecimal(row.original.valor_locacao || 0);
-                        }}
-                    />
-                </div>
-            )
+            cell: ({ row }) => {
+                const rowIndex = itens.findIndex(item => item.id === row.original.id);
+                const moveToNextRow = () => {
+                    const nextRow = itens[rowIndex + 1];
+                    if (nextRow) {
+                        const nextInput = document.querySelector(`input[data-row-id="${nextRow.id}"][data-column-id="valor_locacao"]`) as HTMLInputElement;
+                        nextInput?.focus();
+                    }
+                };
+
+                return (
+                    <div className="flex items-center justify-end font-medium text-gray-900">
+                        <span className="text-xs text-gray-400 mr-1">R$</span>
+                        <input
+                            type="text"
+                            className="w-20 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                            defaultValue={formatDecimal(row.original.valor_locacao || 0)}
+                            key={`locacao-${row.original.id}-${row.original.valor_locacao}`}
+                            data-row-id={row.original.id}
+                            data-column-id="valor_locacao"
+                            onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'valor_locacao' })}
+                            onKeyDown={(e) => handleKeyDown(e, moveToNextRow)}
+                            onBlur={(e) => {
+                                setFocusedCell({ rowId: null, columnId: null });
+                                const newValue = Number(e.target.value.replace(/\./g, '').replace(',', '.'));
+                                if (!isNaN(newValue) && newValue !== row.original.valor_locacao) {
+                                    updateItem(row.original.id, 'valor_locacao', newValue);
+                                }
+                                e.target.value = formatDecimal(row.original.valor_locacao || 0);
+                            }}
+                        />
+                    </div>
+                )
+            }
         },
         {
             header: 'Papel',
+            id: 'valor_papel',
             accessorKey: 'valor_papel',
             size: 100,
-            cell: ({ row }) => (
-                <div className="flex items-center justify-end text-gray-600 text-xs">
-                    <span className="text-gray-400 mr-1">R$</span>
-                    <input
-                        type="text"
-                        className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                        defaultValue={formatDecimal(row.original.valor_papel || 0)}
-                        key={`papel-${row.original.id}-${row.original.valor_papel}`}
-                        onKeyDown={handleKeyDown}
-                        onBlur={(e) => {
-                            const newValue = Number(e.target.value.replace(/\./g, '').replace(',', '.'));
-                            if (!isNaN(newValue) && newValue !== row.original.valor_papel) {
-                                updateItem(row.original.id, 'valor_papel', newValue);
-                            }
-                            e.target.value = formatDecimal(row.original.valor_papel || 0);
-                        }}
-                    />
-                </div>
-            )
+            cell: ({ row }) => {
+                const rowIndex = itens.findIndex(item => item.id === row.original.id);
+                const moveToNextRow = () => {
+                    const nextRow = itens[rowIndex + 1];
+                    if (nextRow) {
+                        const nextInput = document.querySelector(`input[data-row-id="${nextRow.id}"][data-column-id="valor_papel"]`) as HTMLInputElement;
+                        nextInput?.focus();
+                    }
+                };
+
+                return (
+                    <div className="flex items-center justify-end text-gray-600 text-xs">
+                        <span className="text-gray-400 mr-1">R$</span>
+                        <input
+                            type="text"
+                            className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                            defaultValue={formatDecimal(row.original.valor_papel || 0)}
+                            key={`papel-${row.original.id}-${row.original.valor_papel}`}
+                            data-row-id={row.original.id}
+                            data-column-id="valor_papel"
+                            onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'valor_papel' })}
+                            onKeyDown={(e) => handleKeyDown(e, moveToNextRow)}
+                            onBlur={(e) => {
+                                setFocusedCell({ rowId: null, columnId: null });
+                                const newValue = Number(e.target.value.replace(/\./g, '').replace(',', '.'));
+                                if (!isNaN(newValue) && newValue !== row.original.valor_papel) {
+                                    updateItem(row.original.id, 'valor_papel', newValue);
+                                }
+                                e.target.value = formatDecimal(row.original.valor_papel || 0);
+                            }}
+                        />
+                    </div>
+                )
+            }
         },
         {
             header: 'Lona',
+            id: 'valor_lona',
             accessorKey: 'valor_lona',
             size: 100,
-            cell: ({ row }) => (
-                <div className="flex items-center justify-end text-gray-600 text-xs">
-                    <span className="text-gray-400 mr-1">R$</span>
-                    <input
-                        type="text"
-                        className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                        defaultValue={formatDecimal(row.original.valor_lona || 0)}
-                        key={`lona-${row.original.id}-${row.original.valor_lona}`}
-                        onKeyDown={handleKeyDown}
-                        onBlur={(e) => {
-                            const newValue = Number(e.target.value.replace(/\./g, '').replace(',', '.'));
-                            if (!isNaN(newValue) && newValue !== row.original.valor_lona) {
-                                updateItem(row.original.id, 'valor_lona', newValue);
-                            }
-                            e.target.value = formatDecimal(row.original.valor_lona || 0);
-                        }}
-                    />
-                </div>
-            )
+            cell: ({ row }) => {
+                const rowIndex = itens.findIndex(item => item.id === row.original.id);
+                const moveToNextRow = () => {
+                    const nextRow = itens[rowIndex + 1];
+                    if (nextRow) {
+                        const nextInput = document.querySelector(`input[data-row-id="${nextRow.id}"][data-column-id="valor_lona"]`) as HTMLInputElement;
+                        nextInput?.focus();
+                    }
+                };
+
+                return (
+                    <div className="flex items-center justify-end text-gray-600 text-xs">
+                        <span className="text-gray-400 mr-1">R$</span>
+                        <input
+                            type="text"
+                            className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                            defaultValue={formatDecimal(row.original.valor_lona || 0)}
+                            key={`lona-${row.original.id}-${row.original.valor_lona}`}
+                            data-row-id={row.original.id}
+                            data-column-id="valor_lona"
+                            onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'valor_lona' })}
+                            onKeyDown={(e) => handleKeyDown(e, moveToNextRow)}
+                            onBlur={(e) => {
+                                setFocusedCell({ rowId: null, columnId: null });
+                                const newValue = Number(e.target.value.replace(/\./g, '').replace(',', '.'));
+                                if (!isNaN(newValue) && newValue !== row.original.valor_lona) {
+                                    updateItem(row.original.id, 'valor_lona', newValue);
+                                }
+                                e.target.value = formatDecimal(row.original.valor_lona || 0);
+                            }}
+                        />
+                    </div>
+                )
+            }
         },
         {
             header: 'Fluxo Diário',
@@ -476,7 +575,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     placeholder="0"
                     defaultValue={row.original.fluxo_diario ? formatNumber(row.original.fluxo_diario) : ''}
                     key={`fluxo-${row.original.id}-${row.original.fluxo_diario}`}
-                    onKeyDown={handleKeyDown}
                     onBlur={(e) => {
                         const newValue = Number(e.target.value.replace(/\./g, ''));
                         if (!isNaN(newValue) && newValue !== row.original.fluxo_diario) {
@@ -782,20 +880,25 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                         style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
                                     >
                                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        {/* Drag handle for editable cells */}
-                                        {['valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '') && (
-                                            <div
-                                                className={`absolute bottom-0 right-0 w-2 h-2 bg-blue-500 rounded-tl cursor-crosshair opacity-0 group-hover:opacity-100 transition-opacity ${dragState.isDragging && dragState.startRowId === row.original.id && dragState.columnKey === cell.column.id ? 'opacity-100' : ''
-                                                    } ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? 'opacity-100 bg-blue-400' : ''
-                                                    }`}
-                                                onMouseDown={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    const value = (row.original as any)[cell.column.id!];
-                                                    startDragging(row.original.id, cell.column.id!, value);
-                                                }}
-                                            />
-                                        )}
+                                        {/* Drag handle for ONLY specified editable cells */}
+                                        {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
+                                            focusedCell.rowId === row.original.id &&
+                                            (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
+                                                <div
+                                                    className="absolute bottom-0 right-0 w-2 h-2 bg-blue-500 rounded-tl cursor-crosshair opacity-100 transition-opacity"
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        const columnId = cell.column.id!;
+                                                        let value = (row.original as any)[columnId];
+                                                        // For período, use both values
+                                                        if (columnId === 'periodo') {
+                                                            value = { periodo_inicio: row.original.periodo_inicio, periodo_fim: row.original.periodo_fim };
+                                                        }
+                                                        startDragging(row.original.id, columnId, value);
+                                                    }}
+                                                />
+                                            )}
                                         {/* Highlight border during drag */}
                                         {isInDragRange(row.original.id) && dragState.columnKey === cell.column.id && (
                                             <div className="absolute inset-0 border-2 border-blue-400 pointer-events-none rounded" />
