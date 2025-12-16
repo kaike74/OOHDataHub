@@ -23,12 +23,12 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
             searchTerm = searchTerm
                 .normalize('NFD')
                 .replace(/[\u0300-\u036f]/g, '') // Remove accents
-                .replace(/~/g, '') // Remove til
+                .replace(/~/g, '')               // Remove til
                 .toLowerCase();
 
             const likePattern = `%${searchTerm}%`;
 
-            // Simpler query - just use LOWER for case-insensitive search
+            // SQL with REPLACE to normalize database data (remove til and common accents)
             const { results } = await env.DB.prepare(`
                 SELECT 
                     p.id, p.codigo_ooh, p.endereco, p.cidade, p.uf, p.pais,
@@ -37,12 +37,20 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
                 FROM pontos_ooh p
                 LEFT JOIN exibidoras e ON p.id_exibidora = e.id
                 WHERE 
-                    LOWER(p.codigo_ooh) LIKE ? 
-                    OR LOWER(p.endereco) LIKE ?
-                    OR LOWER(p.cidade) LIKE ?
+                    LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                        p.codigo_ooh, 'ã', 'a'), 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u'), 'ç', 'c')
+                    ) LIKE ?
+                    OR LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                        p.endereco, 'ã', 'a'), 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u'), 'ç', 'c')
+                    ) LIKE ?
+                    OR LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                        p.cidade, 'ã', 'a'), 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u'), 'ç', 'c')
+                    ) LIKE ?
                     OR LOWER(p.uf) LIKE ?
                     OR LOWER(p.pais) LIKE ?
-                    OR LOWER(e.nome) LIKE ?
+                    OR LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                        e.nome, 'ã', 'a'), 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u'), 'ç', 'c')
+                    ) LIKE ?
                 LIMIT 10
             `).bind(likePattern, likePattern, likePattern, likePattern, likePattern, likePattern).all();
 
