@@ -73,6 +73,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     useEffect(() => {
         if (selectedProposta) {
             setItens(selectedProposta.itens || []);
+            console.log('🛒 CartTable recebeu itens:', selectedProposta.itens);
         } else {
             setItens([]);
         }
