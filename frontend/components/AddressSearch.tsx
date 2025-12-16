@@ -41,7 +41,10 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/search?q=${encodeURIComponent(query)}`);
-      const results = await response.json();
+      const data = await response.json();
+
+      // Check if response has results array
+      const results = Array.isArray(data) ? data : (data.results || []);
 
       const formattedResults: SearchResult[] = results.map((ponto: any) => ({
         type: 'database' as const,
@@ -152,8 +155,8 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
     <div className="relative">
       <div
         className={`map-search-bar flex items-center gap-3 transition-all ${isFocused
-            ? 'border-emidias-accent shadow-accent'
-            : 'border-transparent'
+          ? 'border-emidias-accent shadow-accent'
+          : 'border-transparent'
           }`}
       >
         <div className={`flex-shrink-0 transition-colors ${isFocused ? 'text-emidias-accent' : 'text-emidias-gray-400'}`}>
@@ -196,21 +199,21 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
 
       {/* Combined Results Dropdown */}
       {showDropdown && allResults.length > 0 && (
-        <div className="absolute top-full mt-2 left-0 right-0 glass-light rounded-xl shadow-emidias-xl max-h-96 overflow-y-auto z-[60] animate-fade-in-up">
-          <div className="p-2">
+        <div className="absolute top-full mt-2 left-0 right-0 bg-white/95 backdrop-blur-md rounded-xl shadow-emidias-xl max-h-96 overflow-y-auto z-[60] animate-fade-in-up border border-emidias-gray-200">
+          <div className="p-1.5">
             {dbResults.length > 0 && (
               <>
-                <div className="text-xs font-semibold text-emidias-gray-400 px-3 py-2">
+                <div className="text-xs font-semibold text-emidias-gray-500 px-2.5 py-1.5">
                   🎯 Pontos Cadastrados ({dbResults.length})
                 </div>
                 {dbResults.map((result, index) => (
                   <button
                     key={`db-${result.id || index}`}
                     onClick={() => handleSelectDbResult(result)}
-                    className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-emidias-blue-50 transition-colors group"
+                    className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-emidias-blue-50 transition-colors group"
                   >
                     <div className="flex items-start gap-2">
-                      <Target size={16} className="text-emidias-accent mt-0.5 flex-shrink-0" />
+                      <Target size={14} className="text-emidias-accent mt-0.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-emidias-gray-900 truncate group-hover:text-emidias-primary">
                           {result.label}
@@ -229,18 +232,18 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
 
             {googleResults.length > 0 && (
               <>
-                {dbResults.length > 0 && <div className="h-px bg-emidias-gray-200 my-2" />}
-                <div className="text-xs font-semibold text-emidias-gray-400 px-3 py-2">
+                {dbResults.length > 0 && <div className="h-px bg-emidias-gray-200 my-1.5" />}
+                <div className="text-xs font-semibold text-emidias-gray-500 px-2.5 py-1.5">
                   📍 Endereços Google ({googleResults.length})
                 </div>
                 {googleResults.map((result, index) => (
                   <button
                     key={`google-${index}`}
                     onClick={() => handleSelectGoogleResult(result)}
-                    className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-emidias-blue-50 transition-colors group"
+                    className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-emidias-blue-50 transition-colors group"
                   >
                     <div className="flex items-start gap-2">
-                      <MapPin size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                      <MapPin size={14} className="text-blue-500 mt-0.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-emidias-gray-900 truncate group-hover:text-emidias-primary">
                           {result.label}

@@ -13,25 +13,22 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
         }
 
         try {
-            // Clean and normalize search term
+            // Normalize search term (remove accents, til, special chars)
             let searchTerm = query.trim();
 
-            // Remove common prefixes (Rua, Avenida, etc)
+            // Remove common prefixes
             searchTerm = searchTerm.replace(/^(rua|avenida|av|alameda|travessa|praça|pça)\s+/i, '');
 
-            // Remove accents for fuzzy matching
-            const normalizedTerm = searchTerm
+            // Normalize: remove accents and til
+            searchTerm = searchTerm
                 .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[\u0300-\u036f]/g, '') // Remove accents
+                .replace(/~/g, '') // Remove til
                 .toLowerCase();
 
-            // Split into words for partial matching
-            const words = normalizedTerm.split(/\s+/).filter(w => w.length > 2);
+            const likePattern = `%${searchTerm}%`;
 
-            // Build LIKE conditions for each word
-            const likePattern = `%${normalizedTerm}%`;
-
-            // Search with fuzzy logic - matches any part of the string
+            // Simpler query - just use LOWER for case-insensitive search
             const { results } = await env.DB.prepare(`
                 SELECT 
                     p.id, p.codigo_ooh, p.endereco, p.cidade, p.uf, p.pais,
@@ -40,20 +37,12 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
                 FROM pontos_ooh p
                 LEFT JOIN exibidoras e ON p.id_exibidora = e.id
                 WHERE 
-                    LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
-                        p.codigo_ooh, 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u'), 'ç', 'c')
-                    ) LIKE ? COLLATE NOCASE
-                    OR LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
-                        p.endereco, 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u'), 'ç', 'c')
-                    ) LIKE ? COLLATE NOCASE
-                    OR LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
-                        p.cidade, 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u'), 'ç', 'c')
-                    ) LIKE ? COLLATE NOCASE
-                    OR LOWER(p.uf) LIKE ? COLLATE NOCASE
-                    OR LOWER(p.pais) LIKE ? COLLATE NOCASE
-                    OR LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
-                        e.nome, 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u'), 'ç', 'c')
-                    ) LIKE ? COLLATE NOCASE
+                    LOWER(p.codigo_ooh) LIKE ? 
+                    OR LOWER(p.endereco) LIKE ?
+                    OR LOWER(p.cidade) LIKE ?
+                    OR LOWER(p.uf) LIKE ?
+                    OR LOWER(p.pais) LIKE ?
+                    OR LOWER(e.nome) LIKE ?
                 LIMIT 10
             `).bind(likePattern, likePattern, likePattern, likePattern, likePattern, likePattern).all();
 
@@ -62,7 +51,7 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
             });
         } catch (error: any) {
             console.error('Search error:', error);
-            return new Response(JSON.stringify({ error: error.message }), {
+            return new Response(JSON.stringify({ error: error.message, results: [] }), {
                 status: 500,
                 headers: { ...corsHeaders(request, env), 'Content-Type': 'application/json' }
             });
