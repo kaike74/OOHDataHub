@@ -1,4 +1,5 @@
 import { Env } from '../index';
+import { corsHeaders } from '../utils/cors';
 
 export async function handleSearch(request: Request, env: Env): Promise<Response> {
     if (request.method === 'GET') {
@@ -7,7 +8,7 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
 
         if (!query || query.trim().length < 2) {
             return new Response(JSON.stringify([]), {
-                headers: { 'Content-Type': 'application/json' }
+                headers: { ...corsHeaders(request, env), 'Content-Type': 'application/json' }
             });
         }
 
@@ -33,16 +34,19 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
             `).bind(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm).all();
 
             return new Response(JSON.stringify(results), {
-                headers: { 'Content-Type': 'application/json' }
+                headers: { ...corsHeaders(request, env), 'Content-Type': 'application/json' }
             });
         } catch (error: any) {
             console.error('Search error:', error);
             return new Response(JSON.stringify({ error: error.message }), {
                 status: 500,
-                headers: { 'Content-Type': 'application/json' }
+                headers: { ...corsHeaders(request, env), 'Content-Type': 'application/json' }
             });
         }
     }
 
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', {
+        status: 405,
+        headers: { ...corsHeaders(request, env) }
+    });
 }

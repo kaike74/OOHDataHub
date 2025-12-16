@@ -2,9 +2,6 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { Search, X, Loader2, MapPin, Target } from 'lucide-react';
-import { api } from '@/lib/api';
-import { Ponto } from '@/lib/types';
-import { useStore } from '@/lib/store';
 
 interface AddressSearchProps {
   onLocationSelect: (location: { lat: number; lng: number; address: string }) => void;
@@ -26,10 +23,6 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
   const [isFocused, setIsFocused] = useState(false);
   const [dbResults, setDbResults] = useState<SearchResult[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
-
-  // Get pontos and setFilterText from store for real-time filtering
-  const pontos = useStore((state) => state.pontos);
-  const setFilterText = useStore((state) => state.setFilterText);
 
   // Debounced search in database
   const searchDatabase = useCallback(async (query: string) => {
@@ -57,20 +50,14 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
     }
   }, []);
 
-  // Debounce search
+  // Debounce search (removed filterText integration)
   useEffect(() => {
     const timer = setTimeout(() => {
       searchDatabase(searchValue);
-      // Filter pins in real-time
-      if (searchValue.length >= 2) {
-        setFilterText(searchValue);
-      } else {
-        setFilterText('');
-      }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchValue, searchDatabase, setFilterText]);
+  }, [searchValue, searchDatabase]);
 
   useEffect(() => {
     if (!inputRef.current || !window.google) return;
@@ -116,7 +103,6 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
     setSearchValue('');
     setDbResults([]);
     setShowDropdown(false);
-    setFilterText('');
     if (inputRef.current) {
       inputRef.current.value = '';
       inputRef.current.focus();
@@ -141,8 +127,8 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
     <div className="relative">
       <div
         className={`map-search-bar flex items-center gap-3 transition-all ${isFocused
-            ? 'border-emidias-accent shadow-accent'
-            : 'border-transparent'
+          ? 'border-emidias-accent shadow-accent'
+          : 'border-transparent'
           }`}
       >
         <div className={`flex-shrink-0 transition-colors ${isFocused ? 'text-emidias-accent' : 'text-emidias-gray-400'}`}>
