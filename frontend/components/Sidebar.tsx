@@ -173,22 +173,24 @@ export default function Sidebar() {
             }
 
             // For Papel and Lona: always base + 25%, independent of commission
-            // Since we don't have separate base values for papel/lona in the Ponto schema,
-            // we'll use a reasonable estimate based on the rental value
-            // Typical production costs are ~15-20% of rental value
-            const papalBase = baseValor * 0.15; // 15% of rental as base cost for paper
-            const lonaBase = baseValor * 0.20; // 20% of rental as base cost for canvas
-            const valorPapel = papalBase * 1.25; // Always +25% regardless of commission
-            const valorLona = lonaBase * 1.25; // Always +25% regardless of commission
+            // Find papel/lona from produtos by tipo
+            const papelProduto = selectedPonto.produtos?.find(p => p.tipo?.toLowerCase() === 'papel');
+            const lonaProduto = selectedPonto.produtos?.find(p => p.tipo?.toLowerCase() === 'lona');
+
+            const basePapel = papelProduto?.valor || 0;
+            const baseLona = lonaProduto?.valor || 0;
+
+            const valorPapel = basePapel * 1.25; // Always +25% regardless of commission
+            const valorLona = baseLona * 1.25; // Always +25% regardless of commission
 
             const item = {
                 id_proposta: selectedProposta.id,
                 id_ooh: selectedPonto.id,
                 periodo_inicio: new Date().toISOString().split('T')[0],
                 periodo_fim: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                valor_locacao: valorLocacao,
-                valor_papel: valorPapel,
-                valor_lona: valorLona,
+                valor_locacao: Math.round(valorLocacao * 100) / 100,
+                valor_papel: Math.round(valorPapel * 100) / 100,
+                valor_lona: Math.round(valorLona * 100) / 100,
                 periodo_comercializado: 'bissemanal',
                 observacoes: '',
                 fluxo_diario: selectedPonto.fluxo || 0
