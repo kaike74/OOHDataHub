@@ -252,9 +252,10 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     }
                 }
 
+                const columnKey = dragState.columnKey!; // We know it's not null here
                 console.log('✅ Drag-fill completed. Updated items:', updatedItens.slice(minIdx, maxIdx + 1).map(item => ({
                     id: item.id,
-                    [dragState.columnKey]: (item as any)[dragState.columnKey]
+                    [columnKey]: (item as any)[columnKey]
                 })));
 
                 setItens(updatedItens);
