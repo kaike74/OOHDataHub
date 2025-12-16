@@ -59,45 +59,8 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
     return () => clearTimeout(timer);
   }, [searchValue, searchDatabase]);
 
-  useEffect(() => {
-    if (!inputRef.current || !window.google) return;
-
-    autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
-      componentRestrictions: { country: 'br' },
-      fields: ['address_components', 'geometry', 'formatted_address', 'name'],
-      types: ['address']
-    });
-
-    autocompleteRef.current.addListener('place_changed', () => {
-      const place = autocompleteRef.current?.getPlace();
-
-      if (!place || !place.geometry || !place.geometry.location) {
-        return;
-      }
-
-      setIsLoading(true);
-
-      const location = {
-        lat: place.geometry.location.lat(),
-        lng: place.geometry.location.lng(),
-        address: place.formatted_address || place.name || ''
-      };
-
-      onLocationSelect(location);
-      setSearchValue(location.address);
-      setShowDropdown(false);
-
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 500);
-    });
-
-    return () => {
-      if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
-      }
-    };
-  }, [onLocationSelect]);
+  // Google Maps initialization removed - using only our custom search
+  // The Google Places widget was causing dual dropdowns
 
   const handleClear = () => {
     setSearchValue('');
