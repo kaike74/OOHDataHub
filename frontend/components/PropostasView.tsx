@@ -50,17 +50,23 @@ export default function PropostasView() {
         setCurrentView('clientes');
     };
 
-    const handlePropostaClick = (proposta: Proposta) => {
-        setSelectedProposta(proposta);
-        // Switch to the Cart View (Map + Cart)
-        // Wait, currentView 'propostas' is THIS view.
-        // I need a new view for the actual editing/cart.
-        // Let's call it 'carrinho' or 'mapa_proposta'.
-        // The store definition has map | exibidoras | clientes | propostas.
-        // Maybe 'propostas' is the list, and 'map' (with selectedProposta set) is the cart view?
-        // Logic: If selectedProposta is set AND view is map, show cart.
-        // Let's reuse 'map' view but with Cart overlay.
-        setCurrentView('map');
+    const handlePropostaClick = async (proposta: Proposta) => {
+        try {
+            setIsLoading(true);
+            const fullProposta = await api.getProposta(proposta.id);
+            // Ensure itens is an array even if API returns null/undefined
+            if (!fullProposta.itens) fullProposta.itens = [];
+
+            setSelectedProposta(fullProposta);
+            setCurrentView('map');
+        } catch (error) {
+            console.error('Erro ao carregar detalhes da proposta:', error);
+            // Fallback to basic info if fetch fails, though risky for cart
+            setSelectedProposta(proposta);
+            setCurrentView('map');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     if (!selectedCliente) return null;

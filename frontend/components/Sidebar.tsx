@@ -244,7 +244,7 @@ export default function Sidebar() {
             />
 
             {/* Sidebar */}
-            <div className="fixed right-0 top-[70px] h-[calc(100vh-70px)] w-full sm:w-[420px] bg-white shadow-emidias-2xl z-30 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col animate-slide-in-right">
+            <div className="fixed right-0 top-[70px] h-[calc(100vh-70px)] w-full sm:w-[420px] bg-white shadow-emidias-2xl z-50 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col animate-slide-in-right">
                 {/* Close Button - Floating */}
                 <button
                     onClick={handleClose}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { Proposta, PropostaItem } from '@/lib/types';
@@ -12,7 +12,8 @@ import {
     ArrowUpDown,
     Check,
     X,
-    Calendar as CalendarIcon
+    Calendar as CalendarIcon,
+    GripHorizontal
 } from 'lucide-react';
 import {
     useReactTable,
@@ -48,6 +49,10 @@ interface CartTableProps {
 export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     const selectedProposta = useStore((state) => state.selectedProposta);
     const refreshProposta = useStore((state) => state.refreshProposta);
+    const setSelectedPonto = useStore((state) => state.setSelectedPonto);
+    const setSidebarOpen = useStore((state) => state.setSidebarOpen);
+    const pontos = useStore((state) => state.pontos); // Need this to find the full Ponto object
+
     const [itens, setItens] = useState<PropostaItem[]>([]);
 
     // Table State
@@ -58,6 +63,12 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
     // UI State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+    // Height Resizing State
+    const [tableHeight, setTableHeight] = useState(500);
+    const isResizingRef = useRef(false);
+    const startYRef = useRef(0);
+    const startHeightRef = useRef(0);
 
     // Batch Actions State
     const [isBatchPeriodOpen, setIsBatchPeriodOpen] = useState(false);
@@ -72,33 +83,49 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         }
     }, [selectedProposta]);
 
+    // Resizing Handlers
+    const startResizing = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        isResizingRef.current = true;
+        startYRef.current = e.clientY;
+        startHeightRef.current = tableHeight;
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', stopResizing);
+    };
+
+    const handleMouseMove = useCallback((e: MouseEvent) => {
+        if (!isResizingRef.current) return;
+
+        const deltaY = startYRef.current - e.clientY; // Upward movement increases height
+        const newHeight = Math.max(200, Math.min(window.innerHeight - 100, startHeightRef.current + deltaY));
+        setTableHeight(newHeight);
+    }, []);
+
+    const stopResizing = useCallback(() => {
+        isResizingRef.current = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', stopResizing);
+    }, [handleMouseMove]);
+
+
     // Optimistic Update Helper
     const updateItem = useCallback(async (id: number, field: string, value: any) => {
         const updatedItens = itens.map(item => {
             if (item.id === id) {
                 const updatedItem = { ...item, [field]: value };
-
-                // Recalculate derived fields if necessary
                 if (['fluxo_diario', 'qtd_bi_mes', 'valor', 'valor_papel', 'valor_lona'].includes(field)) {
-                    // Logic for recalculation can be expanded here if needed
-                    // For now, simpler calculations are done in render or server-side
-
-                    // Example: Recalculate impacts if flow changes
                     if (field === 'fluxo_diario') {
-                        updatedItem.impactos = (value || 0) * 30; // Assuming 30 days for now
+                        updatedItem.impactos = (value || 0) * 30;
                     }
                 }
                 return updatedItem;
             }
             return item;
         });
-
         setItens(updatedItens);
-
-        // Propagate to global store
         refreshProposta({ ...selectedProposta!, itens: updatedItens });
-
-        // Debounced API call could live here
         try {
             await api.updateCart(selectedProposta!.id, updatedItens);
         } catch (error) {
@@ -107,42 +134,32 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     }, [itens, refreshProposta, selectedProposta]);
 
     const removeItem = useCallback(async (id: number) => {
-        // Optimistic remove
         const updatedItens = itens.filter(item => item.id !== id);
         setItens(updatedItens);
-
         refreshProposta({ ...selectedProposta!, itens: updatedItens });
-
         try {
             await api.updateCart(selectedProposta!.id, updatedItens);
         } catch (error) {
             console.error("Failed to remove item", error);
-            // Revert logic would go here
-            setItens(itens); // revert
+            setItens(itens);
         }
     }, [itens, refreshProposta, selectedProposta]);
 
     const applyBatchPeriod = useCallback(async () => {
         if (!batchPeriodValue) return;
-
         const selectedIds = Object.keys(rowSelection).map(Number);
         if (selectedIds.length === 0) return;
 
-        // Optimistic update
         const updatedItens = itens.map(item => {
             if (selectedIds.includes(item.id)) {
                 return { ...item, periodo: batchPeriodValue };
             }
             return item;
         });
-
         setItens(updatedItens);
         setIsBatchPeriodOpen(false);
-        setRowSelection({}); // Clear selection after apply
-
-        // Propagate
+        setRowSelection({});
         refreshProposta({ ...selectedProposta!, itens: updatedItens });
-
         try {
             await api.updateCart(selectedProposta!.id, updatedItens);
         } catch (error) {
@@ -156,7 +173,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         {
             id: 'select',
             header: ({ table }) => (
-                <div className="px-1 opacity-0 group-hover/header:opacity-100 transition-opacity">
+                <div className="px-1 h-full flex items-center justify-center opacity-0 group-hover/header:opacity-100 transition-opacity">
                     <input
                         type="checkbox"
                         checked={table.getIsAllPageRowsSelected()}
@@ -166,7 +183,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 </div>
             ),
             cell: ({ row }) => (
-                <div className={`px-1 transition-opacity ${row.getIsSelected() ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                <div className={`px-1 flex justify-center transition-opacity ${row.getIsSelected() ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                     <input
                         type="checkbox"
                         checked={row.getIsSelected()}
@@ -175,7 +192,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     />
                 </div>
             ),
-            size: 30,
+            size: 40,
             enableResizing: false,
         },
         {
@@ -205,8 +222,29 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         {
             accessorKey: 'endereco',
             header: 'Endereço',
-            size: 200,
-            cell: ({ row }) => <span className="truncate block text-gray-600" title={row.original.endereco}>{row.original.endereco}</span>
+            size: 250,
+            cell: ({ row }) => (
+                <button
+                    className="truncate block text-left text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                    title="Ver detalhes do ponto"
+                    onClick={() => {
+                        const ponto = pontos.find(p => p.id === row.original.id_ooh);
+                        if (ponto) {
+                            setSelectedPonto(ponto);
+                            setSidebarOpen(true);
+                        } else {
+                            // Fallback if full ponto not in store, though it usually is if map is loaded
+                            console.warn("Ponto details not found in store for ID", row.original.id_ooh);
+                            // Optionally fetch here? For now, assume store has it.
+                            // Force basic object to open sidebar:
+                            setSelectedPonto({ id: row.original.id_ooh } as any);
+                            setSidebarOpen(true);
+                        }
+                    }}
+                >
+                    {row.original.endereco}
+                </button>
+            )
         },
         {
             accessorKey: 'ponto_referencia',
@@ -231,7 +269,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             accessorKey: 'produto',
             header: 'Produto',
             size: 100,
-            cell: ({ row }) => <span className="text-gray-600">{row.original.tipo}</span> // Using tipo for now
+            cell: ({ row }) => <span className="text-gray-600">{row.original.tipo}</span>
         },
         {
             accessorKey: 'medidas',
@@ -347,7 +385,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             id: 'impactos',
             size: 100,
             cell: ({ row }) => {
-                // Calculation: Fluxo Diario * 30 (approx for now) * Qtd
                 const impacts = (row.original.fluxo_diario || 0) * 30 * (row.original.qtd_bi_mes || 1);
                 return <div className="text-right text-xs text-gray-600">{formatNumber(impacts)}</div>
             }
@@ -357,9 +394,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             accessorKey: 'total_investimento',
             size: 130,
             cell: ({ row }) => {
-                // Calculation: (Valor Locacao + Papel + Lona) * Qtd
                 const total = ((row.original.valor || 0) + (row.original.valor_papel || 0) + (row.original.valor_lona || 0)) * (row.original.qtd_bi_mes || 1);
-
                 return (
                     <div className="text-right font-semibold text-emerald-700 bg-emerald-50 px-2 rounded-md">
                         {formatCurrency(total)}
@@ -372,7 +407,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             id: 'cpm',
             size: 90,
             cell: ({ row }) => {
-                // Calculation: (Total Invest / Impactos) * 1000
                 const impacts = (row.original.fluxo_diario || 0) * 30 * (row.original.qtd_bi_mes || 1);
                 const total = ((row.original.valor || 0) + (row.original.valor_papel || 0) + (row.original.valor_lona || 0)) * (row.original.qtd_bi_mes || 1);
 
@@ -402,7 +436,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 </div>
             )
         }
-    ], [updateItem, removeItem]);
+    ], [updateItem, removeItem, pontos, setSelectedPonto, setSidebarOpen]);
 
 
     const table = useReactTable({
@@ -430,11 +464,22 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
     return (
         <div
-            className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.15)] z-40 transition-all duration-300 ease-in-out flex flex-col ${isOpen ? 'h-[500px]' : 'h-[50px]'}`}
+            className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.15)] z-40 transition-all duration-300 ease-in-out flex flex-col`}
+            style={{ height: isOpen ? `${tableHeight}px` : '50px' }}
         >
+            {/* Resizer Handle */}
+            {isOpen && (
+                <div
+                    className="absolute -top-1 left-0 right-0 h-3 bg-transparent cursor-row-resize z-50 hover:bg-blue-500/10 flex items-center justify-center group/resizer"
+                    onMouseDown={startResizing}
+                >
+                    <div className="w-16 h-1 bg-gray-300 rounded-full group-hover/resizer:bg-blue-400 opacity-0 group-hover/resizer:opacity-100 transition-all" />
+                </div>
+            )}
+
             {/* Toolbar */}
             <div
-                className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white shadow-sm z-20 cursor-pointer"
+                className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white shadow-sm z-20 cursor-pointer flex-shrink-0"
                 onClick={onToggle}
             >
                 <div className="flex items-center gap-4">
@@ -450,12 +495,11 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     {Object.keys(rowSelection).length > 0 && (
                         <div
                             className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md animate-in fade-in slide-in-from-left-2 shadow-sm border border-blue-100 relative"
-                            onClick={e => e.stopPropagation()} // Prevent toggle when interacting
+                            onClick={e => e.stopPropagation()}
                         >
                             <span className="text-xs font-bold">{Object.keys(rowSelection).length}</span>
                             <div className="h-4 w-px bg-blue-200 mx-1" />
 
-                            {/* Apply Period Trigger */}
                             <button
                                 onClick={() => setIsBatchPeriodOpen(true)}
                                 className="text-xs font-medium hover:text-blue-900 flex items-center gap-1 transition-colors relative"
@@ -496,10 +540,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
                             <div className="h-4 w-px bg-blue-200 mx-1" />
 
-                            {/* Remove Selected */}
                             <button
                                 onClick={() => {
-                                    // Remove selected logic
                                     const selectedIds = Object.keys(rowSelection).map(Number);
                                     const updatedItens = itens.filter(item => !selectedIds.includes(item.id));
                                     setItens(updatedItens);
@@ -519,7 +561,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     className="flex items-center gap-4 relative"
                     onClick={e => e.stopPropagation()}
                 >
-                    {/* Summary in Header when collapsed */}
                     {!isOpen && (
                         <div className="flex items-center gap-4 text-sm animate-fade-in">
                             <div className="flex flex-col items-end">
@@ -531,7 +572,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         </div>
                     )}
 
-                    {/* Settings Toggle */}
                     <button
                         onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                         className={`p-1.5 rounded-md transition-all ${isSettingsOpen ? 'bg-gray-100 text-gray-900 shadow-inner' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}
@@ -540,7 +580,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         <Settings size={16} />
                     </button>
 
-                    {/* Settings Popover */}
                     {isSettingsOpen && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
@@ -598,7 +637,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                             }[header.column.getIsSorted() as string] ?? null}
                                         </div>
 
-                                        {/* Resize Handle */}
                                         {header.column.getCanResize() && (
                                             <div
                                                 onMouseDown={header.getResizeHandler()}
@@ -645,8 +683,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
             {/* Footer Summary - Always visible if open */}
             {isOpen && (
-                <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-sm shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
-                    <div className="text-gray-500 text-xs">
+                <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-sm shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 flex-shrink-0">
+                    <div className="text-gray-500 text-xs text-left">
                         {itens.length} pontos listados
                     </div>
                     <div className="flex items-center gap-6">
