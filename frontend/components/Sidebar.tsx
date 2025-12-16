@@ -172,32 +172,26 @@ export default function Sidebar() {
                 fluxo_diario: selectedPonto.fluxo || 0 // Store current fluxo for consistent calculations
             };
 
-            // Call API to add item. For now, since we implemented 'updateCart' (bulk PUT) but not 'addItem',
-            // let's assume we need to fetch current items, append, and save?
-            // Actually, for efficiency, let's implement a direct ADD endpoint or use a helper.
-            // Since I only created `updateCart` (PUT /itens), I should probably fetch+update or quick-patch.
-            // But wait, the previous `handlePropostas` only supported GET/:id and PUT/:id/itens.
-            // I should stick to fetching ALL items, adding one to array, and PUTting back.
-            // OR even better: just implemented bulk update for simplicity in previous step.
-
-            // Let's rely on `api.updateCart`.
-            // First fetch current items.
+            // Fetch current items
             const data = await api.getProposta(selectedProposta.id);
             const currentItens = data.itens || [];
 
             // Check if already in cart
             if (currentItens.some((i: any) => i.id_ooh === selectedPonto.id)) {
-                alert('Este ponto já está na proposta!');
+                // Silently return or show a toast (future feature)
                 return;
             }
 
             const newItens = [...currentItens, item];
             await api.updateCart(selectedProposta.id, newItens);
 
-            alert('Ponto adicionado ao carrinho com sucesso!');
+            // Refetch to get updated proposal with normalized data
+            const updatedProposta = await api.getProposta(selectedProposta.id);
+            // Update global store to trigger UI updates (Map pins, CartTable)
+            useStore.getState().refreshProposta(updatedProposta);
+
         } catch (error) {
             console.error('Erro ao adicionar ao carrinho:', error);
-            alert('Erro ao adicionar ponto à proposta.');
         }
     };
 

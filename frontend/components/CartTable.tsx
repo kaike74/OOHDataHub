@@ -23,7 +23,7 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
     // Load items when proposal changes
     useEffect(() => {
         loadItens();
-    }, [proposta.id]);
+    }, [proposta]);
 
     const loadItens = async () => {
         setIsLoading(true);

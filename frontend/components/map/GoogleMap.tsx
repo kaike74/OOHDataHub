@@ -292,7 +292,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             });
             googleMapRef.current.fitBounds(bounds);
         }
-    }, [pontos, filterExibidora, filterPais, filterUF, filterCidade, filterTipos, filterValorMin, filterValorMax, isLoaded, setSelectedPonto]);
+    }, [pontos, filterExibidora, filterPais, filterUF, filterCidade, filterTipos, filterValorMin, filterValorMax, isLoaded, setSelectedPonto, selectedProposta]);
 
     // Centralizar mapa quando search location mudar
     useEffect(() => {
