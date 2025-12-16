@@ -122,4 +122,14 @@ export interface PropostaItem {
     tipo?: string;
     medidas?: string;
     ponto_referencia?: string;
+
+    // Added for CartTable
+    periodo?: string; // Generic period field
+    valor?: number; // Generic value field
+    desconto_padrao?: number;
+    total_investimento?: number;
+    impactos?: number;
+    bairro?: string;
+    exibidora?: string;
+    valor_negociado?: number;
 }
