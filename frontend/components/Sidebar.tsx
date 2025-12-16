@@ -158,6 +158,18 @@ export default function Sidebar() {
         if (!selectedPonto || !selectedProposta) return;
 
         try {
+            // Check if already in cart
+            const proposalItens = selectedProposta.itens || [];
+            const isInCart = proposalItens.some((i: any) => i.id_ooh === selectedPonto.id);
+
+            if (isInCart) {
+                // Remove from cart
+                const updatedItens = proposalItens.filter((i: any) => i.id_ooh !== selectedPonto.id);
+                await api.updateCart(selectedProposta.id, updatedItens);
+                const updatedProposta = await api.getProposta(selectedProposta.id);
+                useStore.getState().refreshProposta(updatedProposta);
+                return;
+            }
             // Helper function to calculate value with commission
             const calcularValorComissao = (valorBase: number, comissao: string): number => {
                 const v2 = valorBase * 1.25;
@@ -517,38 +529,49 @@ export default function Sidebar() {
                             </button>
                         )}
 
-                        {/* Edit */}
-                        <button
-                            onClick={handleEdit}
-                            className="flex items-center justify-center w-11 h-11 rounded-lg bg-emidias-primary/10 text-emidias-primary hover:bg-emidias-primary hover:text-white transition-all hover:scale-105"
-                            title="Editar"
-                        >
-                            <Pencil size={18} />
-                        </button>
+                        {/* Only show Edit/History/Delete when NOT in proposal view */}
+                        {!selectedProposta && (
+                            <>
+                                {/* Edit */}
+                                <button
+                                    onClick={handleEdit}
+                                    className="flex items-center justify-center w-11 h-11 rounded-lg bg-emidias-primary/10 text-emidias-primary hover:bg-emidias-primary hover:text-white transition-all hover:scale-105"
+                                    title="Editar"
+                                >
+                                    <Pencil size={18} />
+                                </button>
 
-                        {/* History */}
-                        <button
-                            onClick={handleHistory}
-                            className="flex items-center justify-center w-11 h-11 rounded-lg bg-emidias-gray-100 text-emidias-gray-600 hover:bg-emidias-gray-200 hover:text-emidias-gray-900 transition-all hover:scale-105"
-                            title="Histórico"
-                        >
-                            <History size={18} />
-                        </button>
-
-                        {/* Add to Proposal */}
-                        {selectedProposta && (
-                            <button
-                                onClick={handleAddToProposal}
-                                className="flex items-center justify-center w-auto px-4 h-11 rounded-lg bg-emidias-accent text-white hover:bg-emidias-accent-dark transition-all hover:scale-105 shadow-lg shadow-emidias-accent/20 gap-2 font-semibold"
-                                title={`Adicionar à ${selectedProposta.nome}`}
-                            >
-                                <ShoppingCart size={18} />
-                                <span className="hidden sm:inline">Adicionar</span>
-                            </button>
+                                {/* History */}
+                                <button
+                                    onClick={handleHistory}
+                                    className="flex items-center justify-center w-11 h-11 rounded-lg bg-emidias-gray-100 text-emidias-gray-600 hover:bg-emidias-gray-200 hover:text-emidias-gray-900 transition-all hover:scale-105"
+                                    title="Histórico"
+                                >
+                                    <History size={18} />
+                                </button>
+                            </>
                         )}
 
-                        {/* Delete - Master Only */}
-                        {user?.role === 'master' && (
+                        {/* Add/Remove from Proposal - Dynamic Button */}
+                        {selectedProposta && (() => {
+                            const isInCart = selectedProposta.itens?.some((i: any) => i.id_ooh === selectedPonto.id) || false;
+                            return (
+                                <button
+                                    onClick={handleAddToProposal}
+                                    className={`flex items-center justify-center w-auto px-4 h-11 rounded-lg transition-all hover:scale-105 shadow-lg gap-2 font-semibold ${isInCart
+                                        ? 'bg-red-600 text-white hover:bg-red-700 shadow-red-600/20'
+                                        : 'bg-green-600 text-white hover:bg-green-700 shadow-green-600/20'
+                                        }`}
+                                    title={isInCart ? 'Tirar do carrinho' : `Adicionar à ${selectedProposta.nome}`}
+                                >
+                                    <ShoppingCart size={18} />
+                                    <span className="hidden sm:inline">{isInCart ? 'Tirar do carrinho' : 'Adicionar'}</span>
+                                </button>
+                            );
+                        })()}
+
+                        {/* Delete - Master Only (hide when in proposal view) */}
+                        {!selectedProposta && user?.role === 'master' && (
                             <button
                                 onClick={handleDelete}
                                 disabled={isDeleting}

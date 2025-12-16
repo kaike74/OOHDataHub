@@ -17,8 +17,6 @@ import {
     getCoreRowModel,
     getSortedRowModel,
     getFilteredRowModel,
-    getGroupedRowModel,
-    getExpandedRowModel,
     ColumnDef,
     flexRender,
     SortingState,
@@ -57,7 +55,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const [columnSizing, setColumnSizing] = useState({});
-    const [grouping, setGrouping] = useState<string[]>([]); // Group By state
 
     // UI State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -67,10 +64,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     const isResizingRef = useRef(false);
     const startYRef = useRef(0);
     const startHeightRef = useRef(0);
-
-    // Batch Actions State
-    const [isBatchPeriodOpen, setIsBatchPeriodOpen] = useState(false);
-    const [batchPeriodValue, setBatchPeriodValue] = useState('');
 
     // Initial Load
     useEffect(() => {
@@ -146,28 +139,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             setItens(itens);
         }
     }, [itens, refreshProposta, selectedProposta]);
-
-    const applyBatchPeriod = useCallback(async () => {
-        if (!batchPeriodValue) return;
-        const selectedIds = Object.keys(rowSelection).map(Number);
-        if (selectedIds.length === 0) return;
-
-        const updatedItens = itens.map(item => {
-            if (selectedIds.includes(item.id)) {
-                return { ...item, periodo: batchPeriodValue };
-            }
-            return item;
-        });
-        setItens(updatedItens);
-        setIsBatchPeriodOpen(false);
-        setRowSelection({});
-        refreshProposta({ ...selectedProposta!, itens: updatedItens });
-        try {
-            await api.updateCart(selectedProposta!.id, updatedItens);
-        } catch (error) {
-            console.error("Failed to batch update", error);
-        }
-    }, [batchPeriodValue, itens, rowSelection, refreshProposta, selectedProposta]);
 
 
     // Columns Definition
@@ -473,8 +444,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             )
         },
         {
-            header: 'Observações',
             accessorKey: 'observacoes',
+            header: 'Observações',
             size: 200,
             cell: ({ row }) => (
                 <textarea
@@ -495,7 +466,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     <button
                         onClick={() => removeItem(row.original.id)}
                         className="text-gray-400 hover:text-red-500 p-1 rounded transition-colors"
-                        title="Remover Item"
+                        title="Tirar do carrinho"
                     >
                         <Trash2 size={14} />
                     </button>
@@ -513,7 +484,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             columnVisibility,
             rowSelection,
             columnSizing,
-            grouping,
         },
         columnResizeMode: 'onChange',
         enableRowSelection: true,
@@ -522,12 +492,9 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,
         onColumnSizingChange: setColumnSizing,
-        onGroupingChange: setGrouping,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
-        getGroupedRowModel: getGroupedRowModel(),
-        getExpandedRowModel: getExpandedRowModel(),
     });
 
     if (!selectedProposta) return null;
@@ -571,46 +538,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                             <div className="h-4 w-px bg-blue-200 mx-1" />
 
                             <button
-                                onClick={() => setIsBatchPeriodOpen(true)}
-                                className="text-xs font-medium hover:text-blue-900 flex items-center gap-1 transition-colors relative"
-                            >
-                                <CalendarIcon size={14} /> Aplicar Período
-                            </button>
-
-                            {/* Apply Period Popover */}
-                            {isBatchPeriodOpen && (
-                                <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setIsBatchPeriodOpen(false)} />
-                                    <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-3 z-50 w-64 animate-in fade-in zoom-in-95 cursor-default">
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1">Novo Período para selecionados</label>
-                                        <input
-                                            autoFocus
-                                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                                            placeholder="DD/MM/AAAA - DD/MM/AAAA"
-                                            value={batchPeriodValue}
-                                            onChange={(e) => setBatchPeriodValue(e.target.value)}
-                                        />
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                onClick={() => setIsBatchPeriodOpen(false)}
-                                                className="px-2 py-1 text-xs text-gray-500 hover:bg-gray-100 rounded"
-                                            >
-                                                Cancelar
-                                            </button>
-                                            <button
-                                                onClick={applyBatchPeriod}
-                                                className="px-2 py-1 text-xs bg-blue-600 text-white hover:bg-blue-700 rounded font-medium"
-                                            >
-                                                Aplicar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-
-                            <div className="h-4 w-px bg-blue-200 mx-1" />
-
-                            <button
                                 onClick={() => {
                                     const selectedIds = Object.keys(rowSelection).map(Number);
                                     const updatedItens = itens.filter(item => !selectedIds.includes(item.id));
@@ -621,7 +548,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                 }}
                                 className="text-xs font-medium hover:text-red-700 flex items-center gap-1 text-red-600 transition-colors"
                             >
-                                <Trash2 size={14} /> Remover
+                                <Trash2 size={14} /> Remover Selecionados
                             </button>
                         </div>
                     )}
@@ -673,49 +600,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                             </div>
                                         )
                                     })}
-                                </div>
-
-                                {/* Group By Section */}
-                                <div className="border-t border-gray-200 mt-2 pt-2">
-                                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Agrupar Por</h4>
-                                    <div className="px-1">
-                                        <div
-                                            className={`px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors ${grouping.length === 0 ? 'bg-blue-50' : ''}`}
-                                            onClick={() => setGrouping([])}
-                                        >
-                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${grouping.length === 0 ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
-                                                {grouping.length === 0 && <Check size={10} strokeWidth={3} />}
-                                            </div>
-                                            <span className="text-sm text-gray-700">Sem agrupamento</span>
-                                        </div>
-                                        <div
-                                            className={`px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors ${grouping.includes('cidade') ? 'bg-blue-50' : ''}`}
-                                            onClick={() => setGrouping(['cidade'])}
-                                        >
-                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${grouping.includes('cidade') ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
-                                                {grouping.includes('cidade') && <Check size={10} strokeWidth={3} />}
-                                            </div>
-                                            <span className="text-sm text-gray-700">Por Cidade</span>
-                                        </div>
-                                        <div
-                                            className={`px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors ${grouping.includes('uf') ? 'bg-blue-50' : ''}`}
-                                            onClick={() => setGrouping(['uf'])}
-                                        >
-                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${grouping.includes('uf') ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
-                                                {grouping.includes('uf') && <Check size={10} strokeWidth={3} />}
-                                            </div>
-                                            <span className="text-sm text-gray-700">Por UF</span>
-                                        </div>
-                                        <div
-                                            className={`px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors ${grouping.includes('exibidora_nome') ? 'bg-blue-50' : ''}`}
-                                            onClick={() => setGrouping(['exibidora_nome'])}
-                                        >
-                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${grouping.includes('exibidora_nome') ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
-                                                {grouping.includes('exibidora_nome') && <Check size={10} strokeWidth={3} />}
-                                            </div>
-                                            <span className="text-sm text-gray-700">Por Exibidora</span>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </>
