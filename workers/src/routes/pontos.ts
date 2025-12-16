@@ -96,8 +96,8 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
             const sql = `
           INSERT INTO pontos_ooh (
             codigo_ooh, endereco, latitude, longitude, cidade, uf, pais,
-            id_exibidora, medidas, fluxo, tipo, observacoes
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            id_exibidora, medidas, fluxo, tipo, observacoes, ponto_referencia
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
             console.log(`[${new Date().toISOString()}] Executing INSERT with SQL:`, sql);
             console.log('Params:', {
@@ -118,7 +118,8 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
                 data.medidas || null,
                 data.fluxo || null,
                 data.tipos || null,
-                data.observacoes || null
+                data.observacoes || null,
+                data.ponto_referencia || null
             ).run();
 
             const pontoId = result.meta.last_row_id;
@@ -172,6 +173,7 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
             fluxo = ?,
             tipo = ?,
             observacoes = ?,
+            ponto_referencia = ?,
             updated_at = CURRENT_TIMESTAMP
           WHERE id = ?
         `).bind(
@@ -187,6 +189,7 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
                 data.fluxo,
                 data.tipos || null,
                 data.observacoes,
+                data.ponto_referencia || null,
                 id
             ).run();
 

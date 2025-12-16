@@ -24,8 +24,8 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         SELECT 
             pi.id, pi.id_proposta, pi.id_ooh, pi.periodo_inicio, pi.periodo_fim, 
             pi.valor_locacao, pi.valor_papel, pi.valor_lona, 
-            pi.periodo_comercializado, pi.observacoes,
-            p.endereco, p.cidade, p.uf, p.codigo_ooh,
+            pi.periodo_comercializado, pi.observacoes, pi.fluxo_diario,
+            p.endereco, p.cidade, p.uf, p.pais, p.codigo_ooh, p.tipo, p.medidas, p.ponto_referencia,
             e.nome as exibidora_nome
         FROM proposta_itens pi
         JOIN pontos_ooh p ON pi.id_ooh = p.id
@@ -77,12 +77,12 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                 INSERT INTO proposta_itens (
                     id_proposta, id_ooh, periodo_inicio, periodo_fim, 
                     valor_locacao, valor_papel, valor_lona, 
-                    periodo_comercializado, observacoes
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    periodo_comercializado, observacoes, fluxo_diario
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
                     idProposta, item.id_ooh, item.periodo_inicio, item.periodo_fim,
                     item.valor_locacao, item.valor_papel, item.valor_lona,
-                    item.periodo_comercializado, item.observacoes
+                    item.periodo_comercializado, item.observacoes, item.fluxo_diario || null
                 ));
             }
 

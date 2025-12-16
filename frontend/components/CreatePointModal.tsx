@@ -57,12 +57,14 @@ export default function CreatePointModal() {
   const [fluxo, setFluxo] = useState('');
   const [tipos, setTipos] = useState<string[]>([]); // Multiselect de tipos OOH
   const [observacoes, setObservacoes] = useState('');
+  const [pontoReferencia, setPontoReferencia] = useState('');
   const [custos, setCustos] = useState<Custo[]>([{ produto: '', valor: '', periodo: '' }]);
   const [images, setImages] = useState<File[]>([]);
   const [imagesPreviews, setImagesPreviews] = useState<string[]>([]);
 
   // Geocoding
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [isFetchingReferencia, setIsFetchingReferencia] = useState(false);
 
   // Preencher formulário ao editar
   useEffect(() => {
@@ -92,6 +94,7 @@ export default function CreatePointModal() {
       }
 
       setObservacoes(editingPonto.observacoes || '');
+      setPontoReferencia(editingPonto.ponto_referencia || '');
 
       // Parse produtos com formatação
       if (editingPonto.produtos && editingPonto.produtos.length > 0) {
@@ -152,6 +155,9 @@ export default function CreatePointModal() {
             if (cidadeComponent) setCidade(cidadeComponent.long_name);
             if (ufComponent) setUf(ufComponent.short_name);
             if (paisComponent) setPais(paisComponent.long_name);
+
+            // Auto-fill ponto de referência
+            fetchPontoReferencia(streetViewCoordinates.lat, streetViewCoordinates.lng);
           }
         } catch (error) {
           console.error('Erro no geocoding reverso:', error);
@@ -260,6 +266,69 @@ export default function CreatePointModal() {
     setCustos(newCustos);
   };
 
+  // Auto-fill Ponto de Referência usando Google Places API
+  const fetchPontoReferencia = async (lat: number, lng: number) => {
+    setIsFetchingReferencia(true);
+    try {
+      const service = new google.maps.places.PlacesService(document.createElement('div'));
+      const location = new google.maps.LatLng(lat, lng);
+
+      // Buscar lugares próximos
+      service.nearbySearch(
+        {
+          location,
+          radius: 500, // 500m radius
+          rankBy: google.maps.places.RankBy.PROMINENCE
+        },
+        (results, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+            // Filtrar lugares relevantes
+            const relevantTypes = ['shopping_mall', 'supermarket', 'hospital', 'school', 'university', 'park', 'stadium', 'transit_station'];
+            const relevantPlaces = results.filter(place =>
+              place.types?.some(type => relevantTypes.includes(type))
+            ).slice(0, 3);
+
+            // Montar texto de referência
+            const partes: string[] = [];
+
+            if (relevantPlaces.length > 0) {
+              const mainPlace = relevantPlaces[0];
+              partes.push(`Próximo a: ${mainPlace.name}`);
+
+              if (relevantPlaces.length > 1) {
+                partes.push(`Região: ${relevantPlaces.slice(1).map(p => p.name).join(', ')}`);
+              }
+            }
+
+            // Adicionar nome da rua/cruzamento via Geocoding
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ location: { lat, lng } }, (geoResults, geoStatus) => {
+              if (geoStatus === 'OK' && geoResults && geoResults[0]) {
+                const addressComponents = geoResults[0].address_components;
+                const route = addressComponents.find(c => c.types.includes('route'));
+
+                if (route) {
+                  partes.unshift(`Cruzamento: ${route.long_name}`);
+                }
+
+                setPontoReferencia(partes.join('\n'));
+              } else if (partes.length > 0) {
+                setPontoReferencia(partes.join('\n'));
+              }
+
+              setIsFetchingReferencia(false);
+            });
+          } else {
+            setIsFetchingReferencia(false);
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Erro ao buscar ponto de referência:', error);
+      setIsFetchingReferencia(false);
+    }
+  };
+
   // Geocoding do endereço
   const geocodeAddress = async () => {
     if (!endereco) {
@@ -292,6 +361,9 @@ export default function CreatePointModal() {
         if (paisComponent) setPais(paisComponent.long_name);
 
         setErrors({ ...errors, endereco: '' });
+
+        // Auto-fill ponto de referência
+        fetchPontoReferencia(location.lat(), location.lng());
       } else {
         setErrors({ ...errors, endereco: 'Endereço não encontrado' });
       }
@@ -351,6 +423,7 @@ export default function CreatePointModal() {
         fluxo: fluxo ? parseInt(fluxo) : null,
         tipos: tipos.length > 0 ? tipos.join(', ') : null,
         observacoes: observacoes || null,
+        ponto_referencia: pontoReferencia || null,
         produtos: custos
           .filter(c => c.produto && c.valor)
           .map(c => ({
@@ -417,6 +490,7 @@ export default function CreatePointModal() {
       setFluxo('');
       setTipos([]);
       setObservacoes('');
+      setPontoReferencia('');
       setCustos([{ produto: '', valor: '', periodo: '' }]);
       setImages([]);
       setImagesPreviews([]);
@@ -584,6 +658,43 @@ export default function CreatePointModal() {
                     placeholder="Brasil"
                   />
                 </div>
+              </div>
+
+              {/* Observações */}
+              <div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2">
+                  Observações
+                </label>
+                <textarea
+                  value={observacoes}
+                  onChange={(e) => setObservacoes(e.target.value)}
+                  className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition resize-none"
+                  placeholder="Informações adicionais sobre o ponto..."
+                  rows={3}
+                />
+              </div>
+
+              {/* Ponto de Referência */}
+              <div>
+                <label className="block text-sm font-semibold text-emidias-primary mb-2 flex items-center justify-between">
+                  <span>Ponto de Referência</span>
+                  {isFetchingReferencia && (
+                    <span className="text-xs text-emidias-accent flex items-center gap-1">
+                      <Loader2 size={12} className="animate-spin" />
+                      Buscando referências...
+                    </span>
+                  )}
+                </label>
+                <textarea
+                  value={pontoReferencia}
+                  onChange={(e) => setPontoReferencia(e.target.value)}
+                  className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition resize-none"
+                  placeholder="Ex: Próximo ao Shopping ABC, Cruzamento Av. Principal..."
+                  rows={3}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Este campo é preenchido automaticamente após o geocoding, mas você pode editá-lo livremente.
+                </p>
               </div>
             </div>
           )}

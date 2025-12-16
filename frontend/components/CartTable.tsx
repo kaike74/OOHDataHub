@@ -139,8 +139,8 @@ export default function CartTable({ proposta, isOpen, onToggle }: CartTableProps
             diasPeriodo = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
         }
 
-        // Impacts = Daily Flow × Days
-        const fluxoDiario = (item as any).fluxo_diario || 0;
+        // Impacts = Daily Flow × Days (using stored fluxo_diario)
+        const fluxoDiario = item.fluxo_diario || 0;
         const impactos = fluxoDiario * diasPeriodo;
 
         // CPM = (Investment / Impacts) × 1000

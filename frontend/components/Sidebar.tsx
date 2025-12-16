@@ -168,7 +168,8 @@ export default function Sidebar() {
                 valor_papel: 0,
                 valor_lona: 0,
                 periodo_comercializado: 'bissemanal',
-                observacoes: ''
+                observacoes: '',
+                fluxo_diario: selectedPonto.fluxo || 0 // Store current fluxo for consistent calculations
             };
 
             // Call API to add item. For now, since we implemented 'updateCart' (bulk PUT) but not 'addItem',
@@ -438,6 +439,19 @@ export default function Sidebar() {
                                 </div>
                                 <p className="text-emidias-gray-600 text-sm leading-relaxed whitespace-pre-wrap bg-emidias-gray-50 p-4 rounded-xl border border-emidias-gray-100">
                                     {selectedPonto.observacoes}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Ponto de Referência */}
+                        {selectedPonto.ponto_referencia && (
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <MapPin className="w-5 h-5 text-emidias-accent" />
+                                    <h3 className="font-semibold text-emidias-gray-900">Ponto de Referência</h3>
+                                </div>
+                                <p className="text-emidias-gray-600 text-sm leading-relaxed whitespace-pre-wrap bg-emidias-blue-50/50 p-4 rounded-xl border border-emidias-blue-100">
+                                    {selectedPonto.ponto_referencia}
                                 </p>
                             </div>
                         )}

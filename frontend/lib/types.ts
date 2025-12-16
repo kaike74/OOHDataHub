@@ -15,6 +15,7 @@ export interface Ponto {
     tipos: string | null;
     tipo: string | null; // Alias para tipos (nome da coluna no DB)
     observacoes: string | null;
+    ponto_referencia: string | null;
     status: string;
     created_at: string;
     updated_at: string;
@@ -110,10 +111,15 @@ export interface PropostaItem {
     valor_lona: number;
     periodo_comercializado: 'bissemanal' | 'mensal' | null;
     observacoes: string | null;
+    fluxo_diario: number | null;
     // Enhanced fields from join
     endereco?: string;
     cidade?: string;
     uf?: string;
+    pais?: string;
     codigo_ooh?: string;
     exibidora_nome?: string;
+    tipo?: string;
+    medidas?: string;
+    ponto_referencia?: string;
 }
