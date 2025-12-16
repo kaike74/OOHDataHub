@@ -184,10 +184,23 @@ export default function Sidebar() {
                 p.tipo.toLowerCase().includes('mensal')
             );
 
+            // DEBUG: Log what we found
+            console.log('🔍 Produtos do ponto:', selectedPonto.produtos);
+            console.log('📄 Papel encontrado:', papelProduto);
+            console.log('🎨 Lona encontrada:', lonaProduto);
+            console.log('🏠 Locação encontrada:', locacaoProduto);
+
             // Calculate values with proper rounding to 2 decimal places
             const valorPapel = papelProduto ? parseFloat((papelProduto.valor * 1.25).toFixed(2)) : 0;
             const valorLona = lonaProduto ? parseFloat((lonaProduto.valor * 1.25).toFixed(2)) : 0;
             const valorLocacao = locacaoProduto ? calcularValorComissao(locacaoProduto.valor, selectedProposta.comissao) : 0;
+
+            console.log('💰 Valores calculados:', {
+                papel: valorPapel,
+                lona: valorLona,
+                locacao: valorLocacao,
+                comissao: selectedProposta.comissao
+            });
 
             // Default item structure
             const item = {
