@@ -20,6 +20,7 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
   const setFilterExibidora = useStore((state) => state.setFilterExibidora);
   const setCurrentView = useStore((state) => state.setCurrentView);
   const selectedProposta = useStore((state) => state.selectedProposta);
+  const refreshProposta = useStore((state) => state.refreshProposta);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageSize, setImageSize] = useState({ width: 288, height: 192 }); // Default: w-72 h-48
   const [isAdding, setIsAdding] = useState(false);
@@ -60,8 +61,7 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
   const handleAddToCart = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!selectedProposta) {
-      alert('Por favor, selecione uma proposta primeiro.');
-      return;
+      return; // Silently do nothing if no proposal selected
     }
 
     setIsAdding(true);
@@ -86,21 +86,22 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
 
       // Check if already in cart
       if (currentItens.some((i: any) => i.id_ooh === ponto.id)) {
-        alert('Este ponto já está na proposta!');
-        return;
+        return; // Silently do nothing if already in cart
       }
 
       const newItens = [...currentItens, item];
       await api.updateCart(selectedProposta.id, newItens);
 
-      alert('✅ Ponto adicionado ao carrinho!');
+      // Reload proposal to update UI in real-time
+      const updatedProposta = await api.getProposta(selectedProposta.id);
+      refreshProposta(updatedProposta);
+
     } catch (error) {
       console.error('Erro ao adicionar ao carrinho:', error);
-      alert('❌ Erro ao adicionar ponto à proposta.');
     } finally {
       setIsAdding(false);
     }
-  }, [ponto, selectedProposta]);
+  }, [ponto, selectedProposta, refreshProposta]);
 
   // Auto-rotate imagens a cada 3 segundos
   useEffect(() => {

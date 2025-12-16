@@ -70,6 +70,7 @@ interface AppState {
     setSearchQuery: (query: string) => void;
     setFilterText: (text: string) => void;
     clearFilters: () => void;
+    refreshProposta: (proposta: Proposta) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -192,6 +193,8 @@ export const useStore = create<AppState>()(
                 searchQuery: '',
                 filterText: '',
             }),
+
+            refreshProposta: (proposta) => set({ selectedProposta: proposta }),
         }),
         {
             name: 'ooh-auth-storage',
