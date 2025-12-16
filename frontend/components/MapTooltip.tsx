@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { Ponto } from '@/lib/types';
 import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
-import { Building2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Building2, Eye, ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
 
 interface MapTooltipProps {
   ponto: Ponto;
@@ -19,8 +19,10 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
   const setSelectedExibidora = useStore((state) => state.setSelectedExibidora);
   const setFilterExibidora = useStore((state) => state.setFilterExibidora);
   const setCurrentView = useStore((state) => state.setCurrentView);
+  const selectedProposta = useStore((state) => state.selectedProposta);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageSize, setImageSize] = useState({ width: 288, height: 192 }); // Default: w-72 h-48
+  const [isAdding, setIsAdding] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const imagens = ponto.imagens || [];
 
@@ -54,6 +56,51 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
       }
     }
   }, [ponto.id_exibidora, exibidoras, setFilterExibidora, setSelectedExibidora, setCurrentView]);
+
+  const handleAddToCart = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!selectedProposta) {
+      alert('Por favor, selecione uma proposta primeiro.');
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      // Default item structure
+      const item = {
+        id_proposta: selectedProposta.id,
+        id_ooh: ponto.id,
+        periodo_inicio: new Date().toISOString().split('T')[0],
+        periodo_fim: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        valor_locacao: ponto.produtos?.[0]?.valor || 0,
+        valor_papel: 0,
+        valor_lona: 0,
+        periodo_comercializado: 'bissemanal',
+        observacoes: '',
+        fluxo_diario: ponto.fluxo || 0
+      };
+
+      // Fetch current items
+      const data = await api.getProposta(selectedProposta.id);
+      const currentItens = data.itens || [];
+
+      // Check if already in cart
+      if (currentItens.some((i: any) => i.id_ooh === ponto.id)) {
+        alert('Este ponto já está na proposta!');
+        return;
+      }
+
+      const newItens = [...currentItens, item];
+      await api.updateCart(selectedProposta.id, newItens);
+
+      alert('✅ Ponto adicionado ao carrinho!');
+    } catch (error) {
+      console.error('Erro ao adicionar ao carrinho:', error);
+      alert('❌ Erro ao adicionar ponto à proposta.');
+    } finally {
+      setIsAdding(false);
+    }
+  }, [ponto, selectedProposta]);
 
   // Auto-rotate imagens a cada 3 segundos
   useEffect(() => {
@@ -160,19 +207,34 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
             </div>
           )}
 
-          {/* Botão Street View */}
-          {ponto.latitude && ponto.longitude && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onStreetViewClick?.();
-              }}
-              className="w-full py-2 px-3 bg-emidias-primary hover:bg-emidias-primary-light text-white rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition hover-lift"
-            >
-              <Eye size={14} />
-              Ver no Street View
-            </button>
-          )}
+          {/* Botões de Ação */}
+          <div className="flex gap-2">
+            {/* Botão Street View */}
+            {ponto.latitude && ponto.longitude && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStreetViewClick?.();
+                }}
+                className="flex-1 py-2 px-3 bg-emidias-primary hover:bg-emidias-primary-light text-white rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition hover-lift"
+              >
+                <Eye size={14} />
+                Street View
+              </button>
+            )}
+
+            {/* Botão Adicionar ao Carrinho */}
+            {selectedProposta && (
+              <button
+                onClick={handleAddToCart}
+                disabled={isAdding}
+                className="flex-1 py-2 px-3 bg-emidias-accent hover:bg-[#E01A6A] text-white rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition hover-lift disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ShoppingCart size={14} />
+                {isAdding ? '...' : 'Adicionar'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Seta do tooltip */}

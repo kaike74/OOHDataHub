@@ -35,6 +35,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
     const setStreetViewCoordinates = useStore((state) => state.setStreetViewCoordinates);
     const streetViewRequest = useStore((state) => state.streetViewRequest);
     const setStreetViewRequest = useStore((state) => state.setStreetViewRequest);
+    const selectedProposta = useStore((state) => state.selectedProposta);
     const [isLoaded, setIsLoaded] = useState(false);
     const [isStreetViewMode, setIsStreetViewMode] = useState(false);
     const [streetViewPosition, setStreetViewPosition] = useState<{ lat: number; lng: number } | null>(null);
@@ -196,14 +197,30 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             return true;
         });
 
+        // Get cart item IDs if there's an active proposal
+        const cartItemIds = new Set(
+            selectedProposta?.itens?.map((item: any) => item.id_ooh) || []
+        );
+
         // Criar novos markers
         const markers = filteredPontos
             .filter((ponto) => ponto.latitude && ponto.longitude)
             .map((ponto) => {
+                // Check if point is in cart
+                const isInCart = cartItemIds.has(ponto.id);
+
                 const marker = new google.maps.Marker({
                     position: { lat: ponto.latitude!, lng: ponto.longitude! },
                     title: ponto.codigo_ooh,
                     map: googleMapRef.current!,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: isInCart ? '#10B981' : '#3B82F6', // Green if in cart, blue otherwise
+                        fillOpacity: 0.9,
+                        strokeColor: '#FFFFFF',
+                        strokeWeight: 2
+                    }
                 });
 
                 // Click handler
