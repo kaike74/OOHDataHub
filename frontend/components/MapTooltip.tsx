@@ -66,15 +66,46 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
 
     setIsAdding(true);
     try {
+      // Helper function to calculate value with commission
+      const calcularValorComissao = (valorBase: number, comissao: string): number => {
+        const v2 = valorBase * 1.25;
+        if (comissao === 'V2') return parseFloat(v2.toFixed(2));
+
+        const v3 = v2 * 1.25;
+        if (comissao === 'V3') return parseFloat(v3.toFixed(2));
+
+        const v4 = v3 * 1.25;
+        return parseFloat(v4.toFixed(2));
+      };
+
+      // Find products by type (case-insensitive)
+      const papelProduto = ponto.produtos?.find(p =>
+        p.tipo.toLowerCase().includes('papel')
+      );
+      const lonaProduto = ponto.produtos?.find(p =>
+        p.tipo.toLowerCase().includes('lona')
+      );
+      const locacaoProduto = ponto.produtos?.find(p =>
+        p.tipo.toLowerCase().includes('locação') ||
+        p.tipo.toLowerCase().includes('locacao') ||
+        p.tipo.toLowerCase().includes('bissemanal') ||
+        p.tipo.toLowerCase().includes('mensal')
+      );
+
+      // Calculate values with proper rounding to 2 decimal places
+      const valorPapel = papelProduto ? parseFloat((papelProduto.valor * 1.25).toFixed(2)) : 0;
+      const valorLona = lonaProduto ? parseFloat((lonaProduto.valor * 1.25).toFixed(2)) : 0;
+      const valorLocacao = locacaoProduto ? calcularValorComissao(locacaoProduto.valor, selectedProposta.comissao) : 0;
+
       // Default item structure
       const item = {
         id_proposta: selectedProposta.id,
         id_ooh: ponto.id,
         periodo_inicio: new Date().toISOString().split('T')[0],
         periodo_fim: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        valor_locacao: ponto.produtos?.[0]?.valor || 0,
-        valor_papel: 0,
-        valor_lona: 0,
+        valor_locacao: valorLocacao,
+        valor_papel: valorPapel,
+        valor_lona: valorLona,
         periodo_comercializado: 'bissemanal',
         observacoes: '',
         fluxo_diario: ponto.fluxo || 0
