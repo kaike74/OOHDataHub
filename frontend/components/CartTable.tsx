@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { PropostaItem } from '@/lib/types';
+import { Proposta, PropostaItem } from '@/lib/types';
 import {
     Trash2,
     Settings,
@@ -35,11 +35,16 @@ const formatCurrency = (value: number) => {
     }).format(value);
 };
 
-export default function CartTable() {
+interface CartTableProps {
+    proposta?: Proposta;
+    isOpen: boolean;
+    onToggle: () => void;
+}
+
+export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     const selectedProposta = useStore((state) => state.selectedProposta);
     const refreshProposta = useStore((state) => state.refreshProposta);
     const [itens, setItens] = useState<PropostaItem[]>([]);
-    const [loading, setLoading] = useState(false);
 
     // Table State
     const [sorting, setSorting] = useState<SortingState>([]);
@@ -276,24 +281,32 @@ export default function CartTable() {
         getFilteredRowModel: getFilteredRowModel(),
     });
 
-    if (!selectedProposta) {
-        return (
-            <div className="h-64 flex items-center justify-center bg-gray-50 text-gray-500">
-                Selecione uma proposta para ver o carrinho
-            </div>
-        );
-    }
+    if (!selectedProposta) return null;
 
     return (
-        <div className="flex flex-col h-full bg-white border-t border-gray-200 shadow-up-lg">
+        <div
+            className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.15)] z-40 transition-all duration-300 ease-in-out flex flex-col ${isOpen ? 'h-[400px]' : 'h-[50px]'}`}
+        >
             {/* Toolbar */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white shadow-sm z-20">
+            <div
+                className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white shadow-sm z-20 cursor-pointer"
+                onClick={onToggle}
+            >
                 <div className="flex items-center gap-4">
-                    <h3 className="font-semibold text-gray-800 text-sm">Itens ({itens.length})</h3>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onToggle(); }}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-500 transition-colors"
+                    >
+                        <ChevronDown size={20} className={`transform transition-transform duration-300 ${isOpen ? '' : 'rotate-180'}`} />
+                    </button>
+                    <h3 className="font-semibold text-gray-800 text-sm">Carrinho ({itens.length})</h3>
 
                     {/* Bulk Actions */}
                     {Object.keys(rowSelection).length > 0 && (
-                        <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md animate-in fade-in slide-in-from-left-2 shadow-sm border border-blue-100 relative">
+                        <div
+                            className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md animate-in fade-in slide-in-from-left-2 shadow-sm border border-blue-100 relative"
+                            onClick={e => e.stopPropagation()} // Prevent toggle when interacting
+                        >
                             <span className="text-xs font-bold">{Object.keys(rowSelection).length}</span>
                             <div className="h-4 w-px bg-blue-200 mx-1" />
 
@@ -309,7 +322,7 @@ export default function CartTable() {
                             {isBatchPeriodOpen && (
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setIsBatchPeriodOpen(false)} />
-                                    <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-3 z-50 w-64 animate-in fade-in zoom-in-95">
+                                    <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-3 z-50 w-64 animate-in fade-in zoom-in-95 cursor-default">
                                         <label className="block text-xs font-semibold text-gray-500 mb-1">Novo Período para selecionados</label>
                                         <input
                                             autoFocus
@@ -357,7 +370,22 @@ export default function CartTable() {
                     )}
                 </div>
 
-                <div className="flex items-center gap-2 relative">
+                <div
+                    className="flex items-center gap-4 relative"
+                    onClick={e => e.stopPropagation()}
+                >
+                    {/* Summary in Header when collapsed */}
+                    {!isOpen && (
+                        <div className="flex items-center gap-4 text-sm animate-fade-in">
+                            <div className="flex flex-col items-end">
+                                <span className="text-[10px] text-gray-500">Total</span>
+                                <span className="font-bold text-emerald-600">
+                                    {formatCurrency(itens.reduce((sum, item) => sum + (item.total_investimento || item.valor || 0), 0))}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Settings Toggle */}
                     <button
                         onClick={() => setIsSettingsOpen(!isSettingsOpen)}
@@ -371,7 +399,7 @@ export default function CartTable() {
                     {isSettingsOpen && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
-                            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right">
+                            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
                                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Colunas Visíveis</h4>
                                 <div className="max-h-60 overflow-y-auto px-1">
                                     {table.getAllLeafColumns().map(column => {
@@ -398,8 +426,8 @@ export default function CartTable() {
                 </div>
             </div>
 
-            {/* Table Area */}
-            <div className="flex-1 overflow-auto relative bg-gray-50/50">
+            {/* Table Area - Hidden when collapsed */}
+            <div className={`flex-1 overflow-auto relative bg-gray-50/50 ${!isOpen ? 'hidden' : ''}`}>
                 <div
                     className="min-w-full inline-block align-top"
                     style={{ width: table.getTotalSize() }}
@@ -470,20 +498,22 @@ export default function CartTable() {
                 </div>
             </div>
 
-            {/* Footer Summary */}
-            <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-sm shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
-                <div className="text-gray-500 text-xs">
-                    {itens.length} pontos listados
-                </div>
-                <div className="flex items-center gap-6">
-                    <div className="flex flex-col items-end">
-                        <span className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Investimento Total</span>
-                        <span className="font-bold text-lg text-emerald-600 leading-none">
-                            {formatCurrency(itens.reduce((sum, item) => sum + (item.total_investimento || item.valor || 0), 0))}
-                        </span>
+            {/* Footer Summary - Always visible if open */}
+            {isOpen && (
+                <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-sm shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+                    <div className="text-gray-500 text-xs">
+                        {itens.length} pontos listados
+                    </div>
+                    <div className="flex items-center gap-6">
+                        <div className="flex flex-col items-end">
+                            <span className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Investimento Total</span>
+                            <span className="font-bold text-lg text-emerald-600 leading-none">
+                                {formatCurrency(itens.reduce((sum, item) => sum + (item.total_investimento || item.valor || 0), 0))}
+                            </span>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }
