@@ -17,14 +17,22 @@ interface SearchResult {
 
 export default function AddressSearch({ onLocationSelect }: AddressSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const [searchValue, setSearchValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [dbResults, setDbResults] = useState<SearchResult[]>([]);
+  const [googleResults, setGoogleResults] = useState<SearchResult[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const placesServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
 
-  // Debounced search in database
+  // Initialize Google Places AutocompleteService
+  useEffect(() => {
+    if (window.google && window.google.maps && window.google.maps.places) {
+      placesServiceRef.current = new google.maps.places.AutocompleteService();
+    }
+  }, []);
+
+  // Search database
   const searchDatabase = useCallback(async (query: string) => {
     if (!query || query.length < 2) {
       setDbResults([]);
@@ -50,21 +58,48 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
     }
   }, []);
 
-  // Debounce search (removed filterText integration)
+  // Search Google Places
+  const searchGoogle = useCallback((query: string) => {
+    if (!query || query.length < 3 || !placesServiceRef.current) {
+      setGoogleResults([]);
+      return;
+    }
+
+    placesServiceRef.current.getPlacePredictions(
+      {
+        input: query,
+        componentRestrictions: { country: 'br' }
+      },
+      (predictions, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+          const formatted: SearchResult[] = predictions.slice(0, 5).map((prediction) => ({
+            type: 'google' as const,
+            label: prediction.structured_formatting.main_text,
+            sublabel: prediction.structured_formatting.secondary_text,
+            data: prediction
+          }));
+          setGoogleResults(formatted);
+        } else {
+          setGoogleResults([]);
+        }
+      }
+    );
+  }, []);
+
+  // Debounced search (both sources)
   useEffect(() => {
     const timer = setTimeout(() => {
       searchDatabase(searchValue);
+      searchGoogle(searchValue);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchValue, searchDatabase]);
-
-  // Google Maps initialization removed - using only our custom search
-  // The Google Places widget was causing dual dropdowns
+  }, [searchValue, searchDatabase, searchGoogle]);
 
   const handleClear = () => {
     setSearchValue('');
     setDbResults([]);
+    setGoogleResults([]);
     setShowDropdown(false);
     if (inputRef.current) {
       inputRef.current.value = '';
@@ -83,15 +118,42 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
       setSearchValue(result.label);
       setShowDropdown(false);
       setDbResults([]);
+      setGoogleResults([]);
     }
   };
+
+  const handleSelectGoogleResult = (result: SearchResult) => {
+    if (result.type === 'google') {
+      setIsLoading(true);
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ placeId: result.data.place_id }, (results, status) => {
+        if (status === 'OK' && results && results[0]) {
+          const location = {
+            lat: results[0].geometry.location.lat(),
+            lng: results[0].geometry.location.lng(),
+            address: results[0].formatted_address
+          };
+          onLocationSelect(location);
+          setSearchValue(result.label);
+          setShowDropdown(false);
+          setDbResults([]);
+          setGoogleResults([]);
+          setIsLoading(false);
+        } else {
+          setIsLoading(false);
+        }
+      });
+    }
+  };
+
+  const allResults = [...dbResults, ...googleResults];
 
   return (
     <div className="relative">
       <div
         className={`map-search-bar flex items-center gap-3 transition-all ${isFocused
-          ? 'border-emidias-accent shadow-accent'
-          : 'border-transparent'
+            ? 'border-emidias-accent shadow-accent'
+            : 'border-transparent'
           }`}
       >
         <div className={`flex-shrink-0 transition-colors ${isFocused ? 'text-emidias-accent' : 'text-emidias-gray-400'}`}>
@@ -132,34 +194,68 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
         )}
       </div>
 
-      {/* Database Results Dropdown */}
-      {showDropdown && dbResults.length > 0 && (
+      {/* Combined Results Dropdown */}
+      {showDropdown && allResults.length > 0 && (
         <div className="absolute top-full mt-2 left-0 right-0 glass-light rounded-xl shadow-emidias-xl max-h-96 overflow-y-auto z-[60] animate-fade-in-up">
           <div className="p-2">
-            <div className="text-xs font-semibold text-emidias-gray-400 px-3 py-2">
-              🎯 Pontos Cadastrados ({dbResults.length})
-            </div>
-            {dbResults.map((result, index) => (
-              <button
-                key={`${result.type}-${result.id || index}`}
-                onClick={() => handleSelectDbResult(result)}
-                className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-emidias-blue-50 transition-colors group"
-              >
-                <div className="flex items-start gap-2">
-                  <Target size={16} className="text-emidias-accent mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-emidias-gray-900 truncate group-hover:text-emidias-primary">
-                      {result.label}
-                    </div>
-                    {result.sublabel && (
-                      <div className="text-xs text-emidias-gray-500 truncate mt-0.5">
-                        {result.sublabel}
-                      </div>
-                    )}
-                  </div>
+            {dbResults.length > 0 && (
+              <>
+                <div className="text-xs font-semibold text-emidias-gray-400 px-3 py-2">
+                  🎯 Pontos Cadastrados ({dbResults.length})
                 </div>
-              </button>
-            ))}
+                {dbResults.map((result, index) => (
+                  <button
+                    key={`db-${result.id || index}`}
+                    onClick={() => handleSelectDbResult(result)}
+                    className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-emidias-blue-50 transition-colors group"
+                  >
+                    <div className="flex items-start gap-2">
+                      <Target size={16} className="text-emidias-accent mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-emidias-gray-900 truncate group-hover:text-emidias-primary">
+                          {result.label}
+                        </div>
+                        {result.sublabel && (
+                          <div className="text-xs text-emidias-gray-500 truncate mt-0.5">
+                            {result.sublabel}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </>
+            )}
+
+            {googleResults.length > 0 && (
+              <>
+                {dbResults.length > 0 && <div className="h-px bg-emidias-gray-200 my-2" />}
+                <div className="text-xs font-semibold text-emidias-gray-400 px-3 py-2">
+                  📍 Endereços Google ({googleResults.length})
+                </div>
+                {googleResults.map((result, index) => (
+                  <button
+                    key={`google-${index}`}
+                    onClick={() => handleSelectGoogleResult(result)}
+                    className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-emidias-blue-50 transition-colors group"
+                  >
+                    <div className="flex items-start gap-2">
+                      <MapPin size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-emidias-gray-900 truncate group-hover:text-emidias-primary">
+                          {result.label}
+                        </div>
+                        {result.sublabel && (
+                          <div className="text-xs text-emidias-gray-500 truncate mt-0.5">
+                            {result.sublabel}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </>
+            )}
           </div>
         </div>
       )}
