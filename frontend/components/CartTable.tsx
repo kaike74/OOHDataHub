@@ -364,25 +364,25 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             accessorKey: 'pais',
             header: 'País',
             size: 80,
-            cell: ({ row }) => <span className="text-gray-600">{row.original.pais}</span>
+            cell: ({ row }) => <span className="text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">{row.original.pais}</span>
         },
         {
             accessorKey: 'uf',
             header: 'UF',
             size: 50,
-            cell: ({ row }) => <span className="text-gray-600">{row.original.uf}</span>
+            cell: ({ row }) => <span className="text-gray-600 whitespace-nowrap">{row.original.uf}</span>
         },
         {
             accessorKey: 'cidade',
             header: 'Cidade',
             size: 120,
-            cell: ({ row }) => <span className="text-gray-900 font-medium">{row.original.cidade}</span>
+            cell: ({ row }) => <span className="text-gray-900 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{row.original.cidade}</span>
         },
         {
             accessorKey: 'codigo_ooh',
             header: 'Código OOH',
             size: 100,
-            cell: ({ row }) => <span className="font-mono text-xs bg-gray-50 px-1 py-0.5 rounded border border-gray-100">{row.original.codigo_ooh}</span>
+            cell: ({ row }) => <span className="font-mono text-xs bg-gray-50 px-1 py-0.5 rounded border border-gray-100 whitespace-nowrap">{row.original.codigo_ooh}</span>
         },
         {
             accessorKey: 'endereco',
@@ -410,19 +410,19 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             accessorKey: 'exibidora_nome',
             header: 'Exibidora',
             size: 120,
-            cell: ({ row }) => <span className="text-gray-600 truncate">{row.original.exibidora_nome || row.original.exibidora}</span>
+            cell: ({ row }) => <span className="text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis block">{row.original.exibidora_nome || row.original.exibidora}</span>
         },
         {
             accessorKey: 'produto',
             header: 'Produto',
             size: 100,
-            cell: ({ row }) => <span className="text-gray-600">{row.original.tipo}</span>
+            cell: ({ row }) => <span className="text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis block">{row.original.tipo}</span>
         },
         {
             accessorKey: 'medidas',
             header: 'Medidas',
             size: 100,
-            cell: ({ row }) => <span className="text-xs text-gray-500">{row.original.medidas}</span>
+            cell: ({ row }) => <span className="text-xs text-gray-500 whitespace-nowrap">{row.original.medidas}</span>
         },
         {
             header: 'Período',
@@ -1062,10 +1062,12 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                                     data-row-id={row.original.id}
                                                     className={`flex items-center border-b border-gray-200 transition-colors group ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}`}
                                                 >
-                                                    {row.getVisibleCells().map(cell => (
+                                                    {row.getVisibleCells().map(cell => {
+                                                        const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
+                                                        return (
                                                         <div
                                                             key={cell.id}
-                                                            className={`px-2 py-1 text-xs text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative overflow-hidden ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                                            className={`px-2 py-1 text-xs text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
                                                             style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
                                                         >
                                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1100,7 +1102,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                                                     />
                                                                 )}
                                                         </div>
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </div>
                                             ))}
                                         </div>
@@ -1116,10 +1119,12 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                         data-row-id={row.original.id}
                                         className={`flex items-center border-b border-gray-200 transition-colors group ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}`}
                                     >
-                                        {row.getVisibleCells().map(cell => (
+                                        {row.getVisibleCells().map(cell => {
+                                            const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
+                                            return (
                                             <div
                                                 key={cell.id}
-                                                className={`px-2 py-1 text-xs text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative overflow-hidden ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                                className={`px-2 py-1 text-xs text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
                                                 style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
                                             >
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1154,7 +1159,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                                         />
                                                     )}
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 ))}
                             </>
