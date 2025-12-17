@@ -200,6 +200,10 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                 updates.push('color = ?');
                 values.push(data.color);
             }
+            if (data.markers !== undefined) {
+                updates.push('markers = ?');
+                values.push(JSON.stringify(data.markers));
+            }
 
             if (updates.length > 0) {
                 values.push(layerId, idProposta);

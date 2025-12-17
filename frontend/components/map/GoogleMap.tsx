@@ -302,7 +302,8 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                         anchor: new google.maps.Point(12, 22),
                         strokeWeight: 0,
                         scale: 1.2
-                    }
+                    },
+                    draggable: true, // Allow user to move marker
                 });
 
                 // Optional: Add info window on click for custom markers
@@ -315,6 +316,32 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                 });
 
                 customMarkersRef.current.push(marker);
+
+                // Handle Drag End - Update Store and Persist
+                marker.addListener('dragend', async () => {
+                    const position = marker.getPosition();
+                    if (position && selectedProposta?.id) {
+                        const lat = position.lat();
+                        const lng = position.lng();
+
+                        // 1. Optimistic Update Local Store
+                        useStore.getState().updateCustomMarkerPosition(layer.id, customMarker.id, lat, lng);
+
+                        // 2. Persist to Backend
+                        // We need to send the UPDATED markers array for this layer
+                        const updatedLayer = useStore.getState().customLayers.find(l => l.id === layer.id);
+                        if (updatedLayer) {
+                            try {
+                                await api.updateProposalLayer(selectedProposta.id, layer.id, {
+                                    markers: updatedLayer.markers
+                                });
+                            } catch (error) {
+                                console.error('Failed to save moved marker:', error);
+                                // Revert? For now, just log.
+                            }
+                        }
+                    }
+                });
             });
         });
 
