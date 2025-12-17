@@ -924,29 +924,47 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     className="flex items-center gap-4 relative"
                     onClick={e => e.stopPropagation()}
                 >
-                    {!isOpen && (
-                        <div className="flex items-center gap-4 text-sm animate-fade-in divide-x divide-gray-200">
-                            {/* Impactos Totais */}
-                            <div className="flex flex-col items-end px-4 first:pl-0">
-                                <span className="text-[10px] text-gray-500 uppercase tracking-wider">Impactos Totais</span>
-                                <span className="font-bold text-gray-700">
-                                    {formatNumber(itens.reduce((sum, item) => {
-                                        let diffDays = 0;
-                                        if (item.periodo_inicio && item.periodo_fim) {
-                                            const start = new Date(item.periodo_inicio);
-                                            const end = new Date(item.periodo_fim);
-                                            diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-                                        }
-                                        return sum + ((item.fluxo_diario || 0) * diffDays);
-                                    }, 0))}
-                                </span>
-                            </div>
 
-                            {/* Investimento Total */}
-                            <div className="flex flex-col items-end px-4">
-                                <span className="text-[10px] text-gray-500 uppercase tracking-wider">Investimento Total</span>
-                                <span className="font-bold text-emerald-600">
-                                    {formatCurrency(itens.reduce((sum, item) => {
+                    <div className="flex items-center gap-4 text-sm animate-fade-in divide-x divide-gray-200">
+                        {/* Impactos Totais */}
+                        <div className="flex flex-col items-end px-4 first:pl-0">
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">Impactos Totais</span>
+                            <span className="font-bold text-gray-700">
+                                {formatNumber(itens.reduce((sum, item) => {
+                                    let diffDays = 0;
+                                    if (item.periodo_inicio && item.periodo_fim) {
+                                        const start = new Date(item.periodo_inicio);
+                                        const end = new Date(item.periodo_fim);
+                                        diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+                                    }
+                                    return sum + ((item.fluxo_diario || 0) * diffDays);
+                                }, 0))}
+                            </span>
+                        </div>
+
+                        {/* Investimento Total */}
+                        <div className="flex flex-col items-end px-4">
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">Investimento Total</span>
+                            <span className="font-bold text-emerald-600">
+                                {formatCurrency(itens.reduce((sum, item) => {
+                                    let qtd = 1;
+                                    if (item.periodo_inicio && item.periodo_fim) {
+                                        const start = new Date(item.periodo_inicio);
+                                        const end = new Date(item.periodo_fim);
+                                        const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                                        qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                                    }
+                                    return sum + ((item.valor_locacao || 0) * qtd);
+                                }, 0))}
+                            </span>
+                        </div>
+
+                        {/* CPM Total */}
+                        <div className="flex flex-col items-end px-4 last:pr-0">
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">CPM Total</span>
+                            <span className="font-bold text-blue-600">
+                                {(() => {
+                                    const totalInvest = itens.reduce((sum, item) => {
                                         let qtd = 1;
                                         if (item.periodo_inicio && item.periodo_fim) {
                                             const start = new Date(item.periodo_inicio);
@@ -955,42 +973,24 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                             qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
                                         }
                                         return sum + ((item.valor_locacao || 0) * qtd);
-                                    }, 0))}
-                                </span>
-                            </div>
+                                    }, 0);
 
-                            {/* CPM Total */}
-                            <div className="flex flex-col items-end px-4 last:pr-0">
-                                <span className="text-[10px] text-gray-500 uppercase tracking-wider">CPM Total</span>
-                                <span className="font-bold text-blue-600">
-                                    {(() => {
-                                        const totalInvest = itens.reduce((sum, item) => {
-                                            let qtd = 1;
-                                            if (item.periodo_inicio && item.periodo_fim) {
-                                                const start = new Date(item.periodo_inicio);
-                                                const end = new Date(item.periodo_fim);
-                                                const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                                                qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                                            }
-                                            return sum + ((item.valor_locacao || 0) * qtd);
-                                        }, 0);
+                                    const totalImpactos = itens.reduce((sum, item) => {
+                                        let diffDays = 0;
+                                        if (item.periodo_inicio && item.periodo_fim) {
+                                            const start = new Date(item.periodo_inicio);
+                                            const end = new Date(item.periodo_fim);
+                                            diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+                                        }
+                                        return sum + ((item.fluxo_diario || 0) * diffDays);
+                                    }, 0);
 
-                                        const totalImpactos = itens.reduce((sum, item) => {
-                                            let diffDays = 0;
-                                            if (item.periodo_inicio && item.periodo_fim) {
-                                                const start = new Date(item.periodo_inicio);
-                                                const end = new Date(item.periodo_fim);
-                                                diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-                                            }
-                                            return sum + ((item.fluxo_diario || 0) * diffDays);
-                                        }, 0);
-
-                                        return formatCurrency(totalImpactos > 0 ? (totalInvest / totalImpactos) * 1000 : 0);
-                                    })()}
-                                </span>
-                            </div>
+                                    return formatCurrency(totalImpactos > 0 ? (totalInvest / totalImpactos) * 1000 : 0);
+                                })()}
+                            </span>
                         </div>
-                    )}
+                    </div>
+
 
                     {/* Grouping Menu */}
                     <button
@@ -1062,6 +1062,29 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                         .filter(col => col.id !== 'select' && col.id !== 'actions')
                                         .map(column => {
                                             if (!column.id) return null;
+
+                                            // Map column IDs to readable labels
+                                            const columnLabels: Record<string, string> = {
+                                                'uf': 'UF',
+                                                'exibidora_nome': 'Exibidora',
+                                                'codigo_ooh': 'Código OOH',
+                                                'produto': 'Produto',
+                                                'medidas': 'Medidas',
+                                                'periodo': 'Período de Exibição',
+                                                'periodo_comercializado': 'Período comercializado',
+                                                'valor_locacao': 'Locação',
+                                                'valor_papel': 'Papel',
+                                                'valor_lona': 'Lona',
+                                                'qtd_bi_mes': 'Qtd. Bi/Mês',
+                                                'total_investimento': 'Investimento',
+                                                'cpm': 'CPM',
+                                                'impactos': 'Impactos',
+                                                'ponto_referencia': 'Ponto de Referência',
+                                                'observacoes': 'Observações'
+                                            };
+
+                                            const label = columnLabels[column.id] || column.id;
+
                                             return (
                                                 <div
                                                     key={column.id}
@@ -1071,8 +1094,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                                     <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${column.getIsVisible() ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
                                                         {column.getIsVisible() && <Check size={10} strokeWidth={3} />}
                                                     </div>
-                                                    <span className="text-sm text-gray-700 truncate capitalize select-none">
-                                                        {(column.columnDef.header as string) || column.id}
+                                                    <span className="text-sm text-gray-700 truncate select-none">
+                                                        {label}
                                                     </span>
                                                 </div>
                                             )
@@ -1286,21 +1309,23 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             </div>
 
             {/* Footer Summary - Always visible if open */}
-            {isOpen && (
-                <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-sm shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 flex-shrink-0">
-                    <div className="text-gray-500 text-xs">
-                        {itens.length} pontos listados
-                    </div>
-                    <div className="flex items-center gap-6">
-                        <div className="flex flex-col items-end">
-                            <span className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Investimento Total</span>
-                            <span className="font-bold text-lg text-emerald-600 leading-none">
-                                {formatCurrency(itens.reduce((sum, item) => sum + ((item.valor || 0) + (item.valor_papel || 0) + (item.valor_lona || 0)) * (item.qtd_bi_mes || 1), 0))}
-                            </span>
+            {
+                isOpen && (
+                    <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-sm shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 flex-shrink-0">
+                        <div className="text-gray-500 text-xs">
+                            {itens.length} pontos listados
+                        </div>
+                        <div className="flex items-center gap-6">
+                            <div className="flex flex-col items-end">
+                                <span className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Investimento Total</span>
+                                <span className="font-bold text-lg text-emerald-600 leading-none">
+                                    {formatCurrency(itens.reduce((sum, item) => sum + ((item.valor || 0) + (item.valor_papel || 0) + (item.valor_lona || 0)) * (item.qtd_bi_mes || 1), 0))}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }
