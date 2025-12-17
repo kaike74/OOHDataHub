@@ -1060,12 +1060,12 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                                 <div
                                                     key={row.id}
                                                     data-row-id={row.original.id}
-                                                    className={`flex items-stretch border-b border-gray-200 transition-colors group ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'} ${isInDragRange(row.original.id) ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                                    className={`flex items-center border-b border-gray-200 transition-colors group ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}`}
                                                 >
                                                     {row.getVisibleCells().map(cell => (
                                                         <div
                                                             key={cell.id}
-                                                            className="px-2 py-2 text-sm text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative min-h-[40px]"
+                                                            className={`px-2 py-1 text-xs text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative overflow-hidden ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
                                                             style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
                                                         >
                                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1114,12 +1114,12 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                     <div
                                         key={row.id}
                                         data-row-id={row.original.id}
-                                        className={`flex items-stretch border-b border-gray-200 transition-colors group ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'} ${isInDragRange(row.original.id) ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                        className={`flex items-center border-b border-gray-200 transition-colors group ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}`}
                                     >
                                         {row.getVisibleCells().map(cell => (
                                             <div
                                                 key={cell.id}
-                                                className="px-2 py-2 text-sm text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative min-h-[40px]"
+                                                className={`px-2 py-1 text-xs text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative overflow-hidden ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
                                                 style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
                                             >
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
