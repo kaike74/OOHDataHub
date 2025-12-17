@@ -236,7 +236,7 @@ export const api = {
         method: 'DELETE',
     }),
 
-    updateProposalLayer: (propostaId: number, layerId: string, updates: { visible?: boolean; color?: string }) => fetchAPI(`/api/propostas/${propostaId}/layers/${layerId}`, {
+    updateProposalLayer: (propostaId: number, layerId: string, updates: { visible?: boolean; color?: string; markers?: any[] }) => fetchAPI(`/api/propostas/${propostaId}/layers/${layerId}`, {
         method: 'PUT',
         body: JSON.stringify(updates)
     }),
