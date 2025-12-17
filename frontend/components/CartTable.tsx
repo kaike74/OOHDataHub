@@ -1184,9 +1184,29 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                     });
 
                                     // Calculate group total
-                                    const groupTotal = group.items.reduce((sum, item) =>
-                                        sum + ((item.valor_locacao || 0) + (item.valor_papel || 0) + (item.valor_lona || 0)) * (item.qtd_bi_mes || 1), 0
-                                    );
+                                    const totals = group.items.reduce((acc, item) => {
+                                        // Investimento
+                                        let qtd = 1;
+                                        let diffDays = 0;
+
+                                        if (item.periodo_inicio && item.periodo_fim) {
+                                            const start = new Date(item.periodo_inicio);
+                                            const end = new Date(item.periodo_fim);
+                                            const diffMs = end.getTime() - start.getTime();
+                                            diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+                                            qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                                        }
+
+                                        const investimento = (item.valor_locacao || 0) * qtd;
+                                        const impactos = (item.fluxo_diario || 0) * diffDays;
+
+                                        return {
+                                            investimento: acc.investimento + investimento,
+                                            impactos: acc.impactos + impactos
+                                        };
+                                    }, { investimento: 0, impactos: 0 });
+
+                                    const cpm = totals.impactos > 0 ? (totals.investimento / totals.impactos) * 1000 : 0;
 
                                     return (
                                         <div key={group.name} className="border-b border-gray-200">
@@ -1204,9 +1224,20 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                                 <span className="text-xs text-gray-400 bg-white px-1.5 rounded-sm border border-gray-200">
                                                     {group.count}
                                                 </span>
-                                                <span className="text-xs text-emerald-700 font-medium ml-auto">
-                                                    {formatCurrency(groupTotal)}
-                                                </span>
+                                                <div className="ml-auto flex items-center gap-4">
+                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                        <span className="text-gray-400 uppercase tracking-wider text-[10px]">Impactos:</span>
+                                                        <span className="font-medium text-gray-700">{formatNumber(totals.impactos)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                        <span className="text-gray-400 uppercase tracking-wider text-[10px]">CPM:</span>
+                                                        <span className="font-medium text-blue-600">{formatCurrency(cpm)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                        <span className="text-gray-400 uppercase tracking-wider text-[10px]">Investimento:</span>
+                                                        <span className="font-medium text-emerald-700">{formatCurrency(totals.investimento)}</span>
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             {/* Group Rows */}
