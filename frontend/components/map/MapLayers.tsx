@@ -93,10 +93,9 @@ export default function MapLayers() {
                 const headers = Object.keys(data[0] as object);
                 setHeaders(headers);
 
-                // Initialize Preview
-                setViewingLayerId('preview');
-                // setIsTableOpen(true); // Don't open table on drop as per user request
-                setStep('table-preview');
+                // Initialize Wizard directly to Address selection
+                setViewingLayerId(null);
+                setStep('address');
             }
         } catch (error) {
             console.error('Erro ao ler arquivo:', error);
