@@ -26,6 +26,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             pi.valor_locacao, pi.valor_papel, pi.valor_lona, 
             pi.periodo_comercializado, pi.observacoes, pi.fluxo_diario,
             p.endereco, p.cidade, p.uf, p.pais, p.codigo_ooh, p.tipo, p.medidas, p.ponto_referencia,
+            p.latitude, p.longitude,
             e.nome as exibidora_nome
         FROM proposta_itens pi
         JOIN pontos_ooh p ON pi.id_ooh = p.id
