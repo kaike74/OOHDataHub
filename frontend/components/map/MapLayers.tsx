@@ -62,7 +62,7 @@ export default function MapLayers() {
                     setCustomLayers(layers);
                     // Load configs
                     const configs: any = {};
-                    layers.forEach(l => {
+                    layers.forEach((l: MapLayer) => {
                         if (l.config) configs[l.id] = l.config;
                     });
                     setLayerConfigs(configs);
