@@ -129,8 +129,13 @@ export async function handlePropostas(request: Request, env: Env, path: string):
     if (request.method === 'GET' && path.match(/^\/api\/propostas\/\d+\/layers$/)) {
         const idProposta = path.split('/')[3];
         const { results } = await env.DB.prepare('SELECT * FROM proposal_layers WHERE id_proposta = ? ORDER BY created_at DESC').bind(idProposta).all();
-        // Parse markers JSON
-        const layers = results.map((l: any) => ({ ...l, markers: JSON.parse(l.markers), visible: !!l.visible }));
+        // Parse markers JSON and data JSON
+        const layers = results.map((l: any) => ({
+            ...l,
+            markers: JSON.parse(l.markers),
+            data: l.data ? JSON.parse(l.data) : [],
+            visible: !!l.visible
+        }));
         return new Response(JSON.stringify(layers), { headers });
     }
 
@@ -145,14 +150,15 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             }
 
             await env.DB.prepare(`
-                INSERT INTO proposal_layers (id, id_proposta, name, color, markers, visible)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO proposal_layers (id, id_proposta, name, color, markers, data, visible)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             `).bind(
                 data.id,
                 idProposta,
                 data.name,
                 data.color || '#3B82F6',
                 JSON.stringify(data.markers),
+                JSON.stringify(data.data || []),
                 data.visible !== undefined ? (data.visible ? 1 : 0) : 1
             ).run();
 
