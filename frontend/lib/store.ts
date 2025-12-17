@@ -77,6 +77,7 @@ interface AppState {
     addCustomLayer: (layer: MapLayer) => void;
     toggleLayerVisibility: (layerId: string) => void;
     removeLayer: (layerId: string) => void;
+    updateLayerColor: (layerId: string, color: string) => void;
 
     refreshProposta: (proposta: Proposta) => void;
 }
@@ -148,6 +149,9 @@ export const useStore = create<AppState>()(
             })),
             removeLayer: (layerId) => set((state) => ({
                 customLayers: state.customLayers.filter(l => l.id !== layerId)
+            })),
+            updateLayerColor: (layerId, color) => set((state) => ({
+                customLayers: state.customLayers.map(l => l.id === layerId ? { ...l, color } : l)
             })),
 
             setSelectedPonto: (ponto) => set((state) => ({

@@ -224,6 +224,23 @@ export const api = {
         method: 'POST'
     }),
 
+    // Layers
+    getProposalLayers: (propostaId: number) => fetchAPI(`/api/propostas/${propostaId}/layers`),
+
+    addProposalLayer: (propostaId: number, layer: any) => fetchAPI(`/api/propostas/${propostaId}/layers`, {
+        method: 'POST',
+        body: JSON.stringify(layer)
+    }),
+
+    deleteProposalLayer: (propostaId: number, layerId: string) => fetchAPI(`/api/propostas/${propostaId}/layers/${layerId}`, {
+        method: 'DELETE',
+    }),
+
+    updateProposalLayer: (propostaId: number, layerId: string, updates: { visible?: boolean; color?: string }) => fetchAPI(`/api/propostas/${propostaId}/layers/${layerId}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+    }),
+
     // Stats
     getStats: () => fetchAPI('/api/stats'),
 

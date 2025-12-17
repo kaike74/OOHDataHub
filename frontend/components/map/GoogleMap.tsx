@@ -393,7 +393,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             <div ref={mapRef} className="w-full h-full" />
 
             <MapLayers />
-            <AIChat />
+            {selectedProposta && <AIChat />}
 
             {/* Tooltip no Hover */}
             {hoveredPonto && isLoaded && !isStreetViewMode && (

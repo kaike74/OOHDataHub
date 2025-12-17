@@ -4,18 +4,24 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import { useStore } from '@/lib/store';
+import { api } from '@/lib/api';
 import { CustomMarker } from '@/lib/types';
-import { Layers, Upload, X, Eye, EyeOff, Trash2, FileSpreadsheet, MapPin, Check, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
+import { Layers, Upload, X, Eye, EyeOff, Trash2, FileSpreadsheet, MapPin, Check, ChevronRight, Loader2, AlertCircle, Palette } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 // Rate Limiter Helper
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+const PRESET_COLORS = ['#EF4444', '#F97316', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#000000', '#78716c'];
+
 export default function MapLayers() {
     const customLayers = useStore((state) => state.customLayers);
+    const setCustomLayers = useStore((state) => state.setCustomLayers);
     const addCustomLayer = useStore((state) => state.addCustomLayer);
     const toggleLayerVisibility = useStore((state) => state.toggleLayerVisibility);
     const removeLayer = useStore((state) => state.removeLayer);
+    const updateLayerColor = useStore((state) => state.updateLayerColor);
+    const selectedProposta = useStore((state) => state.selectedProposta);
 
     const [isOpen, setIsOpen] = useState(false);
 
@@ -32,6 +38,23 @@ export default function MapLayers() {
     const [totalToProcess, setTotalToProcess] = useState(0);
     const [errors, setErrors] = useState<string[]>([]);
     const isProcessingRef = useRef(false);
+
+    // Color Picker State
+    const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
+
+    // Sync with Backend
+    useEffect(() => {
+        if (selectedProposta?.id) {
+            // Fetch layers
+            api.getProposalLayers(selectedProposta.id)
+                .then(layers => {
+                    setCustomLayers(layers);
+                })
+                .catch(err => console.error('Erro ao carregar camadas:', err));
+        } else {
+            setCustomLayers([]);
+        }
+    }, [selectedProposta?.id, setCustomLayers]);
 
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         const file = acceptedFiles[0];
@@ -101,16 +124,12 @@ export default function MapLayers() {
         const markers: CustomMarker[] = [];
         const geocoder = new google.maps.Geocoder();
 
-        // Batch processing to avoid rate limits
-        // Google Maps Geocoding API has QPS limits. Usually 50 QPS standard.
-        // We'll be conservative with client-side geocoding.
-
+        // Batch processing
         for (let i = 0; i < excelData.length; i++) {
-            if (!isProcessingRef.current) break; // Allow cancellation
+            if (!isProcessingRef.current) break;
 
             const row = excelData[i];
 
-            // Construct address
             const addressParts = selectedAddressCols.map(col => row[col]).filter(Boolean);
             const address = addressParts.join(', ');
 
@@ -128,7 +147,7 @@ export default function MapLayers() {
                             if (status === 'OVER_QUERY_LIMIT') {
                                 reject('RATE_LIMIT');
                             } else {
-                                resolve([]); // Not found, resolve empty to continue
+                                resolve([]);
                             }
                         }
                     });
@@ -145,18 +164,16 @@ export default function MapLayers() {
                     });
                 }
 
-                // Success
                 setProcessedCount(prev => prev + 1);
-
-                // Small delay to be nice to the API
-                await delay(100);
+                // Lower delay to try to be faster but still safe-ish (Google client-side limit is tight)
+                // If user complains about speed, server-side is the only real fix.
+                await delay(300);
 
             } catch (error) {
                 if (error === 'RATE_LIMIT') {
-                    // Backoff and retry current item
                     console.warn('Rate limit hit, waiting...');
-                    await delay(2000);
-                    i--; // Retry this index
+                    await delay(2500);
+                    i--;
                 } else {
                     console.error('Geocoding error:', error);
                     setProcessedCount(prev => prev + 1);
@@ -164,7 +181,30 @@ export default function MapLayers() {
             }
         }
 
-        if (markers.length > 0) {
+        if (markers.length > 0 && selectedProposta?.id) {
+            const newLayer = {
+                id: uuidv4(),
+                name: selectedFile?.name.replace(/\.[^/.]+$/, "") || 'Nova Camada',
+                visible: true,
+                color: getRandomColor(),
+                markers
+            };
+
+            // Optimistic update
+            addCustomLayer(newLayer);
+
+            // Persist
+            try {
+                await api.addProposalLayer(selectedProposta.id, newLayer);
+            } catch (e) {
+                console.error("Failed to save layer", e);
+                // Ideally revert optimistic update or show error
+                setErrors(prev => [...prev, 'Erro ao salvar camada no banco de dados.']);
+            }
+
+            resetState();
+        } else if (markers.length > 0 && !selectedProposta?.id) {
+            // Fallback for no proposal selected (should not happen if hidden)
             addCustomLayer({
                 id: uuidv4(),
                 name: selectedFile?.name.replace(/\.[^/.]+$/, "") || 'Nova Camada',
@@ -172,18 +212,13 @@ export default function MapLayers() {
                 color: getRandomColor(),
                 markers
             });
+            resetState();
         } else {
             setErrors(prev => [...prev, 'Nenhum endereço foi localizado.']);
+            setTimeout(() => setStep('upload'), 2000);
         }
 
         isProcessingRef.current = false;
-        if (markers.length > 0) {
-            resetState();
-        } else {
-            // Stay on processing screen effectively to show error or just go back to upload?
-            // Let's go back to upload but keep error visible if needed
-            setTimeout(() => setStep('upload'), 2000);
-        }
     };
 
     const resetState = () => {
@@ -203,9 +238,41 @@ export default function MapLayers() {
     };
 
     const getRandomColor = () => {
-        const colors = ['#EF4444', '#F97316', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899'];
+        const colors = PRESET_COLORS;
         return colors[Math.floor(Math.random() * colors.length)];
     };
+
+
+    const handleToggleVisibility = async (layerId: string, currentVisible: boolean) => {
+        toggleLayerVisibility(layerId); // Optimistic
+        if (selectedProposta?.id) {
+            api.updateProposalLayer(selectedProposta.id, layerId, { visible: !currentVisible }).catch(console.error);
+        }
+    };
+
+    const handleRemoveLayer = async (layerId: string) => {
+        removeLayer(layerId); // Optimistic
+        if (selectedProposta?.id) {
+            api.deleteProposalLayer(selectedProposta.id, layerId).catch(console.error);
+        }
+    };
+
+    const handleColorChange = async (layerId: string, color: string) => {
+        updateLayerColor(layerId, color); // Optimistic (need to add this action to store later or just modify state directly if store allows)
+
+        // Manual update via setCustomLayers if updateLayerColor missing
+        // But for now let's assume I add it or do it manually here:
+        useStore.setState(state => ({
+            customLayers: state.customLayers.map(l => l.id === layerId ? { ...l, color } : l)
+        }));
+
+        setActiveColorPicker(null);
+        if (selectedProposta?.id) {
+            api.updateProposalLayer(selectedProposta.id, layerId, { color }).catch(console.error);
+        }
+    };
+
+    if (!selectedProposta) return null; // Hide if no proposal selected
 
     return (
         <div className="absolute top-20 left-4 z-10 font-sans">
@@ -263,18 +330,38 @@ export default function MapLayers() {
                                         </div>
                                     )}
                                     {customLayers.map(layer => (
-                                        <div key={layer.id} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-md hover:bg-white transition-colors group">
+                                        <div key={layer.id} className="relative flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-md hover:bg-white transition-colors group">
                                             <div className="flex items-center gap-2 overflow-hidden">
-                                                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: layer.color }} />
+                                                <button
+                                                    onClick={() => setActiveColorPicker(activeColorPicker === layer.id ? null : layer.id)}
+                                                    className="w-4 h-4 rounded-full flex-shrink-0 border border-black/10 hover:scale-110 transition-transform"
+                                                    style={{ backgroundColor: layer.color }}
+                                                    title="Mudar cor"
+                                                />
                                                 <div className="min-w-0">
                                                     <p className="text-sm font-medium text-gray-700 truncate max-w-[120px]" title={layer.name}>{layer.name}</p>
                                                 </div>
                                             </div>
+
+                                            {/* Color Picker Popover */}
+                                            {activeColorPicker === layer.id && (
+                                                <div className="absolute top-10 left-0 z-20 bg-white p-2 rounded-lg shadow-xl border border-gray-200 grid grid-cols-5 gap-1 animate-in zoom-in-95 duration-200">
+                                                    {PRESET_COLORS.map(color => (
+                                                        <button
+                                                            key={color}
+                                                            className="w-5 h-5 rounded-full hover:scale-110 transition-transform border border-black/10"
+                                                            style={{ backgroundColor: color }}
+                                                            onClick={() => handleColorChange(layer.id, color)}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
+
                                             <div className="flex items-center gap-1">
-                                                <button onClick={() => toggleLayerVisibility(layer.id)} className="p-1 hover:bg-gray-200 rounded text-gray-500">
+                                                <button onClick={() => handleToggleVisibility(layer.id, layer.visible)} className="p-1 hover:bg-gray-200 rounded text-gray-500">
                                                     {layer.visible ? <Eye size={14} /> : <EyeOff size={14} />}
                                                 </button>
-                                                <button onClick={() => removeLayer(layer.id)} className="p-1 hover:bg-red-100 hover:text-red-500 rounded text-gray-500">
+                                                <button onClick={() => handleRemoveLayer(layer.id)} className="p-1 hover:bg-red-100 hover:text-red-500 rounded text-gray-500">
                                                     <Trash2 size={14} />
                                                 </button>
                                             </div>

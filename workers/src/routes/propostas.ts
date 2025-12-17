@@ -123,5 +123,88 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         }
     }
 
+    // --- PROPOSAL LAYERS ROUTES ---
+
+    // GET /api/propostas/:id/layers
+    if (request.method === 'GET' && path.match(/^\/api\/propostas\/\d+\/layers$/)) {
+        const idProposta = path.split('/')[3];
+        const { results } = await env.DB.prepare('SELECT * FROM proposal_layers WHERE id_proposta = ? ORDER BY created_at DESC').bind(idProposta).all();
+        // Parse markers JSON
+        const layers = results.map((l: any) => ({ ...l, markers: JSON.parse(l.markers), visible: !!l.visible }));
+        return new Response(JSON.stringify(layers), { headers });
+    }
+
+    // POST /api/propostas/:id/layers
+    if (request.method === 'POST' && path.match(/^\/api\/propostas\/\d+\/layers$/)) {
+        try {
+            const idProposta = path.split('/')[3];
+            const data = await request.json() as any;
+
+            if (!data.id || !data.name || !data.markers) {
+                return new Response(JSON.stringify({ error: 'Dados incompletos (id, name, markers)' }), { status: 400, headers });
+            }
+
+            await env.DB.prepare(`
+                INSERT INTO proposal_layers (id, id_proposta, name, color, markers, visible)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `).bind(
+                data.id,
+                idProposta,
+                data.name,
+                data.color || '#3B82F6',
+                JSON.stringify(data.markers),
+                data.visible !== undefined ? (data.visible ? 1 : 0) : 1
+            ).run();
+
+            return new Response(JSON.stringify({ success: true }), { status: 201, headers });
+        } catch (e: any) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
+    // DELETE /api/propostas/:id/layers/:layerId
+    if (request.method === 'DELETE' && path.match(/^\/api\/propostas\/\d+\/layers\/[\w-]+$/)) {
+        try {
+            const idProposta = path.split('/')[3];
+            const layerId = path.split('/')[5];
+
+            await env.DB.prepare('DELETE FROM proposal_layers WHERE id = ? AND id_proposta = ?').bind(layerId, idProposta).run();
+
+            return new Response(JSON.stringify({ success: true }), { headers });
+        } catch (e: any) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
+    // PUT /api/propostas/:id/layers/:layerId (Update visibility/color)
+    if (request.method === 'PUT' && path.match(/^\/api\/propostas\/\d+\/layers\/[\w-]+$/)) {
+        try {
+            const idProposta = path.split('/')[3];
+            const layerId = path.split('/')[5];
+            const data = await request.json() as any;
+
+            const updates = [];
+            const values = [];
+
+            if (data.visible !== undefined) {
+                updates.push('visible = ?');
+                values.push(data.visible ? 1 : 0);
+            }
+            if (data.color !== undefined) {
+                updates.push('color = ?');
+                values.push(data.color);
+            }
+
+            if (updates.length > 0) {
+                values.push(layerId, idProposta);
+                await env.DB.prepare(`UPDATE proposal_layers SET ${updates.join(', ')} WHERE id = ? AND id_proposta = ?`).bind(...values).run();
+            }
+
+            return new Response(JSON.stringify({ success: true }), { headers });
+        } catch (e: any) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 }
