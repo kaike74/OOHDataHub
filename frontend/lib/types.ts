@@ -139,3 +139,20 @@ export interface PropostaItem {
     produto?: string;
     qtd_bi_mes?: number;
 }
+
+export interface CustomMarker {
+    id: string;
+    lat: number;
+    lng: number;
+    title: string;
+    description?: string;
+    color?: string;
+}
+
+export interface MapLayer {
+    id: string;
+    name: string;
+    visible: boolean;
+    color: string;
+    markers: CustomMarker[];
+}

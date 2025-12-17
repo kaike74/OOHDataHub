@@ -6,6 +6,8 @@ import { useStore } from '@/lib/store';
 import { Ponto } from '@/lib/types';
 import { api } from '@/lib/api';
 import MapTooltip from '@/components/MapTooltip';
+import MapLayers from './MapLayers';
+import AIChat from '@/components/AIChat';
 import { MapPin } from 'lucide-react';
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
@@ -19,10 +21,12 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
     const googleMapRef = useRef<google.maps.Map | null>(null);
     const streetViewRef = useRef<google.maps.StreetViewPanorama | null>(null);
     const markersRef = useRef<google.maps.Marker[]>([]);
+    const customMarkersRef = useRef<google.maps.Marker[]>([]);
     const clustererRef = useRef<MarkerClusterer | null>(null);
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const pontos = useStore((state) => state.pontos);
+    const customLayers = useStore((state) => state.customLayers);
     const filterExibidora = useStore((state) => state.filterExibidora);
     const filterPais = useStore((state) => state.filterPais);
     const filterUF = useStore((state) => state.filterUF);
@@ -275,6 +279,47 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
 
     }, [filteredPontos, selectedProposta, setSelectedPonto]);
 
+    // 4. Effect for Rendering Custom Markers
+    useEffect(() => {
+        if (!googleMapRef.current) return;
+
+        // Clear old custom markers
+        customMarkersRef.current.forEach(marker => marker.setMap(null));
+        customMarkersRef.current = [];
+
+        customLayers.forEach(layer => {
+            if (!layer.visible) return;
+
+            layer.markers.forEach(customMarker => {
+                const marker = new google.maps.Marker({
+                    position: { lat: customMarker.lat, lng: customMarker.lng },
+                    title: customMarker.title,
+                    map: googleMapRef.current!,
+                    icon: {
+                        path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+                        fillColor: layer.color || '#FC1E75',
+                        fillOpacity: 1,
+                        anchor: new google.maps.Point(12, 22),
+                        strokeWeight: 0,
+                        scale: 1.2
+                    }
+                });
+
+                // Optional: Add info window on click for custom markers
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `<div style="padding: 5px;"><strong>${customMarker.title}</strong><br/>${customMarker.description || ''}</div>`
+                });
+
+                marker.addListener('click', () => {
+                    infoWindow.open(googleMapRef.current, marker);
+                });
+
+                customMarkersRef.current.push(marker);
+            });
+        });
+
+    }, [customLayers]);
+
     // Centralizar mapa quando search location mudar
     useEffect(() => {
         if (searchLocation && googleMapRef.current) {
@@ -346,6 +391,9 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
     return (
         <div className="relative w-full h-full">
             <div ref={mapRef} className="w-full h-full" />
+
+            <MapLayers />
+            <AIChat />
 
             {/* Tooltip no Hover */}
             {hoveredPonto && isLoaded && !isStreetViewMode && (

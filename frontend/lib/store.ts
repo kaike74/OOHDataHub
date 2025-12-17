@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Ponto, Exibidora, Stats, User, Cliente, Proposta } from './types';
+import { Ponto, Exibidora, Stats, User, Cliente, Proposta, MapLayer } from './types';
 
 interface AppState {
     // Auth
@@ -70,6 +70,14 @@ interface AppState {
     setSearchQuery: (query: string) => void;
     setFilterText: (text: string) => void;
     clearFilters: () => void;
+
+    // Custom Layers
+    customLayers: MapLayer[];
+    setCustomLayers: (layers: MapLayer[]) => void;
+    addCustomLayer: (layer: MapLayer) => void;
+    toggleLayerVisibility: (layerId: string) => void;
+    removeLayer: (layerId: string) => void;
+
     refreshProposta: (proposta: Proposta) => void;
 }
 
@@ -84,6 +92,7 @@ export const useStore = create<AppState>()(
             // Initial state
             pontos: [],
             exibidoras: [],
+            customLayers: [], // Initialize customLayers
             stats: null,
             selectedPonto: null,
             editingPonto: null,
@@ -116,6 +125,7 @@ export const useStore = create<AppState>()(
                 isAuthenticated: false,
                 pontos: [],
                 exibidoras: [],
+                customLayers: [],
                 stats: null,
                 selectedPonto: null,
                 editingPonto: null,
@@ -129,6 +139,17 @@ export const useStore = create<AppState>()(
             setPontos: (pontos) => set({ pontos }),
             setExibidoras: (exibidoras) => set({ exibidoras }),
             setStats: (stats) => set({ stats }),
+
+            // Custom Layers Actions
+            setCustomLayers: (layers) => set({ customLayers: layers }),
+            addCustomLayer: (layer) => set((state) => ({ customLayers: [...state.customLayers, layer] })),
+            toggleLayerVisibility: (layerId) => set((state) => ({
+                customLayers: state.customLayers.map(l => l.id === layerId ? { ...l, visible: !l.visible } : l)
+            })),
+            removeLayer: (layerId) => set((state) => ({
+                customLayers: state.customLayers.filter(l => l.id !== layerId)
+            })),
+
             setSelectedPonto: (ponto) => set((state) => ({
                 selectedPonto: ponto,
                 // Manter sidebar aberta se há exibidora selecionada (para voltar aos detalhes dela)

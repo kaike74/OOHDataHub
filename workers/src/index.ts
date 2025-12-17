@@ -17,6 +17,9 @@ import { handleUsers } from './routes/users';
 import { handleClientes } from './routes/clientes';
 import { handlePropostas } from './routes/propostas';
 import { handleSearch } from './routes/search';
+import { handleAIChat } from './routes/ai';
+import { handlePublicProposal } from './routes/proposal_public';
+import { handleClients } from './routes/clients';
 import { corsHeaders, handleOptions } from './utils/cors';
 
 export default {
@@ -78,6 +81,19 @@ export default {
 
             if (path === '/api/search') {
                 return await handleSearch(request, env);
+            }
+
+            if (path === '/api/ai/chat') {
+                return await handleAIChat(request, env);
+            }
+
+            // Public Routes
+            if (path.startsWith('/api/public/proposals/')) {
+                return await handlePublicProposal(request, env);
+            }
+
+            if (path.startsWith('/api/clients')) {
+                return await handleClients(request, env, path);
             }
 
             // Not found

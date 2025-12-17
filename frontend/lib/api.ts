@@ -224,6 +224,12 @@ export const api = {
     // Stats
     getStats: () => fetchAPI('/api/stats'),
 
+    // AI
+    chatAI: (messages: any[], context: any) => fetchAPI('/api/ai/chat', {
+        method: 'POST',
+        body: JSON.stringify({ messages, context }),
+    }),
+
     // Helper para URL de imagem
     getImageUrl: (r2Key: string) => `${API_URL}/api/images/${encodeURIComponent(r2Key)}`,
 };
