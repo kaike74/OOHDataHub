@@ -13,6 +13,15 @@ import {
     Check,
     Calendar as CalendarIcon,
     Layers,
+    Hash,
+    Type,
+    MapPin,
+    Box,
+    Ruler,
+    DollarSign,
+    Globe,
+    Building2,
+    StickyNote
 } from 'lucide-react';
 import {
     useReactTable,
@@ -353,51 +362,53 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         type="checkbox"
                         checked={row.getIsSelected()}
                         onChange={(e) => row.toggleSelected(!!e.target.checked)}
-                        className="cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
                     />
                 </div>
             ),
-            size: 50,
+            size: 32,
             enableResizing: false,
         },
         {
-            accessorKey: 'pais',
-            header: 'País',
-            size: 80,
-            cell: ({ row }) => <span className="text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis">{row.original.pais}</span>
-        },
-        {
             accessorKey: 'uf',
-            header: 'UF',
-            size: 50,
-            cell: ({ row }) => <span className="text-gray-600 whitespace-nowrap">{row.original.uf}</span>
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal">
+                    <MapPin size={13} />
+                    <span>UF</span>
+                </div>
+            ),
+            size: 60,
+            cell: ({ row }) => <span className="text-gray-700 whitespace-nowrap text-[13px]">{row.original.uf}</span>
         },
         {
-            accessorKey: 'cidade',
-            header: 'Cidade',
-            size: 120,
-            cell: ({ row }) => <span className="text-gray-900 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{row.original.cidade}</span>
-        },
-        {
-            accessorKey: 'codigo_ooh',
-            header: 'Código OOH',
-            size: 100,
-            cell: ({ row }) => <span className="font-mono text-xs bg-gray-50 px-1 py-0.5 rounded border border-gray-100 whitespace-nowrap">{row.original.codigo_ooh}</span>
+            accessorKey: 'cidade', // "Praça" in user image seems to map to Cidade
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal">
+                    <MapPin size={13} />
+                    <span>Praça</span>
+                </div>
+            ),
+            size: 140,
+            cell: ({ row }) => <span className="text-gray-900 font-medium whitespace-nowrap overflow-hidden text-ellipsis text-[13px]">{row.original.cidade}</span>
         },
         {
             accessorKey: 'endereco',
-            header: 'Endereço',
-            size: 250,
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal">
+                    <MapPin size={13} />
+                    <span>Endereço</span>
+                </div>
+            ),
+            size: 280,
             cell: ({ row }) => (
                 <button
-                    className="truncate block text-left text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                    className="truncate block text-left text-gray-900 hover:text-blue-600 hover:underline text-[13px]"
                     title="Ver detalhes do ponto"
                     onClick={() => {
                         const ponto = pontos.find(p => p.id === row.original.id_ooh);
                         if (ponto) {
                             setSelectedPonto(ponto);
                         } else {
-                            console.warn("Ponto details not found in store for ID", row.original.id_ooh);
                             setSelectedPonto({ id: row.original.id_ooh } as any);
                         }
                     }}
@@ -408,27 +419,63 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         },
         {
             accessorKey: 'exibidora_nome',
-            header: 'Exibidora',
-            size: 120,
-            cell: ({ row }) => <span className="text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis block">{row.original.exibidora_nome || row.original.exibidora}</span>
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal">
+                    <Building2 size={13} />
+                    <span>Exibidora</span>
+                </div>
+            ),
+            size: 140,
+            cell: ({ row }) => <span className="text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis block text-[13px]">{row.original.exibidora_nome || row.original.exibidora}</span>
+        },
+        {
+            accessorKey: 'codigo_ooh',
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal">
+                    <Hash size={13} />
+                    <span>Código OOH</span>
+                </div>
+            ),
+            size: 110,
+            cell: ({ row }) => <span className="font-mono text-[11px] bg-gray-50 px-1 py-0.5 rounded border border-gray-100 whitespace-nowrap text-gray-600">{row.original.codigo_ooh}</span>
         },
         {
             accessorKey: 'produto',
-            header: 'Produto',
-            size: 100,
-            cell: ({ row }) => <span className="text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis block">{row.original.tipo}</span>
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal">
+                    <Box size={13} />
+                    <span>Produto</span>
+                </div>
+            ),
+            size: 110,
+            cell: ({ row }) => (
+                <span className="text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis block text-[13px] flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
+                    {row.original.tipo}
+                </span>
+            )
         },
         {
             accessorKey: 'medidas',
-            header: 'Medidas',
-            size: 100,
-            cell: ({ row }) => <span className="text-xs text-gray-500 whitespace-nowrap">{row.original.medidas}</span>
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal">
+                    <Ruler size={13} />
+                    <span>Medidas</span>
+                </div>
+            ),
+            size: 110,
+            cell: ({ row }) => <span className="text-[12px] text-gray-500 whitespace-nowrap">{row.original.medidas}</span>
         },
         {
-            header: 'Período',
             id: 'periodo',
-            accessorKey: 'periodo_wrapper', // For drag-fill identification
-            size: 220,
+            accessorKey: 'periodo_wrapper',
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal">
+                    <CalendarIcon size={13} />
+                    <span>Período de Exibição</span>
+                </div>
+            ),
+            size: 240,
             cell: ({ row }) => {
                 const rowIndex = itens.findIndex(item => item.id === row.original.id);
                 const moveToNextRow = () => {
@@ -440,34 +487,30 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 };
 
                 return (
-                    <div className="flex items-center gap-1 relative">
+                    <div className="flex items-center gap-1 relative h-full group/cell hover:bg-gray-50 -m-2 p-2 transition-colors">
                         <input
                             type="date"
-                            className="w-[105px] bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded px-2 py-1 text-[11px] transition-all cursor-pointer"
+                            className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none text-[12px] text-gray-700 w-[95px] transition-colors"
                             defaultValue={row.original.periodo_inicio || ''}
                             key={`inicio-${row.original.id}-${row.original.periodo_inicio}`}
                             data-row-id={row.original.id}
                             data-column-id="periodo_inicio"
-                            onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'periodo' })}
                             onBlur={(e) => {
-                                setFocusedCell({ rowId: null, columnId: null });
                                 if (e.target.value !== row.original.periodo_inicio) {
                                     updateItem(row.original.id, 'periodo_inicio', e.target.value);
                                 }
                             }}
                             onKeyDown={(e) => handleKeyDown(e, moveToNextRow)}
                         />
-                        <span className="text-gray-400 text-xs">→</span>
+                        <span className="text-gray-300 text-[10px] mx-0.5">→</span>
                         <input
                             type="date"
-                            className="w-[105px] bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded px-2 py-1 text-[11px] transition-all cursor-pointer"
+                            className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none text-[12px] text-gray-700 w-[95px] transition-colors"
                             defaultValue={row.original.periodo_fim || ''}
                             key={`fim-${row.original.id}-${row.original.periodo_fim}`}
                             data-row-id={row.original.id}
                             data-column-id="periodo_fim"
-                            onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'periodo' })}
                             onBlur={(e) => {
-                                setFocusedCell({ rowId: null, columnId: null });
                                 if (e.target.value !== row.original.periodo_fim) {
                                     updateItem(row.original.id, 'periodo_fim', e.target.value);
                                 }
@@ -479,45 +522,31 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             }
         },
         {
-            header: 'Período Com.',
             id: 'periodo_comercializado',
             accessorKey: 'periodo_comercializado',
-            size: 130,
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal">
+                    <Layers size={13} />
+                    <span>Período da Locação</span>
+                </div>
+            ),
+            size: 140,
             cell: ({ row }) => {
-                const rowIndex = itens.findIndex(item => item.id === row.original.id);
-                const currentItem = itens.find(item => item.id === row.original.id);
-                const currentValue = currentItem?.periodo_comercializado || 'bissemanal';
-
+                const currentValue = row.original.periodo_comercializado || 'bissemanal';
                 return (
-                    <div className="relative w-full h-full flex items-center">
+                    <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors">
                         <select
-                            className="w-full bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs rounded px-2 py-1 cursor-pointer transition-all"
+                            className="w-full bg-transparent border-none text-[13px] text-gray-700 focus:ring-0 p-0 cursor-pointer"
                             value={currentValue}
-                            data-row-id={row.original.id}
-                            data-column-id="periodo_comercializado"
-                            onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'periodo_comercializado' })}
-                            onBlur={() => setFocusedCell({ rowId: null, columnId: null })}
                             onChange={(e) => {
-                                const newValue = e.target.value;
-                                console.log('🔄 Período Com. changed:', { id: row.original.id, from: currentValue, to: newValue });
-                                updateItem(row.original.id, 'periodo_comercializado', newValue);
-
-                                // Recalculate qtd when period comercializado changes
-                                if (currentItem?.periodo_inicio && currentItem?.periodo_fim) {
-                                    const dataInicio = new Date(currentItem.periodo_inicio);
-                                    const dataFim = new Date(currentItem.periodo_fim);
+                                updateItem(row.original.id, 'periodo_comercializado', e.target.value);
+                                // Recalc logic...
+                                if (row.original.periodo_inicio && row.original.periodo_fim) {
+                                    const dataInicio = new Date(row.original.periodo_inicio);
+                                    const dataFim = new Date(row.original.periodo_fim);
                                     const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
-                                    const qtd = newValue === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                                    const qtd = e.target.value === 'mensal' ? 1 : Math.ceil(diffDays / 14);
                                     updateItem(row.original.id, 'qtd_bi_mes', qtd);
-                                }
-
-                                // Force focus on next row's select
-                                const nextRow = itens[rowIndex + 1];
-                                if (nextRow) {
-                                    setTimeout(() => {
-                                        const nextSelect = document.querySelector(`select[data-row-id="${nextRow.id}"][data-column-id="periodo_comercializado"]`) as HTMLSelectElement;
-                                        nextSelect?.focus();
-                                    }, 10);
                                 }
                             }}
                         >
@@ -529,177 +558,110 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             }
         },
         {
-            header: 'Qtd Bi/Mes',
-            id: 'qtd_bi_mes',
-            size: 80,
-            cell: ({ row }) => {
-                // Auto-calculate based on period
-                let qtd = 1;
-                if (row.original.periodo_inicio && row.original.periodo_fim) {
-                    const dataInicio = new Date(row.original.periodo_inicio);
-                    const dataFim = new Date(row.original.periodo_fim);
-                    const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
-                    qtd = row.original.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                }
-                return <div className="text-right text-sm text-gray-700 font-mono px-1">{qtd}</div>;
-            }
-        },
-        {
-            header: 'Locação',
             id: 'valor_locacao',
             accessorKey: 'valor_locacao',
-            size: 110,
-            cell: ({ row }) => {
-                const rowIndex = itens.findIndex(item => item.id === row.original.id);
-                const moveToNextRow = () => {
-                    const nextRow = itens[rowIndex + 1];
-                    if (nextRow) {
-                        const nextInput = document.querySelector(`input[data-row-id="${nextRow.id}"][data-column-id="valor_locacao"]`) as HTMLInputElement;
-                        nextInput?.focus();
-                    }
-                };
-
-                return (
-                    <div className="flex items-center justify-end font-medium text-gray-900 w-full">
-                        <span className="text-xs text-gray-400 mr-1">R$</span>
-                        <input
-                            type="text"
-                            className="flex-1 bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right rounded px-2 py-1 transition-all cursor-text"
-                            defaultValue={formatDecimal(row.original.valor_locacao || 0)}
-                            key={`locacao-${row.original.id}-${row.original.valor_locacao}`}
-                            data-row-id={row.original.id}
-                            data-column-id="valor_locacao"
-                            onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'valor_locacao' })}
-                            onKeyDown={(e) => handleKeyDown(e, moveToNextRow)}
-                            onBlur={(e) => {
-                                setFocusedCell({ rowId: null, columnId: null });
-                                const newValue = Number(e.target.value.replace(/\./g, '').replace(',', '.'));
-                                if (!isNaN(newValue) && newValue !== row.original.valor_locacao) {
-                                    updateItem(row.original.id, 'valor_locacao', newValue);
-                                }
-                                e.target.value = formatDecimal(row.original.valor_locacao || 0);
-                            }}
-                        />
-                    </div>
-                )
-            }
-        },
-        {
-            header: 'Papel',
-            id: 'valor_papel',
-            accessorKey: 'valor_papel',
-            size: 100,
-            cell: ({ row }) => {
-                const rowIndex = itens.findIndex(item => item.id === row.original.id);
-                const moveToNextRow = () => {
-                    const nextRow = itens[rowIndex + 1];
-                    if (nextRow) {
-                        const nextInput = document.querySelector(`input[data-row-id="${nextRow.id}"][data-column-id="valor_papel"]`) as HTMLInputElement;
-                        nextInput?.focus();
-                    }
-                };
-
-                return (
-                    <div className="flex items-center justify-end text-gray-600 text-xs w-full">
-                        <span className="text-gray-400 mr-1">R$</span>
-                        <input
-                            type="text"
-                            className="flex-1 bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right rounded px-2 py-1 transition-all cursor-text"
-                            defaultValue={formatDecimal(row.original.valor_papel || 0)}
-                            key={`papel-${row.original.id}-${row.original.valor_papel}`}
-                            data-row-id={row.original.id}
-                            data-column-id="valor_papel"
-                            onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'valor_papel' })}
-                            onKeyDown={(e) => handleKeyDown(e, moveToNextRow)}
-                            onBlur={(e) => {
-                                setFocusedCell({ rowId: null, columnId: null });
-                                const newValue = Number(e.target.value.replace(/\./g, '').replace(',', '.'));
-                                if (!isNaN(newValue) && newValue !== row.original.valor_papel) {
-                                    updateItem(row.original.id, 'valor_papel', newValue);
-                                }
-                                e.target.value = formatDecimal(row.original.valor_papel || 0);
-                            }}
-                        />
-                    </div>
-                )
-            }
-        },
-        {
-            header: 'Lona',
-            id: 'valor_lona',
-            accessorKey: 'valor_lona',
-            size: 100,
-            cell: ({ row }) => {
-                const rowIndex = itens.findIndex(item => item.id === row.original.id);
-                const moveToNextRow = () => {
-                    const nextRow = itens[rowIndex + 1];
-                    if (nextRow) {
-                        const nextInput = document.querySelector(`input[data-row-id="${nextRow.id}"][data-column-id="valor_lona"]`) as HTMLInputElement;
-                        nextInput?.focus();
-                    }
-                };
-
-                return (
-                    <div className="flex items-center justify-end text-gray-600 text-xs w-full">
-                        <span className="text-gray-400 mr-1">R$</span>
-                        <input
-                            type="text"
-                            className="flex-1 bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right rounded px-2 py-1 transition-all cursor-text"
-                            defaultValue={formatDecimal(row.original.valor_lona || 0)}
-                            key={`lona-${row.original.id}-${row.original.valor_lona}`}
-                            data-row-id={row.original.id}
-                            data-column-id="valor_lona"
-                            onFocus={() => setFocusedCell({ rowId: row.original.id, columnId: 'valor_lona' })}
-                            onKeyDown={(e) => handleKeyDown(e, moveToNextRow)}
-                            onBlur={(e) => {
-                                setFocusedCell({ rowId: null, columnId: null });
-                                const newValue = Number(e.target.value.replace(/\./g, '').replace(',', '.'));
-                                if (!isNaN(newValue) && newValue !== row.original.valor_lona) {
-                                    updateItem(row.original.id, 'valor_lona', newValue);
-                                }
-                                e.target.value = formatDecimal(row.original.valor_lona || 0);
-                            }}
-                        />
-                    </div>
-                )
-            }
-        },
-        {
-            header: 'Fluxo Diário',
-            accessorKey: 'fluxo_diario',
-            size: 110,
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal justify-end w-full">
+                    <DollarSign size={13} />
+                    <span>Locação</span>
+                </div>
+            ),
+            size: 120,
             cell: ({ row }) => (
-                <input
-                    type="text"
-                    className="w-full bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs text-gray-600"
-                    placeholder="0"
-                    defaultValue={row.original.fluxo_diario ? formatNumber(row.original.fluxo_diario) : ''}
-                    key={`fluxo-${row.original.id}-${row.original.fluxo_diario}`}
-                    onBlur={(e) => {
-                        const newValue = Number(e.target.value.replace(/\./g, ''));
-                        if (!isNaN(newValue) && newValue !== row.original.fluxo_diario) {
-                            updateItem(row.original.id, 'fluxo_diario', newValue);
-                        }
-                        e.target.value = row.original.fluxo_diario ? formatNumber(row.original.fluxo_diario) : '';
-                    }}
-                />
+                <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors flex items-center justify-end">
+                    <input
+                        type="text"
+                        className="w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700 font-normal"
+                        defaultValue={formatCurrency(row.original.valor_locacao || 0)}
+                        onBlur={(e) => {
+                            // Extract numbers
+                            const valStr = e.target.value.replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
+                            const newValue = parseFloat(valStr);
+                            if (!isNaN(newValue) && newValue !== row.original.valor_locacao) {
+                                updateItem(row.original.id, 'valor_locacao', newValue);
+                            }
+                            // Reformat
+                            e.target.value = formatCurrency(row.original.valor_locacao || 0);
+                            if (!isNaN(newValue)) e.target.value = formatCurrency(newValue);
+                        }}
+                        onFocus={(e) => {
+                            // On focus show raw number if needed or just select all
+                            e.target.select();
+                        }}
+                    />
+                </div>
             )
         },
         {
-            header: 'Impactos',
-            id: 'impactos',
-            size: 100,
-            cell: ({ row }) => {
-                const impacts = (row.original.fluxo_diario || 0) * 30 * (row.original.qtd_bi_mes || 1);
-                return <div className="text-right text-xs text-gray-600">{formatNumber(impacts)}</div>
-            }
+            id: 'valor_papel',
+            accessorKey: 'valor_papel',
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal justify-end w-full">
+                    <DollarSign size={13} />
+                    <span>Papel</span>
+                </div>
+            ),
+            size: 110,
+            cell: ({ row }) => (
+                <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors flex items-center justify-end">
+                    <input
+                        type="text"
+                        className="w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700"
+                        defaultValue={formatCurrency(row.original.valor_papel || 0)}
+                        onBlur={(e) => {
+                            const valStr = e.target.value.replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
+                            const newValue = parseFloat(valStr);
+                            if (!isNaN(newValue) && newValue !== row.original.valor_papel) {
+                                updateItem(row.original.id, 'valor_papel', newValue);
+                            }
+                            if (!isNaN(newValue)) e.target.value = formatCurrency(newValue);
+                            else e.target.value = formatCurrency(row.original.valor_papel || 0);
+                        }}
+                        onFocus={(e) => e.target.select()}
+                    />
+                </div>
+            )
         },
         {
-            header: 'Total Invest.',
-            id: 'total_investimento',
-            size: 130,
+            id: 'valor_lona',
+            accessorKey: 'valor_lona',
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal justify-end w-full">
+                    <DollarSign size={13} />
+                    <span>Lona</span>
+                </div>
+            ),
+            size: 110,
+            cell: ({ row }) => (
+                <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors flex items-center justify-end">
+                    <input
+                        type="text"
+                        className="w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700"
+                        defaultValue={formatCurrency(row.original.valor_lona || 0)}
+                        onBlur={(e) => {
+                            const valStr = e.target.value.replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
+                            const newValue = parseFloat(valStr);
+                            if (!isNaN(newValue) && newValue !== row.original.valor_lona) {
+                                updateItem(row.original.id, 'valor_lona', newValue);
+                            }
+                            if (!isNaN(newValue)) e.target.value = formatCurrency(newValue);
+                            else e.target.value = formatCurrency(row.original.valor_lona || 0);
+                        }}
+                        onFocus={(e) => e.target.select()}
+                    />
+                </div>
+            )
+        },
+        {
+            id: 'qtd_bi_mes',
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal justify-end w-full">
+                    <Hash size={13} />
+                    <span>Qtd.</span>
+                </div>
+            ),
+            size: 70,
             cell: ({ row }) => {
-                // Calculate qtd
                 let qtd = 1;
                 if (row.original.periodo_inicio && row.original.periodo_fim) {
                     const dataInicio = new Date(row.original.periodo_inicio);
@@ -707,88 +669,94 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
                     qtd = row.original.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
                 }
-
-                // Only locação × qtd (NOT papel/lona)
-                const total = (row.original.valor_locacao || 0) * qtd;
-                return (
-                    <div className="text-right font-semibold text-emerald-700 bg-emerald-50 px-2 rounded-md">
-                        {formatCurrency(total)}
-                    </div>
-                )
+                return <div className="text-right text-[13px] text-gray-700">{qtd}</div>;
             }
         },
         {
-            header: 'CPM',
-            id: 'cpm',
-            size: 90,
+            id: 'total_investimento',
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal justify-end w-full">
+                    <DollarSign size={13} />
+                    <span>Investimento por Praça</span>
+                </div>
+            ),
+            size: 150,
             cell: ({ row }) => {
-                const impacts = (row.original.fluxo_diario || 0) * 30 * (row.original.qtd_bi_mes || 1);
-                const total = ((row.original.valor || 0) + (row.original.valor_papel || 0) + (row.original.valor_lona || 0)) * (row.original.qtd_bi_mes || 1);
-
-                if (impacts === 0) return <span className="text-xs text-gray-300">-</span>;
-
-                const cpm = (total / impacts) * 1000;
-                return (
-                    <div className="text-right text-xs bg-gray-100 rounded px-1.5 py-0.5 font-mono text-gray-700">
-                        {formatCurrency(cpm)}
-                    </div>
-                )
+                let qtd = 1;
+                if (row.original.periodo_inicio && row.original.periodo_fim) {
+                    const dataInicio = new Date(row.original.periodo_inicio);
+                    const dataFim = new Date(row.original.periodo_fim);
+                    const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+                    qtd = row.original.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                }
+                const total = (row.original.valor_locacao || 0) * qtd;
+                return <div className="text-right text-[13px] text-gray-900 font-medium">{formatCurrency(total)}</div>
             }
         },
         {
             accessorKey: 'ponto_referencia',
-            header: 'Ponto de Referência',
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal">
+                    <MapPin size={13} />
+                    <span>Ponto de Referência</span>
+                </div>
+            ),
             size: 200,
             cell: ({ row }) => (
-                <input
-                    type="text"
-                    className="w-full bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded px-2 py-1 text-sm placeholder-gray-400 transition-all cursor-text"
-                    defaultValue={row.original.ponto_referencia || ''}
-                    placeholder="Adicionar referência..."
-                    key={`ref-${row.original.id}-${row.original.ponto_referencia}`}
-                    onKeyDown={handleKeyDown}
-                    onBlur={(e) => {
-                        if (e.target.value !== row.original.ponto_referencia) {
-                            updateItem(row.original.id, 'ponto_referencia', e.target.value);
-                        }
-                    }}
-                />
+                <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors">
+                    <input
+                        type="text"
+                        className="w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] text-gray-700 placeholder-gray-300"
+                        defaultValue={row.original.ponto_referencia || ''}
+                        placeholder="Vazio"
+                        onBlur={(e) => {
+                            if (e.target.value !== row.original.ponto_referencia) {
+                                updateItem(row.original.id, 'ponto_referencia', e.target.value);
+                            }
+                        }}
+                    />
+                </div>
             )
         },
         {
+            id: 'observacoes',
             accessorKey: 'observacoes',
-            header: 'Observações',
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal">
+                    <StickyNote size={13} />
+                    <span>Observações</span>
+                </div>
+            ),
             size: 200,
             cell: ({ row }) => (
-                <textarea
-                    className="w-full bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded px-2 py-1 text-xs resize-none placeholder-gray-400 transition-all cursor-text"
-                    rows={2}
-                    defaultValue={row.original.observacoes || ''}
-                    placeholder="Adicionar observação..."
-                    key={`obs-${row.original.id}-${row.original.observacoes}`}
-                    onKeyDown={handleKeyDown}
-                    onBlur={(e) => {
-                        if (e.target.value !== row.original.observacoes) {
-                            updateItem(row.original.id, 'observacoes', e.target.value);
-                        }
-                    }}
-                />
+                <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors">
+                    <input
+                        type="text"
+                        className="w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] text-gray-700 placeholder-gray-300"
+                        defaultValue={row.original.observacoes || ''}
+                        placeholder="Vazio"
+                        onBlur={(e) => {
+                            if (e.target.value !== row.original.observacoes) {
+                                updateItem(row.original.id, 'observacoes', e.target.value);
+                            }
+                        }}
+                    />
+                </div>
             )
         },
         {
             id: 'actions',
+            header: '',
             size: 40,
             enableResizing: false,
             cell: ({ row }) => (
-                <div className="flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                        onClick={() => removeItem(row.original.id)}
-                        className="text-gray-400 hover:text-red-500 p-1 rounded transition-colors"
-                        title="Tirar do carrinho"
-                    >
-                        <Trash2 size={14} />
-                    </button>
-                </div>
+                <button
+                    onClick={() => removeItem(row.original.id)}
+                    className="flex justify-center w-full opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
+                    title="Remover"
+                >
+                    <Trash2 size={14} />
+                </button>
             )
         }
     ], [updateItem, removeItem, pontos, setSelectedPonto, itens, focusedCell]);
@@ -984,23 +952,23 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     style={{ width: table.getTotalSize() }}
                 >
                     {/* Head */}
-                    <div className="sticky top-0 z-10 bg-gray-100 border-b border-gray-300 font-semibold text-xs text-gray-600 text-left flex shadow-sm group/header">
+                    <div className="sticky top-0 z-10 bg-white font-normal text-[13px] text-gray-500 text-left flex border-b border-gray-200 group/header">
                         {table.getHeaderGroups().map(headerGroup => (
                             <div key={headerGroup.id} className="flex flex-row w-full">
                                 {headerGroup.headers.map(header => (
                                     <div
                                         key={header.id}
-                                        className="relative group px-4 py-3 border-r border-gray-300 last:border-r-0 flex items-center justify-between select-none bg-gray-100 hover:bg-gray-200 transition-colors"
+                                        className="relative group px-3 py-2 border-r border-gray-200 last:border-r-0 flex items-center justify-between select-none hover:bg-gray-50 transition-colors"
                                         style={{ width: header.getSize(), flex: `0 0 ${header.getSize()}px` }}
                                     >
                                         <div
-                                            className="flex items-center gap-1.5 cursor-pointer hover:text-gray-900 truncate w-full font-medium"
+                                            className="flex items-center gap-1.5 cursor-pointer hover:text-gray-900 truncate w-full"
                                             onClick={header.column.getToggleSortingHandler()}
                                         >
                                             {flexRender(header.column.columnDef.header, header.getContext())}
                                             {{
-                                                asc: <ArrowUpDown size={12} className="text-blue-600 shrink-0" />,
-                                                desc: <ArrowUpDown size={12} className="text-blue-600 rotate-180 shrink-0" />,
+                                                asc: <ArrowUpDown size={12} className="text-gray-400 shrink-0" />,
+                                                desc: <ArrowUpDown size={12} className="text-gray-400 rotate-180 shrink-0" />,
                                             }[header.column.getIsSorted() as string] ?? null}
                                         </div>
 
@@ -1008,7 +976,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                             <div
                                                 onMouseDown={header.getResizeHandler()}
                                                 onTouchStart={header.getResizeHandler()}
-                                                className={`absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-blue-400 opacity-0 group-hover:opacity-100 transition-opacity z-20 ${header.column.getIsResizing() ? 'bg-blue-500 opacity-100' : ''}`}
+                                                className={`absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity z-20 ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
                                             />
                                         )}
                                     </div>
@@ -1018,7 +986,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     </div>
 
                     {/* Body */}
-                    <div className="bg-white">
+                    <div className="bg-white text-[13px]">
                         {/* Grouped View */}
                         {groupedData ? (
                             <>
@@ -1035,22 +1003,22 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                     );
 
                                     return (
-                                        <div key={group.name} className="border-b-2 border-gray-300">
+                                        <div key={group.name} className="border-b border-gray-200">
                                             {/* Group Header */}
                                             <div
-                                                className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors sticky top-[41px] z-[5] border-b border-gray-200"
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors sticky top-[37px] z-[5] border-b border-gray-200"
                                                 onClick={() => toggleGroupCollapse(group.name)}
                                             >
                                                 {isCollapsed ? (
-                                                    <ChevronRight size={16} className="text-gray-500 flex-shrink-0" />
+                                                    <ChevronRight size={14} className="text-gray-400 flex-shrink-0" />
                                                 ) : (
-                                                    <ChevronDown size={16} className="text-gray-500 flex-shrink-0" />
+                                                    <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
                                                 )}
-                                                <span className="font-semibold text-sm text-gray-700">{group.name}</span>
-                                                <span className="text-xs text-gray-500 bg-white px-2 py-0.5 rounded-full border border-gray-200">
+                                                <span className="font-medium text-sm text-gray-800">{group.name}</span>
+                                                <span className="text-xs text-gray-400 bg-white px-1.5 rounded-sm border border-gray-200">
                                                     {group.count}
                                                 </span>
-                                                <span className="text-xs text-emerald-700 font-semibold ml-auto">
+                                                <span className="text-xs text-emerald-700 font-medium ml-auto">
                                                     {formatCurrency(groupTotal)}
                                                 </span>
                                             </div>
@@ -1065,43 +1033,43 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                                     {row.getVisibleCells().map(cell => {
                                                         const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
                                                         return (
-                                                        <div
-                                                            key={cell.id}
-                                                            className={`px-3 py-2 text-xs text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
-                                                            style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
-                                                        >
-                                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                            {/* Drag handle for ONLY specified editable cells */}
-                                                            {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
-                                                                focusedCell.rowId === row.original.id &&
-                                                                (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
-                                                                    <div
-                                                                        className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
-                                                                        style={{ borderRadius: '0 0 2px 0' }}
-                                                                        title="Arrastar para preencher"
-                                                                        onMouseDown={(e) => {
-                                                                            e.preventDefault();
-                                                                            e.stopPropagation();
-                                                                            const columnId = cell.column.id!;
+                                                            <div
+                                                                key={cell.id}
+                                                                className={`px-3 py-1.5 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                                                style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
+                                                            >
+                                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                                {/* Drag handle for ONLY specified editable cells */}
+                                                                {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
+                                                                    focusedCell.rowId === row.original.id &&
+                                                                    (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
+                                                                        <div
+                                                                            className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
+                                                                            style={{ borderRadius: '0 0 2px 0' }}
+                                                                            title="Arrastar para preencher"
+                                                                            onMouseDown={(e) => {
+                                                                                e.preventDefault();
+                                                                                e.stopPropagation();
+                                                                                const columnId = cell.column.id!;
 
-                                                                            // Get current value from itens state for real-time accuracy
-                                                                            const currentItem = itens.find(item => item.id === row.original.id);
-                                                                            let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
+                                                                                // Get current value from itens state for real-time accuracy
+                                                                                const currentItem = itens.find(item => item.id === row.original.id);
+                                                                                let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
 
-                                                                            // For período, use both values
-                                                                            if (columnId === 'periodo') {
-                                                                                value = {
-                                                                                    periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
-                                                                                    periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
-                                                                                };
-                                                                            }
+                                                                                // For período, use both values
+                                                                                if (columnId === 'periodo') {
+                                                                                    value = {
+                                                                                        periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
+                                                                                        periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
+                                                                                    };
+                                                                                }
 
-                                                                            console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
-                                                                            startDragging(row.original.id, columnId, value);
-                                                                        }}
-                                                                    />
-                                                                )}
-                                                        </div>
+                                                                                console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
+                                                                                startDragging(row.original.id, columnId, value);
+                                                                            }}
+                                                                        />
+                                                                    )}
+                                                            </div>
                                                         );
                                                     })}
                                                 </div>
@@ -1122,43 +1090,43 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                         {row.getVisibleCells().map(cell => {
                                             const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
                                             return (
-                                            <div
-                                                key={cell.id}
-                                                className={`px-3 py-2 text-xs text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
-                                                style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
-                                            >
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                {/* Drag handle for ONLY specified editable cells */}
-                                                {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
-                                                    focusedCell.rowId === row.original.id &&
-                                                    (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
-                                                        <div
-                                                            className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
-                                                            style={{ borderRadius: '0 0 2px 0' }}
-                                                            title="Arrastar para preencher"
-                                                            onMouseDown={(e) => {
-                                                                e.preventDefault();
-                                                                e.stopPropagation();
-                                                                const columnId = cell.column.id!;
+                                                <div
+                                                    key={cell.id}
+                                                    className={`px-3 py-1.5 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                                    style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
+                                                >
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                    {/* Drag handle for ONLY specified editable cells */}
+                                                    {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
+                                                        focusedCell.rowId === row.original.id &&
+                                                        (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
+                                                            <div
+                                                                className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
+                                                                style={{ borderRadius: '0 0 2px 0' }}
+                                                                title="Arrastar para preencher"
+                                                                onMouseDown={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    const columnId = cell.column.id!;
 
-                                                                // Get current value from itens state for real-time accuracy
-                                                                const currentItem = itens.find(item => item.id === row.original.id);
-                                                                let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
+                                                                    // Get current value from itens state for real-time accuracy
+                                                                    const currentItem = itens.find(item => item.id === row.original.id);
+                                                                    let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
 
-                                                                // For período, use both values
-                                                                if (columnId === 'periodo') {
-                                                                    value = {
-                                                                        periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
-                                                                        periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
-                                                                    };
-                                                                }
+                                                                    // For período, use both values
+                                                                    if (columnId === 'periodo') {
+                                                                        value = {
+                                                                            periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
+                                                                            periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
+                                                                        };
+                                                                    }
 
-                                                                console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
-                                                                startDragging(row.original.id, columnId, value);
-                                                            }}
-                                                        />
-                                                    )}
-                                            </div>
+                                                                    console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
+                                                                    startDragging(row.original.id, columnId, value);
+                                                                }}
+                                                            />
+                                                        )}
+                                                </div>
                                             );
                                         })}
                                     </div>
