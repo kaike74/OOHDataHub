@@ -443,7 +443,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     <div className="flex items-center gap-1 relative">
                         <input
                             type="date"
-                            className="w-[105px] bg-transparent border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-[11px]"
+                            className="w-[105px] bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded px-2 py-1 text-[11px] transition-all cursor-pointer"
                             defaultValue={row.original.periodo_inicio || ''}
                             key={`inicio-${row.original.id}-${row.original.periodo_inicio}`}
                             data-row-id={row.original.id}
@@ -460,7 +460,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         <span className="text-gray-400 text-xs">→</span>
                         <input
                             type="date"
-                            className="w-[105px] bg-transparent border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-[11px]"
+                            className="w-[105px] bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded px-2 py-1 text-[11px] transition-all cursor-pointer"
                             defaultValue={row.original.periodo_fim || ''}
                             key={`fim-${row.original.id}-${row.original.periodo_fim}`}
                             data-row-id={row.original.id}
@@ -489,9 +489,9 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 const currentValue = currentItem?.periodo_comercializado || 'bissemanal';
 
                 return (
-                    <div className="relative w-full h-full flex items-center pr-3">
+                    <div className="relative w-full h-full flex items-center">
                         <select
-                            className="w-[calc(100%-12px)] bg-transparent text-xs outline-none cursor-pointer hover:bg-gray-50 rounded px-1 py-0.5 transition-colors"
+                            className="w-full bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs rounded px-2 py-1 cursor-pointer transition-all"
                             value={currentValue}
                             data-row-id={row.original.id}
                             data-column-id="periodo_comercializado"
@@ -560,11 +560,11 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 };
 
                 return (
-                    <div className="flex items-center justify-end font-medium text-gray-900">
+                    <div className="flex items-center justify-end font-medium text-gray-900 w-full">
                         <span className="text-xs text-gray-400 mr-1">R$</span>
                         <input
                             type="text"
-                            className="w-20 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                            className="flex-1 bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right rounded px-2 py-1 transition-all cursor-text"
                             defaultValue={formatDecimal(row.original.valor_locacao || 0)}
                             key={`locacao-${row.original.id}-${row.original.valor_locacao}`}
                             data-row-id={row.original.id}
@@ -600,11 +600,11 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 };
 
                 return (
-                    <div className="flex items-center justify-end text-gray-600 text-xs">
+                    <div className="flex items-center justify-end text-gray-600 text-xs w-full">
                         <span className="text-gray-400 mr-1">R$</span>
                         <input
                             type="text"
-                            className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                            className="flex-1 bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right rounded px-2 py-1 transition-all cursor-text"
                             defaultValue={formatDecimal(row.original.valor_papel || 0)}
                             key={`papel-${row.original.id}-${row.original.valor_papel}`}
                             data-row-id={row.original.id}
@@ -640,11 +640,11 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 };
 
                 return (
-                    <div className="flex items-center justify-end text-gray-600 text-xs">
+                    <div className="flex items-center justify-end text-gray-600 text-xs w-full">
                         <span className="text-gray-400 mr-1">R$</span>
                         <input
                             type="text"
-                            className="w-16 bg-transparent border-none text-right focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                            className="flex-1 bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right rounded px-2 py-1 transition-all cursor-text"
                             defaultValue={formatDecimal(row.original.valor_lona || 0)}
                             key={`lona-${row.original.id}-${row.original.valor_lona}`}
                             data-row-id={row.original.id}
@@ -742,7 +742,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             cell: ({ row }) => (
                 <input
                     type="text"
-                    className="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-sm placeholder-gray-300"
+                    className="w-full bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded px-2 py-1 text-sm placeholder-gray-400 transition-all cursor-text"
                     defaultValue={row.original.ponto_referencia || ''}
                     placeholder="Adicionar referência..."
                     key={`ref-${row.original.id}-${row.original.ponto_referencia}`}
@@ -761,7 +761,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             size: 200,
             cell: ({ row }) => (
                 <textarea
-                    className="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-xs resize-none"
+                    className="w-full bg-white hover:bg-gray-50 border border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded px-2 py-1 text-xs resize-none placeholder-gray-400 transition-all cursor-text"
                     rows={2}
                     defaultValue={row.original.observacoes || ''}
                     placeholder="Adicionar observação..."
@@ -984,17 +984,17 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     style={{ width: table.getTotalSize() }}
                 >
                     {/* Head */}
-                    <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200 font-semibold text-xs text-gray-500 uppercase text-left flex shadow-sm group/header">
+                    <div className="sticky top-0 z-10 bg-gray-100 border-b border-gray-300 font-semibold text-xs text-gray-600 text-left flex shadow-sm group/header">
                         {table.getHeaderGroups().map(headerGroup => (
                             <div key={headerGroup.id} className="flex flex-row w-full">
                                 {headerGroup.headers.map(header => (
                                     <div
                                         key={header.id}
-                                        className="relative group px-3 py-2.5 border-r border-gray-200 last:border-r-0 flex items-center justify-between select-none bg-gray-50"
+                                        className="relative group px-4 py-3 border-r border-gray-300 last:border-r-0 flex items-center justify-between select-none bg-gray-100 hover:bg-gray-200 transition-colors"
                                         style={{ width: header.getSize(), flex: `0 0 ${header.getSize()}px` }}
                                     >
                                         <div
-                                            className="flex items-center gap-1.5 cursor-pointer hover:text-gray-900 truncate w-full"
+                                            className="flex items-center gap-1.5 cursor-pointer hover:text-gray-900 truncate w-full font-medium"
                                             onClick={header.column.getToggleSortingHandler()}
                                         >
                                             {flexRender(header.column.columnDef.header, header.getContext())}
@@ -1060,14 +1060,14 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                                 <div
                                                     key={row.id}
                                                     data-row-id={row.original.id}
-                                                    className={`flex items-center border-b border-gray-200 transition-colors group ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}`}
+                                                    className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}`}
                                                 >
                                                     {row.getVisibleCells().map(cell => {
                                                         const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
                                                         return (
                                                         <div
                                                             key={cell.id}
-                                                            className={`px-2 py-1 text-xs text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                                            className={`px-3 py-2 text-xs text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
                                                             style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
                                                         >
                                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1117,14 +1117,14 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                     <div
                                         key={row.id}
                                         data-row-id={row.original.id}
-                                        className={`flex items-center border-b border-gray-200 transition-colors group ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}`}
+                                        className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}`}
                                     >
                                         {row.getVisibleCells().map(cell => {
                                             const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
                                             return (
                                             <div
                                                 key={cell.id}
-                                                className={`px-2 py-1 text-xs text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                                className={`px-3 py-2 text-xs text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
                                                 style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
                                             >
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
