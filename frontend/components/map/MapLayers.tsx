@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { CustomMarker } from '@/lib/types';
+import { CustomMarker, MapLayer } from '@/lib/types';
 import { Layers, Upload, X, Eye, EyeOff, Trash2, FileSpreadsheet, MapPin, Check, ChevronRight, Loader2, AlertCircle, Palette, Table as TableIcon, Edit2, Maximize2, Minimize2, Save } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
