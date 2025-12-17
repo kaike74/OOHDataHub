@@ -238,7 +238,8 @@ export default function MapLayers() {
             headers: headers,
             config: {
                 addressCols: selectedAddressCols,
-                nameCol: selectedNameCol
+                nameCol: selectedNameCol,
+                headers // Persist headers here for reliability
             }
         };
 
@@ -339,6 +340,7 @@ export default function MapLayers() {
 
         // 1. Update Data in Memory
         const newData = [...layer.data];
+        const oldRow = newData[rowIndex]; // Keep reference to old row for matching
         newData[rowIndex] = { ...newData[rowIndex], [col]: newValue };
 
         updateLayerData(viewingLayerId, { data: newData });
@@ -373,7 +375,16 @@ export default function MapLayers() {
                         const rowId = row._id;
 
                         // Find existing marker linked to this row
-                        const existingMarkerIndex = layer.markers.findIndex(m => m.rowId === rowId);
+                        let existingMarkerIndex = layer.markers.findIndex(m => m.rowId === rowId);
+
+                        // Fallback: If not found by ID (legacy data), try matching by previous title/address
+                        if (existingMarkerIndex === -1) {
+                            const oldAddressParts = config.addressCols.map(c => oldRow[c]).filter(Boolean);
+                            const oldAddress = oldAddressParts.join(', ');
+                            const oldTitle = config.nameCol ? oldRow[config.nameCol] : oldAddress;
+
+                            existingMarkerIndex = layer.markers.findIndex(m => m.title === oldTitle || m.description === oldAddress);
+                        }
 
                         const newMarker: CustomMarker = {
                             id: existingMarkerIndex >= 0 ? layer.markers[existingMarkerIndex].id : uuidv4(),
@@ -381,15 +392,24 @@ export default function MapLayers() {
                             lng: location.lng(),
                             title: title,
                             description: address,
-                            rowId: rowId
+                            rowId: rowId // Determine RowID linkage permanently now
                         };
 
-                        updateLayerData(viewingLayerId, { markers: [...layer.markers, newMarker] });
+                        let newMarkers = [...layer.markers];
+                        if (existingMarkerIndex >= 0) {
+                            // Update existing
+                            newMarkers[existingMarkerIndex] = newMarker;
+                        } else {
+                            // Append new
+                            newMarkers.push(newMarker);
+                        }
+
+                        updateLayerData(viewingLayerId, { markers: newMarkers });
 
                         // Update Backend
                         api.updateProposalLayer(selectedProposta!.id, viewingLayerId, {
                             data: newData,
-                            markers: [...layer.markers, newMarker]
+                            markers: newMarkers
                         });
                     }
                 } catch (e) {
@@ -410,6 +430,12 @@ export default function MapLayers() {
     const activeLayer = viewingLayerId === 'preview'
         ? { name: 'Pré-visualização', data: excelData, headers }
         : customLayers.find(l => l.id === viewingLayerId);
+
+    // Fallback for missing headers (persistence issue fix)
+    if (activeLayer && !activeLayer.headers && activeLayer.data && activeLayer.data.length > 0) {
+        // @ts-ignore
+        activeLayer.headers = Object.keys(activeLayer.data[0]);
+    }
 
     return (
         <>
