@@ -370,21 +370,19 @@ export default function MapLayers() {
                     const results = await geocoder.geocode({ address });
                     if (results && results.results[0]) {
                         const location = results.results[0].geometry.location;
+                        const rowId = row._id;
 
-                        // Try to find a marker that matches the OLD address/title? 
-                        // Hard without ID link. 
-                        // Let's just create a new marker and append it. 
+                        // Find existing marker linked to this row
+                        const existingMarkerIndex = layer.markers.findIndex(m => m.rowId === rowId);
+
                         const newMarker: CustomMarker = {
-                            id: uuidv4(),
+                            id: existingMarkerIndex >= 0 ? layer.markers[existingMarkerIndex].id : uuidv4(),
                             lat: location.lat(),
                             lng: location.lng(),
                             title: title,
-                            description: address
+                            description: address,
+                            rowId: rowId
                         };
-
-                        // We don't delete the old one because we don't know which one it is.
-                        // Maybe we assume there's only one marker per row?
-                        // Ideally we should have stored 'rowIndex' in marker.
 
                         updateLayerData(viewingLayerId, { markers: [...layer.markers, newMarker] });
 
@@ -446,23 +444,12 @@ export default function MapLayers() {
                             {/* UPLOAD / WIZARD STEPS */}
                             {step === 'upload' && (
                                 <>
-                                    <div
-                                        {...getRootProps()}
-                                        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${isDragActive ? 'border-emidias-accent bg-emidias-accent/5' : 'border-gray-300 hover:border-emidias-accent/50 hover:bg-gray-50'}`}
-                                    >
-                                        <input {...getInputProps()} />
-                                        <Upload className="mx-auto text-gray-400 mb-2" size={24} />
-                                        <p className="text-sm text-gray-600 font-medium">
-                                            Arraste sua planilha
-                                        </p>
-                                        <p className="text-xs text-gray-400 mt-1">XLSX ou CSV</p>
-                                    </div>
-
-                                    {/* LIST OF LAYERS */}
-                                    <div className="space-y-2 mt-4 pt-4 border-t border-gray-100">
-                                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Camadas Ativas</h4>
+                                    <div className="space-y-2">
+                                        {/* Header removed as it's redundant inside "Minhas Camadas" logic if empty */}
                                         {customLayers.length === 0 && (
-                                            <div className="text-center py-2 text-gray-400 text-xs italic">Nenhuma camada</div>
+                                            <div className="text-center py-8 text-gray-400 text-sm italic">
+                                                Nenhuma camada adicionada.
+                                            </div>
                                         )}
                                         {customLayers.map(layer => {
                                             const progress = processingStatus[layer.id];
@@ -545,6 +532,17 @@ export default function MapLayers() {
                                             );
                                         })}
                                     </div>
+
+                                    {/* ADD BUTTON (Bottom) */}
+                                    <div className="mt-4 pt-2 border-t border-gray-100">
+                                        <div {...getRootProps()}>
+                                            <input {...getInputProps()} />
+                                            <button className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:bg-gray-50 hover:border-emidias-accent hover:text-emidias-accent transition-all">
+                                                <Upload size={16} />
+                                                Adicionar camada (XLSX/CSV)
+                                            </button>
+                                        </div>
+                                    </div>
                                 </>
                             )}
 
@@ -609,87 +607,90 @@ export default function MapLayers() {
                                 </div>
                             )}
                         </div>
-                    </div>
-                )}
-            </div>
+                    </div >
+                )
+                }
+            </div >
 
             {/* --- TABLE DRAWER (BOTTOM) --- */}
             {/* --- TABLE WINDOW (FLOATING) --- */}
-            {isTableOpen && activeLayer && (
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 w-[900px] max-w-[90vw] h-[600px] max-h-[80vh] bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200">
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-200 rounded-t-xl cursor-move">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white rounded-lg shadow-sm">
-                                <TableIcon size={20} className="text-emidias-accent" />
+            {
+                isTableOpen && activeLayer && (
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 w-[900px] max-w-[90vw] h-[600px] max-h-[80vh] bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-200 rounded-t-xl cursor-move">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white rounded-lg shadow-sm">
+                                    <TableIcon size={20} className="text-emidias-accent" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-800 text-lg">{activeLayer.name}</h3>
+                                    <p className="text-xs text-gray-500">{activeLayer.data?.length || 0} registros encontrados</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="font-bold text-gray-800 text-lg">{activeLayer.name}</h3>
-                                <p className="text-xs text-gray-500">{activeLayer.data?.length || 0} registros encontrados</p>
+                            <div className="flex items-center gap-2">
+                                {/* Min/Max buttons could go here if implemented properly for window, but for now just close */}
+                                <button onClick={() => setIsTableOpen(false)} className="p-2 hover:bg-red-50 hover:text-red-500 rounded-lg text-gray-400 transition-colors">
+                                    <X size={20} />
+                                </button>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            {/* Min/Max buttons could go here if implemented properly for window, but for now just close */}
-                            <button onClick={() => setIsTableOpen(false)} className="p-2 hover:bg-red-50 hover:text-red-500 rounded-lg text-gray-400 transition-colors">
-                                <X size={20} />
-                            </button>
-                        </div>
-                    </div>
 
-                    {/* Table Content */}
-                    <div className="flex-1 overflow-auto custom-scrollbar p-1">
-                        <table className="w-full text-sm text-left border-collapse">
-                            <thead className="sticky top-0 bg-white/95 backdrop-blur shadow-sm z-10 text-xs uppercase tracking-wider text-gray-500 font-bold">
-                                <tr>
-                                    {activeLayer.headers?.map(header => (
-                                        <th key={header} className="px-6 py-3 border-b border-gray-100 whitespace-nowrap">
-                                            {header}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {activeLayer.data?.slice(0, 500).map((row, i) => (
-                                    <tr key={i} className="hover:bg-blue-50/50 group transition-colors odd:bg-gray-50/30">
+                        {/* Table Content */}
+                        <div className="flex-1 overflow-auto custom-scrollbar p-1">
+                            <table className="w-full text-sm text-left border-collapse">
+                                <thead className="sticky top-0 bg-white/95 backdrop-blur shadow-sm z-10 text-xs uppercase tracking-wider text-gray-500 font-bold">
+                                    <tr>
                                         {activeLayer.headers?.map(header => (
-                                            <td key={header} className="p-0 border-r border-transparent min-w-[150px]">
-                                                {viewingLayerId === 'preview' ? (
-                                                    <div className="px-6 py-3 truncate text-gray-700">{row[header]}</div>
-                                                ) : (
-                                                    <input
-                                                        type="text"
-                                                        defaultValue={row[header]}
-                                                        onBlur={(e) => handleCellChange(i, header, e.target.value)}
-                                                        className="w-full px-6 py-3 bg-transparent focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 outline-none truncate text-gray-700 placeholder-transparent"
-                                                    />
-                                                )}
-                                            </td>
+                                            <th key={header} className="px-6 py-3 border-b border-gray-100 whitespace-nowrap">
+                                                {header}
+                                            </th>
                                         ))}
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        {activeLayer.data && activeLayer.data.length > 500 && (
-                            <div className="p-8 text-center text-gray-400 text-sm">
-                                <p>Renderizando apenas as primeiras 500 linhas para performance.</p>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {activeLayer.data?.slice(0, 500).map((row, i) => (
+                                        <tr key={i} className="hover:bg-blue-50/50 group transition-colors odd:bg-gray-50/30">
+                                            {activeLayer.headers?.map(header => (
+                                                <td key={header} className="p-0 border-r border-transparent min-w-[150px]">
+                                                    {viewingLayerId === 'preview' ? (
+                                                        <div className="px-6 py-3 truncate text-gray-700">{row[header]}</div>
+                                                    ) : (
+                                                        <input
+                                                            type="text"
+                                                            defaultValue={row[header]}
+                                                            onBlur={(e) => handleCellChange(i, header, e.target.value)}
+                                                            className="w-full px-6 py-3 bg-transparent focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 outline-none truncate text-gray-700 placeholder-transparent"
+                                                        />
+                                                    )}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {activeLayer.data && activeLayer.data.length > 500 && (
+                                <div className="p-8 text-center text-gray-400 text-sm">
+                                    <p>Renderizando apenas as primeiras 500 linhas para performance.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer Actions (Only for Wizard) */}
+                        {step === 'table-preview' && (
+                            <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-xl flex justify-between items-center">
+                                <p className="text-sm text-gray-500">Verifique se os dados estão corretos antes de continuar.</p>
+                                <button
+                                    onClick={handleContinueFromTable}
+                                    className="bg-emidias-accent text-white px-6 py-2.5 rounded-lg font-bold hover:bg-emidias-accent-dark shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                                >
+                                    Configurar Geocodificação <ChevronRight size={18} />
+                                </button>
                             </div>
                         )}
                     </div>
-
-                    {/* Footer Actions (Only for Wizard) */}
-                    {step === 'table-preview' && (
-                        <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-xl flex justify-between items-center">
-                            <p className="text-sm text-gray-500">Verifique se os dados estão corretos antes de continuar.</p>
-                            <button
-                                onClick={handleContinueFromTable}
-                                className="bg-emidias-accent text-white px-6 py-2.5 rounded-lg font-bold hover:bg-emidias-accent-dark shadow-md hover:shadow-lg transition-all flex items-center gap-2"
-                            >
-                                Configurar Geocodificação <ChevronRight size={18} />
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
+                )
+            }
         </>
     );
 }

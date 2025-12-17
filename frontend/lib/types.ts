@@ -147,6 +147,7 @@ export interface CustomMarker {
     title: string;
     description?: string;
     color?: string;
+    rowId?: string;
 }
 
 export interface MapLayer {
