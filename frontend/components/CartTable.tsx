@@ -774,6 +774,28 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             }
         },
         {
+            accessorKey: 'latitude',
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal">
+                    <Globe size={13} />
+                    <span>Lat</span>
+                </div>
+            ),
+            size: 90,
+            cell: ({ row }) => <span className="text-gray-500 text-[11px] font-mono">{row.original.latitude ?? '-'}</span>
+        },
+        {
+            accessorKey: 'longitude',
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal">
+                    <Globe size={13} />
+                    <span>Lon</span>
+                </div>
+            ),
+            size: 90,
+            cell: ({ row }) => <span className="text-gray-500 text-[11px] font-mono">{row.original.longitude ?? '-'}</span>
+        },
+        {
             accessorKey: 'ponto_referencia',
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal">
@@ -1070,6 +1092,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                                 'codigo_ooh': 'Código OOH',
                                                 'produto': 'Produto',
                                                 'medidas': 'Medidas',
+                                                'latitude': 'Latitude',
+                                                'longitude': 'Longitude',
                                                 'periodo': 'Período de Exibição',
                                                 'periodo_comercializado': 'Período comercializado',
                                                 'valor_locacao': 'Locação',
@@ -1309,23 +1333,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             </div>
 
             {/* Footer Summary - Always visible if open */}
-            {
-                isOpen && (
-                    <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-sm shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 flex-shrink-0">
-                        <div className="text-gray-500 text-xs">
-                            {itens.length} pontos listados
-                        </div>
-                        <div className="flex items-center gap-6">
-                            <div className="flex flex-col items-end">
-                                <span className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Investimento Total</span>
-                                <span className="font-bold text-lg text-emerald-600 leading-none">
-                                    {formatCurrency(itens.reduce((sum, item) => sum + ((item.valor || 0) + (item.valor_papel || 0) + (item.valor_lona || 0)) * (item.qtd_bi_mes || 1), 0))}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
+
         </div >
     );
 }

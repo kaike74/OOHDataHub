@@ -122,6 +122,8 @@ export interface PropostaItem {
     exibidora_nome?: string;
     tipo?: string;
     medidas?: string;
+    latitude?: number;
+    longitude?: number;
 
     // Additional Cart Fields
     ponto_referencia?: string;
