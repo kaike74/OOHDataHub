@@ -87,14 +87,15 @@ export default function MapLayers() {
             const data = XLSX.utils.sheet_to_json(sheet);
 
             if (data.length > 0) {
-                setExcelData(data);
+                // Add unique ID to each row for tracking
+                const enhancedData = data.map((row: any) => ({ ...row, _id: uuidv4() }));
+                setExcelData(enhancedData);
                 const headers = Object.keys(data[0] as object);
                 setHeaders(headers);
 
                 // Initialize Preview
                 setViewingLayerId('preview');
-                // We use a dummy ID 'preview' for the table when in wizard mode
-                setIsTableOpen(true);
+                // setIsTableOpen(true); // Don't open table on drop as per user request
                 setStep('table-preview');
             }
         } catch (error) {
@@ -614,32 +615,35 @@ export default function MapLayers() {
             </div>
 
             {/* --- TABLE DRAWER (BOTTOM) --- */}
+            {/* --- TABLE WINDOW (FLOATING) --- */}
             {isTableOpen && activeLayer && (
-                <div className={`absolute bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 shadow-[0_-5px_15px_rgba(0,0,0,0.1)] flex flex-col transition-all duration-300 ${tableHeight === 'half' ? 'h-[40vh]' : 'h-[80vh]'}`}>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 w-[900px] max-w-[90vw] h-[600px] max-h-[80vh] bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200">
                     {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                            <TableIcon size={18} className="text-gray-500" />
-                            <h3 className="font-semibold text-gray-800">{activeLayer.name}</h3>
-                            <span className="text-xs text-gray-500 px-2 py-0.5 bg-gray-200 rounded-full">{activeLayer.data?.length || 0} linhas</span>
+                    <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-200 rounded-t-xl cursor-move">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white rounded-lg shadow-sm">
+                                <TableIcon size={20} className="text-emidias-accent" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-800 text-lg">{activeLayer.name}</h3>
+                                <p className="text-xs text-gray-500">{activeLayer.data?.length || 0} registros encontrados</p>
+                            </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => setTableHeight(h => h === 'half' ? 'full' : 'half')} className="p-1.5 hover:bg-gray-200 rounded text-gray-500">
-                                {tableHeight === 'half' ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
-                            </button>
-                            <button onClick={() => setIsTableOpen(false)} className="p-1.5 hover:bg-red-100 hover:text-red-500 rounded text-gray-500">
-                                <X size={16} />
+                            {/* Min/Max buttons could go here if implemented properly for window, but for now just close */}
+                            <button onClick={() => setIsTableOpen(false)} className="p-2 hover:bg-red-50 hover:text-red-500 rounded-lg text-gray-400 transition-colors">
+                                <X size={20} />
                             </button>
                         </div>
                     </div>
 
                     {/* Table Content */}
-                    <div className="flex-1 overflow-auto">
+                    <div className="flex-1 overflow-auto custom-scrollbar p-1">
                         <table className="w-full text-sm text-left border-collapse">
-                            <thead className="sticky top-0 bg-gray-50 shadow-sm z-10">
+                            <thead className="sticky top-0 bg-white/95 backdrop-blur shadow-sm z-10 text-xs uppercase tracking-wider text-gray-500 font-bold">
                                 <tr>
                                     {activeLayer.headers?.map(header => (
-                                        <th key={header} className="px-4 py-2 font-semibold text-gray-600 border-r border-b border-gray-200 whitespace-nowrap bg-gray-50">
+                                        <th key={header} className="px-6 py-3 border-b border-gray-100 whitespace-nowrap">
                                             {header}
                                         </th>
                                     ))}
@@ -647,17 +651,17 @@ export default function MapLayers() {
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {activeLayer.data?.slice(0, 500).map((row, i) => (
-                                    <tr key={i} className="hover:bg-blue-50 group">
+                                    <tr key={i} className="hover:bg-blue-50/50 group transition-colors odd:bg-gray-50/30">
                                         {activeLayer.headers?.map(header => (
-                                            <td key={header} className="p-0 border-r border-gray-100 min-w-[150px]">
+                                            <td key={header} className="p-0 border-r border-transparent min-w-[150px]">
                                                 {viewingLayerId === 'preview' ? (
-                                                    <div className="px-4 py-2 truncate text-gray-700">{row[header]}</div>
+                                                    <div className="px-6 py-3 truncate text-gray-700">{row[header]}</div>
                                                 ) : (
                                                     <input
                                                         type="text"
                                                         defaultValue={row[header]}
                                                         onBlur={(e) => handleCellChange(i, header, e.target.value)}
-                                                        className="w-full px-4 py-2 bg-transparent focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 outline-none truncate text-gray-700"
+                                                        className="w-full px-6 py-3 bg-transparent focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 outline-none truncate text-gray-700 placeholder-transparent"
                                                     />
                                                 )}
                                             </td>
@@ -667,20 +671,21 @@ export default function MapLayers() {
                             </tbody>
                         </table>
                         {activeLayer.data && activeLayer.data.length > 500 && (
-                            <div className="p-4 text-center text-gray-500 text-xs italic">
-                                Renderizando apenas as primeiras 500 linhas para performance.
+                            <div className="p-8 text-center text-gray-400 text-sm">
+                                <p>Renderizando apenas as primeiras 500 linhas para performance.</p>
                             </div>
                         )}
                     </div>
 
                     {/* Footer Actions (Only for Wizard) */}
                     {step === 'table-preview' && (
-                        <div className="p-3 border-t border-gray-200 bg-gray-50 flex justify-end">
+                        <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-xl flex justify-between items-center">
+                            <p className="text-sm text-gray-500">Verifique se os dados estão corretos antes de continuar.</p>
                             <button
                                 onClick={handleContinueFromTable}
-                                className="bg-emidias-accent text-white px-6 py-2 rounded-lg font-medium hover:bg-emidias-accent-dark shadow-sm flex items-center gap-2"
+                                className="bg-emidias-accent text-white px-6 py-2.5 rounded-lg font-bold hover:bg-emidias-accent-dark shadow-md hover:shadow-lg transition-all flex items-center gap-2"
                             >
-                                Configurar Colunas <ChevronRight size={16} />
+                                Configurar Geocodificação <ChevronRight size={18} />
                             </button>
                         </div>
                     )}
