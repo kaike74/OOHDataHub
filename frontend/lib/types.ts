@@ -157,4 +157,8 @@ export interface MapLayer {
     markers: CustomMarker[];
     data?: any[]; // Raw data rows
     headers?: string[]; // Column headers
+    config?: {
+        addressCols: string[];
+        nameCol: string;
+    };
 }

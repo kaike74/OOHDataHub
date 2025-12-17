@@ -134,7 +134,8 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             ...l,
             markers: JSON.parse(l.markers),
             data: l.data ? JSON.parse(l.data) : [],
-            visible: !!l.visible
+            visible: !!l.visible,
+            config: l.config ? JSON.parse(l.config) : undefined
         }));
         return new Response(JSON.stringify(layers), { headers });
     }
@@ -150,8 +151,8 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             }
 
             await env.DB.prepare(`
-                INSERT INTO proposal_layers (id, id_proposta, name, color, markers, data, visible)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO proposal_layers (id, id_proposta, name, color, markers, data, visible, config)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
                 data.id,
                 idProposta,
@@ -159,7 +160,8 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                 data.color || '#3B82F6',
                 JSON.stringify(data.markers),
                 JSON.stringify(data.data || []),
-                data.visible !== undefined ? (data.visible ? 1 : 0) : 1
+                data.visible !== undefined ? (data.visible ? 1 : 0) : 1,
+                JSON.stringify(data.config || {})
             ).run();
 
             return new Response(JSON.stringify({ success: true }), { status: 201, headers });
@@ -203,6 +205,14 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             if (data.markers !== undefined) {
                 updates.push('markers = ?');
                 values.push(JSON.stringify(data.markers));
+            }
+            if (data.name !== undefined) {
+                updates.push('name = ?');
+                values.push(data.name);
+            }
+            if (data.data !== undefined) {
+                updates.push('data = ?');
+                values.push(JSON.stringify(data.data));
             }
 
             if (updates.length > 0) {

@@ -79,6 +79,7 @@ interface AppState {
     removeLayer: (layerId: string) => void;
     updateLayerColor: (layerId: string, color: string) => void;
     updateCustomMarkerPosition: (layerId: string, markerId: string, lat: number, lng: number) => void;
+    updateLayerData: (layerId: string, updates: Partial<MapLayer>) => void;
 
     refreshProposta: (proposta: Proposta) => void;
 }
@@ -160,6 +161,9 @@ export const useStore = create<AppState>()(
                         ? { ...l, markers: l.markers.map(m => m.id === markerId ? { ...m, lat, lng } : m) }
                         : l
                 )
+            })),
+            updateLayerData: (layerId, updates) => set((state) => ({
+                customLayers: state.customLayers.map(l => l.id === layerId ? { ...l, ...updates } : l)
             })),
 
             setSelectedPonto: (ponto) => set((state) => ({
