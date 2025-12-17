@@ -186,22 +186,25 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
 
     // Optimistic Update Helper
-    const updateItem = useCallback(async (id: number, field: string, value: any) => {
-        console.log(`📝 CartTable updateItem called:`, { id, field, value });
+    const updateItem = useCallback(async (id: number, fieldOrUpdates: string | Record<string, any>, value?: any) => {
+        const updates = typeof fieldOrUpdates === 'string' ? { [fieldOrUpdates]: value } : fieldOrUpdates;
+        console.log(`📝 CartTable updateItem called:`, { id, updates });
 
         const updatedItens = itens.map(item => {
             if (item.id === id) {
-                const updatedItem = { ...item, [field]: value };
-                if (['fluxo_diario', 'qtd_bi_mes', 'valor', 'valor_papel', 'valor_lona'].includes(field)) {
-                    if (field === 'fluxo_diario') {
-                        updatedItem.impactos = (value || 0) * 30;
-                    }
+                const updatedItem = { ...item, ...updates };
+
+                // Handle specific field logic
+                if ('fluxo_diario' in updates) {
+                    updatedItem.impactos = (updates.fluxo_diario || 0) * 30;
                 }
+
                 console.log(`✅ Updated item:`, updatedItem);
                 return updatedItem;
             }
             return item;
         });
+
         setItens(updatedItens);
         refreshProposta({ ...selectedProposta!, itens: updatedItens });
         try {
@@ -539,15 +542,20 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                             className="w-full bg-transparent border-none text-[13px] text-gray-700 focus:ring-0 p-0 cursor-pointer"
                             value={currentValue}
                             onChange={(e) => {
-                                updateItem(row.original.id, 'periodo_comercializado', e.target.value);
-                                // Recalc logic...
+                                const newValue = e.target.value;
+                                let qtd = 1;
+
                                 if (row.original.periodo_inicio && row.original.periodo_fim) {
                                     const dataInicio = new Date(row.original.periodo_inicio);
                                     const dataFim = new Date(row.original.periodo_fim);
                                     const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
-                                    const qtd = e.target.value === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                                    updateItem(row.original.id, 'qtd_bi_mes', qtd);
+                                    qtd = newValue === 'mensal' ? 1 : Math.ceil(diffDays / 14);
                                 }
+
+                                updateItem(row.original.id, {
+                                    periodo_comercializado: newValue,
+                                    qtd_bi_mes: qtd
+                                });
                             }}
                         >
                             <option value="bissemanal">Bissemanal</option>
