@@ -142,7 +142,7 @@ export default function MapLayers() {
     };
 
     return (
-        <div className="absolute top-4 left-4 z-10 font-sans">
+        <div className="absolute top-20 left-4 z-10 font-sans">
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="bg-white p-3 rounded-lg shadow-lg hover:bg-gray-50 transition-colors group"

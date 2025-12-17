@@ -96,5 +96,32 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         }
     }
 
+    // POST /api/propostas/:id/share - Gerar/Recuperar token de compartilhamento
+    if (request.method === 'POST' && path.match(/^\/api\/propostas\/\d+\/share$/)) {
+        try {
+            const id = path.split('/')[3];
+
+            // Verifica se já tem token
+            const proposta = await env.DB.prepare('SELECT public_token FROM propostas WHERE id = ?').bind(id).first();
+
+            if (!proposta) {
+                return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
+            }
+
+            let token = proposta.public_token as string;
+
+            if (!token) {
+                // Gera novo token simples (pode usar UUID ou nanoid se tiver importado, ou algo random)
+                token = crypto.randomUUID();
+                await env.DB.prepare('UPDATE propostas SET public_token = ? WHERE id = ?').bind(token, id).run();
+            }
+
+            return new Response(JSON.stringify({ token, success: true }), { headers });
+
+        } catch (e: any) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 }

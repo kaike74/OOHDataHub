@@ -24,8 +24,10 @@ import {
     StickyNote,
     Eye,
     Target,
-    BarChart3
+    BarChart3,
+    Share2
 } from 'lucide-react';
+import ShareModal from './ShareModal';
 import {
     useReactTable,
     getCoreRowModel,
@@ -105,6 +107,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
     // UI State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isGroupMenuOpen, setIsGroupMenuOpen] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [focusedCell, setFocusedCell] = useState<{ rowId: number | null; columnId: string | null }>({ rowId: null, columnId: null });
 
     // Grouping State
@@ -916,6 +919,14 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     </button>
                     <h3 className="font-semibold text-gray-800 text-sm">Carrinho ({itens.length})</h3>
 
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsShareModalOpen(true); }}
+                        className="ml-4 flex items-center gap-1.5 px-3 py-1.5 bg-emidias-primary text-white text-xs font-medium rounded-md hover:bg-emidias-primary-dark transition-colors shadow-sm"
+                        title="Gerar link compartilhável"
+                    >
+                        <Share2 size={14} /> Compartilhar
+                    </button>
+
                     {/* Bulk Actions */}
                     {Object.keys(rowSelection).length > 0 && (
                         <div
@@ -1365,6 +1376,11 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
 
             {/* Footer Summary - Always visible if open */}
 
+            <ShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                proposta={selectedProposta}
+            />
         </div >
     );
 }

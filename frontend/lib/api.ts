@@ -220,6 +220,9 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify({ itens }),
     }),
+    shareProposta: (id: number) => fetchAPI(`/api/propostas/${id}/share`, {
+        method: 'POST'
+    }),
 
     // Stats
     getStats: () => fetchAPI('/api/stats'),
