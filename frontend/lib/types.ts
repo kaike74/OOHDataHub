@@ -154,8 +154,6 @@ export interface MapLayer {
     name: string;
     visible: boolean;
     color: string;
-    visible: boolean;
-    color: string;
     markers: CustomMarker[];
     data?: any[]; // Raw data rows
     headers?: string[]; // Column headers
