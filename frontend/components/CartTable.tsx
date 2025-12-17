@@ -203,63 +203,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         }
     }, [itens, refreshProposta, selectedProposta]);
 
-    // Drag-to-Fill Handlers
-    const startDragging = useCallback((rowId: number, columnKey: string, value: any) => {
-        console.log('🎯 Starting drag from row:', rowId, 'column:', columnKey, 'value:', value);
-        setDragState({
-            isDragging: true,
-            startRowId: rowId,
-            currentRowId: rowId,
-            columnKey,
-            startValue: value
-        });
-    }, []);
-
-    const handleDragOver = useCallback((rowId: number) => {
-        if (dragState.isDragging && rowId !== dragState.currentRowId) {
-            console.log('📍 Dragging over row:', rowId);
-            setDragState(prev => ({ ...prev, currentRowId: rowId }));
-        }
-    }, [dragState.isDragging, dragState.currentRowId]);
-
-    // Global mouse move handler for drag-fill
-    useEffect(() => {
-        if (!dragState.isDragging) return;
-
-        // Change cursor to crosshair during drag
-        document.body.style.cursor = 'crosshair';
-        document.body.style.userSelect = 'none';
-
-        const handleMouseMove = (e: MouseEvent) => {
-            // Find which row the mouse is over
-            const element = document.elementFromPoint(e.clientX, e.clientY);
-            if (!element) return;
-
-            const row = element.closest('[data-row-id]');
-            if (row) {
-                const rowId = parseInt(row.getAttribute('data-row-id') || '0');
-                if (rowId && rowId !== dragState.currentRowId) {
-                    setDragState(prev => ({ ...prev, currentRowId: rowId }));
-                }
-            }
-        };
-
-        const handleMouseUp = () => {
-            document.body.style.cursor = '';
-            document.body.style.userSelect = '';
-            handleDragEnd();
-        };
-
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-
-        return () => {
-            document.body.style.cursor = '';
-            document.body.style.userSelect = '';
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        };
-    }, [dragState.isDragging, dragState.currentRowId, handleDragEnd]);
+    // Drag-to-Fill Handlers - Simplified to avoid circular dependencies
+    const dragEndRef = useRef<(() => void) | null>(null);
 
     const handleDragEnd = useCallback(() => {
         if (dragState.isDragging && dragState.startRowId !== null && dragState.currentRowId !== null && dragState.columnKey) {
@@ -292,7 +237,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     }
                 }
 
-                const columnKey = dragState.columnKey!; // We know it's not null here
+                const columnKey = dragState.columnKey!;
                 console.log('✅ Drag-fill completed. Updated items:', updatedItens.slice(minIdx, maxIdx + 1).map(item => ({
                     id: item.id,
                     [columnKey]: (item as any)[columnKey]
@@ -304,9 +249,62 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             }
         }
 
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
         setDragState({ isDragging: false, startRowId: null, currentRowId: null, columnKey: null, startValue: null });
-        document.removeEventListener('mouseup', handleDragEnd);
     }, [dragState, itens, refreshProposta, selectedProposta]);
+
+    // Update ref when handleDragEnd changes
+    useEffect(() => {
+        dragEndRef.current = handleDragEnd;
+    }, [handleDragEnd]);
+
+    const startDragging = useCallback((rowId: number, columnKey: string, value: any) => {
+        console.log('🎯 Starting drag from row:', rowId, 'column:', columnKey, 'value:', value);
+
+        document.body.style.cursor = 'crosshair';
+        document.body.style.userSelect = 'none';
+
+        setDragState({
+            isDragging: true,
+            startRowId: rowId,
+            currentRowId: rowId,
+            columnKey,
+            startValue: value
+        });
+    }, []);
+
+    // Global mouse move handler for drag-fill
+    useEffect(() => {
+        if (!dragState.isDragging) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            const element = document.elementFromPoint(e.clientX, e.clientY);
+            if (!element) return;
+
+            const row = element.closest('[data-row-id]');
+            if (row) {
+                const rowId = parseInt(row.getAttribute('data-row-id') || '0');
+                if (rowId && rowId !== dragState.currentRowId) {
+                    setDragState(prev => ({ ...prev, currentRowId: rowId }));
+                }
+            }
+        };
+
+        const handleMouseUp = () => {
+            if (dragEndRef.current) {
+                dragEndRef.current();
+            }
+        };
+
+        document.addEventListener('mousemove', handleMouseMove, { passive: true });
+        document.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [dragState.isDragging, dragState.currentRowId]);
 
     // Check if a row is in the drag range
     const isInDragRange = useCallback((rowId: number) => {
@@ -1020,7 +1018,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     </div>
 
                     {/* Body */}
-                    <div className="divide-y divide-gray-100 bg-white">
+                    <div className="bg-white">
                         {/* Grouped View */}
                         {groupedData ? (
                             <>
@@ -1037,7 +1035,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                     );
 
                                     return (
-                                        <div key={group.name} className="border-b border-gray-200">
+                                        <div key={group.name} className="border-b-2 border-gray-300">
                                             {/* Group Header */}
                                             <div
                                                 className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors sticky top-[41px] z-[5] border-b border-gray-200"
@@ -1062,12 +1060,12 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                                 <div
                                                     key={row.id}
                                                     data-row-id={row.original.id}
-                                                    className={`flex items-center hover:bg-blue-50/20 transition-colors group ${row.getIsSelected() ? 'bg-blue-50/60' : ''} ${isInDragRange(row.original.id) ? 'bg-blue-100 ring-2 ring-blue-400' : ''}`}
+                                                    className={`flex items-stretch border-b border-gray-200 transition-colors group ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'} ${isInDragRange(row.original.id) ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
                                                 >
                                                     {row.getVisibleCells().map(cell => (
                                                         <div
                                                             key={cell.id}
-                                                            className="px-3 py-2.5 text-sm text-gray-700 border-r border-transparent group-hover:border-gray-100 truncate flex items-center relative"
+                                                            className="px-2 py-2 text-sm text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative min-h-[40px]"
                                                             style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
                                                         >
                                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1076,7 +1074,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                                                 focusedCell.rowId === row.original.id &&
                                                                 (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
                                                                     <div
-                                                                        className="absolute bottom-0 right-0 w-3 h-3 bg-blue-600 hover:bg-blue-700 border border-white rounded-tl cursor-crosshair opacity-100 transition-all z-50 shadow-sm hover:w-4 hover:h-4"
+                                                                        className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
+                                                                        style={{ borderRadius: '0 0 2px 0' }}
                                                                         title="Arrastar para preencher"
                                                                         onMouseDown={(e) => {
                                                                             e.preventDefault();
@@ -1115,12 +1114,12 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                     <div
                                         key={row.id}
                                         data-row-id={row.original.id}
-                                        className={`flex items-center hover:bg-blue-50/20 transition-colors group ${row.getIsSelected() ? 'bg-blue-50/60' : ''} ${isInDragRange(row.original.id) ? 'bg-blue-100 ring-2 ring-blue-400' : ''}`}
+                                        className={`flex items-stretch border-b border-gray-200 transition-colors group ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'} ${isInDragRange(row.original.id) ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
                                     >
                                         {row.getVisibleCells().map(cell => (
                                             <div
                                                 key={cell.id}
-                                                className="px-3 py-2.5 text-sm text-gray-700 border-r border-transparent group-hover:border-gray-100 truncate flex items-center relative"
+                                                className="px-2 py-2 text-sm text-gray-700 border-r border-gray-200 last:border-r-0 flex items-center relative min-h-[40px]"
                                                 style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
                                             >
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1129,7 +1128,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                                     focusedCell.rowId === row.original.id &&
                                                     (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
                                                         <div
-                                                            className="absolute bottom-0 right-0 w-3 h-3 bg-blue-600 hover:bg-blue-700 border border-white rounded-tl cursor-crosshair opacity-100 transition-all z-50 shadow-sm hover:w-4 hover:h-4"
+                                                            className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
+                                                            style={{ borderRadius: '0 0 2px 0' }}
                                                             title="Arrastar para preencher"
                                                             onMouseDown={(e) => {
                                                                 e.preventDefault();
