@@ -21,7 +21,10 @@ import {
     DollarSign,
     Globe,
     Building2,
-    StickyNote
+    StickyNote,
+    Eye,
+    Target,
+    BarChart3
 } from 'lucide-react';
 import {
     useReactTable,
@@ -55,12 +58,26 @@ const formatDecimal = (value: number) => {
 }
 
 // Helper to handle Enter to move to next row, Tab for regular behavior
-const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, moveToNext?: () => void) => {
+// Helper to handle Enter to move to next row, Tab for regular behavior
+const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
+    rowId: number,
+    columnId: string,
+    itens: PropostaItem[]
+) => {
     if (e.key === 'Enter') {
         e.preventDefault();
         e.currentTarget.blur();
-        if (moveToNext) {
-            setTimeout(() => moveToNext(), 10);
+
+        const currentIndex = itens.findIndex(item => item.id === rowId);
+        const nextItem = itens[currentIndex + 1];
+
+        if (nextItem) {
+            // Find the input in the next row with the same column id
+            const nextInput = document.querySelector(`[data-row-id="${nextItem.id}"][data-column-id="${columnId}"]`) as HTMLElement;
+            if (nextInput) {
+                setTimeout(() => nextInput.focus(), 10);
+            }
         }
     }
 }
@@ -195,8 +212,19 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 const updatedItem = { ...item, ...updates };
 
                 // Handle specific field logic
-                if ('fluxo_diario' in updates) {
-                    updatedItem.impactos = (updates.fluxo_diario || 0) * 30;
+                if ('fluxo_diario' in updates || 'periodo_inicio' in updates || 'periodo_fim' in updates) {
+                    const fluxo = updates.fluxo_diario !== undefined ? updates.fluxo_diario : (item.fluxo_diario || 0);
+                    const inicio = updates.periodo_inicio || item.periodo_inicio;
+                    const fim = updates.periodo_fim || item.periodo_fim;
+
+                    if (inicio && fim) {
+                        const dataInicio = new Date(inicio);
+                        const dataFim = new Date(fim);
+                        const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+                        updatedItem.impactos = fluxo * diffDays;
+                    } else {
+                        updatedItem.impactos = 0;
+                    }
                 }
 
                 console.log(`✅ Updated item:`, updatedItem);
@@ -480,15 +508,6 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             ),
             size: 240,
             cell: ({ row }) => {
-                const rowIndex = itens.findIndex(item => item.id === row.original.id);
-                const moveToNextRow = () => {
-                    const nextRow = itens[rowIndex + 1];
-                    if (nextRow) {
-                        const nextInput = document.querySelector(`input[data-row-id="${nextRow.id}"][data-column-id="periodo_inicio"]`) as HTMLInputElement;
-                        nextInput?.focus();
-                    }
-                };
-
                 return (
                     <div className="flex items-center gap-1 relative h-full group/cell hover:bg-gray-50 -m-2 p-2 transition-colors">
                         <input
@@ -503,7 +522,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                     updateItem(row.original.id, 'periodo_inicio', e.target.value);
                                 }
                             }}
-                            onKeyDown={(e) => handleKeyDown(e, moveToNextRow)}
+                            onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_inicio', itens)}
                         />
                         <span className="text-gray-300 text-[10px] mx-0.5">→</span>
                         <input
@@ -518,7 +537,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                                     updateItem(row.original.id, 'periodo_fim', e.target.value);
                                 }
                             }}
-                            onKeyDown={(e) => handleKeyDown(e, moveToNextRow)}
+                            onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_fim', itens)}
                         />
                     </div>
                 );
@@ -530,7 +549,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal">
                     <Layers size={13} />
-                    <span>Período da Locação</span>
+                    <span>Período comercializado</span>
                 </div>
             ),
             size: 140,
@@ -581,6 +600,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         type="text"
                         className="w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700 font-normal"
                         defaultValue={formatCurrency(row.original.valor_locacao || 0)}
+                        data-row-id={row.original.id}
+                        data-column-id="valor_locacao"
                         onBlur={(e) => {
                             // Extract numbers
                             const valStr = e.target.value.replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
@@ -596,6 +617,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                             // On focus show raw number if needed or just select all
                             e.target.select();
                         }}
+                        onKeyDown={(e) => handleKeyDown(e, row.original.id, 'valor_locacao', itens)}
                     />
                 </div>
             )
@@ -616,6 +638,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         type="text"
                         className="w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700"
                         defaultValue={formatCurrency(row.original.valor_papel || 0)}
+                        data-row-id={row.original.id}
+                        data-column-id="valor_papel"
                         onBlur={(e) => {
                             const valStr = e.target.value.replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
                             const newValue = parseFloat(valStr);
@@ -626,6 +650,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                             else e.target.value = formatCurrency(row.original.valor_papel || 0);
                         }}
                         onFocus={(e) => e.target.select()}
+                        onKeyDown={(e) => handleKeyDown(e, row.original.id, 'valor_papel', itens)}
                     />
                 </div>
             )
@@ -646,6 +671,8 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         type="text"
                         className="w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700"
                         defaultValue={formatCurrency(row.original.valor_lona || 0)}
+                        data-row-id={row.original.id}
+                        data-column-id="valor_lona"
                         onBlur={(e) => {
                             const valStr = e.target.value.replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
                             const newValue = parseFloat(valStr);
@@ -656,6 +683,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                             else e.target.value = formatCurrency(row.original.valor_lona || 0);
                         }}
                         onFocus={(e) => e.target.select()}
+                        onKeyDown={(e) => handleKeyDown(e, row.original.id, 'valor_lona', itens)}
                     />
                 </div>
             )
@@ -665,7 +693,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal justify-end w-full">
                     <Hash size={13} />
-                    <span>Qtd.</span>
+                    <span>Qtd. Bi/Mês</span>
                 </div>
             ),
             size: 70,
@@ -685,7 +713,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal justify-end w-full">
                     <DollarSign size={13} />
-                    <span>Investimento por Praça</span>
+                    <span>Investimento</span>
                 </div>
             ),
             size: 150,
@@ -699,6 +727,50 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 }
                 const total = (row.original.valor_locacao || 0) * qtd;
                 return <div className="text-right text-[13px] text-gray-900 font-medium">{formatCurrency(total)}</div>
+            }
+        },
+        {
+            id: 'cpm',
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal justify-end w-full">
+                    <BarChart3 size={13} />
+                    <span>CPM</span>
+                </div>
+            ),
+            size: 80,
+            cell: ({ row }) => {
+                let qtd = 1;
+                let diffDays = 0;
+                if (row.original.periodo_inicio && row.original.periodo_fim) {
+                    const dataInicio = new Date(row.original.periodo_inicio);
+                    const dataFim = new Date(row.original.periodo_fim);
+                    diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+                    qtd = row.original.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                }
+                const totalInvestimento = (row.original.valor_locacao || 0) * qtd;
+                const impactos = (row.original.fluxo_diario || 0) * diffDays;
+                const cpm = impactos > 0 ? (totalInvestimento / impactos) * 1000 : 0;
+                return <div className="text-right text-[13px] text-gray-700">{formatCurrency(cpm)}</div>;
+            }
+        },
+        {
+            id: 'impactos',
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal justify-end w-full">
+                    <Target size={13} />
+                    <span>Impactos</span>
+                </div>
+            ),
+            size: 100,
+            cell: ({ row }) => {
+                let diffDays = 0;
+                if (row.original.periodo_inicio && row.original.periodo_fim) {
+                    const dataInicio = new Date(row.original.periodo_inicio);
+                    const dataFim = new Date(row.original.periodo_fim);
+                    diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+                }
+                const impactos = (row.original.fluxo_diario || 0) * diffDays;
+                return <div className="text-right text-[13px] text-gray-700">{formatNumber(impactos)}</div>;
             }
         },
         {
@@ -853,11 +925,68 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                     onClick={e => e.stopPropagation()}
                 >
                     {!isOpen && (
-                        <div className="flex items-center gap-4 text-sm animate-fade-in">
-                            <div className="flex flex-col items-end">
-                                <span className="text-[10px] text-gray-500">Total</span>
+                        <div className="flex items-center gap-4 text-sm animate-fade-in divide-x divide-gray-200">
+                            {/* Impactos Totais */}
+                            <div className="flex flex-col items-end px-4 first:pl-0">
+                                <span className="text-[10px] text-gray-500 uppercase tracking-wider">Impactos Totais</span>
+                                <span className="font-bold text-gray-700">
+                                    {formatNumber(itens.reduce((sum, item) => {
+                                        let diffDays = 0;
+                                        if (item.periodo_inicio && item.periodo_fim) {
+                                            const start = new Date(item.periodo_inicio);
+                                            const end = new Date(item.periodo_fim);
+                                            diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+                                        }
+                                        return sum + ((item.fluxo_diario || 0) * diffDays);
+                                    }, 0))}
+                                </span>
+                            </div>
+
+                            {/* Investimento Total */}
+                            <div className="flex flex-col items-end px-4">
+                                <span className="text-[10px] text-gray-500 uppercase tracking-wider">Investimento Total</span>
                                 <span className="font-bold text-emerald-600">
-                                    {formatCurrency(itens.reduce((sum, item) => sum + ((item.valor || 0) + (item.valor_papel || 0) + (item.valor_lona || 0)) * (item.qtd_bi_mes || 1), 0))}
+                                    {formatCurrency(itens.reduce((sum, item) => {
+                                        let qtd = 1;
+                                        if (item.periodo_inicio && item.periodo_fim) {
+                                            const start = new Date(item.periodo_inicio);
+                                            const end = new Date(item.periodo_fim);
+                                            const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                                            qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                                        }
+                                        return sum + ((item.valor_locacao || 0) * qtd);
+                                    }, 0))}
+                                </span>
+                            </div>
+
+                            {/* CPM Total */}
+                            <div className="flex flex-col items-end px-4 last:pr-0">
+                                <span className="text-[10px] text-gray-500 uppercase tracking-wider">CPM Total</span>
+                                <span className="font-bold text-blue-600">
+                                    {(() => {
+                                        const totalInvest = itens.reduce((sum, item) => {
+                                            let qtd = 1;
+                                            if (item.periodo_inicio && item.periodo_fim) {
+                                                const start = new Date(item.periodo_inicio);
+                                                const end = new Date(item.periodo_fim);
+                                                const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                                                qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                                            }
+                                            return sum + ((item.valor_locacao || 0) * qtd);
+                                        }, 0);
+
+                                        const totalImpactos = itens.reduce((sum, item) => {
+                                            let diffDays = 0;
+                                            if (item.periodo_inicio && item.periodo_fim) {
+                                                const start = new Date(item.periodo_inicio);
+                                                const end = new Date(item.periodo_fim);
+                                                diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+                                            }
+                                            return sum + ((item.fluxo_diario || 0) * diffDays);
+                                        }, 0);
+
+                                        return formatCurrency(totalImpactos > 0 ? (totalInvest / totalImpactos) * 1000 : 0);
+                                    })()}
                                 </span>
                             </div>
                         </div>
@@ -920,7 +1049,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         className={`p-1.5 rounded-md transition-all ${isSettingsOpen ? 'bg-gray-100 text-gray-900 shadow-inner' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}
                         title="Configurações da tabela"
                     >
-                        <Settings size={16} />
+                        <Eye size={16} />
                     </button>
 
                     {isSettingsOpen && (
@@ -929,23 +1058,25 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                             <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
                                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Colunas Visíveis</h4>
                                 <div className="max-h-60 overflow-y-auto px-1">
-                                    {table.getAllLeafColumns().map(column => {
-                                        if (!column.id) return null;
-                                        return (
-                                            <div
-                                                key={column.id}
-                                                className="px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors"
-                                                onClick={column.getToggleVisibilityHandler()}
-                                            >
-                                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${column.getIsVisible() ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
-                                                    {column.getIsVisible() && <Check size={10} strokeWidth={3} />}
+                                    {table.getAllLeafColumns()
+                                        .filter(col => col.id !== 'select' && col.id !== 'actions')
+                                        .map(column => {
+                                            if (!column.id) return null;
+                                            return (
+                                                <div
+                                                    key={column.id}
+                                                    className="px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors"
+                                                    onClick={column.getToggleVisibilityHandler()}
+                                                >
+                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${column.getIsVisible() ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
+                                                        {column.getIsVisible() && <Check size={10} strokeWidth={3} />}
+                                                    </div>
+                                                    <span className="text-sm text-gray-700 truncate capitalize select-none">
+                                                        {(column.columnDef.header as string) || column.id}
+                                                    </span>
                                                 </div>
-                                                <span className="text-sm text-gray-700 truncate capitalize select-none">
-                                                    {(column.columnDef.header as string) || column.id}
-                                                </span>
-                                            </div>
-                                        )
-                                    })}
+                                            )
+                                        })}
                                 </div>
                             </div>
                         </>
