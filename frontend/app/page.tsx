@@ -48,9 +48,13 @@ export default function HomePage() {
 
   // Carregar dados iniciais
   useEffect(() => {
-    // Redirect client users to their dashboard
+    // Check for "New Proposal" action
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get('action');
+
+    // Redirect client users to their dashboard UNLESS they are creating a new proposal
     const userRole = JSON.parse(localStorage.getItem('ooh-auth-storage') || '{}')?.state?.user?.role;
-    if (userRole === 'client') {
+    if (userRole === 'client' && action !== 'new') {
       router.replace('/admin/proposals');
       return;
     }

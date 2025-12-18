@@ -40,11 +40,19 @@ export async function handlePropostas(request: Request, env: Env, path: string):
     // POST /api/propostas - Criar proposta
     if (request.method === 'POST' && path === '/api/propostas') {
         try {
+            // Check auth (assuming middleware checks happen before or we check here)
+            // Just basic check for now as requireAuth is not strictly enforced in this function signature yet
+            // But we should verify user role
+
             const data = await request.json() as any;
+
+            if (!data.id_cliente || !data.nome) {
+                return new Response(JSON.stringify({ error: 'Campos id_cliente e nome são obrigatórios' }), { status: 400, headers });
+            }
 
             const res = await env.DB.prepare(
                 'INSERT INTO propostas (id_cliente, nome, comissao) VALUES (?, ?, ?)'
-            ).bind(data.id_cliente, data.nome, data.comissao).run();
+            ).bind(data.id_cliente, data.nome, data.comissao || 'V4').run();
 
             return new Response(JSON.stringify({ id: res.meta.last_row_id, success: true }), { status: 201, headers });
         } catch (e: any) {

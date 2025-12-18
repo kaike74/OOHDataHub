@@ -134,6 +134,15 @@ export default function AdminProposalsPage() {
 
                 {/* Actions - Right */}
                 <div className="flex items-center gap-2 sm:gap-3">
+                    {/* New Proposal Button */}
+                    <button
+                        onClick={() => router.push('/?action=new')}
+                        className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all font-medium backdrop-blur-sm"
+                    >
+                        <Plus size={18} />
+                        <span>Nova Proposta</span>
+                    </button>
+
                     {/* Menu Button */}
                     <button
                         onClick={() => setMenuOpen(true)}
