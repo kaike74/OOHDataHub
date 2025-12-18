@@ -8,13 +8,10 @@ import {
     requireAuth
 } from '../utils/auth';
 
+import { corsHeaders } from '../utils/cors';
+
 export const handleClients = async (request: Request, env: Env, path: string) => {
-    const headers = {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    };
+    const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
 
     // POST /api/clients/login - Public endpoint for client login
     if (path === '/api/clients/login' && request.method === 'POST') {
