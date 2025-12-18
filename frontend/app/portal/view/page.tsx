@@ -213,16 +213,30 @@ const PortalViewContent = () => {
                             {isAuthenticated ? (
                                 <button
                                     onClick={() => router.push('/admin/proposals')}
-                                    className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition shadow-sm"
+                                    className="w-10 h-10 rounded-full bg-emidias-accent text-white flex items-center justify-center font-bold shadow-sm hover:scale-105 transition-all"
+                                    title="Ir para Dashboard"
                                 >
-                                    Dashboard
+                                    {/* Get Initial from stored user (simplification: assume 'Client' if name missing or 'C') */}
+                                    {(() => {
+                                        try {
+                                            const storage = localStorage.getItem('ooh-client-auth-storage') || '{}';
+                                            const userData = JSON.parse(storage)?.state?.user;
+                                            return userData?.name ? userData.name[0].toUpperCase() : 'C';
+                                        } catch {
+                                            return 'U';
+                                        }
+                                    })()}
                                 </button>
                             ) : (
                                 <button
                                     onClick={() => router.push('/login')}
-                                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm shadow-blue-600/20"
+                                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-xl hover:from-blue-700 hover:to-blue-800 transition shadow-md hover:shadow-lg"
                                 >
-                                    Entrar
+                                    <div className="p-1 bg-white/20 rounded-full">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                    </div>
+                                    <span className="hidden sm:inline">Faça seu login para editar e criar suas propostas</span>
+                                    <span className="sm:hidden">Login</span>
                                 </button>
                             )}
                         </div>

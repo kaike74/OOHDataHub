@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Loader2, Building2, DollarSign, FileText } from 'lucide-react';
+import { X, Loader2, Building2, DollarSign, FileText, AlertTriangle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
@@ -17,6 +17,7 @@ export default function CreateProposalModal({ isOpen, onClose }: CreateProposalM
 
     const [isLoading, setIsLoading] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
+    const [error, setError] = useState('');
 
     // Form States
     const [selectedClientId, setSelectedClientId] = useState<number | ''>('');
@@ -41,10 +42,18 @@ export default function CreateProposalModal({ isOpen, onClose }: CreateProposalM
     // Reset form when opening
     useEffect(() => {
         if (isOpen) {
+            setError('');
             setName('');
+            console.log('User when opening modal:', user);
+
             if (user?.role === 'client') {
-                setSelectedClientId(user.client_id || ''); // Assuming user object has client_id
-                setCommission('CLIENT');
+                if (user.client_id) {
+                    setSelectedClientId(Number(user.client_id));
+                    setCommission('CLIENT');
+                } else {
+                    console.error('User is client but missing client_id. Store state:', user);
+                    setError('Erro: Identificação do cliente não encontrada. Por favor, faça LOGOUT e LOGIN novamente para atualizar suas credenciais.');
+                }
             } else {
                 setSelectedClientId('');
                 setCommission('V4');
@@ -80,7 +89,7 @@ export default function CreateProposalModal({ isOpen, onClose }: CreateProposalM
             }
         } catch (error) {
             console.error('Error creating proposal:', error);
-            alert('Erro ao criar proposta. Tente novamente.');
+            setError('Erro ao criar proposta. Tente novamente.');
         } finally {
             setIsLoading(false);
         }
@@ -107,6 +116,14 @@ export default function CreateProposalModal({ isOpen, onClose }: CreateProposalM
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
+
+                    {error && (
+                        <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-start gap-3">
+                            <AlertTriangle size={20} className="flex-shrink-0 mt-0.5" />
+                            <p>{error}</p>
+                        </div>
+                    )}
+
                     {/* Client Selection (Internal Only) */}
                     {user?.role !== 'client' && (
                         <div className="space-y-2">
