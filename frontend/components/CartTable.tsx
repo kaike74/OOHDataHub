@@ -253,21 +253,23 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
         setIsSyncing(true);
 
         try {
-            if (updatedItens.length === 0 && (!activeProposta?.itens || activeProposta.itens.length === 0)) {
+            if (updatedItens.length === 0 && (!selectedProposta?.itens || selectedProposta.itens.length === 0)) {
                 return;
             }
 
+            if (!selectedProposta || !selectedProposta.id) return;
+
             if (isClientView) {
-                await api.updatePortalProposalItems(activeProposta!.id, updatedItens);
+                await api.updatePortalProposalItems(selectedProposta.id, updatedItens);
             } else {
-                await api.updateCart(activeProposta!.id, updatedItens);
+                await api.updateCart(selectedProposta.id, updatedItens);
             }
 
-            refreshProposta({ ...activeProposta!, itens: updatedItens });
+            refreshProposta({ ...selectedProposta!, itens: updatedItens });
 
             // Re-fetch to sync (clean)
-            if (activeProposta && !isClientView) {
-                const res = await api.getProposta(activeProposta.id);
+            if (selectedProposta && !isClientView) {
+                const res = await api.getProposta(selectedProposta.id);
                 if (res) refreshProposta(res);
             }
         } catch (error) {
@@ -275,7 +277,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
         } finally {
             setIsSyncing(false);
         }
-    }, [itens, refreshProposta, activeProposta, isClientView]);
+    }, [itens, refreshProposta, selectedProposta, isClientView]);
 
     // Drag-to-Fill Handlers - Simplified to avoid circular dependencies
     const dragEndRef = useRef<(() => void) | null>(null);

@@ -28,7 +28,7 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
 
     // Portal State
     const [clientUsers, setClientUsers] = useState<ClientUser[]>([]);
-    const [selectedUserId, setSelectedUserId] = useState<number | 'new' | ''>('');
+    const [selectedUserId, setSelectedUserId] = useState<string | number>('');
     const [newUser, setNewUser] = useState({ name: '', email: '' });
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
