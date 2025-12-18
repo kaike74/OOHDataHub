@@ -982,11 +982,11 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
             const total = (item.valor_locacao || 0) * qtd;
 
             const row = [
-                item.codigo_ooh,
-                item.cidade,
-                item.endereco,
+                item.codigo_ooh || '',
+                item.cidade || '',
+                item.endereco || '',
                 `${item.periodo_inicio ? new Date(item.periodo_inicio).toLocaleDateString() : ''} - ${item.periodo_fim ? new Date(item.periodo_fim).toLocaleDateString() : ''}`,
-                item.medidas,
+                item.medidas || '',
                 formatCurrency(total)
             ];
             return row;
