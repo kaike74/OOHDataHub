@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
@@ -34,7 +34,7 @@ const mapItemToPonto = (item: any): Ponto => ({
     updated_by: 0
 } as unknown as Ponto);
 
-export default function PortalViewPage() {
+const PortalViewContent = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
@@ -187,5 +187,17 @@ export default function PortalViewPage() {
                 />
             )}
         </div>
+    );
+}
+
+export default function PortalViewPage() {
+    return (
+        <Suspense fallback={
+            <div className="h-screen w-screen flex items-center justify-center bg-gray-50">
+                <Loader2 className="animate-spin text-blue-600" size={48} />
+            </div>
+        }>
+            <PortalViewContent />
+        </Suspense>
     );
 }
