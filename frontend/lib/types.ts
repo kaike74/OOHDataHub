@@ -76,6 +76,8 @@ export interface User {
     name: string | null;
     role: 'master' | 'editor' | 'viewer' | 'client';
     created_at: string;
+    client_id?: number;
+    client_name?: string | null;
 }
 
 export interface AuthResponse {
