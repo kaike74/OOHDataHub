@@ -219,7 +219,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
 
     } catch (e: any) {
         console.error(e);
-        const status = e.message === 'Unauthorized' || e.message === 'No token provided' ? 401 : 500;
+        const status = e.message === 'Unauthorized' || e.message === 'No token provided' || e.message === 'Invalid token' ? 401 : 500;
         return new Response(JSON.stringify({ error: e.message }), { status, headers });
     }
 
