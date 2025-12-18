@@ -1529,82 +1529,28 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                                         })}
                                     </div>
                                 ))}
-                                <>
-                                    {table.getRowModel().rows.map(row => (
-                                        <div
-                                            key={row.id}
-                                            data-row-id={row.original.id}
-                                            className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] 
-                                            ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}
-                                            ${row.original.status === 'pendente_validacao' ? 'opacity-70 bg-orange-50/30' : ''}
-                                        `}
-                                        >
-                                            {row.getVisibleCells().map(cell => {
-                                                const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
-                                                return (
-                                                    <div
-                                                        key={cell.id}
-                                                        className={`px-3 py-1.5 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
-                                                        style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
-                                                    >
-                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                        {/* Drag handle for ONLY specified editable cells */}
-                                                        {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
-                                                            focusedCell.rowId === row.original.id &&
-                                                            (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
-                                                                <div
-                                                                    className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
-                                                                    style={{ borderRadius: '0 0 2px 0' }}
-                                                                    title="Arrastar para preencher"
-                                                                    onMouseDown={(e) => {
-                                                                        e.preventDefault();
-                                                                        e.stopPropagation();
-                                                                        const columnId = cell.column.id!;
-
-                                                                        // Get current value from itens state for real-time accuracy
-                                                                        const currentItem = itens.find(item => item.id === row.original.id);
-                                                                        let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
-
-                                                                        // For período, use both values
-                                                                        if (columnId === 'periodo') {
-                                                                            value = {
-                                                                                periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
-                                                                                periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
-                                                                            };
-                                                                        }
-
-                                                                        console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
-                                                                        startDragging(row.original.id, columnId, value);
-                                                                    }}
-                                                                />
-                                                            )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    ))}
-                                </>
+                            </>
                         )}
 
-                                {table.getRowModel().rows.length === 0 && (
-                                    <div className="p-12 text-center text-gray-400 text-sm w-full flex flex-col items-center gap-3">
-                                        <div className="p-3 bg-gray-100 rounded-full">
-                                            <Settings size={24} className="text-gray-300" />
-                                        </div>
-                                        <span>Nenhum ponto no carrinho.</span>
-                                    </div>
-                                )}
+                        {table.getRowModel().rows.length === 0 && (
+                            <div className="p-12 text-center text-gray-400 text-sm w-full flex flex-col items-center gap-3">
+                                <div className="p-3 bg-gray-100 rounded-full">
+                                    <Settings size={24} className="text-gray-300" />
+                                </div>
+                                <span>Nenhum ponto no carrinho.</span>
                             </div>
+                        )}
                     </div>
                 </div>
+            </div>
 
-                {/* Footer Summary - Always visible if open */}
+            {/* Footer Summary - Always visible if open */}
 
-                <ShareModal
-                    isOpen={isShareModalOpen}
-                    onClose={() => setIsShareModalOpen(false)}
-                    proposta={selectedProposta}
-                />
-            </div >
-            );
+            <ShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                proposta={selectedProposta}
+            />
+        </div >
+    );
 }

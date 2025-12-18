@@ -95,6 +95,24 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
             }), { headers });
         }
 
+        // GET /api/portal/points - List ALL points (Simplified for Map)
+        if (path === '/api/portal/points' && request.method === 'GET') {
+            const user = await requireClientAuth(request, env);
+
+            const { results } = await env.DB.prepare(`
+                SELECT 
+                    p.id, p.latitude, p.longitude, 
+                    p.endereco, p.cidade, p.uf, p.codigo_ooh,
+                    p.tipo, p.medidas, p.id_exibidora, p.impactos,
+                    e.nome as exibidora_nome
+                FROM pontos_ooh p
+                LEFT JOIN exibidoras e ON p.id_exibidora = e.id
+                WHERE p.status = 'ativo'
+            `).all();
+
+            return new Response(JSON.stringify(results), { headers });
+        }
+
         // POST /api/portal/share - Share proposal with client user (Agency Only)
         if (path === '/api/portal/share' && request.method === 'POST') {
             // This requires AGENCY auth

@@ -80,16 +80,49 @@ const PortalViewContent = () => {
                     data.itens = processedItems;
                     setActiveProposta(data);
 
-                    // Extract points for the map
-                    const points = data.itens.map((item: any) => mapItemToPonto(item))
-                        .filter((p, index, self) =>
-                            index === self.findIndex((t) => t.id === p.id)
-                        ); // Unique points
+                    // Fetch ALL available points to show on map (as ghosts/inventory)
+                    try {
+                        const allPoints = await api.getPortalPoints();
 
-                    setPontos(points);
+                        // Map all points
+                        const mappedPoints = allPoints.map((p: any) => ({
+                            ...p,
+                            // Ensure basic Ponto structure
+                            tipos: [],
+                            observacoes: '',
+                            status: 'disponivel', // Default
+                            pais: 'Brasil',
+                            fluxo: 'N/A',
+                            created_at: '',
+                            updated_at: '',
+                            created_by: 0,
+                            updated_by: 0
+                        }));
 
-                    // Center map logic might be handled by GoogleMap if points change?
-                    // GoogleMap uses points to cluster.
+                        // Overlay proposal items (mark them as selected or different status)
+                        const proposalPointIds = new Set(data.itens.map((i: any) => i.id_ooh || i.id));
+
+                        // Merge strategies: 
+                        // We want ALL points. If a point is in the proposal, use the proposal item's status?
+                        // Or just show them.
+                        // Actually, CartTable needs PROPOSAL items. GoogleMap needs POINTS.
+                        // Use proposal items to override status in the full list if needed, or just let them coexist.
+
+                        // Let's mark points in proposal as 'selected' or just let CartTable handle selection state?
+                        // If we pass `pontos` to store, GoogleMap renders them.
+                        // We should probably rely on the ID match.
+
+                        setPontos(mappedPoints);
+
+                    } catch (e) {
+                        console.error("Failed to fetch all points for portal map", e);
+                        // Fallback: just use proposal items
+                        const points = data.itens.map((item: any) => mapItemToPonto(item))
+                            .filter((p, index, self) =>
+                                index === self.findIndex((t) => t.id === p.id)
+                            );
+                        setPontos(points);
+                    }
                 }
 
             } catch (err: any) {

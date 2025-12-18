@@ -254,6 +254,8 @@ export const api = {
 
     getPortalProposal: (id: number) => fetchAPI(`/api/portal/proposals/${id}`),
 
+    getPortalPoints: () => fetchAPI('/api/portal/points'),
+
     updatePortalProposalItems: (id: number, itens: any[]) => fetchAPI(`/api/portal/proposals/${id}/items`, {
         method: 'PUT',
         body: JSON.stringify({ itens })
