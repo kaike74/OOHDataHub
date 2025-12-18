@@ -38,10 +38,13 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
             const { results } = await env.DB.prepare(`
                 SELECT 
                     p.id, p.nome, p.created_at, p.status,
-                    c.nome as cliente_nome,
+                    p.comissao, -- Included but null/empty for consistency
+                    c.id as client_id,
+                    c.nome as client_name,
+                    c.logo as client_logo,
                     -- Calculated totals
                     COUNT(pi.id) as total_itens,
-                    SUM(pi.valor_locacao + pi.valor_papel + pi.valor_lona) as total_investimento,
+                    SUM(pi.valor_locacao + pi.valor_papel + pi.valor_lona) as total_valor,
                     SUM(COALESCE(pi.fluxo_diario, po.fluxo, 0)) as total_impactos
                 FROM propostas p
                 JOIN proposta_shares ps ON p.id = ps.proposal_id
@@ -52,6 +55,18 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                 GROUP BY p.id
                 ORDER BY p.created_at DESC
             `).bind(user.id).all();
+
+            // Transform results to match AdminProposal interface exact expectations if needed
+            // The query aliases should handle most of it:
+            // id, nome, created_at, status, comissao, client_id, client_name, client_logo, total_itens, total_valor
+            // Missing: shared_with (can be empty array for clients)
+
+            const proposals = results.map((r: any) => ({
+                ...r,
+                shared_with: [] // Clients don't see who else it's shared with
+            }));
+
+            return new Response(JSON.stringify(proposals), { headers });
 
             return new Response(JSON.stringify(results), { headers });
         }

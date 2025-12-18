@@ -36,14 +36,21 @@ export default function AdminProposalsPage() {
     const setCurrentView = useStore((state) => state.setCurrentView);
     const setMenuOpen = useStore((state) => state.setMenuOpen);
 
+    const user = useStore((state) => state.user);
+
     useEffect(() => {
-        loadProposals();
-    }, []);
+        if (user) loadProposals();
+    }, [user]);
 
     const loadProposals = async () => {
         try {
             setLoading(true);
-            const data = await api.getAdminProposals();
+            let data;
+            if (user?.role === 'client') {
+                data = await api.getPortalProposals();
+            } else {
+                data = await api.getAdminProposals();
+            }
             setProposals(data);
             // Default all expanded
             const initialExpanded: Record<number, boolean> = {};

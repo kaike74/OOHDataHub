@@ -48,6 +48,11 @@ export default function NavigationMenu() {
         },
     ];
 
+    // Filter menu items for clients
+    const filteredMenuItems = user?.role === 'client'
+        ? menuItems.filter(item => item.id === 'propostas')
+        : menuItems;
+
     const handleLogout = () => {
         const confirmLogout = confirm('Tem certeza que deseja sair?');
         if (confirmLogout) {
@@ -146,7 +151,7 @@ export default function NavigationMenu() {
                         Navegação
                     </p>
                     <div className="space-y-2">
-                        {menuItems.map((item) => {
+                        {filteredMenuItems.map((item) => {
                             const Icon = item.icon;
                             // If there's a selected proposal and we're on map view, consider "Propostas" as active
                             const isActive = selectedProposta && currentView === 'map'

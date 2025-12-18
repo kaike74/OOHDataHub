@@ -566,7 +566,7 @@ export async function sendClientWelcomeEmail(
 
     if (!gmailClientEmail || !gmailPrivateKey) {
         console.warn('Email not configured. Client User created with password:', temporaryPassword);
-        console.warn('Portal Login URL:', `${frontendUrl}/portal`);
+        console.warn('Portal Login URL:', `${frontendUrl}/login`);
         return;
     }
 
@@ -655,7 +655,7 @@ export async function sendClientWelcomeEmail(
             </div>
 
             <p style="text-align: center;">
-                <a href="${frontendUrl}/portal" class="button">Acessar Portal</a>
+                <a href="${frontendUrl}/login" class="button">Acessar Portal</a>
             </p>
 
             <p style="margin-top: 30px; font-size: 14px; color: #666;">
