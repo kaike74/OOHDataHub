@@ -1,136 +1,191 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import { useStore } from '@/lib/store';
+import GoogleMap from '@/components/map/GoogleMap';
+import CartTable from '@/components/CartTable';
+import { Loader2, LogOut, MapPin, ArrowLeft } from 'lucide-react';
+import { Proposta, PropostaItem, Ponto } from '@/lib/types';
 
-function ProposalContent() {
+// Helper to map flat item to Ponto
+const mapItemToPonto = (item: any): Ponto => ({
+    id: item.id_ooh || item.id, // Fallback
+    codigo_ooh: item.codigo_ooh,
+    endereco: item.endereco,
+    bairro: item.bairro,
+    cidade: item.cidade,
+    uf: item.uf,
+    cep: '', // Not returned by minimal query usually
+    latitude: item.latitude,
+    longitude: item.longitude,
+    medidas: item.medidas,
+    tipo: item.tipo,
+    id_exibidora: item.id_exibidora,
+    // Defaults for missing checks
+    pais: 'Brasil',
+    fluxo: 'N/A',
+    tipos: [],
+    observacoes: '',
+    created_at: '',
+    updated_at: '',
+    created_by: 0,
+    updated_by: 0
+} as unknown as Ponto);
+
+export default function PortalViewPage() {
     const searchParams = useSearchParams();
-    const token = searchParams.get('token');
-    const [proposal, setProposal] = useState<any>(null);
+    const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [activeProposta, setActiveProposta] = useState<Proposta | null>(null);
+    const [isCartOpen, setIsCartOpen] = useState(true);
+
+    const setPontos = useStore((state) => state.setPontos);
+    const setExibidoras = useStore((state) => state.setExibidoras); // Maybe empty?
 
     useEffect(() => {
-        const fetchProposal = async () => {
-            if (!token) {
-                setError('Token não fornecido');
+        const loadProposal = async () => {
+            const token = searchParams.get('token');
+            const id = searchParams.get('id');
+
+            if (!token && !id) {
+                setError('Proposta não especificada');
                 setIsLoading(false);
                 return;
             }
 
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/public/proposals/${token}`);
-                if (!res.ok) throw new Error('Proposta não encontrada ou expirada');
-                const data = await res.json();
-                setProposal(data);
+                let data: Proposta;
+
+                if (token) {
+                    data = await api.getPublicProposal(token);
+                } else {
+                    // Authenticated - api client handles token automatically
+                    data = await api.getPortalProposal(Number(id));
+                }
+
+                if (data && data.itens) {
+                    // Map items to fix prices and types
+                    const processedItems = data.itens.map((item: any) => ({
+                        ...item,
+                        // Map total value to locacao for the table display if needed
+                        valor_locacao: item.valor_total || item.valor_locacao || 0,
+                        valor_papel: 0,
+                        valor_lona: 0,
+                    }));
+
+                    data.itens = processedItems;
+                    setActiveProposta(data);
+
+                    // Extract points for the map
+                    const points = data.itens.map((item: any) => mapItemToPonto(item))
+                        .filter((p, index, self) =>
+                            index === self.findIndex((t) => t.id === p.id)
+                        ); // Unique points
+
+                    setPontos(points);
+
+                    // Center map logic might be handled by GoogleMap if points change?
+                    // GoogleMap uses points to cluster.
+                }
+
             } catch (err: any) {
-                setError(err.message);
+                console.error(err);
+                if (err.message === 'Unauthorized' || err.status === 401) {
+                    router.push('/portal/login');
+                } else {
+                    setError(err.message || 'Erro ao carregar proposta');
+                }
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchProposal();
-    }, [token]);
+        loadProposal();
+    }, [searchParams, setPontos, router]);
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="animate-spin text-blue-600" size={48} />
-            </div>
-        );
-    }
-
-    if (error || !proposal) {
-        return (
-            <div className="min-h-screen flex items-center justify-center flex-col gap-4">
-                <h1 className="text-2xl font-bold text-gray-800">Oops!</h1>
-                <p className="text-gray-600">{error || 'Algo deu errado.'}</p>
-            </div>
-        );
-    }
-
-    return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-            {/* Header */}
-            <header className="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    {proposal.cliente_logo && (
-                        <img src={proposal.cliente_logo} alt="Logo Cliente" className="h-10 w-auto" />
-                    )}
-                    <div>
-                        <h1 className="text-xl font-bold text-gray-800">{proposal.nome}</h1>
-                        <p className="text-sm text-gray-500">Proposta para {proposal.cliente_nome}</p>
-                    </div>
+            <div className="h-screen w-screen flex items-center justify-center bg-gray-50">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="animate-spin text-blue-600" size={48} />
+                    <p className="text-gray-500 font-medium">Carregando proposta...</p>
                 </div>
-                <div className="flex items-center gap-4">
-                    <div className="text-right">
-                        <p className="text-sm text-gray-500">Investimento Total</p>
-                        <p className="text-lg font-bold text-green-600">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                                proposal.itens.reduce((acc: number, item: any) => acc + ((item.valor_locacao || 0) + (item.valor_papel || 0) + (item.valor_lona || 0)), 0)
-                            )}
-                        </p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="h-screen w-screen flex items-center justify-center bg-gray-50 p-4">
+                <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md text-center">
+                    <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <LogOut size={32} className="text-red-500" />
                     </div>
-                    <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
-                        Aprovar Proposta
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">Erro</h2>
+                    <p className="text-gray-600 mb-6">{error}</p>
+                    <button
+                        onClick={() => router.push('/portal/login')}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    >
+                        Voltar para Login
                     </button>
                 </div>
-            </header>
+            </div>
+        );
+    }
 
-            {/* Content */}
-            <div className="flex-1 flex overflow-hidden">
-                {/* Map View (simplified) */}
-                <div className="flex-1 relative border-r border-gray-200">
-                    <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                        <p className="text-gray-500 font-medium">Mapa Interativo (Visualização simplificada)</p>
-                        {/* Placeholder for map - robust implementation would require a dedicated ClientMap component that accepts list of points */}
-                    </div>
-                </div>
-
-                {/* Items List */}
-                <div className="w-[400px] bg-white flex flex-col shadow-xl z-20 overflow-hidden">
-                    <div className="p-4 bg-gray-50 border-b border-gray-200 font-medium text-gray-600 flex justify-between items-center">
-                        <span>{proposal.itens.length} Pontos Selecionados</span>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                        {proposal.itens.map((item: any) => (
-                            <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                                        {item.codigo_ooh}
-                                    </span>
-                                    <span className="text-xs text-gray-500 capitalize">{item.tipo}</span>
-                                </div>
-                                <h3 className="font-medium text-gray-800 text-sm line-clamp-2 mb-1">{item.endereco}</h3>
-                                <p className="text-xs text-gray-500 mb-3">{item.cidade}/{item.uf}</p>
-
-                                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                                    <div className="text-sm font-bold text-gray-700">
-                                        {/* Fallback calculation if valor_total is not available directly from public API optimization */}
-                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                                            (item.valor_total !== undefined) ? item.valor_total : ((item.valor_locacao || 0) + (item.valor_papel || 0) + (item.valor_lona || 0))
-                                        )}
-                                    </div>
-                                    <div className="flex gap-2">
-                                        {/* Status actions */}
-                                        <button className="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded transition">Rejeitar</button>
-                                    </div>
-                                </div>
+    return (
+        <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-50 relative">
+            {/* Header Overlay */}
+            <div className="absolute top-0 left-0 right-0 z-40 p-4 pointer-events-none">
+                <div className="bg-white/90 backdrop-blur-md border border-gray-200 shadow-lg rounded-2xl p-4 flex items-center justify-between pointer-events-auto max-w-screen-xl mx-auto">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => router.back()}
+                            className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                        >
+                            <ArrowLeft size={20} />
+                        </button>
+                        <div>
+                            <h1 className="font-bold text-gray-900 text-lg leading-tight">{activeProposta?.nome}</h1>
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <span>{activeProposta?.itens?.length || 0} pontos</span>
+                                <span>•</span>
+                                <span>{new Date(activeProposta?.created_at || '').toLocaleDateString()}</span>
                             </div>
-                        ))}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <div className="hidden sm:block text-right mr-2">
+                            <div className="text-xs text-gray-500 uppercase tracking-widest font-semibold">Investimento Total</div>
+                            <div className="text-sm font-bold text-blue-600">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                    activeProposta?.itens?.reduce((acc, item) => acc + (item.valor_locacao || 0) * (item.qtd_bi_mes || 1), 0) || 0
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
-}
 
-export default function Page() {
-    return (
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" /></div>}>
-            <ProposalContent />
-        </Suspense>
+            {/* Map */}
+            <div className="absolute inset-0 z-0">
+                <GoogleMap />
+            </div>
+
+            {/* Cart Table (Restricted) */}
+            {activeProposta && (
+                <CartTable
+                    isOpen={isCartOpen}
+                    onToggle={() => setIsCartOpen(!isCartOpen)}
+                    proposta={activeProposta}
+                    isClientView={true}
+                />
+            )}
+        </div>
     );
 }

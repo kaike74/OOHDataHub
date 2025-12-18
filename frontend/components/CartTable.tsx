@@ -88,15 +88,19 @@ interface CartTableProps {
     proposta?: Proposta;
     isOpen: boolean;
     onToggle: () => void;
+    isClientView?: boolean;
 }
 
-export default function CartTable({ isOpen, onToggle }: CartTableProps) {
-    const selectedProposta = useStore((state) => state.selectedProposta);
+export default function CartTable({ isOpen, onToggle, isClientView = false, proposta }: CartTableProps) {
+    const storeSelectedProposta = useStore((state) => state.selectedProposta);
+    const selectedProposta = proposta || storeSelectedProposta;
+
     const refreshProposta = useStore((state) => state.refreshProposta);
     const setSelectedPonto = useStore((state) => state.setSelectedPonto);
     const pontos = useStore((state) => state.pontos);
 
     const [itens, setItens] = useState<PropostaItem[]>([]);
+    const [isSyncing, setIsSyncing] = useState(false);
 
     // Table State
     const [sorting, setSorting] = useState<SortingState>([]);
@@ -138,7 +142,16 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         } else {
             setItens([]);
         }
-    }, [selectedProposta]);
+
+        if (isClientView) {
+            setColumnVisibility(prev => ({
+                ...prev,
+                valor_papel: false,
+                valor_lona: false,
+                periodo_comercializado: false
+            }));
+        }
+    }, [selectedProposta, isClientView]);
 
     // Group items by selected field
     const groupedData = useMemo(() => {
@@ -237,14 +250,32 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
         });
 
         setItens(updatedItens);
-        refreshProposta({ ...selectedProposta!, itens: updatedItens });
+        setIsSyncing(true);
+
         try {
-            await api.updateCart(selectedProposta!.id, updatedItens);
-            console.log(`✅ API updateCart successful`);
+            if (updatedItens.length === 0 && (!activeProposta?.itens || activeProposta.itens.length === 0)) {
+                return;
+            }
+
+            if (isClientView) {
+                await api.updatePortalProposalItems(activeProposta!.id, updatedItens);
+            } else {
+                await api.updateCart(activeProposta!.id, updatedItens);
+            }
+
+            refreshProposta({ ...activeProposta!, itens: updatedItens });
+
+            // Re-fetch to sync (clean)
+            if (activeProposta && !isClientView) {
+                const res = await api.getProposta(activeProposta.id);
+                if (res) refreshProposta(res);
+            }
         } catch (error) {
-            console.error("Failed to update item", error);
+            console.error('Falha ao atualizar carrinho', error);
+        } finally {
+            setIsSyncing(false);
         }
-    }, [itens, refreshProposta, selectedProposta]);
+    }, [itens, refreshProposta, activeProposta, isClientView]);
 
     // Drag-to-Fill Handlers - Simplified to avoid circular dependencies
     const dragEndRef = useRef<(() => void) | null>(null);
@@ -593,7 +624,7 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal justify-end w-full">
                     <DollarSign size={13} />
-                    <span>Locação</span>
+                    <span>{isClientView ? 'Valor' : 'Locação'}</span>
                 </div>
             ),
             size: 120,
@@ -601,11 +632,13 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                 <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors flex items-center justify-end">
                     <input
                         type="text"
-                        className="w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700 font-normal"
+                        readOnly={isClientView}
+                        className={`w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700 font-normal ${isClientView ? 'cursor-default' : ''}`}
                         defaultValue={formatCurrency(row.original.valor_locacao || 0)}
                         data-row-id={row.original.id}
                         data-column-id="valor_locacao"
                         onBlur={(e) => {
+                            if (isClientView) return;
                             // Extract numbers
                             const valStr = e.target.value.replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
                             const newValue = parseFloat(valStr);
@@ -618,9 +651,9 @@ export default function CartTable({ isOpen, onToggle }: CartTableProps) {
                         }}
                         onFocus={(e) => {
                             // On focus show raw number if needed or just select all
-                            e.target.select();
+                            if (!isClientView) e.target.select();
                         }}
-                        onKeyDown={(e) => handleKeyDown(e, row.original.id, 'valor_locacao', itens)}
+                        onKeyDown={(e) => !isClientView && handleKeyDown(e, row.original.id, 'valor_locacao', itens)}
                     />
                 </div>
             )

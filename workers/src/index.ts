@@ -20,6 +20,7 @@ import { handleSearch } from './routes/search';
 import { handleAIChat } from './routes/ai';
 import { handlePublicProposal } from './routes/proposal_public';
 import { handleClients } from './routes/clients';
+import { handlePortal } from './routes/portal';
 import { corsHeaders, handleOptions } from './utils/cors';
 
 export default {
@@ -94,6 +95,10 @@ export default {
 
             if (path.startsWith('/api/clients')) {
                 return await handleClients(request, env, path);
+            }
+
+            if (path.startsWith('/api/portal')) {
+                return await handlePortal(request, env, path);
             }
 
             // Not found

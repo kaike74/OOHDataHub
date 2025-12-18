@@ -1,59 +1,128 @@
 
 import { Env } from '../index';
 import jwt from '@tsndr/cloudflare-worker-jwt';
-import { hashPassword, verifyPassword } from '../utils/auth'; // Assumptions on utils
+import {
+    hashPassword,
+    verifyPassword,
+    sendClientWelcomeEmail,
+    requireAuth
+} from '../utils/auth';
 
 export const handleClients = async (request: Request, env: Env, path: string) => {
-    // POST /api/clients/login
+    const headers = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    };
+
+    // POST /api/clients/login - Public endpoint for client login
     if (path === '/api/clients/login' && request.method === 'POST') {
         const { email, password } = await request.json() as any;
+
+        if (!email || !password) {
+            return new Response(JSON.stringify({ error: 'Email and password required' }), { status: 400, headers });
+        }
 
         const stmt = env.DB.prepare('SELECT * FROM client_users WHERE email = ?').bind(email);
         const user = await stmt.first();
 
         if (!user || !await verifyPassword(password, user.password_hash as string)) {
-            return new Response('Invalid credentials', { status: 401 });
+            return new Response(JSON.stringify({ error: 'Credenciais inválidas' }), { status: 401, headers });
         }
 
         // Generate Token
+        // Using a secret from env, fallback to 'secret' for dev if missing (should be in wrangler.toml)
+        const secret = (env as any).JWT_SECRET || 'secret-key-change-me';
+
         const token = await jwt.sign({
             id: user.id,
             client_id: user.client_id,
+            name: user.name,
             role: 'client'
-        }, 'SECRET_KEY_ENV'); // Use env var in real app
+        }, secret);
 
-        return new Response(JSON.stringify({ token, user }), {
-            headers: { 'Content-Type': 'application/json' }
+        // Update last login
+        await env.DB.prepare('UPDATE client_users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(user.id).run();
+
+        return new Response(JSON.stringify({
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                client_id: user.client_id
+            }
+        }), {
+            headers
         });
     }
 
-    // POST /api/clients/invite (Requires Agency Auth - handled by middleware or check)
-    // For now we assume this is protected by agency token check which we skip for brevity here
-    if (path === '/api/clients/invite' && request.method === 'POST') {
-        const { client_id, email, name } = await request.json() as any;
-
-        // Mock password gen
-        const tempPassword = Math.random().toString(36).slice(-8);
-        const passwordHash = await hashPassword(tempPassword);
-
+    // POST /api/clients/register - Register a new client user (Requires Agency Auth)
+    if (path === '/api/clients/register' && request.method === 'POST') {
         try {
-            await env.DB.prepare(
+            await requireAuth(request, env); // Agency user only
+
+            const { client_id, email, name } = await request.json() as any;
+
+            if (!client_id || !email || !name) {
+                return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers });
+            }
+
+            // Check if email exists
+            const existing = await env.DB.prepare('SELECT id FROM client_users WHERE email = ?').bind(email).first();
+            if (existing) {
+                return new Response(JSON.stringify({ error: 'Email já cadastrado' }), { status: 409, headers });
+            }
+
+            // Generate password: Name + 4 digits
+            // Remove spaces from name for the password part
+            const cleanName = name.replace(/\s+/g, '').slice(0, 10); // First 10 chars of name
+            const randomDigits = Math.floor(1000 + Math.random() * 9000);
+            const generatedPassword = `${cleanName}${randomDigits}`;
+
+            const passwordHash = await hashPassword(generatedPassword);
+
+            const result = await env.DB.prepare(
                 'INSERT INTO client_users (client_id, email, password_hash, name) VALUES (?, ?, ?, ?)'
             ).bind(client_id, email, passwordHash, name).run();
 
-            // In real app: Send Email via Resend/Mailgun
+            // Send Email
+            // Send Email
+            await sendClientWelcomeEmail(env, email, generatedPassword);
+
+
             return new Response(JSON.stringify({
                 success: true,
-                temp_password: tempPassword,
-                message: "User created. Send this password to client."
+                message: "Usuário criado. Credenciais enviadas por email.",
+                userId: result.meta.last_row_id
             }), {
-                headers: { 'Content-Type': 'application/json' }
+                headers
             });
 
         } catch (e: any) {
-            return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+            console.error(e);
+            return new Response(JSON.stringify({ error: e.message || 'Error registering client' }), { status: 500, headers });
         }
     }
 
-    return new Response('Not found', { status: 404 });
+    // GET /api/clients/by-client/:clientId - List users for a client (Requires Agency Auth)
+    if (path.startsWith('/api/clients/by-client/') && request.method === 'GET') {
+        try {
+            await requireAuth(request, env);
+
+            const clientId = path.split('/').pop();
+
+            const { results } = await env.DB.prepare(
+                'SELECT id, name, email, created_at, last_login FROM client_users WHERE client_id = ? ORDER BY created_at DESC'
+            ).bind(clientId).all();
+
+            return new Response(JSON.stringify(results), { headers });
+        } catch (e: any) {
+            console.error(e);
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
+    return new Response(JSON.stringify({ error: 'Not found' }), { status: 404, headers });
 };

@@ -6,8 +6,13 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8787';
 function getToken(): string | null {
     if (typeof window === 'undefined') return null;
     try {
-        const storage = localStorage.getItem('ooh-auth-storage');
+        // Check if we are in portal context
+        const isPortal = window.location.pathname.startsWith('/portal');
+        const storageKey = isPortal ? 'ooh-client-auth-storage' : 'ooh-auth-storage';
+
+        const storage = localStorage.getItem(storageKey);
         if (!storage) return null;
+
         const parsed = JSON.parse(storage);
         return parsed?.state?.token || null;
     } catch {
@@ -220,9 +225,40 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify({ itens }),
     }),
+    // Public Token Share (Legacy/Public)
     shareProposta: (id: number) => fetchAPI(`/api/propostas/${id}/share`, {
         method: 'POST'
     }),
+
+    // Client Portal & Shared Access
+    getClientUsers: (clientId: number) => fetchAPI(`/api/clients/by-client/${clientId}`),
+
+    registerClientUser: (data: { client_id: number; name: string; email: string }) => fetchAPI('/api/clients/register', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+
+    shareProposalWithUser: (proposalId: number, clientUserId: number) => fetchAPI('/api/portal/share', {
+        method: 'POST',
+        body: JSON.stringify({ proposal_id: proposalId, client_user_id: clientUserId })
+    }),
+
+    // Portal (Client Side)
+    portalLogin: (email: string, password: string) => fetchAPI('/api/clients/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+    }),
+
+    getPortalProposals: () => fetchAPI('/api/portal/proposals'),
+
+    getPortalProposal: (id: number) => fetchAPI(`/api/portal/proposals/${id}`),
+
+    updatePortalProposalItems: (id: number, itens: any[]) => fetchAPI(`/api/portal/proposals/${id}/items`, {
+        method: 'PUT',
+        body: JSON.stringify({ itens })
+    }),
+
+    getPublicProposal: (token: string) => fetchAPI(`/api/public/proposals/${token}`),
 
     // Layers
     getProposalLayers: (propostaId: number) => fetchAPI(`/api/propostas/${propostaId}/layers`),

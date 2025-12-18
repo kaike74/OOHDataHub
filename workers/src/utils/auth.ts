@@ -525,3 +525,153 @@ export async function sendWelcomeEmail(
         console.error('[WELCOME EMAIL] User credentials (manual):', email, temporaryPassword);
     }
 }
+
+/**
+ * Send welcome email to new CLIENT user with temporary password
+ */
+export async function sendClientWelcomeEmail(
+    env: Env,
+    email: string,
+    temporaryPassword: string
+): Promise<void> {
+    const gmailClientEmail = (env as any).GMAIL_CLIENT_EMAIL;
+    const gmailPrivateKey = (env as any).GMAIL_PRIVATE_KEY;
+    const frontendUrl = (env as any).FRONTEND_URL || 'http://localhost:3000';
+
+    if (!gmailClientEmail || !gmailPrivateKey) {
+        console.warn('Email not configured. Client User created with password:', temporaryPassword);
+        console.warn('Portal Login URL:', `${frontendUrl}/portal`);
+        return;
+    }
+
+    try {
+        console.log('[CLIENT EMAIL] Starting email send process...');
+
+        // Create JWT for Gmail API authentication
+        const now = Math.floor(Date.now() / 1000);
+        const jwtHeader = { alg: 'RS256', typ: 'JWT' };
+        const jwtClaim = {
+            iss: gmailClientEmail,
+            sub: 'emidias@hubradios.com', // User to impersonate
+            scope: 'https://www.googleapis.com/auth/gmail.send',
+            aud: 'https://oauth2.googleapis.com/token',
+            exp: now + 3600,
+            iat: now
+        };
+
+        const privateKeyPem = gmailPrivateKey.replace(/\\n/g, '\n');
+        const privateKeyBuffer = pemToArrayBuffer(privateKeyPem);
+
+        const cryptoKey = await crypto.subtle.importKey(
+            'pkcs8',
+            privateKeyBuffer,
+            { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+            false,
+            ['sign']
+        );
+
+        const jwtHeaderB64 = base64UrlEncode(JSON.stringify(jwtHeader));
+        const jwtClaimB64 = base64UrlEncode(JSON.stringify(jwtClaim));
+        const jwtUnsigned = `${jwtHeaderB64}.${jwtClaimB64}`;
+
+        const signature = await crypto.subtle.sign(
+            'RSASSA-PKCS1-v1_5',
+            cryptoKey,
+            new TextEncoder().encode(jwtUnsigned)
+        );
+
+        const jwtSignatureB64 = base64UrlEncode(signature);
+        const jwt = `${jwtUnsigned}.${jwtSignatureB64}`;
+
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+        });
+
+        if (!tokenResponse.ok) {
+            const tokenResponseText = await tokenResponse.text();
+            throw new Error(`Failed to get access token: ${tokenResponseText}`);
+        }
+
+        const tokenData = await tokenResponse.json() as any;
+        const access_token = tokenData.access_token;
+
+        // Create welcome email
+        const subject = 'Acesso ao Portal de Propostas - OOH Data Hub';
+        const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #ec4899 0%, #2563eb 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+        .credentials { background: white; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ec4899; }
+        .button { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #ec4899 0%, #2563eb 100%); color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Acesso ao Portal</h1>
+        </div>
+        <div class="content">
+            <p>Olá,</p>
+            <p>Uma nova conta foi criada para você acessar suas propostas no <strong>OOH Data Hub</strong>.</p>
+            
+            <div class="credentials">
+                <p style="margin: 0 0 10px 0;"><strong>Suas credenciais de acesso:</strong></p>
+                <p style="margin: 5px 0;">📧 <strong>Email:</strong> ${email}</p>
+                <p style="margin: 5px 0;">🔑 <strong>Senha:</strong> <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-size: 14px;">${temporaryPassword}</code></p>
+            </div>
+
+            <p style="text-align: center;">
+                <a href="${frontendUrl}/portal" class="button">Acessar Portal</a>
+            </p>
+
+            <p style="margin-top: 30px; font-size: 14px; color: #666;">
+                Use essas credenciais para fazer login e visualizar as propostas compartilhadas com você.
+            </p>
+        </div>
+        <div class="footer">
+            <p>OOH Data Hub - Sistema de Gestão E-MÍDIAS</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+        const emailLines = [
+            `To: ${email}`,
+            `From: ${gmailClientEmail}`,
+            `Subject: ${subject}`,
+            'MIME-Version: 1.0',
+            'Content-Type: text/html; charset=utf-8',
+            '',
+            htmlBody
+        ];
+        const rawEmail = emailLines.join('\r\n');
+        const encodedEmail = base64UrlEncode(rawEmail);
+
+        const sendResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${access_token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ raw: encodedEmail }),
+        });
+
+        if (!sendResponse.ok) {
+            const sendResponseText = await sendResponse.text();
+            throw new Error(`Failed to send email: ${sendResponseText}`);
+        }
+
+        console.log('[CLIENT EMAIL] ✅ Email sent successfully to:', email);
+    } catch (error) {
+        console.error('[CLIENT EMAIL] ❌ Error:', error);
+        console.error('[CLIENT EMAIL] User credentials (manual):', email, temporaryPassword);
+    }
+}
