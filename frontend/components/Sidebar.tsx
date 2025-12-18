@@ -172,6 +172,12 @@ export default function Sidebar() {
             }
             // Helper function to calculate value with commission
             const calcularValorComissao = (valorBase: number, comissao: string): number => {
+                // Client Special Pricing: Double Base (2x)
+                if (comissao === 'CLIENT' || user?.role === 'client') {
+                    return parseFloat((valorBase * 2).toFixed(2));
+                }
+
+                // Internal Logic
                 const v2 = valorBase * 1.25;
                 if (comissao === 'V2') return parseFloat(v2.toFixed(2));
 
@@ -199,7 +205,7 @@ export default function Sidebar() {
             // DEBUG: Log what we found
             console.log('🔍 Produtos do ponto:', selectedPonto.produtos);
             console.log('📄 Papel encontrado:', papelProduto);
-            console.log('🎨 Lona encontrada:', lonaProduto);
+            console.log('🎨 Lona encontrado:', lonaProduto);
             console.log('🏠 Locação encontrada:', locacaoProduto);
 
             // Calculate values with proper rounding to 2 decimal places
@@ -464,24 +470,43 @@ export default function Sidebar() {
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
                                     <DollarSign className="w-5 h-5 text-emidias-accent" />
-                                    <h3 className="font-semibold text-emidias-gray-900">Produtos e Valores</h3>
+                                    <h3 className="font-semibold text-emidias-gray-900">
+                                        {user?.role === 'client' ? 'Valores Médios (Mercado)' : 'Produtos e Valores'}
+                                    </h3>
                                 </div>
                                 <div className="space-y-2">
-                                    {produtos.map((produto, idx) => (
-                                        <div key={idx} className="p-4 bg-gradient-to-r from-emidias-gray-50 to-transparent rounded-xl border border-emidias-gray-100 hover:border-emidias-accent/30 transition-all">
-                                            <div className="flex justify-between items-start gap-3">
-                                                <div className="flex-1 min-w-0">
-                                                    <span className="font-semibold text-emidias-gray-900">{produto.tipo}</span>
-                                                    {produto.periodo && (
-                                                        <p className="text-xs text-emidias-gray-500 mt-1">{produto.periodo}</p>
-                                                    )}
+                                    {produtos.map((produto, idx) => {
+                                        // Calculate display value
+                                        let displayValue = produto.valor;
+                                        const isLocacao = produto.tipo.toLowerCase().includes('locação') ||
+                                            produto.tipo.toLowerCase().includes('locacao') ||
+                                            produto.tipo.toLowerCase().includes('bissemanal') ||
+                                            produto.tipo.toLowerCase().includes('mensal');
+
+                                        if (user?.role === 'client') {
+                                            if (isLocacao) {
+                                                displayValue = produto.valor * 2; // Double Base for Clients
+                                            } else {
+                                                displayValue = produto.valor * 1.25; // Production + 25% for Clients (Standard)
+                                            }
+                                        }
+
+                                        return (
+                                            <div key={idx} className="p-4 bg-gradient-to-r from-emidias-gray-50 to-transparent rounded-xl border border-emidias-gray-100 hover:border-emidias-accent/30 transition-all">
+                                                <div className="flex justify-between items-start gap-3">
+                                                    <div className="flex-1 min-w-0">
+                                                        <span className="font-semibold text-emidias-gray-900">{produto.tipo}</span>
+                                                        {produto.periodo && (
+                                                            <p className="text-xs text-emidias-gray-500 mt-1">{produto.periodo}</p>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-lg font-bold text-emidias-accent whitespace-nowrap">
+                                                        {formatCurrency(displayValue)}
+                                                    </span>
                                                 </div>
-                                                <span className="text-lg font-bold text-emidias-accent whitespace-nowrap">
-                                                    {formatCurrency(produto.valor)}
-                                                </span>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}

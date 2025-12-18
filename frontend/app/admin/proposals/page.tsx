@@ -26,12 +26,16 @@ interface AdminProposal {
     shared_with: Array<{ email: string; name: string }>;
 }
 
+import CreateProposalModal from '@/components/CreateProposalModal';
+
 export default function AdminProposalsPage() {
     const router = useRouter();
     const [proposals, setProposals] = useState<AdminProposal[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>({});
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
     const setSelectedProposta = useStore((state) => state.setSelectedProposta);
     const setCurrentView = useStore((state) => state.setCurrentView);
     const setMenuOpen = useStore((state) => state.setMenuOpen);
@@ -70,7 +74,9 @@ export default function AdminProposalsPage() {
             const proposta = await api.getProposta(proposalId);
             setSelectedProposta(proposta);
             setCurrentView('map');
-            router.push('/');
+            // If Client, bypass redirect
+            const url = user?.role === 'client' ? '/?action=new' : '/';
+            router.push(url);
         } catch (error) {
             console.error('Error opening proposal:', error);
         }
@@ -106,6 +112,9 @@ export default function AdminProposalsPage() {
 
     return (
         <div className="min-h-screen bg-emidias-gray-50 pb-10">
+            {/* Modal */}
+            <CreateProposalModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
+
             {/* Header */}
             <header className="gradient-primary px-4 sm:px-6 flex items-center justify-between flex-shrink-0 z-40 fixed top-0 left-0 right-0 h-[70px] border-b-4 border-emidias-accent shadow-emidias-xl">
                 {/* Logo OOH Data Hub - Left */}
@@ -134,14 +143,16 @@ export default function AdminProposalsPage() {
 
                 {/* Actions - Right */}
                 <div className="flex items-center gap-2 sm:gap-3">
-                    {/* New Proposal Button */}
-                    <button
-                        onClick={() => router.push('/?action=new')}
-                        className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all font-medium backdrop-blur-sm"
-                    >
-                        <Plus size={18} />
-                        <span>Nova Proposta</span>
-                    </button>
+                    {/* New Proposal Button - INTERNAL ONLY */}
+                    {user?.role !== 'client' && (
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all font-medium backdrop-blur-sm"
+                        >
+                            <Plus size={18} />
+                            <span>Nova Proposta</span>
+                        </button>
+                    )}
 
                     {/* Menu Button */}
                     <button
@@ -177,9 +188,18 @@ export default function AdminProposalsPage() {
                         <Loader2 className="animate-spin text-emidias-accent" size={32} />
                     </div>
                 ) : filteredGroupIds.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-xl border-2 border-dashed border-emidias-gray-200">
+                    <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl border-2 border-dashed border-emidias-gray-200">
                         <FileText className="mx-auto text-emidias-gray-300 mb-3" size={48} />
-                        <p className="text-emidias-gray-500 font-medium">Nenhuma proposta encontrada</p>
+                        <p className="text-emidias-gray-500 font-medium mb-4">Nenhuma proposta encontrada</p>
+                        {user?.role === 'client' && (
+                            <button
+                                onClick={() => setIsCreateModalOpen(true)}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-emidias-accent text-white rounded-xl hover:bg-emidias-accent-dark transition-all font-bold shadow-lg hover:-translate-y-0.5"
+                            >
+                                <Plus size={20} />
+                                Criar Minha Primeira Proposta
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <div className="space-y-4">
@@ -252,7 +272,10 @@ export default function AdminProposalsPage() {
                                                             </div>
                                                             <div className="flex items-center gap-1.5" title="Comissão / Valor">
                                                                 <DollarSign size={14} className="text-emidias-gray-400" />
-                                                                <span className="font-medium text-emidias-gray-700">{proposal.comissao}</span>
+                                                                <span className="font-medium text-emidias-gray-700">
+                                                                    {/* Hide Commission for Client */}
+                                                                    {user?.role === 'client' ? '-' : proposal.comissao}
+                                                                </span>
                                                             </div>
                                                             <div className="flex items-center gap-1.5" title="Total de Itens">
                                                                 <MapPin size={14} className="text-emidias-gray-400" />
@@ -288,6 +311,17 @@ export default function AdminProposalsPage() {
                                                     <ChevronRight size={18} className="text-emidias-gray-300 opacity-0 group-hover:opacity-100 transition-opacity -mr-2" />
                                                 </div>
                                             ))}
+
+                                            {/* Client Only: "New Proposal" Card at the end of the list */}
+                                            {user?.role === 'client' && (
+                                                <div
+                                                    onClick={() => setIsCreateModalOpen(true)}
+                                                    className="p-4 bg-emidias-gray-50 hover:bg-emidias-gray-100 cursor-pointer flex items-center justify-center gap-2 text-emidias-gray-500 hover:text-emidias-accent transition-all border-dashed border-2 border-transparent hover:border-emidias-accent/30"
+                                                >
+                                                    <Plus size={20} />
+                                                    <span className="font-bold">Criar Nova Proposta</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
