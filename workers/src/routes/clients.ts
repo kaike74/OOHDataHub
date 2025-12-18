@@ -1,11 +1,12 @@
 
 import { Env } from '../index';
-import jwt from '@tsndr/cloudflare-worker-jwt';
 import {
     hashPassword,
     verifyPassword,
     sendClientWelcomeEmail,
-    requireAuth
+    requireAuth,
+    generateClientToken,
+    ClientUser
 } from '../utils/auth';
 
 import { corsHeaders } from '../utils/cors';
@@ -45,16 +46,16 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             return new Response(JSON.stringify({ error: 'Credenciais inválidas' }), { status: 401, headers });
         }
 
-        // Generate Token
-        // Using a secret from env, fallback to 'secret' for dev if missing (should be in wrangler.toml)
-        const secret = (env as any).JWT_SECRET || 'secret-key-change-me';
-
-        const token = await jwt.sign({
-            id: user.id,
-            client_id: user.client_id,
-            name: user.name,
+        // Generate Token using consistent auth helper
+        const clientUser: ClientUser = {
+            id: user.id as number,
+            client_id: user.client_id as number,
+            name: user.name as string,
+            email: user.email as string,
             role: 'client'
-        }, secret);
+        };
+
+        const token = await generateClientToken(clientUser);
 
         // Update last login
         await env.DB.prepare('UPDATE client_users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(user.id).run();

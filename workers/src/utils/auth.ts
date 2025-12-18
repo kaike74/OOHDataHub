@@ -12,10 +12,19 @@ export interface User {
     role: 'master' | 'editor' | 'viewer';
 }
 
+export interface ClientUser {
+    id: number;
+    email: string;
+    name: string;
+    client_id: number;
+    role: 'client';
+}
+
 export interface CustomJWTPayload {
     userId: number;
     email: string;
     role: string;
+    client_id?: number;
 }
 
 /**
@@ -38,13 +47,30 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 }
 
 /**
- * Generate a JWT token for a user
+ * Generate a JWT token for a user (Agency)
  */
 export async function generateToken(user: User): Promise<string> {
     const payload = {
         userId: user.id,
         email: user.email,
         role: user.role,
+    };
+
+    return await new jose.SignJWT(payload as any)
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime(JWT_EXPIRES_IN)
+        .sign(JWT_SECRET);
+}
+
+/**
+ * Generate a JWT token for a Client User
+ */
+export async function generateClientToken(user: ClientUser): Promise<string> {
+    const payload = {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        client_id: user.client_id
     };
 
     return await new jose.SignJWT(payload as any)
