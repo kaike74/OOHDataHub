@@ -93,7 +93,7 @@ export default {
                 return await handlePublicProposal(request, env);
             }
 
-            if (path.startsWith('/api/clients')) {
+            if (path.startsWith('/api/clients') || path.startsWith('/api/admin')) {
                 return await handleClients(request, env, path);
             }
 
