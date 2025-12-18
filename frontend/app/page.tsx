@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import GoogleMap from '@/components/map/GoogleMap';
 import Sidebar from '@/components/Sidebar';
 import ExibidoraSidebar from '@/components/ExibidoraSidebar';
@@ -43,12 +44,14 @@ export default function HomePage() {
     filterTipos.length > 0,
   ].filter(Boolean).length;
 
+  const router = useRouter();
+
   // Carregar dados iniciais
   useEffect(() => {
     // Redirect client users to their dashboard
     const userRole = JSON.parse(localStorage.getItem('ooh-auth-storage') || '{}')?.state?.user?.role;
     if (userRole === 'client') {
-      window.location.href = '/admin/proposals';
+      router.replace('/admin/proposals');
       return;
     }
 
