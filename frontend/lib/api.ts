@@ -231,6 +231,7 @@ export const api = {
     }),
 
     // Client Portal & Shared Access
+    getAllClientUsers: () => fetchAPI('/api/clients'),
     getClientUsers: (clientId: number) => fetchAPI(`/api/clients/by-client/${clientId}`),
 
     registerClientUser: (data: { client_id: number; name: string; email: string }) => fetchAPI('/api/clients/register', {

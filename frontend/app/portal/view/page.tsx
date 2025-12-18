@@ -28,6 +28,7 @@ const mapItemToPonto = (item: any): Ponto => ({
     fluxo: 'N/A',
     tipos: [],
     observacoes: '',
+    status: item.status || 'disponivel', // Default for safety
     created_at: '',
     updated_at: '',
     created_by: 0,
@@ -159,14 +160,33 @@ const PortalViewContent = () => {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <div className="hidden sm:block text-right mr-2">
+                    <div className="flex items-center gap-4">
+                        <div className="hidden sm:block text-right">
                             <div className="text-xs text-gray-500 uppercase tracking-widest font-semibold">Investimento Total</div>
                             <div className="text-sm font-bold text-blue-600">
                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
                                     activeProposta?.itens?.reduce((acc, item) => acc + (item.valor_locacao || 0) * (item.qtd_bi_mes || 1), 0) || 0
                                 )}
                             </div>
+                        </div>
+
+                        {/* Login/Dashboard Button */}
+                        <div className="border-l border-gray-200 pl-4">
+                            {localStorage.getItem('ooh-client-auth-storage') ? (
+                                <button
+                                    onClick={() => router.push('/portal/dashboard')}
+                                    className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition shadow-sm"
+                                >
+                                    Dashboard
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => router.push('/portal/login')}
+                                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm shadow-blue-600/20"
+                                >
+                                    Entrar
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

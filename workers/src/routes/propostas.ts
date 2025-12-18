@@ -24,7 +24,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         SELECT 
             pi.id, pi.id_proposta, pi.id_ooh, pi.periodo_inicio, pi.periodo_fim, 
             pi.valor_locacao, pi.valor_papel, pi.valor_lona, 
-            pi.periodo_comercializado, pi.observacoes, pi.fluxo_diario,
+            pi.periodo_comercializado, pi.observacoes, pi.fluxo_diario, pi.status,
             p.endereco, p.cidade, p.uf, p.pais, p.codigo_ooh, p.tipo, p.medidas, p.ponto_referencia,
             p.latitude, p.longitude,
             e.nome as exibidora_nome

@@ -223,6 +223,8 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             .map((ponto: Ponto) => {
                 const isInCart = cartItemIds.has(ponto.id);
 
+                const isGhost = ponto.status === 'pendente_validacao';
+
                 const marker = new google.maps.Marker({
                     position: { lat: ponto.latitude!, lng: ponto.longitude! },
                     title: ponto.codigo_ooh,
@@ -230,8 +232,8 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                     icon: {
                         path: google.maps.SymbolPath.CIRCLE,
                         scale: 8,
-                        fillColor: isInCart ? '#10B981' : '#3B82F6', // Green if in cart
-                        fillOpacity: 0.9,
+                        fillColor: isGhost ? '#9CA3AF' : (isInCart ? '#10B981' : '#3B82F6'), // Gray for ghost, Green if in cart
+                        fillOpacity: isGhost ? 0.4 : 0.9,
                         strokeColor: '#FFFFFF',
                         strokeWeight: 2
                     }

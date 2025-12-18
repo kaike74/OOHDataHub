@@ -11,6 +11,23 @@ import {
 import { corsHeaders } from '../utils/cors';
 
 export const handleClients = async (request: Request, env: Env, path: string) => {
+    // GET /api/clients - List ALL client users (Requires Agency Auth)
+    if (path === '/api/clients' && request.method === 'GET') {
+        try {
+            await requireAuth(request, env);
+            const { results } = await env.DB.prepare(`
+                SELECT cu.id, cu.name, cu.email, cu.created_at, cu.last_login, c.nome as client_name
+                FROM client_users cu
+                JOIN clientes c ON cu.client_id = c.id
+                ORDER BY cu.created_at DESC
+            `).all();
+            return new Response(JSON.stringify(results), { headers });
+        } catch (e: any) {
+            console.error(e);
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
 
     // POST /api/clients/login - Public endpoint for client login

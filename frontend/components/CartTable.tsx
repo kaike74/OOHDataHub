@@ -39,6 +39,9 @@ import {
     VisibilityState,
     RowSelectionState,
 } from '@tanstack/react-table';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 // Helper for formatted money
 const formatCurrency = (value: number) => {
@@ -504,7 +507,16 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                 </div>
             ),
             size: 110,
-            cell: ({ row }) => <span className="font-mono text-[11px] bg-gray-50 px-1 py-0.5 rounded border border-gray-100 whitespace-nowrap text-gray-600">{row.original.codigo_ooh}</span>
+            cell: ({ row }) => (
+                <div className="flex flex-col">
+                    <span className="font-mono text-[11px] bg-gray-50 px-1 py-0.5 rounded border border-gray-100 whitespace-nowrap text-gray-600">
+                        {row.original.codigo_ooh}
+                    </span>
+                    {row.original.status === 'pendente_validacao' && (
+                        <span className="text-[10px] text-orange-500 font-bold mt-0.5">Em Análise</span>
+                    )}
+                </div>
+            )
         },
         {
             accessorKey: 'produto',
@@ -901,6 +913,112 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
         }
     ], [updateItem, removeItem, pontos, setSelectedPonto, itens, focusedCell]);
 
+    // Export Handlers
+    const handleExportExcel = () => {
+        if (!itens.length) return;
+
+        const dataToExport = itens.map(item => {
+            // Calculate item totals
+            let qtd = 1;
+            if (item.periodo_inicio && item.periodo_fim) {
+                const start = new Date(item.periodo_inicio);
+                const end = new Date(item.periodo_fim);
+                const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+            }
+            const total = (item.valor_locacao || 0) * qtd;
+
+            return {
+                'Código OOH': item.codigo_ooh,
+                'Exibidora': item.exibidora_nome || item.exibidora,
+                'Cidade': item.cidade,
+                'UF': item.uf,
+                'Endereço': item.endereco,
+                'Produto': item.tipo,
+                'Medidas': item.medidas,
+                'Início': item.periodo_inicio,
+                'Fim': item.periodo_fim,
+                'Período': item.periodo_comercializado,
+                'Investimento': total,
+                // Only include other costs if NOT client view
+                ...(!isClientView ? {
+                    'Locação Unit.': item.valor_locacao,
+                    'Papel': item.valor_papel,
+                    'Lona': item.valor_lona,
+                } : {}),
+                'Impactos': item.fluxo_diario, // Approximate
+                'Observações': item.observacoes
+            };
+        });
+
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Proposta");
+        XLSX.writeFile(wb, `${selectedProposta?.nome || 'Proposta'}.xlsx`);
+    };
+
+    const handleExportPDF = () => {
+        if (!itens.length) return;
+
+        const doc = new jsPDF();
+
+        doc.setFontSize(18);
+        doc.text(selectedProposta?.nome || 'Proposta de Mídia OOH', 14, 22);
+
+        doc.setFontSize(11);
+        doc.text(`Gerado em: ${new Date().toLocaleDateString()}`, 14, 30);
+        if (selectedProposta?.nome) {
+            // Add client info if available
+        }
+
+        const tableBody = itens.map(item => {
+            let qtd = 1;
+            if (item.periodo_inicio && item.periodo_fim) {
+                const start = new Date(item.periodo_inicio);
+                const end = new Date(item.periodo_fim);
+                const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+            }
+            const total = (item.valor_locacao || 0) * qtd;
+
+            const row = [
+                item.codigo_ooh,
+                item.cidade,
+                item.endereco,
+                `${item.periodo_inicio ? new Date(item.periodo_inicio).toLocaleDateString() : ''} - ${item.periodo_fim ? new Date(item.periodo_fim).toLocaleDateString() : ''}`,
+                item.medidas,
+                formatCurrency(total)
+            ];
+            return row;
+        });
+
+        autoTable(doc, {
+            head: [['Código', 'Cidade', 'Endereço', 'Período', 'Medidas', 'Investimento']],
+            body: tableBody,
+            startY: 40,
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [66, 133, 244] } // Blue
+        });
+
+        // Add Summary
+        const totalInvest = itens.reduce((acc, item) => {
+            let qtd = 1;
+            if (item.periodo_inicio && item.periodo_fim) {
+                const start = new Date(item.periodo_inicio);
+                const end = new Date(item.periodo_fim);
+                const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+            }
+            return acc + (item.valor_locacao || 0) * qtd;
+        }, 0);
+
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(12);
+        doc.text(`Total Investimento: ${formatCurrency(totalInvest)}`, 14, finalY);
+
+        doc.save(`${selectedProposta?.nome || 'Proposta'}.pdf`);
+    };
+
 
     const table = useReactTable({
         data: itens,
@@ -961,6 +1079,23 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                     >
                         <Share2 size={14} /> Compartilhar
                     </button>
+
+                    {isClientView && (
+                        <div className="flex items-center gap-2 ml-4 border-l border-gray-200 pl-4">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); handleExportExcel(); }}
+                                className="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700 transition"
+                            >
+                                Excel
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); handleExportPDF(); }}
+                                className="px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition"
+                            >
+                                PDF
+                            </button>
+                        </div>
+                    )}
 
                     {/* Bulk Actions */}
                     {Object.keys(rowSelection).length > 0 && (
@@ -1291,7 +1426,10 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                                                 <div
                                                     key={row.id}
                                                     data-row-id={row.original.id}
-                                                    className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}`}
+                                                    className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] 
+                                                        ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}
+                                                        ${row.original.status === 'pendente_validacao' ? 'opacity-70 bg-orange-50/30' : ''}
+                                                    `}
                                                 >
                                                     {row.getVisibleCells().map(cell => {
                                                         const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
@@ -1314,20 +1452,14 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                                                                                 e.preventDefault();
                                                                                 e.stopPropagation();
                                                                                 const columnId = cell.column.id!;
-
-                                                                                // Get current value from itens state for real-time accuracy
                                                                                 const currentItem = itens.find(item => item.id === row.original.id);
                                                                                 let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
-
-                                                                                // For período, use both values
                                                                                 if (columnId === 'periodo') {
                                                                                     value = {
                                                                                         periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
                                                                                         periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
                                                                                     };
                                                                                 }
-
-                                                                                console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
                                                                                 startDragging(row.original.id, columnId, value);
                                                                             }}
                                                                         />
@@ -1348,7 +1480,10 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                                     <div
                                         key={row.id}
                                         data-row-id={row.original.id}
-                                        className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}`}
+                                        className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] 
+                                            ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}
+                                            ${row.original.status === 'pendente_validacao' ? 'opacity-70 bg-orange-50/30' : ''}
+                                        `}
                                     >
                                         {row.getVisibleCells().map(cell => {
                                             const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
@@ -1394,28 +1529,82 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                                         })}
                                     </div>
                                 ))}
-                            </>
+                                <>
+                                    {table.getRowModel().rows.map(row => (
+                                        <div
+                                            key={row.id}
+                                            data-row-id={row.original.id}
+                                            className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] 
+                                            ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}
+                                            ${row.original.status === 'pendente_validacao' ? 'opacity-70 bg-orange-50/30' : ''}
+                                        `}
+                                        >
+                                            {row.getVisibleCells().map(cell => {
+                                                const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
+                                                return (
+                                                    <div
+                                                        key={cell.id}
+                                                        className={`px-3 py-1.5 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                                        style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
+                                                    >
+                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                        {/* Drag handle for ONLY specified editable cells */}
+                                                        {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
+                                                            focusedCell.rowId === row.original.id &&
+                                                            (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
+                                                                <div
+                                                                    className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
+                                                                    style={{ borderRadius: '0 0 2px 0' }}
+                                                                    title="Arrastar para preencher"
+                                                                    onMouseDown={(e) => {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        const columnId = cell.column.id!;
+
+                                                                        // Get current value from itens state for real-time accuracy
+                                                                        const currentItem = itens.find(item => item.id === row.original.id);
+                                                                        let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
+
+                                                                        // For período, use both values
+                                                                        if (columnId === 'periodo') {
+                                                                            value = {
+                                                                                periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
+                                                                                periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
+                                                                            };
+                                                                        }
+
+                                                                        console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
+                                                                        startDragging(row.original.id, columnId, value);
+                                                                    }}
+                                                                />
+                                                            )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ))}
+                                </>
                         )}
 
-                        {table.getRowModel().rows.length === 0 && (
-                            <div className="p-12 text-center text-gray-400 text-sm w-full flex flex-col items-center gap-3">
-                                <div className="p-3 bg-gray-100 rounded-full">
-                                    <Settings size={24} className="text-gray-300" />
-                                </div>
-                                <span>Nenhum ponto no carrinho.</span>
+                                {table.getRowModel().rows.length === 0 && (
+                                    <div className="p-12 text-center text-gray-400 text-sm w-full flex flex-col items-center gap-3">
+                                        <div className="p-3 bg-gray-100 rounded-full">
+                                            <Settings size={24} className="text-gray-300" />
+                                        </div>
+                                        <span>Nenhum ponto no carrinho.</span>
+                                    </div>
+                                )}
                             </div>
-                        )}
                     </div>
                 </div>
-            </div>
 
-            {/* Footer Summary - Always visible if open */}
+                {/* Footer Summary - Always visible if open */}
 
-            <ShareModal
-                isOpen={isShareModalOpen}
-                onClose={() => setIsShareModalOpen(false)}
-                proposta={selectedProposta}
-            />
-        </div >
-    );
+                <ShareModal
+                    isOpen={isShareModalOpen}
+                    onClose={() => setIsShareModalOpen(false)}
+                    proposta={selectedProposta}
+                />
+            </div >
+            );
 }

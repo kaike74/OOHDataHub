@@ -137,7 +137,9 @@ export interface PropostaItem {
     bairro?: string;
     exibidora?: string;
     produto?: string;
+    produto?: string;
     qtd_bi_mes?: number;
+    status?: string; // Add status for ghost points
 }
 
 export interface CustomMarker {
