@@ -46,6 +46,14 @@ const PortalViewContent = () => {
     const setPontos = useStore((state) => state.setPontos);
     const setExibidoras = useStore((state) => state.setExibidoras); // Maybe empty?
 
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    useEffect(() => {
+        // Check auth on mount to avoid hydration mismatch
+        const auth = localStorage.getItem('ooh-client-auth-storage');
+        setIsAuthenticated(!!auth);
+    }, []);
+
     useEffect(() => {
         const loadProposal = async () => {
             const token = searchParams.get('token');
@@ -80,43 +88,40 @@ const PortalViewContent = () => {
                     data.itens = processedItems;
                     setActiveProposta(data);
 
-                    // Fetch ALL available points to show on map (as ghosts/inventory)
-                    try {
-                        const allPoints = await api.getPortalPoints();
+                    // Fetch ALL available points ONLY if authenticated (not public token)
+                    // Public view restricts to only showing the proposal points
+                    if (!token) {
+                        try {
+                            const allPoints = await api.getPortalPoints();
 
-                        // Map all points
-                        const mappedPoints = allPoints.map((p: any) => ({
-                            ...p,
-                            // Ensure basic Ponto structure
-                            tipos: [],
-                            observacoes: '',
-                            status: 'disponivel', // Default
-                            pais: 'Brasil',
-                            fluxo: 'N/A',
-                            created_at: '',
-                            updated_at: '',
-                            created_by: 0,
-                            updated_by: 0
-                        }));
+                            // Map all points
+                            const mappedPoints = allPoints.map((p: any) => ({
+                                ...p,
+                                // Ensure basic Ponto structure
+                                tipos: [],
+                                observacoes: '',
+                                status: 'disponivel', // Default
+                                pais: 'Brasil',
+                                fluxos: 'N/A',
+                                created_at: '',
+                                updated_at: '',
+                                created_by: 0,
+                                updated_by: 0
+                            }));
 
-                        // Overlay proposal items (mark them as selected or different status)
-                        const proposalPointIds = new Set(data.itens.map((i: any) => i.id_ooh || i.id));
+                            setPontos(mappedPoints);
 
-                        // Merge strategies: 
-                        // We want ALL points. If a point is in the proposal, use the proposal item's status?
-                        // Or just show them.
-                        // Actually, CartTable needs PROPOSAL items. GoogleMap needs POINTS.
-                        // Use proposal items to override status in the full list if needed, or just let them coexist.
-
-                        // Let's mark points in proposal as 'selected' or just let CartTable handle selection state?
-                        // If we pass `pontos` to store, GoogleMap renders them.
-                        // We should probably rely on the ID match.
-
-                        setPontos(mappedPoints);
-
-                    } catch (e) {
-                        console.error("Failed to fetch all points for portal map", e);
-                        // Fallback: just use proposal items
+                        } catch (e) {
+                            console.error("Failed to fetch all points for portal map", e);
+                            // Fallback: just use proposal items
+                            const points = data.itens.map((item: any) => mapItemToPonto(item))
+                                .filter((p, index, self) =>
+                                    index === self.findIndex((t) => t.id === p.id)
+                                );
+                            setPontos(points);
+                        }
+                    } else {
+                        // Public mode: only show proposal points
                         const points = data.itens.map((item: any) => mapItemToPonto(item))
                             .filter((p, index, self) =>
                                 index === self.findIndex((t) => t.id === p.id)
@@ -205,7 +210,7 @@ const PortalViewContent = () => {
 
                         {/* Login/Dashboard Button */}
                         <div className="border-l border-gray-200 pl-4">
-                            {localStorage.getItem('ooh-client-auth-storage') ? (
+                            {isAuthenticated ? (
                                 <button
                                     onClick={() => router.push('/portal/dashboard')}
                                     className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition shadow-sm"
