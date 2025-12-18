@@ -133,7 +133,7 @@ const PortalViewContent = () => {
             } catch (err: any) {
                 console.error(err);
                 if (err.message === 'Unauthorized' || err.status === 401) {
-                    router.push('/portal/login');
+                    router.push('/login');
                 } else {
                     setError(err.message || 'Erro ao carregar proposta');
                 }
@@ -166,7 +166,7 @@ const PortalViewContent = () => {
                     <h2 className="text-xl font-bold text-gray-900 mb-2">Erro</h2>
                     <p className="text-gray-600 mb-6">{error}</p>
                     <button
-                        onClick={() => router.push('/portal/login')}
+                        onClick={() => router.push('/login')}
                         className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                     >
                         Voltar para Login
@@ -212,14 +212,14 @@ const PortalViewContent = () => {
                         <div className="border-l border-gray-200 pl-4">
                             {isAuthenticated ? (
                                 <button
-                                    onClick={() => router.push('/portal/dashboard')}
+                                    onClick={() => router.push('/admin/proposals')}
                                     className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition shadow-sm"
                                 >
                                     Dashboard
                                 </button>
                             ) : (
                                 <button
-                                    onClick={() => router.push('/portal/login')}
+                                    onClick={() => router.push('/login')}
                                     className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm shadow-blue-600/20"
                                 >
                                     Entrar

@@ -45,6 +45,13 @@ export default function HomePage() {
 
   // Carregar dados iniciais
   useEffect(() => {
+    // Redirect client users to their dashboard
+    const userRole = JSON.parse(localStorage.getItem('ooh-auth-storage') || '{}')?.state?.user?.role;
+    if (userRole === 'client') {
+      window.location.href = '/admin/proposals';
+      return;
+    }
+
     const loadData = async () => {
       try {
         setIsLoading(true);
