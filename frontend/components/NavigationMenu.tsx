@@ -39,6 +39,13 @@ export default function NavigationMenu() {
             description: 'Gerenciar propostas por cliente',
             type: 'view' as const
         },
+        {
+            id: 'contas' as const,
+            icon: Shield,
+            label: 'Contas',
+            description: 'Gerenciar acesso de clientes',
+            type: 'view' as const
+        },
     ];
 
     const handleLogout = () => {
@@ -57,7 +64,7 @@ export default function NavigationMenu() {
 
 
 
-    const handleViewChange = (viewId: 'map' | 'exibidoras' | 'clientes' | 'propostas') => {
+    const handleViewChange = (viewId: 'map' | 'exibidoras' | 'clientes' | 'propostas' | 'contas') => {
         // If we're leaving proposal editing mode (map with cart), clear the proposta
         if (selectedProposta && viewId !== 'propostas') {
             setSelectedProposta(null);
@@ -65,11 +72,13 @@ export default function NavigationMenu() {
 
         if (viewId === 'propostas') {
             router.push('/admin/proposals');
+        } else if (viewId === 'contas') {
+            router.push('/admin/accounts');
         } else if (viewId === 'map' || viewId === 'exibidoras') {
             router.push('/');
         }
 
-        setCurrentView(viewId);
+        setCurrentView(viewId as any); // Cast because store might not have updated type definition yet
         setMenuOpen(false);
     };
 

@@ -22,7 +22,7 @@ interface AppState {
     isModalOpen: boolean;
     isExibidoraModalOpen: boolean;
     isMenuOpen: boolean;
-    currentView: 'map' | 'exibidoras' | 'clientes' | 'propostas';
+    currentView: 'map' | 'exibidoras' | 'clientes' | 'propostas' | 'contas';
     selectedCliente: Cliente | null;
     selectedProposta: Proposta | null;
     streetViewCoordinates: { lat: number; lng: number } | null;
@@ -57,7 +57,7 @@ interface AppState {
     setModalOpen: (open: boolean) => void;
     setExibidoraModalOpen: (open: boolean) => void;
     setMenuOpen: (open: boolean) => void;
-    setCurrentView: (view: 'map' | 'exibidoras' | 'clientes' | 'propostas') => void;
+    setCurrentView: (view: 'map' | 'exibidoras' | 'clientes' | 'propostas' | 'contas') => void;
     setStreetViewCoordinates: (coords: { lat: number; lng: number } | null) => void;
     setStreetViewRequest: (request: { lat: number; lng: number } | null) => void;
     setFilterCidade: (cidades: string[]) => void;

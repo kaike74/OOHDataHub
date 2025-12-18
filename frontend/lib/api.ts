@@ -252,7 +252,15 @@ export const api = {
 
     getPortalProposals: () => fetchAPI('/api/portal/proposals'),
 
+    // Admin: Proposals
     getAdminProposals: () => fetchAPI('/api/propostas/admin/list'),
+
+    // Admin: Accounts
+    getAdminAccounts: () => fetchAPI('/api/admin/accounts'),
+    getAccountShares: (userId: number) => fetchAPI(`/api/admin/accounts/${userId}/shares`),
+    deleteAccount: (userId: number) => fetchAPI(`/api/admin/accounts/${userId}`, { method: 'DELETE' }),
+    resetAccountPassword: (userId: number) => fetchAPI(`/api/admin/accounts/${userId}/reset`, { method: 'POST' }),
+    deleteShare: (shareId: number) => fetchAPI(`/api/admin/shares/${shareId}`, { method: 'DELETE' }),
 
     getPortalProposal: (id: number) => fetchAPI(`/api/portal/proposals/${id}`),
 

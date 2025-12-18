@@ -11,6 +11,8 @@ import {
 import { corsHeaders } from '../utils/cors';
 
 export const handleClients = async (request: Request, env: Env, path: string) => {
+    const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
+
     // GET /api/clients - List ALL client users (Requires Agency Auth)
     if (path === '/api/clients' && request.method === 'GET') {
         try {
@@ -27,8 +29,6 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
         }
     }
-
-    const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
 
     // POST /api/clients/login - Public endpoint for client login
     if (path === '/api/clients/login' && request.method === 'POST') {
@@ -134,6 +134,107 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             return new Response(JSON.stringify(results), { headers });
         } catch (e: any) {
             console.error(e);
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
+    // GET /api/admin/accounts - List ALL client users with stats (Requires Agency Auth)
+    if (path === '/api/admin/accounts' && request.method === 'GET') {
+        try {
+            await requireAuth(request, env);
+            const { results } = await env.DB.prepare(`
+                SELECT cu.id, cu.name, cu.email, cu.created_at, cu.last_login, c.nome as client_name, c.id as client_id,
+                (SELECT COUNT(*) FROM proposta_shares ps WHERE ps.client_user_id = cu.id) as shared_count
+                FROM client_users cu
+                LEFT JOIN clientes c ON cu.client_id = c.id
+                ORDER BY cu.created_at DESC
+            `).all();
+            return new Response(JSON.stringify(results), { headers });
+        } catch (e: any) {
+            console.error(e);
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
+    // GET /api/admin/accounts/:id/shares - List proposals shared with specific user
+    if (path.match(/\/api\/admin\/accounts\/\d+\/shares/) && request.method === 'GET') {
+        try {
+            await requireAuth(request, env);
+            const userId = path.split('/')[4];
+            const { results } = await env.DB.prepare(`
+                SELECT ps.id as share_id, p.id as proposal_id, p.nome as proposal_name, p.created_at, p.status
+                FROM proposta_shares ps
+                JOIN propostas p ON ps.proposal_id = p.id
+                WHERE ps.client_user_id = ?
+                ORDER BY p.created_at DESC
+            `).bind(userId).all();
+            return new Response(JSON.stringify(results), { headers });
+        } catch (e: any) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
+    // DELETE /api/admin/accounts/:id - Delete user and their shares
+    if (path.match(/\/api\/admin\/accounts\/\d+$/) && request.method === 'DELETE') {
+        try {
+            await requireAuth(request, env);
+            const userId = path.split('/')[4];
+
+            // Delete shares first
+            await env.DB.prepare('DELETE FROM proposta_shares WHERE client_user_id = ?').bind(userId).run();
+            // Delete user
+            const res = await env.DB.prepare('DELETE FROM client_users WHERE id = ?').bind(userId).run();
+
+            if (res.meta.changes === 0) {
+                return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers });
+            }
+
+            return new Response(JSON.stringify({ success: true }), { headers });
+        } catch (e: any) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
+    // POST /api/admin/accounts/:id/reset - Reset password
+    if (path.match(/\/api\/admin\/accounts\/\d+\/reset/) && request.method === 'POST') {
+        try {
+            await requireAuth(request, env);
+            const userId = path.split('/')[4];
+
+            // Get user info for email
+            const user = await env.DB.prepare('SELECT * FROM client_users WHERE id = ?').bind(userId).first();
+            if (!user) {
+                return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers });
+            }
+
+            // Generate new password
+            const cleanName = (user.name as string).replace(/\s+/g, '').slice(0, 10);
+            const randomDigits = Math.floor(1000 + Math.random() * 9000);
+            const newPassword = `${cleanName}${randomDigits}`;
+
+            const passwordHash = await hashPassword(newPassword);
+
+            await env.DB.prepare('UPDATE client_users SET password_hash = ? WHERE id = ?')
+                .bind(passwordHash, userId)
+                .run();
+
+            // Send Email
+            await sendClientWelcomeEmail(env, user.email as string, newPassword);
+
+            return new Response(JSON.stringify({ success: true, message: 'Senha resetada e enviada por e-mail' }), { headers });
+        } catch (e: any) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
+    // DELETE /api/admin/shares/:id - Delete a share
+    if (path.match(/\/api\/admin\/shares\/\d+$/) && request.method === 'DELETE') {
+        try {
+            await requireAuth(request, env);
+            const shareId = path.split('/')[4];
+            await env.DB.prepare('DELETE FROM proposta_shares WHERE id = ?').bind(shareId).run();
+            return new Response(JSON.stringify({ success: true }), { headers });
+        } catch (e: any) {
             return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
         }
     }
