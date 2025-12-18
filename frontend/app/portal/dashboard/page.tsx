@@ -142,9 +142,7 @@ export default function PortalDashboard() {
                                 <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Proposta</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Criado por</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
-                                        <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Investimento</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Investimento</th>
                                         <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Impactos</th>
                                         <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">CPM</th>
                                         <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
@@ -165,26 +163,22 @@ export default function PortalDashboard() {
                                                     <div>
                                                         <div className="font-medium text-gray-900">{proposal.nome}</div>
                                                         <div className="text-xs text-gray-500">{proposal.total_itens} pontos</div>
+
+                                                        {/* CREATED BY ROW */}
+                                                        <div className="mt-1 flex items-center gap-2 text-xs text-gray-400">
+                                                            <span>Em {new Date(proposal.created_at).toLocaleDateString()}</span>
+                                                            <span>•</span>
+                                                            <span>Por:</span>
+                                                            <span className="font-medium text-gray-600">
+                                                                {(() => {
+                                                                    if (!proposal.created_by) return 'E-Mídias';
+                                                                    // @ts-ignore
+                                                                    if (user && proposal.created_by === user.id) return 'Você';
+                                                                    return proposal.creator_name || proposal.creator_email || 'Usuário';
+                                                                })()}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900 font-medium">
-                                                    {(() => {
-                                                        if (!proposal.created_by) return <span className="text-emidias-primary">E-Mídias</span>;
-                                                        // @ts-ignore
-                                                        if (user && proposal.created_by === user.id) return 'Você';
-                                                        return proposal.creator_name || proposal.creator_email || 'Usuário';
-                                                    })()}
-                                                </div>
-                                                <div className="text-xs text-gray-500">
-                                                    {proposal.created_by ? (proposal.created_by === (user as any)?.id ? 'Criador' : proposal.creator_email) : 'Interno'}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                    <Calendar size={14} className="text-gray-400" />
-                                                    {new Date(proposal.created_at).toLocaleDateString()}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -214,9 +208,10 @@ export default function PortalDashboard() {
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                )}
-            </main>
-        </div>
+                    </div >
+                )
+                }
+            </main >
+        </div >
     );
 }

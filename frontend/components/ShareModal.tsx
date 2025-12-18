@@ -199,7 +199,7 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                                         <option value="">Selecione um usuário...</option>
                                         {clientUsers.map(u => (
                                             <option key={u.id} value={u.id}>
-                                                {u.name} ({u.client_name || 'Sem cliente'}) - {u.email}
+                                                {u.name} - {u.email}
                                             </option>
                                         ))}
                                         <option value="new" className="font-medium text-emidias-primary">+ Cadastrar Novo Usuário</option>

@@ -266,6 +266,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const query = `
                 SELECT 
                     p.id, p.nome, p.created_at, p.status, p.comissao,
+                    p.created_by, creator.email as creator_email, creator.name as creator_name,
                     c.id as client_id, c.nome as client_name, c.logo_url as client_logo,
                     -- Aggregated counts
                     COUNT(DISTINCT pi.id) as total_itens,
@@ -279,6 +280,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     ) as shared_with
                 FROM propostas p
                 JOIN clientes c ON p.id_cliente = c.id
+                LEFT JOIN client_users creator ON p.created_by = creator.id
                 LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
                 GROUP BY p.id
                 ORDER BY p.created_at DESC

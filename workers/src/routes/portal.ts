@@ -97,26 +97,37 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
             // Get Items (Restricted columns)
             const { results: items } = await env.DB.prepare(`
                 SELECT 
-                    pi.id, pi.periodo_inicio, pi.periodo_fim, 
-                    pi.status, pi.client_comment, pi.periodo_comercializado,
-                    -- Force calculation based on Point Base Value to match Sidebar logic
-                    -- Client: Double Base for Rent, +25% for Production
-                    (po.valor * 2) as valor_locacao, 
-                    (po.valor_papel * 1.25) as valor_papel, 
-                    (po.valor_lona * 1.25) as valor_lona,
-                    po.codigo_ooh, po.endereco, po.cidade, po.uf, NULL as bairro,
-                    po.latitude, po.longitude, po.medidas, po.tipo,
-                    COALESCE(pi.fluxo_diario, po.fluxo, 0) as impactos,
-                    -- Total also needs to use calculated values
-                    ((po.valor * 2) + (po.valor_papel * 1.25) + (po.valor_lona * 1.25)) as valor_total
-                FROM proposta_itens pi
-                JOIN pontos_ooh po ON pi.id_ooh = po.id
+                    pi.id, pi.id_proposta, pi.id_ooh, 
+                    pi.periodo_inicio, pi.periodo_fim, 
+                    pi.valor_locacao, pi.valor_papel, pi.valor_lona,
+                    pi.periodo_comercializado, pi.qtd_bi_mes, pi.observacoes, 
+                    COALESCE(pi.fluxo_diario, po.fluxo, 0) as fluxo_diario,
+                    po.codigo_ooh, po.endereco, po.bairro, po.cidade, po.uf,
+                    po.latitude, po.longitude, po.tipo, po.medidas, po.formato,
+                    po.ponto_referencia,
+                    e.nome as exibidora
+                FROM proposta_itens pi 
+                JOIN pontos_ooh po ON pi.id_ooh = po.id 
+                LEFT JOIN exibidoras e ON po.id_exibidora = e.id
                 WHERE pi.id_proposta = ?
             `).bind(proposalId).all();
 
+            /* Client Pricing Logic moved to insertion time (Sidebar/Propostas API) */
+            /* We now trust the stored values in pi.valor_locacao */
+
+            // Format monetary values
+            const processedItems = items.map((item: any) => ({
+                ...item,
+                valor_locacao: item.valor_locacao || 0,
+                valor_papel: item.valor_papel || 0,
+                valor_lona: item.valor_lona || 0,
+                lat: item.latitude,
+                lng: item.longitude
+            }));
+
             return new Response(JSON.stringify({
                 ...proposal,
-                itens: items
+                itens: processedItems
             }), { headers });
         }
 
