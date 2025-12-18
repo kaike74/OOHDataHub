@@ -80,7 +80,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                 SELECT 
                     pi.id, pi.periodo_inicio, pi.periodo_fim, 
                     pi.status, pi.client_comment,
-                    po.codigo_ooh, po.endereco, po.cidade, po.uf, po.bairro,
+                    po.codigo_ooh, po.endereco, po.cidade, po.uf, NULL as bairro,
                     po.latitude, po.longitude, po.medidas, po.tipo,
                     po.impactos,
                     (pi.valor_locacao + pi.valor_papel + pi.valor_lona) as valor_total

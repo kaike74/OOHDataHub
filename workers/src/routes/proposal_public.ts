@@ -27,7 +27,7 @@ export const handlePublicProposal = async (request: Request, env: Env) => {
         const itemsStmt = env.DB.prepare(`
             SELECT pi.id, pi.id_ooh, pi.periodo_inicio, pi.periodo_fim, 
                    pi.status, pi.client_comment,
-                   po.codigo_ooh, po.endereco, po.cidade, po.uf, po.bairro,
+                   po.codigo_ooh, po.endereco, po.cidade, po.uf, NULL as bairro,
                    po.latitude, po.longitude, po.medidas, po.tipo,
                    e.nome as exibidora_nome,
                    -- Calculate public price (total_investimento equivalent) but maybe without breakdown?
