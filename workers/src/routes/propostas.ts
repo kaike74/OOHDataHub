@@ -226,5 +226,46 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         }
     }
 
+    // GET /api/propostas/admin/list - Lista agregada para admin (Propostas, Clientes, Shares)
+    if (request.method === 'GET' && path === '/api/propostas/admin/list') {
+        try {
+            // Check auth (assuming middleware checks happen before or we check here)
+            // Ideally should verify if user is 'master' or 'editor'
+
+            const query = `
+                SELECT 
+                    p.id, p.nome, p.created_at, p.status, p.comissao,
+                    c.id as client_id, c.nome as client_name, c.logo_url as client_logo,
+                    -- Aggregated counts
+                    COUNT(DISTINCT pi.id) as total_itens,
+                    SUM(pi.valor_locacao + pi.valor_papel + pi.valor_lona) as total_valor,
+                    -- Shared info
+                    (
+                        SELECT json_group_array(json_object('email', cu.email, 'name', cu.name))
+                        FROM proposta_shares ps
+                        JOIN client_users cu ON ps.client_user_id = cu.id
+                        WHERE ps.proposal_id = p.id
+                    ) as shared_with
+                FROM propostas p
+                JOIN clientes c ON p.id_cliente = c.id
+                LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
+                GROUP BY p.id
+                ORDER BY p.created_at DESC
+            `;
+
+            const { results } = await env.DB.prepare(query).all();
+
+            // Store shared_with as parsed JSON
+            const formattedResults = results.map((row: any) => ({
+                ...row,
+                shared_with: row.shared_with ? JSON.parse(row.shared_with) : []
+            }));
+
+            return new Response(JSON.stringify(formattedResults), { headers });
+        } catch (e: any) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 }

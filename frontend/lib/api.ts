@@ -252,6 +252,8 @@ export const api = {
 
     getPortalProposals: () => fetchAPI('/api/portal/proposals'),
 
+    getAdminProposals: () => fetchAPI('/api/propostas/admin/list'),
+
     getPortalProposal: (id: number) => fetchAPI(`/api/portal/proposals/${id}`),
 
     getPortalPoints: () => fetchAPI('/api/portal/points'),

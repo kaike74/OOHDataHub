@@ -33,10 +33,10 @@ export default function NavigationMenu() {
             type: 'view' as const
         },
         {
-            id: 'clientes' as const,
+            id: 'propostas' as const,
             icon: Users,
-            label: 'Clientes',
-            description: 'Gerenciar clientes e propostas',
+            label: 'Propostas',
+            description: 'Gerenciar propostas por cliente',
             type: 'view' as const
         },
     ];
@@ -59,9 +59,16 @@ export default function NavigationMenu() {
 
     const handleViewChange = (viewId: 'map' | 'exibidoras' | 'clientes' | 'propostas') => {
         // If we're leaving proposal editing mode (map with cart), clear the proposta
-        if (selectedProposta && viewId !== 'clientes') {
+        if (selectedProposta && viewId !== 'propostas') {
             setSelectedProposta(null);
         }
+
+        if (viewId === 'propostas') {
+            router.push('/admin/proposals');
+        } else if (viewId === 'map' || viewId === 'exibidoras') {
+            router.push('/');
+        }
+
         setCurrentView(viewId);
         setMenuOpen(false);
     };
@@ -132,9 +139,9 @@ export default function NavigationMenu() {
                     <div className="space-y-2">
                         {menuItems.map((item) => {
                             const Icon = item.icon;
-                            // If there's a selected proposal and we're on map view, consider "Clientes" as active
+                            // If there's a selected proposal and we're on map view, consider "Propostas" as active
                             const isActive = selectedProposta && currentView === 'map'
-                                ? item.id === 'clientes'
+                                ? item.id === 'propostas'
                                 : currentView === item.id;
 
                             return (
