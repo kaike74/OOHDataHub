@@ -42,7 +42,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                     -- Calculated totals
                     COUNT(pi.id) as total_itens,
                     SUM(pi.valor_locacao + pi.valor_papel + pi.valor_lona) as total_investimento,
-                    SUM(po.impactos) as total_impactos
+                    SUM(COALESCE(pi.fluxo_diario, po.fluxo, 0)) as total_impactos
                 FROM propostas p
                 JOIN proposta_shares ps ON p.id = ps.proposal_id
                 JOIN clientes c ON p.id_cliente = c.id
@@ -82,7 +82,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                     pi.status, pi.client_comment,
                     po.codigo_ooh, po.endereco, po.cidade, po.uf, NULL as bairro,
                     po.latitude, po.longitude, po.medidas, po.tipo,
-                    po.impactos,
+                    COALESCE(pi.fluxo_diario, po.fluxo, 0) as impactos,
                     (pi.valor_locacao + pi.valor_papel + pi.valor_lona) as valor_total
                 FROM proposta_itens pi
                 JOIN pontos_ooh po ON pi.id_ooh = po.id
@@ -103,7 +103,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                 SELECT 
                     p.id, p.latitude, p.longitude, 
                     p.endereco, p.cidade, p.uf, p.codigo_ooh,
-                    p.tipo, p.medidas, p.id_exibidora, p.impactos,
+                    p.tipo, p.medidas, p.id_exibidora, p.fluxo as impactos,
                     e.nome as exibidora_nome
                 FROM pontos_ooh p
                 LEFT JOIN exibidoras e ON p.id_exibidora = e.id

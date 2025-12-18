@@ -30,7 +30,11 @@ export default function LoginPage() {
         try {
             const response = await api.login(email, password);
             setAuth(response.user, response.token);
-            router.push('/');
+            if (response.user.role === 'client') {
+                router.push('/portal/dashboard');
+            } else {
+                router.push('/');
+            }
         } catch (err: any) {
             setError(err.message || 'Erro ao fazer login');
         } finally {

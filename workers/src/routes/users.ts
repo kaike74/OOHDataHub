@@ -11,6 +11,8 @@ import {
     sendPasswordResetEmail,
     sendWelcomeEmail,
     User,
+    generateClientToken,
+    ClientUser
 } from '../utils/auth';
 
 export async function handleUsers(request: Request, env: Env, path: string): Promise<Response> {
@@ -69,44 +71,79 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
                 });
             }
 
-            // Find user
+            // Find user in INTERNAL users table
             const user = await env.DB.prepare(
                 'SELECT id, email, password_hash, name, role FROM users WHERE email = ?'
             ).bind(email).first() as any;
 
-            if (!user) {
-                return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
-                    status: 401,
-                    headers,
-                });
-            }
+            if (user) {
+                // Verify password
+                const isValid = await verifyPassword(password, user.password_hash);
+                if (!isValid) {
+                    return new Response(JSON.stringify({ error: 'Credenciais inválidas' }), {
+                        status: 401,
+                        headers,
+                    });
+                }
 
-            // Verify password
-            const isValid = await verifyPassword(password, user.password_hash);
-            if (!isValid) {
-                return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
-                    status: 401,
-                    headers,
-                });
-            }
-
-            // Generate token
-            const token = await generateToken({
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                role: user.role,
-            });
-
-            return new Response(JSON.stringify({
-                token,
-                user: {
+                // Generate token
+                const token = await generateToken({
                     id: user.id,
                     email: user.email,
                     name: user.name,
                     role: user.role,
-                },
-            }), { headers });
+                });
+
+                return new Response(JSON.stringify({
+                    token,
+                    user: {
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        role: user.role,
+                    },
+                }), { headers });
+            }
+
+            // If not found in internal users, check CLIENT users
+            const clientUser = await env.DB.prepare(
+                'SELECT id, client_id, name, email, password_hash FROM client_users WHERE email = ?'
+            ).bind(email).first() as any;
+
+            if (clientUser) {
+                const isValid = await verifyPassword(password, clientUser.password_hash);
+                if (!isValid) {
+                    return new Response(JSON.stringify({ error: 'Credenciais inválidas' }), {
+                        status: 401,
+                        headers,
+                    });
+                }
+
+                // Generate Client Token
+                const token = await generateClientToken({
+                    id: clientUser.id,
+                    client_id: clientUser.client_id,
+                    name: clientUser.name,
+                    email: clientUser.email,
+                    role: 'client'
+                });
+
+                return new Response(JSON.stringify({
+                    token,
+                    user: {
+                        id: clientUser.id,
+                        email: clientUser.email,
+                        name: clientUser.name,
+                        role: 'client',
+                        clientId: clientUser.client_id
+                    },
+                }), { headers });
+            }
+
+            return new Response(JSON.stringify({ error: 'Credenciais inválidas' }), {
+                status: 401,
+                headers,
+            });
         }
 
         // POST /api/auth/change-password - Change own password

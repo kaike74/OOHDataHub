@@ -147,7 +147,7 @@ export async function requireMaster(request: Request, env: Env): Promise<User> {
  * Validate email domain
  */
 export function validateEmailDomain(email: string): boolean {
-    return email.endsWith('@hubradios.com');
+    return true; // Allow all domains to support client access
 }
 
 /**
