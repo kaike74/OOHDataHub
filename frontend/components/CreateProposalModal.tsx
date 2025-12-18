@@ -47,8 +47,11 @@ export default function CreateProposalModal({ isOpen, onClose }: CreateProposalM
             console.log('User when opening modal:', user);
 
             if (user?.role === 'client') {
-                if (user.client_id) {
-                    setSelectedClientId(Number(user.client_id));
+                // Support both snake_case (backend default) and camelCase (potential frontend transformation)
+                const cId = user.client_id || user.clientId;
+
+                if (cId) {
+                    setSelectedClientId(Number(cId));
                     setCommission('CLIENT');
                 } else {
                     console.error('User is client but missing client_id. Store state:', user);
@@ -177,8 +180,8 @@ export default function CreateProposalModal({ isOpen, onClose }: CreateProposalM
                                         type="button"
                                         onClick={() => setCommission(opt)}
                                         className={`p-3 rounded-xl border font-bold transition-all ${commission === opt
-                                                ? 'bg-emidias-accent text-white border-emidias-accent shadow-lg scale-105'
-                                                : 'bg-white text-emidias-gray-500 border-emidias-gray-200 hover:bg-emidias-gray-50'
+                                            ? 'bg-emidias-accent text-white border-emidias-accent shadow-lg scale-105'
+                                            : 'bg-white text-emidias-gray-500 border-emidias-gray-200 hover:bg-emidias-gray-50'
                                             }`}
                                     >
                                         {opt}

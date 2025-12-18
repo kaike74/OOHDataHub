@@ -77,6 +77,7 @@ export interface User {
     role: 'master' | 'editor' | 'viewer' | 'client';
     created_at: string;
     client_id?: number;
+    clientId?: number; // Legacy/Alternative
     client_name?: string | null;
 }
 
