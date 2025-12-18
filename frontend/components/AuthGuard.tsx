@@ -10,6 +10,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const isAuthenticated = useStore((state) => state.isAuthenticated);
 
     useEffect(() => {
+        // Skip check for portal routes (they handle their own auth or are public)
+        if (pathname?.startsWith('/portal')) return;
+
         // Se não está autenticado e não está na página de login, redireciona
         if (!isAuthenticated && pathname !== '/login') {
             router.push('/login');
@@ -21,8 +24,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         }
     }, [isAuthenticated, pathname, router]);
 
-    // Se não está autenticado e não está na página de login, não renderiza nada (vai redirecionar)
-    if (!isAuthenticated && pathname !== '/login') {
+    // Se não está autenticado e não está na página de login (e nao é portal), não renderiza nada
+    if (!isAuthenticated && pathname !== '/login' && !pathname?.startsWith('/portal')) {
         return (
             <div className="min-h-screen bg-gray-900 flex items-center justify-center">
                 <div className="text-white text-center">
