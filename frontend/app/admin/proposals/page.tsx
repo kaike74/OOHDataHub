@@ -24,6 +24,8 @@ interface AdminProposal {
     total_itens: number;
     total_valor: number;
     shared_with: Array<{ email: string; name: string }>;
+    created_by?: number | null;
+    creator_email?: string;
 }
 
 import CreateProposalModal from '@/components/CreateProposalModal';
@@ -263,6 +265,13 @@ export default function AdminProposalsPage() {
                                                                 }`}>
                                                                 {proposal.status?.replace('_', ' ')}
                                                             </span>
+                                                            {/* Creator Indicator */}
+                                                            {proposal.created_by && (
+                                                                <span className="flex items-center gap-1 text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full border border-purple-100 font-medium" title={`Criado por: ${proposal.creator_email || 'Cliente'}`}>
+                                                                    <Users size={10} />
+                                                                    {proposal.creator_email ? proposal.creator_email.split('@')[0] : 'Cliente'}
+                                                                </span>
+                                                            )}
                                                         </div>
 
                                                         <div className="flex items-center gap-4 text-sm text-emidias-gray-500 mt-2">

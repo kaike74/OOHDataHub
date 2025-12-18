@@ -99,11 +99,16 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                 SELECT 
                     pi.id, pi.periodo_inicio, pi.periodo_fim, 
                     pi.status, pi.client_comment, pi.periodo_comercializado,
-                    pi.valor_locacao, pi.valor_papel, pi.valor_lona,
+                    -- Force calculation based on Point Base Value to match Sidebar logic
+                    -- Client: Double Base for Rent, +25% for Production
+                    (po.valor * 2) as valor_locacao, 
+                    (po.valor_papel * 1.25) as valor_papel, 
+                    (po.valor_lona * 1.25) as valor_lona,
                     po.codigo_ooh, po.endereco, po.cidade, po.uf, NULL as bairro,
                     po.latitude, po.longitude, po.medidas, po.tipo,
                     COALESCE(pi.fluxo_diario, po.fluxo, 0) as impactos,
-                    (pi.valor_locacao + pi.valor_papel + pi.valor_lona) as valor_total
+                    -- Total also needs to use calculated values
+                    ((po.valor * 2) + (po.valor_papel * 1.25) + (po.valor_lona * 1.25)) as valor_total
                 FROM proposta_itens pi
                 JOIN pontos_ooh po ON pi.id_ooh = po.id
                 WHERE pi.id_proposta = ?
