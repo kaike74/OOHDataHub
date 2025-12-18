@@ -91,7 +91,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
 
             // Get Proposal Details
             const proposal = await env.DB.prepare(
-                'SELECT p.id, p.nome, p.created_at, p.status FROM propostas p WHERE p.id = ?'
+                'SELECT p.id, p.nome, p.created_at, p.status, p.comissao FROM propostas p WHERE p.id = ?'
             ).bind(proposalId).first();
 
             // Get Items (Restricted columns)
@@ -104,7 +104,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                     COALESCE(pi.fluxo_diario, po.fluxo, 0) as fluxo_diario,
                     po.codigo_ooh, po.endereco, po.bairro, po.cidade, po.uf,
                     po.latitude, po.longitude, po.tipo, po.medidas, po.formato,
-                    po.ponto_referencia,
+                    po.ponto_referencia, po.produtos,
                     e.nome as exibidora
                 FROM proposta_itens pi 
                 JOIN pontos_ooh po ON pi.id_ooh = po.id 
@@ -112,18 +112,55 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                 WHERE pi.id_proposta = ?
             `).bind(proposalId).all();
 
-            /* Client Pricing Logic moved to insertion time (Sidebar/Propostas API) */
-            /* We now trust the stored values in pi.valor_locacao */
+            /* Client Pricing Logic:
+             * IF Proposal Commission is 'CLIENT' (Created by Client user)
+             * THEN Recalculate values dynamically (Double Base) to ensure consistency (ignoring potential sync errors)
+             * ELSE Use stored values (Respects Agency Commission V1-V4)
+             */
+            const isClientCommission = proposal.comissao === 'CLIENT';
 
             // Format monetary values
-            const processedItems = items.map((item: any) => ({
-                ...item,
-                valor_locacao: item.valor_locacao || 0,
-                valor_papel: item.valor_papel || 0,
-                valor_lona: item.valor_lona || 0,
-                lat: item.latitude,
-                lng: item.longitude
-            }));
+            const processedItems = items.map((item: any) => {
+                let valor_locacao = item.valor_locacao || 0;
+                let valor_papel = item.valor_papel || 0;
+                let valor_lona = item.valor_lona || 0;
+
+                // Dynamic Recalculation for CLIENT commission
+                if (isClientCommission && item.produtos) {
+                    try {
+                        const produtos = JSON.parse(item.produtos);
+                        const locacaoProd = produtos.find((p: any) =>
+                            p.tipo.toLowerCase().includes('locação') ||
+                            p.tipo.toLowerCase().includes('locacao') ||
+                            p.tipo.toLowerCase().includes('bissemanal')
+                        );
+                        if (locacaoProd) {
+                            valor_locacao = locacaoProd.valor * 2;
+                        }
+
+                        const papelProd = produtos.find((p: any) => p.tipo.toLowerCase().includes('papel'));
+                        if (papelProd) {
+                            valor_papel = papelProd.valor * 1.25;
+                        }
+
+                        const lonaProd = produtos.find((p: any) => p.tipo.toLowerCase().includes('lona'));
+                        if (lonaProd) {
+                            valor_lona = lonaProd.valor * 1.25;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing products JSON for recalculation', e);
+                    }
+                }
+
+                return {
+                    ...item,
+                    valor_locacao,
+                    valor_papel,
+                    valor_lona,
+                    lat: item.latitude,
+                    lng: item.longitude
+                };
+            });
 
             return new Response(JSON.stringify({
                 ...proposal,
