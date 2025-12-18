@@ -1,14 +1,18 @@
 
 import { Env } from '../index';
 
+import { corsHeaders } from '../utils/cors';
+
 export const handlePublicProposal = async (request: Request, env: Env) => {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
+
     // GET /api/public/proposals/:token
     if (request.method === 'GET') {
         const token = path.split('/').pop();
-        if (!token) return new Response('Token required', { status: 400 });
+        if (!token) return new Response('Token required', { status: 400, headers });
 
         const stmt = env.DB.prepare(`
             SELECT p.*, c.nome as cliente_nome, c.logo_url as cliente_logo
@@ -20,7 +24,7 @@ export const handlePublicProposal = async (request: Request, env: Env) => {
         const proposal = await stmt.first();
 
         if (!proposal) {
-            return new Response('Proposal not found', { status: 404 });
+            return new Response('Proposal not found', { status: 404, headers });
         }
 
         // Get items but HIDE COSTS
@@ -48,9 +52,9 @@ export const handlePublicProposal = async (request: Request, env: Env) => {
             ...proposal,
             itens: results
         }), {
-            headers: { 'Content-Type': 'application/json' }
+            headers
         });
     }
 
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { status: 405, headers });
 };
