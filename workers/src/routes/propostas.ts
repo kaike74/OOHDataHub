@@ -1,6 +1,6 @@
-
 import { Env } from '../index';
 import { corsHeaders } from '../utils/cors';
+import { extractToken, verifyToken } from '../utils/auth';
 
 export async function handlePropostas(request: Request, env: Env, path: string): Promise<Response> {
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
@@ -40,9 +40,20 @@ export async function handlePropostas(request: Request, env: Env, path: string):
     // POST /api/propostas - Criar proposta
     if (request.method === 'POST' && path === '/api/propostas') {
         try {
-            // Check auth (assuming middleware checks happen before or we check here)
-            // Just basic check for now as requireAuth is not strictly enforced in this function signature yet
-            // But we should verify user role
+            // Validate Auth / Creator
+            const token = extractToken(request);
+            let createdBy = null;
+            let role = 'internal';
+
+            if (token) {
+                const payload = await verifyToken(token);
+                if (payload) {
+                    role = payload.role;
+                    if (role === 'client') {
+                        createdBy = payload.userId;
+                    }
+                }
+            }
 
             const data = await request.json() as any;
 
@@ -50,11 +61,23 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                 return new Response(JSON.stringify({ error: 'Campos id_cliente e nome são obrigatórios' }), { status: 400, headers });
             }
 
-            const res = await env.DB.prepare(
-                'INSERT INTO propostas (id_cliente, nome, comissao) VALUES (?, ?, ?)'
-            ).bind(data.id_cliente, data.nome, data.comissao || 'V4').run();
+            // Client role override (just to be safe)
+            const comissao = role === 'client' ? 'CLIENT' : (data.comissao || 'V4');
 
-            return new Response(JSON.stringify({ id: res.meta.last_row_id, success: true }), { status: 201, headers });
+            const res = await env.DB.prepare(
+                'INSERT INTO propostas (id_cliente, nome, comissao, created_by) VALUES (?, ?, ?, ?)'
+            ).bind(data.id_cliente, data.nome, comissao, createdBy).run();
+
+            const proposalId = res.meta.last_row_id;
+
+            // Auto-share with creator if client
+            if (role === 'client' && createdBy) {
+                await env.DB.prepare(
+                    'INSERT INTO proposta_shares (proposal_id, client_user_id) VALUES (?, ?)'
+                ).bind(proposalId, createdBy).run();
+            }
+
+            return new Response(JSON.stringify({ id: proposalId, success: true }), { status: 201, headers });
         } catch (e: any) {
             return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
         }

@@ -24,6 +24,7 @@ export default function HomePage() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [searchLocation, setSearchLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const setPontos = useStore((state) => state.setPontos);
   const setExibidoras = useStore((state) => state.setExibidoras);
@@ -54,6 +55,7 @@ export default function HomePage() {
 
     // Redirect client users to their dashboard UNLESS they are creating a new proposal
     const userRole = JSON.parse(localStorage.getItem('ooh-auth-storage') || '{}')?.state?.user?.role;
+    setUserRole(userRole);
     if (userRole === 'client' && action !== 'new') {
       router.replace('/admin/proposals');
       return;
@@ -126,13 +128,15 @@ export default function HomePage() {
                 )}
               </button>
 
-              <button
-                onClick={() => setModalOpen(true)}
-                className="px-3 sm:px-5 py-2.5 bg-emidias-accent text-white rounded-xl hover:bg-emidias-accent-dark flex items-center gap-2 transition-all font-semibold hover-lift shadow-accent"
-              >
-                <Plus size={20} strokeWidth={2.5} />
-                <span className="hidden sm:inline">Novo Ponto</span>
-              </button>
+              {userRole !== 'client' && (
+                <button
+                  onClick={() => setModalOpen(true)}
+                  className="px-3 sm:px-5 py-2.5 bg-emidias-accent text-white rounded-xl hover:bg-emidias-accent-dark flex items-center gap-2 transition-all font-semibold hover-lift shadow-accent"
+                >
+                  <Plus size={20} strokeWidth={2.5} />
+                  <span className="hidden sm:inline">Novo Ponto</span>
+                </button>
+              )}
             </>
           )}
 

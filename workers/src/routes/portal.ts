@@ -42,6 +42,9 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                     c.id as client_id,
                     c.nome as client_name,
                     c.logo_url as client_logo,
+                    creator.name as creator_name,
+                    creator.email as creator_email,
+                    p.created_by,
                     -- Calculated totals
                     COUNT(pi.id) as total_itens,
                     SUM(pi.valor_locacao + pi.valor_papel + pi.valor_lona) as total_valor,
@@ -49,6 +52,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                 FROM propostas p
                 JOIN proposta_shares ps ON p.id = ps.proposal_id
                 JOIN clientes c ON p.id_cliente = c.id
+                LEFT JOIN client_users creator ON p.created_by = creator.id
                 LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
                 LEFT JOIN pontos_ooh po ON pi.id_ooh = po.id
                 WHERE ps.client_user_id = ?
@@ -94,7 +98,8 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
             const { results: items } = await env.DB.prepare(`
                 SELECT 
                     pi.id, pi.periodo_inicio, pi.periodo_fim, 
-                    pi.status, pi.client_comment,
+                    pi.status, pi.client_comment, pi.periodo_comercializado,
+                    pi.valor_locacao, pi.valor_papel, pi.valor_lona,
                     po.codigo_ooh, po.endereco, po.cidade, po.uf, NULL as bairro,
                     po.latitude, po.longitude, po.medidas, po.tipo,
                     COALESCE(pi.fluxo_diario, po.fluxo, 0) as impactos,
@@ -217,9 +222,10 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                             id_proposta, id_ooh, periodo_inicio, periodo_fim, 
                             valor_locacao, valor_papel, valor_lona, 
                             periodo_comercializado, observacoes, fluxo_diario, status
-                        ) VALUES (?, ?, ?, ?, 0, 0, 0, ?, ?, ?, 'pendente_validacao')
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente_validacao')
                     `).bind(
                         proposalId, item.id_ooh, item.periodo_inicio, item.periodo_fim,
+                        item.valor_locacao || 0, item.valor_papel || 0, item.valor_lona || 0,
                         item.periodo_comercializado || 'bissemanal', item.observacoes, item.fluxo_diario
                     ));
                 }

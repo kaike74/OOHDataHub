@@ -13,6 +13,9 @@ interface Proposal {
     total_itens: number;
     total_valor: number;
     total_impactos: number;
+    created_by: number | null;
+    creator_name?: string;
+    creator_email?: string;
 }
 
 export default function PortalDashboard() {
@@ -139,6 +142,7 @@ export default function PortalDashboard() {
                                 <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Proposta</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Criado por</th>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
                                         <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Investimento</th>
                                         <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Impactos</th>
@@ -162,6 +166,19 @@ export default function PortalDashboard() {
                                                         <div className="font-medium text-gray-900">{proposal.nome}</div>
                                                         <div className="text-xs text-gray-500">{proposal.total_itens} pontos</div>
                                                     </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-900 font-medium">
+                                                    {(() => {
+                                                        if (!proposal.created_by) return <span className="text-emidias-primary">E-Mídias</span>;
+                                                        // @ts-ignore
+                                                        if (user && proposal.created_by === user.id) return 'Você';
+                                                        return proposal.creator_name || proposal.creator_email || 'Usuário';
+                                                    })()}
+                                                </div>
+                                                <div className="text-xs text-gray-500">
+                                                    {proposal.created_by ? (proposal.created_by === (user as any)?.id ? 'Criador' : proposal.creator_email) : 'Interno'}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
