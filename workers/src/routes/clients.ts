@@ -49,7 +49,6 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
         // Generate Token using consistent auth helper
         const clientUser: ClientUser = {
             id: user.id as number,
-            client_id: user.client_id as number,
             name: user.name as string,
             email: user.email as string,
             role: 'client'
@@ -66,7 +65,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
                 id: user.id,
                 email: user.email,
                 name: user.name,
-                client_id: user.client_id
+                role: 'client'
             }
         }), {
             headers
@@ -78,9 +77,9 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
         try {
             await requireAuth(request, env); // Agency user only
 
-            const { client_id, email, name } = await request.json() as any;
+            const { email, name } = await request.json() as any;
 
-            if (!client_id || !email || !name) {
+            if (!email || !name) {
                 return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers });
             }
 
@@ -99,8 +98,8 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             const passwordHash = await hashPassword(generatedPassword);
 
             const result = await env.DB.prepare(
-                'INSERT INTO client_users (client_id, email, password_hash, name) VALUES (?, ?, ?, ?)'
-            ).bind(client_id, email, passwordHash, name).run();
+                'INSERT INTO client_users (email, password_hash, name) VALUES (?, ?, ?)'
+            ).bind(email, passwordHash, name).run();
 
             // Send Email
             // Send Email
@@ -128,9 +127,16 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
 
             const clientId = path.split('/').pop();
 
-            const { results } = await env.DB.prepare(
-                'SELECT id, name, email, created_at, last_login FROM client_users WHERE client_id = ? ORDER BY created_at DESC'
-            ).bind(clientId).all();
+            // List users who have access to proposals from this client
+            // via proposta_shares (not directly linked to client)
+            const { results } = await env.DB.prepare(`
+                SELECT DISTINCT cu.id, cu.name, cu.email, cu.created_at, cu.last_login
+                FROM client_users cu
+                JOIN proposta_shares ps ON cu.id = ps.client_user_id
+                JOIN propostas p ON ps.proposal_id = p.id
+                WHERE p.id_cliente = ?
+                ORDER BY cu.created_at DESC
+            `).bind(clientId).all();
 
             return new Response(JSON.stringify(results), { headers });
         } catch (e: any) {

@@ -107,7 +107,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // If not found in internal users, check CLIENT users
             const clientUser = await env.DB.prepare(
-                'SELECT id, client_id, name, email, password_hash FROM client_users WHERE email = ?'
+                'SELECT id, name, email, password_hash FROM client_users WHERE email = ?'
             ).bind(email).first() as any;
 
             if (clientUser) {
@@ -122,7 +122,6 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
                 // Generate Client Token
                 const token = await generateClientToken({
                     id: clientUser.id,
-                    client_id: clientUser.client_id,
                     name: clientUser.name,
                     email: clientUser.email,
                     role: 'client'
@@ -134,8 +133,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
                         id: clientUser.id,
                         email: clientUser.email,
                         name: clientUser.name,
-                        role: 'client',
-                        clientId: clientUser.client_id
+                        role: 'client'
                     },
                 }), { headers });
             }

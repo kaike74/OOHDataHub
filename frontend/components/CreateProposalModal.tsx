@@ -50,18 +50,15 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             console.log('Initial Client ID passed:', initialClientId);
 
             if (user?.role === 'client') {
-                // If initialClientId is passed (from Portal Dashboard Grouping), use it
-                // Otherwise try fallback to user's linked client
-                // IMPORTANT: Check for undefined explicitly, not falsy, to allow 0 as valid client ID
-                const cId = initialClientId !== undefined ? initialClientId : (user.client_id || user.clientId);
-
-                if (cId !== undefined && cId !== null) {
-                    setSelectedClientId(Number(cId));
+                // Client users MUST use initialClientId from the grouping they clicked
+                // Client users are not tied to a single client, they can create proposals for any client they have access to
+                if (initialClientId !== undefined && initialClientId !== null) {
+                    setSelectedClientId(Number(initialClientId));
                     setCommission('V0'); // Strict V0 for Clients
-                    console.log('Set client ID to:', Number(cId));
+                    console.log('Set client ID to:', Number(initialClientId));
                 } else {
-                    console.error('User is client but missing client_id. Store state:', user);
-                    setError('Erro: Identificação do cliente não encontrada. Por favor, faça LOGOUT e LOGIN novamente para atualizar suas credenciais.');
+                    console.error('Client user tried to create proposal without specifying client. initialClientId:', initialClientId);
+                    setError('Erro: Cliente não especificado. Por favor, clique em "Nova Proposta" dentro do agrupamento do cliente desejado.');
                 }
             } else {
                 setSelectedClientId('');

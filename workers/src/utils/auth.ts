@@ -16,7 +16,6 @@ export interface ClientUser {
     id: number;
     email: string;
     name: string;
-    client_id: number;
     role: 'client';
 }
 
@@ -24,7 +23,6 @@ export interface CustomJWTPayload {
     userId: number;
     email: string;
     role: string;
-    client_id?: number;
 }
 
 /**
@@ -69,8 +67,7 @@ export async function generateClientToken(user: ClientUser): Promise<string> {
     const payload = {
         userId: user.id,
         email: user.email,
-        role: user.role,
-        client_id: user.client_id
+        role: user.role
     };
 
     return await new jose.SignJWT(payload as any)

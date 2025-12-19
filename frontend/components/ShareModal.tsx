@@ -112,7 +112,6 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                     return;
                 }
                 const res = await api.registerClientUser({
-                    client_id: proposta.id_cliente,
                     name: newUser.name,
                     email: newUser.email
                 });
