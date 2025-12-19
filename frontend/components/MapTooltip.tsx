@@ -80,6 +80,9 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
       }
       // Helper function to calculate value with commission
       const calcularValorComissao = (valorBase: number, comissao: string): number => {
+        // V0 = Client rate (2x base value)
+        if (comissao === 'V0') return parseFloat((valorBase * 2).toFixed(2));
+
         const v2 = valorBase * 1.25;
         if (comissao === 'V2') return parseFloat(v2.toFixed(2));
 
@@ -108,6 +111,13 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
       const valorPapel = papelProduto ? parseFloat((papelProduto.valor * 1.25).toFixed(2)) : 0;
       const valorLona = lonaProduto ? parseFloat((lonaProduto.valor * 1.25).toFixed(2)) : 0;
       const valorLocacao = locacaoProduto ? calcularValorComissao(locacaoProduto.valor, selectedProposta.comissao) : 0;
+
+      console.log('💰 Valores calculados para comissão', selectedProposta.comissao, ':', {
+        valorBase: locacaoProduto?.valor,
+        valorLocacao,
+        valorPapel,
+        valorLona
+      });
 
       // Default item structure
       const item = {
