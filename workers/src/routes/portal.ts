@@ -45,10 +45,17 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                     creator.name as creator_name,
                     creator.email as creator_email,
                     p.created_by,
-                    -- Calculated totals
+                -- Calculated totals
                     COUNT(pi.id) as total_itens,
                     SUM(pi.valor_locacao + pi.valor_papel + pi.valor_lona) as total_valor,
-                    SUM(COALESCE(pi.fluxo_diario, po.fluxo, 0)) as total_impactos
+                    SUM(COALESCE(pi.fluxo_diario, po.fluxo, 0)) as total_impactos,
+                    -- Shared info
+                    (
+                        SELECT json_group_array(json_object('email', cu.email, 'name', cu.name))
+                        FROM proposta_shares ps2
+                        JOIN client_users cu ON ps2.client_user_id = cu.id
+                        WHERE ps2.proposal_id = p.id
+                    ) as shared_with
                 FROM propostas p
                 JOIN proposta_shares ps ON p.id = ps.proposal_id
                 JOIN clientes c ON p.id_cliente = c.id
@@ -65,9 +72,10 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
             // id, nome, created_at, status, comissao, client_id, client_name, client_logo, total_itens, total_valor
             // Missing: shared_with (can be empty array for clients)
 
+            // Transform results to match AdminProposal interface exact expectations if needed
             const proposals = results.map((r: any) => ({
                 ...r,
-                shared_with: [] // Clients don't see who else it's shared with
+                shared_with: r.shared_with ? JSON.parse(r.shared_with) : []
             }));
 
             return new Response(JSON.stringify(proposals), { headers });

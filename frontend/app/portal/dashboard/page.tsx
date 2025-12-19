@@ -16,6 +16,7 @@ interface Proposal {
     created_by: number | null;
     creator_name?: string;
     creator_email?: string;
+    shared_with?: { name: string; email: string }[];
 }
 
 export default function PortalDashboard() {
@@ -142,10 +143,9 @@ export default function PortalDashboard() {
                                 <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Proposta</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Compartilhado com</th>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Investimento</th>
-                                        <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Impactos</th>
-                                        <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">CPM</th>
-                                        <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
+                                        <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -156,40 +156,74 @@ export default function PortalDashboard() {
                                             onClick={() => router.push(`/portal/view?id=${proposal.id}`)}
                                         >
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition-colors">
-                                                        <FileText size={18} />
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-100 group-hover:scale-105 transition-all shadow-sm">
+                                                        <FileText size={20} />
                                                     </div>
                                                     <div>
-                                                        <div className="font-medium text-gray-900">{proposal.nome}</div>
-                                                        <div className="text-xs text-gray-500">{proposal.total_itens} pontos</div>
-
-                                                        {/* CREATED BY ROW */}
-                                                        <div className="mt-1 flex items-center gap-2 text-xs text-gray-400">
-                                                            <span>Em {new Date(proposal.created_at).toLocaleDateString()}</span>
+                                                        <div className="font-semibold text-gray-900 text-base mb-0.5">{proposal.nome}</div>
+                                                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                                                            <div className="flex items-center gap-1">
+                                                                <Calendar size={12} />
+                                                                {new Date(proposal.created_at).toLocaleDateString()}
+                                                            </div>
                                                             <span>•</span>
-                                                            <span>Por:</span>
-                                                            <span className="font-medium text-gray-600">
-                                                                {(() => {
-                                                                    if (!proposal.created_by) return 'E-Mídias';
-                                                                    // @ts-ignore
-                                                                    if (user && proposal.created_by === user.id) return 'Você';
-                                                                    return proposal.creator_name || proposal.creator_email || 'Usuário';
-                                                                })()}
+                                                            <div className="flex items-center gap-1">
+                                                                <Target size={12} />
+                                                                {proposal.total_itens} pontos
+                                                            </div>
+                                                            <span>•</span>
+                                                            <span>
+                                                                Por: <span className="font-medium text-gray-700">
+                                                                    {(() => {
+                                                                        if (!proposal.created_by) return 'E-Mídias';
+                                                                        // @ts-ignore
+                                                                        if (user && proposal.created_by === user.id) return 'Você';
+                                                                        return proposal.creator_name || proposal.creator_email || 'Usuário';
+                                                                    })()}
+                                                                </span>
                                                             </span>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <div className="text-sm font-medium text-gray-900">{formatCurrency(proposal.total_valor)}</div>
+                                            <td className="px-6 py-4">
+                                                <div className="flex -space-x-2 overflow-hidden py-1">
+                                                    {proposal.shared_with && proposal.shared_with.length > 0 ? (
+                                                        proposal.shared_with.slice(0, 5).map((share, idx) => (
+                                                            <div
+                                                                key={idx}
+                                                                className="relative group/avatar cursor-help"
+                                                            >
+                                                                <div className="w-8 h-8 rounded-full border-2 border-white bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-xs font-semibold text-gray-600 uppercase shadow-sm">
+                                                                    {share.name ? share.name.charAt(0) : share.email.charAt(0)}
+                                                                </div>
+                                                                {/* Tooltip */}
+                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover/avatar:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
+                                                                    <div className="font-semibold">{share.name || 'Usuário'}</div>
+                                                                    <div className="text-gray-300 text-[10px]">{share.email}</div>
+                                                                    {/* Arrow */}
+                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400 italic pl-1">Apenas você</span>
+                                                    )}
+                                                    {proposal.shared_with && proposal.shared_with.length > 5 && (
+                                                        <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-500 shadow-sm z-10">
+                                                            +{proposal.shared_with.length - 5}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <div className="text-sm text-gray-600">{formatNumber(proposal.total_impactos)}</div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <div className="text-sm text-gray-600 font-mono">
-                                                    {formatCurrency(calculateCPM(proposal.total_valor, proposal.total_impactos))}
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <div className="text-sm font-bold text-gray-900">{formatCurrency(proposal.total_valor)}</div>
+                                                    <div className="text-xs text-gray-500 flex items-center gap-1" title="Impactos totais">
+                                                        <BarChart3 size={10} />
+                                                        {formatNumber(proposal.total_impactos)} imp.
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -198,7 +232,7 @@ export default function PortalDashboard() {
                                                         e.stopPropagation();
                                                         router.push(`/portal/view?id=${proposal.id}`);
                                                     }}
-                                                    className="p-2 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"
+                                                    className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors group-hover:scale-105"
                                                 >
                                                     <ExternalLink size={18} />
                                                 </button>
