@@ -1,6 +1,7 @@
 
 import { Env } from '../index';
 import { verifyToken, extractToken, requireAuth } from '../utils/auth';
+import { logAudit } from '../utils/audit';
 
 // Helper to authenticate CLIENT users
 async function requireClientAuth(request: Request, env: Env) {
@@ -62,7 +63,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                 LEFT JOIN usuarios_externos creator ON p.created_by = creator.id
                 LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
                 LEFT JOIN pontos_ooh po ON pi.id_ooh = po.id
-                WHERE ps.client_user_id = ?
+                WHERE ps.client_user_id = ? AND p.deleted_at IS NULL
                 GROUP BY p.id
                 ORDER BY p.created_at DESC
             `).bind(user.id).all();
@@ -99,7 +100,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
 
             // Get Proposal Details
             const proposal = await env.DB.prepare(
-                'SELECT p.id, p.nome, p.created_at, p.status, p.comissao FROM propostas p WHERE p.id = ?'
+                'SELECT p.id, p.nome, p.created_at, p.status, p.comissao FROM propostas p WHERE p.id = ? AND p.deleted_at IS NULL'
             ).bind(proposalId).first();
 
             // Get Items (Restricted columns)
@@ -243,7 +244,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
             const currentItems = await env.DB.prepare('SELECT id FROM proposta_itens WHERE id_proposta = ?').bind(proposalId).all();
             const currentIds = currentItems.results.map((i: any) => i.id);
 
-            const idsToDelete = currentIds.filter((id) => !incomingIds.includes(id));
+            const idsToDelete = currentIds.filter((id: number) => !incomingIds.includes(id));
 
             if (idsToDelete.length > 0) {
                 const placeholders = idsToDelete.map(() => '?').join(',');
@@ -294,11 +295,54 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
 
             if (batch.length > 0) {
                 await env.DB.batch(batch);
+
+                await logAudit(env, {
+                    tableName: 'propostas',
+                    recordId: Number(proposalId),
+                    action: 'UPDATE',
+                    changedBy: user.id,
+                    userType: 'client',
+                    changes: { action: 'client_update_items', items_count: incomingItems.length }
+                });
             }
 
             return new Response(JSON.stringify({ success: true }), { headers });
         }
 
+        // GET /api/portal/history/:type/:id - Get audit log history
+        if (path.startsWith('/api/portal/history/') && request.method === 'GET') {
+            const user = await requireClientAuth(request, env);
+            const pathParts = path.split('/');
+            const type = pathParts[4]; // 'proposals' or table name really
+            const id = pathParts[5];
+
+            // Verify access (basic check)
+            if (type === 'proposals') {
+                const share = await env.DB.prepare(
+                    'SELECT id FROM proposta_shares WHERE proposal_id = ? AND client_user_id = ?'
+                ).bind(id, user.id).first();
+                if (!share) return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
+
+                const { results } = await env.DB.prepare(`
+                    SELECT al.*, 
+                           CASE WHEN al.user_type = 'client' THEN cu.name 
+                                WHEN al.user_type = 'agency' THEN ui.name 
+                                ELSE 'Sistema' END as user_name
+                    FROM audit_logs al
+                    LEFT JOIN usuarios_externos cu ON al.user_type = 'client' AND al.changed_by = cu.id
+                    LEFT JOIN usuarios_internos ui ON al.user_type = 'agency' AND al.changed_by = ui.id
+                    WHERE al.table_name = 'propostas' AND al.record_id = ?
+                    ORDER BY al.created_at DESC
+                `).bind(id).all();
+
+                return new Response(JSON.stringify(results.map((r: any) => ({
+                    ...r,
+                    changes: r.changes ? JSON.parse(r.changes) : {}
+                }))), { headers });
+            }
+
+            return new Response(JSON.stringify({ error: 'Invalid type' }), { status: 400, headers });
+        }
     } catch (e: any) {
         console.error(e);
         const status = e.message === 'Unauthorized' || e.message === 'No token provided' || e.message === 'Invalid token' ? 401 : 500;

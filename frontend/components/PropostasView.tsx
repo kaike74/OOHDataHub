@@ -1,15 +1,17 @@
 
 import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
-import { ArrowLeft, Plus, Calendar, Coins, FileText, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, Coins, FileText, Loader2, History } from 'lucide-react';
 import { Proposta } from '@/lib/types';
 import PropostaModal from './PropostaModal';
+import HistoryModal from './HistoryModal';
 import { api } from '@/lib/api';
 
 export default function PropostasView() {
     const [propostas, setPropostas] = useState<Proposta[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isPropostaModalOpen, setIsPropostaModalOpen] = useState(false);
+    const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(null);
 
     const selectedCliente = useStore((state) => state.selectedCliente);
     const setSelectedCliente = useStore((state) => state.setSelectedCliente);
@@ -138,8 +140,20 @@ export default function PropostasView() {
                                     </span>
                                 </div>
                                 <div className="text-right text-emidias-gray-500 text-sm flex items-center justify-end gap-2">
-                                    <Calendar size={14} />
-                                    {new Date(proposta.created_at).toLocaleDateString()}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedHistoryId(proposta.id);
+                                        }}
+                                        className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-emidias-primary transition-colors"
+                                        title="Ver Histórico"
+                                    >
+                                        <History size={16} />
+                                    </button>
+                                    <div className="flex items-center gap-1">
+                                        <Calendar size={14} />
+                                        {new Date(proposta.created_at).toLocaleDateString()}
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -163,6 +177,13 @@ export default function PropostasView() {
                     loadPropostas();
                     handlePropostaClick(newProposta); // Auto-open cart
                 }}
+            />
+
+            <HistoryModal
+                isOpen={!!selectedHistoryId}
+                onClose={() => setSelectedHistoryId(null)}
+                type="proposals"
+                id={selectedHistoryId || 0}
             />
         </div>
     );

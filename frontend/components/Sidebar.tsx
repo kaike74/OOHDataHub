@@ -6,6 +6,7 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye, ChevronLeft, ChevronRight, Phone, Mail, Trash2, DollarSign, Tag, Calendar, ExternalLink, Loader2, Calculator, ShoppingCart } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Contato, Proposta } from '@/lib/types';
+import HistoryModal from '@/components/HistoryModal';
 
 // Componente para exibir contatos da exibidora
 function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undefined }) {
@@ -85,6 +86,7 @@ export default function Sidebar() {
     const user = useStore((state) => state.user);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const imagens = selectedPonto?.imagens || [];
@@ -99,7 +101,7 @@ export default function Sidebar() {
     }, [selectedPonto, setEditingPonto, setModalOpen, setSidebarOpen]);
 
     const handleHistory = useCallback(() => {
-        alert('Funcionalidade de histórico será implementada em breve');
+        setIsHistoryOpen(true);
     }, []);
 
     const handleDelete = useCallback(async () => {
@@ -613,6 +615,13 @@ export default function Sidebar() {
                     </div>
                 </div>
             </div>
+
+            <HistoryModal
+                isOpen={isHistoryOpen}
+                onClose={() => setIsHistoryOpen(false)}
+                type="points"
+                id={selectedPonto?.id || 0}
+            />
         </>
     );
 }

@@ -2,7 +2,7 @@
 
 import { useStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
-import { X, Map, Building2, Settings, LogOut, User, ChevronRight, Shield, Users } from 'lucide-react';
+import { X, Map, Building2, Settings, LogOut, User, ChevronRight, Shield, Users, Trash2 } from 'lucide-react';
 
 export default function NavigationMenu() {
     const router = useRouter();
@@ -46,6 +46,13 @@ export default function NavigationMenu() {
             description: 'Gerenciar acesso de clientes',
             type: 'view' as const
         },
+        {
+            id: 'lixeira' as const,
+            icon: Trash2,
+            label: 'Lixeira',
+            description: 'Itens arquivados e excluídos',
+            type: 'view' as const
+        },
     ];
 
     // Filter menu items for clients
@@ -69,7 +76,7 @@ export default function NavigationMenu() {
 
 
 
-    const handleViewChange = (viewId: 'map' | 'exibidoras' | 'clientes' | 'propostas' | 'contas') => {
+    const handleViewChange = (viewId: 'map' | 'exibidoras' | 'clientes' | 'propostas' | 'contas' | 'lixeira') => {
         // If we're leaving proposal editing mode (map with cart), clear the proposta
         if (selectedProposta && viewId !== 'propostas') {
             setSelectedProposta(null);
@@ -79,6 +86,8 @@ export default function NavigationMenu() {
             router.push('/admin/proposals');
         } else if (viewId === 'contas') {
             router.push('/admin/accounts');
+        } else if (viewId === 'lixeira') {
+            router.push('/admin/trash');
         } else if (viewId === 'map' || viewId === 'exibidoras') {
             router.push('/');
         }

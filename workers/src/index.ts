@@ -21,6 +21,7 @@ import { handleAIChat } from './routes/ai';
 import { handlePublicProposal } from './routes/proposal_public';
 import { handleClients } from './routes/clients';
 import { handlePortal } from './routes/portal';
+import { handleTrash } from './routes/trash';
 import { corsHeaders, handleOptions } from './utils/cors';
 
 export default {
@@ -101,6 +102,10 @@ export default {
                 return await handlePortal(request, env, path);
             }
 
+            if (path.startsWith('/api/trash')) {
+                return await handleTrash(request, env, path);
+            }
+
             // Not found
             return new Response(JSON.stringify({ error: 'Not found' }), {
                 status: 404,
@@ -112,6 +117,31 @@ export default {
                 status: 500,
                 headers: { ...corsHeaders(request, env), 'Content-Type': 'application/json' },
             });
+        }
+    },
+
+    async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+        // Cron trigger: 0 0 * * * (Daily)
+        console.log('[CRON] Starting daily cleanup...');
+
+        try {
+            // Delete proposals older than 30 days in trash
+            const resPropostas = await env.DB.prepare(`
+                DELETE FROM propostas 
+                WHERE deleted_at IS NOT NULL 
+                AND deleted_at < datetime('now', '-30 days')
+            `).run();
+
+            // Delete points older than 30 days in trash
+            const resPoints = await env.DB.prepare(`
+                DELETE FROM pontos_ooh 
+                WHERE deleted_at IS NOT NULL 
+                AND deleted_at < datetime('now', '-30 days')
+            `).run();
+
+            console.log(`[CRON] Deleted ${resPropostas.meta.changes} proposals and ${resPoints.meta.changes} points.`);
+        } catch (e) {
+            console.error('[CRON] Error during cleanup:', e);
         }
     },
 };

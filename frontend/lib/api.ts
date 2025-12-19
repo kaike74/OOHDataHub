@@ -301,4 +301,16 @@ export const api = {
 
     // Helper para URL de imagem
     getImageUrl: (r2Key: string) => `${API_URL}/api/images/${encodeURIComponent(r2Key)}`,
+
+    // History
+    getHistory: (type: string, id: number | string) => fetchAPI(`/api/portal/history/${type}/${id}`),
+
+    // Trash
+    getTrash: (type: 'proposals' | 'points') => fetchAPI(`/api/trash/${type}`),
+    restoreTrash: (type: 'proposals' | 'points', id: number | string) => fetchAPI(`/api/trash/${type}/${id}/restore`, { method: 'POST' }),
+    deleteTrash: (type: 'proposals' | 'points', id: number | string) => fetchAPI(`/api/trash/${type}/${id}`, { method: 'DELETE' }),
+
+    // Soft Delete Proposal override (if needed, currently standard deletePonto does DELETE)
+    // Assuming backend handles soft delete on DELETE /api/propostas/:id
+    deleteProposta: (id: number) => fetchAPI(`/api/propostas/${id}`, { method: 'DELETE' }),
 };

@@ -1,6 +1,7 @@
 import { Env } from '../index';
 import { corsHeaders } from '../utils/cors';
-import { extractToken, verifyToken } from '../utils/auth';
+import { extractToken, verifyToken, requireAuth } from '../utils/auth';
+import { logAudit } from '../utils/audit';
 
 export async function handlePropostas(request: Request, env: Env, path: string): Promise<Response> {
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
@@ -11,7 +12,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
 
         // Buscar proposta
         const proposta = await env.DB.prepare(
-            'SELECT * FROM propostas WHERE id = ?'
+            'SELECT * FROM propostas WHERE id = ? AND deleted_at IS NULL'
         ).bind(id).first();
 
         if (!proposta) {
@@ -44,10 +45,12 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const token = extractToken(request);
             let createdBy = null;
             let role = 'internal';
+            let userId = 0;
 
             if (token) {
                 const payload = await verifyToken(token);
                 if (payload) {
+                    userId = payload.userId;
                     role = payload.role;
                     if (role === 'client') {
                         createdBy = payload.userId;
@@ -76,6 +79,16 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     'INSERT INTO proposta_shares (proposal_id, client_user_id) VALUES (?, ?)'
                 ).bind(proposalId, createdBy).run();
             }
+
+            // Audit
+            await logAudit(env, {
+                tableName: 'propostas',
+                recordId: proposalId as number,
+                action: 'CREATE',
+                changedBy: userId,
+                userType: role as any,
+                changes: data
+            });
 
             return new Response(JSON.stringify({ id: proposalId, success: true }), { status: 201, headers });
         } catch (e: any) {
@@ -119,6 +132,27 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             }
 
             await env.DB.batch(batch);
+
+            // Audit
+            const token = extractToken(request);
+            let userId = 0;
+            let role = 'agency';
+            if (token) {
+                const payload = await verifyToken(token);
+                if (payload) {
+                    userId = payload.userId;
+                    role = payload.role === 'client' ? 'client' : 'agency';
+                }
+            }
+
+            await logAudit(env, {
+                tableName: 'propostas',
+                recordId: Number(idProposta),
+                action: 'UPDATE',
+                changedBy: userId,
+                userType: role as any,
+                changes: { action: 'update_items', items_count: data.itens.length }
+            });
 
             return new Response(JSON.stringify({ success: true }), { headers });
 
@@ -282,6 +316,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                 JOIN clientes c ON p.id_cliente = c.id
                 LEFT JOIN usuarios_externos creator ON p.created_by = creator.id
                 LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
+                WHERE p.deleted_at IS NULL
                 GROUP BY p.id
                 ORDER BY p.created_at DESC
             `;
@@ -295,6 +330,32 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             }));
 
             return new Response(JSON.stringify(formattedResults), { headers });
+        } catch (e: any) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
+    // DELETE /api/propostas/:id - Soft Delete
+    if (request.method === 'DELETE' && path.match(/^\/api\/propostas\/\d+$/)) {
+        try {
+            const id = path.split('/').pop();
+            await requireAuth(request, env);
+            const token = extractToken(request);
+            const payload = await verifyToken(token!);
+
+            await env.DB.prepare('UPDATE propostas SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?').bind(id).run();
+
+            await logAudit(env, {
+                tableName: 'propostas',
+                recordId: Number(id),
+                action: 'DELETE',
+                changedBy: payload!.userId,
+                userType: 'agency',
+                changes: { deleted_at: new Date().toISOString() }
+            });
+
+            return new Response(JSON.stringify({ success: true }), { headers });
+
         } catch (e: any) {
             return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
         }

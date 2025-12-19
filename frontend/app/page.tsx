@@ -14,6 +14,7 @@ import ExibidorasView from '@/components/ExibidorasView';
 import ClientesView from '@/components/ClientesView';
 import PropostasView from '@/components/PropostasView';
 import CartTable from '@/components/CartTable';
+import TrashView from '@/components/TrashView';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { Plus, Filter, Menu, MapPin, Building2, Loader2 } from 'lucide-react';
@@ -241,6 +242,7 @@ export default function HomePage() {
         {currentView === 'exibidoras' && !isLoading && !error && <ExibidorasView />}
         {currentView === 'clientes' && !isLoading && !error && <ClientesView />}
         {currentView === 'propostas' && !isLoading && !error && <PropostasView />}
+        {currentView === 'lixeira' && !isLoading && !error && <TrashView />}
 
         {/* Global Components */}
         <CreatePointModal />

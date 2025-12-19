@@ -6,6 +6,7 @@ import {
     sendClientWelcomeEmail,
     requireAuth,
     generateClientToken,
+    verifyToken,
     ClientUser
 } from '../utils/auth';
 
@@ -14,16 +15,56 @@ import { corsHeaders } from '../utils/cors';
 export const handleClients = async (request: Request, env: Env, path: string) => {
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
 
-    // GET /api/clients - List ALL client users (Requires Agency Auth)
+    // GET /api/clients - List ALL client users (Requires Agency Auth OR Client Auth)
     if (path === '/api/clients' && request.method === 'GET') {
         try {
-            await requireAuth(request, env);
-            const { results } = await env.DB.prepare(`
-                SELECT cu.id, cu.name, cu.email, cu.created_at, cu.last_login
-                FROM usuarios_externos cu
-                ORDER BY cu.created_at DESC
-            `).all();
-            return new Response(JSON.stringify(results), { headers });
+            let isAgency = false;
+            let currentClientUser: any = null;
+
+            // Try Agency Auth
+            try {
+                await requireAuth(request, env);
+                isAgency = true;
+            } catch (e) {
+                // Try Client Auth if Agency failed
+                const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+                if (token) {
+                    const payload = await verifyToken(token);
+                    if (payload && payload.role === 'client') {
+                        currentClientUser = await env.DB.prepare('SELECT * FROM usuarios_externos WHERE id = ?').bind(payload.userId).first();
+                        if (!currentClientUser) throw new Error('User not found');
+                    } else {
+                        throw new Error('Unauthorized');
+                    }
+                } else {
+                    throw new Error('Unauthorized');
+                }
+            }
+
+            if (isAgency) {
+                // Agency gets everything
+                const { results } = await env.DB.prepare(`
+                    SELECT cu.id, cu.name, cu.email, cu.created_at, cu.last_login
+                    FROM usuarios_externos cu
+                    ORDER BY cu.created_at DESC
+                `).all();
+                return new Response(JSON.stringify(results), { headers });
+            } else {
+                // Client User gets only themselves (and potentially others from same company if we had that link explicit)
+                // For now, to allow "sharing", we might want to return users they have already shared with?
+                // Or simply return just themselves so the UI works and they can add new people by email.
+                // Returning empty list or just themselves avoids leaking other clients' data.
+
+                const results = [{
+                    id: currentClientUser.id,
+                    name: currentClientUser.name,
+                    email: currentClientUser.email,
+                    created_at: currentClientUser.created_at,
+                    last_login: currentClientUser.last_login
+                }];
+                return new Response(JSON.stringify(results), { headers });
+            }
+
         } catch (e: any) {
             console.error(e);
             return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
