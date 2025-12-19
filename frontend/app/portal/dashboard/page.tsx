@@ -30,6 +30,7 @@ export default function PortalDashboard() {
     const [user, setUser] = useState<{ name: string; email: string } | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [creatingForClientId, setCreatingForClientId] = useState<number | undefined>(undefined);
+    const [creatingForClientName, setCreatingForClientName] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         checkAuth();
@@ -172,6 +173,7 @@ export default function PortalDashboard() {
                                     <button
                                         onClick={() => {
                                             setCreatingForClientId(Number(clientId));
+                                            setCreatingForClientName(group.clientName);
                                             setIsCreateModalOpen(true);
                                         }}
                                         className="px-4 py-2 bg-emidias-primary hover:bg-emidias-primary-dark text-white rounded-lg text-sm font-semibold shadow-sm transition-colors flex items-center gap-2"
@@ -297,6 +299,7 @@ export default function PortalDashboard() {
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
                 initialClientId={creatingForClientId}
+                initialClientName={creatingForClientName}
             />
         </div>
     );

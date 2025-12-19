@@ -8,9 +8,10 @@ interface CreateProposalModalProps {
     isOpen: boolean;
     onClose: () => void;
     initialClientId?: number;
+    initialClientName?: string;
 }
 
-export default function CreateProposalModal({ isOpen, onClose, initialClientId }: CreateProposalModalProps) {
+export default function CreateProposalModal({ isOpen, onClose, initialClientId, initialClientName }: CreateProposalModalProps) {
     const router = useRouter();
     const user = useStore((state) => state.user);
     const setSelectedProposta = useStore((state) => state.setSelectedProposta);
@@ -129,28 +130,39 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId }
                         </div>
                     )}
 
-                    {/* Client Selection (Internal Only) */}
-                    {user?.role !== 'client' && (
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-emidias-gray-700 flex items-center gap-2">
-                                <Building2 size={16} className="text-emidias-accent" />
-                                Cliente
-                            </label>
-                            <select
-                                value={selectedClientId}
-                                onChange={(e) => setSelectedClientId(Number(e.target.value))}
-                                className="w-full p-3 bg-emidias-gray-50 border border-emidias-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emidias-accent/50 transition-all font-medium"
-                                required
-                            >
-                                <option value="" disabled>Selecione um cliente...</option>
-                                {clients.map(client => (
+                    {/* Client Selection */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold text-emidias-gray-700 flex items-center gap-2">
+                            <Building2 size={16} className="text-emidias-accent" />
+                            Cliente
+                        </label>
+                        <select
+                            value={selectedClientId}
+                            onChange={(e) => setSelectedClientId(Number(e.target.value))}
+                            className={`w-full p-3 bg-emidias-gray-50 border border-emidias-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emidias-accent/50 transition-all font-medium ${user?.role === 'client' ? 'opacity-70 cursor-not-allowed bg-gray-100' : ''}`}
+                            required
+                            disabled={user?.role === 'client'}
+                        >
+                            <option value="" disabled>Selecione um cliente...</option>
+                            {/* If Client User, only show their linked clients (or the specific one) */}
+                            {user?.role === 'client' ? (
+                                // For client users, we might not have the full 'clients' list loaded from API
+                                // We should rely on the clients available to them, or just show the selected ID if we can't fetch names
+                                // Ideally, for the portal, we might need to pass the client name too
+                                <option value={selectedClientId}>{
+                                    clients.find(c => c.id === selectedClientId)?.nome ||
+                                    (user as any)?.client_name ||
+                                    'Cliente Selecionado'
+                                }</option>
+                            ) : (
+                                clients.map(client => (
                                     <option key={client.id} value={client.id}>
                                         {client.nome}
                                     </option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
+                                ))
+                            )}
+                        </select>
+                    </div>
 
                     {/* Proposal Name */}
                     <div className="space-y-2">
@@ -168,13 +180,18 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId }
                         />
                     </div>
 
-                    {/* Commission Selection (Internal Only) */}
-                    {user?.role !== 'client' && (
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-emidias-gray-700 flex items-center gap-2">
-                                <DollarSign size={16} className="text-emidias-accent" />
-                                Tabela de Comissão
-                            </label>
+                    {/* Commission Selection */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold text-emidias-gray-700 flex items-center gap-2">
+                            <DollarSign size={16} className="text-emidias-accent" />
+                            Tabela de Comissão
+                        </label>
+                        {user?.role === 'client' ? (
+                            <div className="w-full p-3 bg-gray-100 border border-gray-200 rounded-xl font-medium text-gray-600 cursor-not-allowed flex items-center justify-between">
+                                <span>Tabela Cliente (V0)</span>
+                                <span className="text-xs bg-gray-200 px-2 py-1 rounded text-gray-500">Padrão</span>
+                            </div>
+                        ) : (
                             <div className="grid grid-cols-3 gap-3">
                                 {['V2', 'V3', 'V4'].map((opt) => (
                                     <button
@@ -190,8 +207,8 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId }
                                     </button>
                                 ))}
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
                     {/* Submit Button */}
                     <button
