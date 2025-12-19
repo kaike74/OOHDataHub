@@ -47,15 +47,18 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             setError('');
             setName('');
             console.log('User when opening modal:', user);
+            console.log('Initial Client ID passed:', initialClientId);
 
             if (user?.role === 'client') {
                 // If initialClientId is passed (from Portal Dashboard Grouping), use it
                 // Otherwise try fallback to user's linked client
-                const cId = initialClientId || user.client_id || user.clientId;
+                // IMPORTANT: Check for undefined explicitly, not falsy, to allow 0 as valid client ID
+                const cId = initialClientId !== undefined ? initialClientId : (user.client_id || user.clientId);
 
-                if (cId) {
+                if (cId !== undefined && cId !== null) {
                     setSelectedClientId(Number(cId));
                     setCommission('V0'); // Strict V0 for Clients
+                    console.log('Set client ID to:', Number(cId));
                 } else {
                     console.error('User is client but missing client_id. Store state:', user);
                     setError('Erro: Identificação do cliente não encontrada. Por favor, faça LOGOUT e LOGIN novamente para atualizar suas credenciais.');
@@ -78,6 +81,8 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                 nome: name,
                 comissao: commission
             };
+
+            console.log('📝 Creating proposal with payload:', payload);
 
             const response = await api.createProposta(payload);
 
