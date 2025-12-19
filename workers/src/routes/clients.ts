@@ -19,9 +19,8 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
         try {
             await requireAuth(request, env);
             const { results } = await env.DB.prepare(`
-                SELECT cu.id, cu.name, cu.email, cu.created_at, cu.last_login, c.nome as client_name
+                SELECT cu.id, cu.name, cu.email, cu.created_at, cu.last_login
                 FROM client_users cu
-                JOIN clientes c ON cu.client_id = c.id
                 ORDER BY cu.created_at DESC
             `).all();
             return new Response(JSON.stringify(results), { headers });
@@ -150,10 +149,9 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
         try {
             await requireAuth(request, env);
             const { results } = await env.DB.prepare(`
-                SELECT cu.id, cu.name, cu.email, cu.created_at, cu.last_login, c.nome as client_name, c.id as client_id,
+                SELECT cu.id, cu.name, cu.email, cu.created_at, cu.last_login,
                 (SELECT COUNT(*) FROM proposta_shares ps WHERE ps.client_user_id = cu.id) as shared_count
                 FROM client_users cu
-                LEFT JOIN clientes c ON cu.client_id = c.id
                 ORDER BY cu.created_at DESC
             `).all();
             return new Response(JSON.stringify(results), { headers });
