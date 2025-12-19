@@ -18,8 +18,6 @@ interface UserAccount {
     email: string;
     created_at: string;
     last_login: string | null;
-    client_name: string;
-    client_id: number;
     shared_count: number;
 }
 
@@ -129,8 +127,7 @@ export default function AdminAccountsPage() {
     // Filter
     const filteredAccounts = accounts.filter(user =>
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.client_name?.toLowerCase().includes(searchTerm.toLowerCase())
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -221,9 +218,6 @@ export default function AdminAccountsPage() {
                                                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm text-emidias-gray-500">
                                                     <span className="flex items-center gap-1">
                                                         <Mail size={12} /> {user.email}
-                                                    </span>
-                                                    <span className="flex items-center gap-1 font-medium text-emidias-accent">
-                                                        <Building2 size={12} /> {user.client_name}
                                                     </span>
                                                 </div>
                                             </div>
