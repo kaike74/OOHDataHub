@@ -172,6 +172,7 @@ export default function PortalDashboard() {
                                     </div>
                                     <button
                                         onClick={() => {
+                                            console.log('🔵 Opening modal for client:', { clientId, clientIdNum: Number(clientId), groupName: group.clientName });
                                             setCreatingForClientId(Number(clientId));
                                             setCreatingForClientName(group.clientName);
                                             setIsCreateModalOpen(true);
@@ -297,7 +298,12 @@ export default function PortalDashboard() {
 
             <CreateProposalModal
                 isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
+                onClose={() => {
+                    setIsCreateModalOpen(false);
+                    // Reset states when closing
+                    setCreatingForClientId(undefined);
+                    setCreatingForClientName(undefined);
+                }}
                 initialClientId={creatingForClientId}
                 initialClientName={creatingForClientName}
             />
