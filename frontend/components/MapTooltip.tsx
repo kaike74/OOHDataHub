@@ -80,10 +80,6 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
       }
       // Helper function to calculate value with commission
       const calcularValorComissao = (valorBase: number, comissao: string): number => {
-        if (comissao === 'CLIENT') {
-          return parseFloat((valorBase * 2).toFixed(2));
-        }
-
         const v2 = valorBase * 1.25;
         if (comissao === 'V2') return parseFloat(v2.toFixed(2));
 

@@ -26,7 +26,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             pi.valor_locacao, pi.valor_papel, pi.valor_lona, 
             pi.periodo_comercializado, pi.observacoes, pi.fluxo_diario, pi.status,
             p.endereco, p.cidade, p.uf, p.pais, p.codigo_ooh, p.tipo, p.medidas, p.ponto_referencia,
-            p.latitude, p.longitude, p.produtos,
+            p.latitude, p.longitude,
             e.nome as exibidora_nome
         FROM proposta_itens pi
         JOIN pontos_ooh p ON pi.id_ooh = p.id
@@ -34,46 +34,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         WHERE pi.id_proposta = ?
     `).bind(id).all();
 
-        let processedItens = itens;
-
-        if (proposta.comissao === 'CLIENT') {
-            processedItens = itens.map((item: any) => {
-                let valor_locacao = item.valor_locacao || 0;
-                let valor_papel = item.valor_papel || 0;
-                let valor_lona = item.valor_lona || 0;
-
-                // Recalculate logic specific for CLIENT created proposals (Consistency with Portal)
-                if (item.produtos) {
-                    try {
-                        const produtos = JSON.parse(item.produtos);
-                        const locacaoProd = produtos.find((p: any) =>
-                            p.tipo.toLowerCase().includes('locação') ||
-                            p.tipo.toLowerCase().includes('locacao') ||
-                            p.tipo.toLowerCase().includes('bissemanal')
-                        );
-                        if (locacaoProd) {
-                            valor_locacao = locacaoProd.valor * 2;
-                        }
-
-                        const papelProd = produtos.find((p: any) => p.tipo.toLowerCase().includes('papel'));
-                        if (papelProd) {
-                            valor_papel = papelProd.valor * 1.25;
-                        }
-
-                        const lonaProd = produtos.find((p: any) => p.tipo.toLowerCase().includes('lona'));
-                        if (lonaProd) {
-                            valor_lona = lonaProd.valor * 1.25;
-                        }
-                    } catch (e) {
-                        // Fallback to stored values if parse error
-                        console.error('Error parsing products for recalc', e);
-                    }
-                }
-                return { ...item, valor_locacao, valor_papel, valor_lona };
-            });
-        }
-
-        return new Response(JSON.stringify({ ...proposta, itens: processedItens }), { headers });
+        return new Response(JSON.stringify({ ...proposta, itens }), { headers });
     }
 
     // POST /api/propostas - Criar proposta

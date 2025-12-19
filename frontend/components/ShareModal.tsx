@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Copy, Check, QrCode, ExternalLink, Loader2, Share2, Users, UserPlus, Mail, Link as LinkIcon, Plus } from 'lucide-react';
+import { X, Copy, Check, QrCode, ExternalLink, Loader2, Share2, Users, UserPlus, Mail, Link as LinkIcon } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Proposta } from '@/lib/types';
 // import { toast } from 'sonner';
@@ -29,12 +29,7 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
 
     // Portal State
     const [clientUsers, setClientUsers] = useState<ClientUser[]>([]);
-
-    // Multi-select state
-    const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
-    const [currentSelection, setCurrentSelection] = useState('');
-    const [isCreatingNew, setIsCreatingNew] = useState(false);
-
+    const [selectedUserId, setSelectedUserId] = useState<string | number>('');
     const [newUser, setNewUser] = useState({ name: '', email: '' });
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -43,9 +38,6 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
         if (isOpen) {
             setErrorMessage('');
             setSuccessMessage('');
-            setSelectedUserIds([]);
-            setCurrentSelection('');
-            setIsCreatingNew(false);
         }
         if (isOpen && proposta && mode === 'portal') {
             fetchClientUsers();
@@ -88,69 +80,52 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
         }
     };
 
-    const handleAddUser = (id: number) => {
-        if (!selectedUserIds.includes(id)) {
-            setSelectedUserIds([...selectedUserIds, id]);
-        }
-        setCurrentSelection('');
-    };
-
-    const handleRemoveUser = (id: number) => {
-        setSelectedUserIds(selectedUserIds.filter(uid => uid !== id));
-    };
-
-    const handleCreateUser = async () => {
-        if (!proposta || !newUser.name || !newUser.email) return;
-        setIsLoading(true);
-        try {
-            const res = await api.registerClientUser({
-                client_id: proposta.id_cliente,
-                name: newUser.name,
-                email: newUser.email
-            });
-            if (res.success && res.userId) {
-                // Refresh list and add to selection
-                await fetchClientUsers();
-                handleAddUser(Number(res.userId));
-                setNewUser({ name: '', email: '' });
-                setIsCreatingNew(false);
-                setSuccessMessage('Usuário criado e selecionado!');
-                setTimeout(() => setSuccessMessage(''), 3000);
-            } else {
-                setErrorMessage(res.error || 'Falha ao criar usuário');
-            }
-        } catch (err: any) {
-            setErrorMessage(err.message || 'Erro ao criar usuário');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const handlePortalShare = async () => {
         if (!proposta) return;
-        if (selectedUserIds.length === 0) {
-            setErrorMessage('Selecione pelo menos um usuário');
-            return;
-        }
-
         setIsLoading(true);
         setSuccessMessage('');
         setErrorMessage('');
 
         try {
-            // Sequential sharing (could be Promise.all but let's do sequential to track errors if needed)
-            // or just trigger all.
-            const results = await Promise.all(
-                selectedUserIds.map(userId => api.shareProposalWithUser(proposta.id, userId))
-            );
+            let userIdToShare = selectedUserId;
 
-            const failures = results.filter(r => !r.success);
+            // If creating new user
+            if (selectedUserId === 'new') {
+                if (!newUser.name || !newUser.email) {
+                    setErrorMessage('Preencha nome e email');
+                    setIsLoading(false);
+                    return;
+                }
+                const res = await api.registerClientUser({
+                    client_id: proposta.id_cliente,
+                    name: newUser.name,
+                    email: newUser.email
+                });
+                if (res.success && res.userId) {
+                    userIdToShare = res.userId;
+                    // toast.success('Usuário criado com sucesso!');
+                } else {
+                    throw new Error(res.error || 'Falha ao criar usuário');
+                }
+            }
 
-            if (failures.length === 0) {
-                setSuccessMessage(`Proposta compartilhada com ${selectedUserIds.length} usuário(s)!`);
-                setSelectedUserIds([]); // Reset selection
+            if (!userIdToShare || userIdToShare === 'new') throw new Error('Selecione um usuário');
+
+            const shareRes = await api.shareProposalWithUser(proposta.id, Number(userIdToShare));
+
+            if (shareRes.success) {
+                setSuccessMessage(selectedUserId === 'new'
+                    ? `Convite enviado para ${newUser.email} com acesso à proposta!`
+                    : 'Proposta compartilhada com sucesso!');
+                if (selectedUserId === 'new') {
+                    // Refresh list and select the new user? Or just reset
+                    setNewUser({ name: '', email: '' });
+                    fetchClientUsers(); // Refresh list
+                    setSelectedUserId(''); // Reset selection
+                }
+
             } else {
-                throw new Error(`Falha ao compartilhar com ${failures.length} usuário(s)`);
+                throw new Error('Falha ao compartilhar proposta');
             }
 
         } catch (err: any) {
@@ -215,62 +190,24 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
 
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Selecionar Clientes</label>
-                                    <div className="flex gap-2 mb-2">
-                                        <select
-                                            value={currentSelection}
-                                            onChange={(e) => {
-                                                if (e.target.value === 'new') {
-                                                    setIsCreatingNew(true);
-                                                    setCurrentSelection('');
-                                                } else if (e.target.value) {
-                                                    handleAddUser(Number(e.target.value));
-                                                }
-                                            }}
-                                            className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-emidias-primary focus:ring focus:ring-emidias-primary/20 p-2.5 text-gray-700"
-                                        >
-                                            <option value="">Adicionar usuário...</option>
-                                            {clientUsers
-                                                .filter(u => !selectedUserIds.includes(u.id))
-                                                .map(u => (
-                                                    <option key={u.id} value={u.id}>
-                                                        {u.name} - {u.email}
-                                                    </option>
-                                                ))}
-                                            <option value="new" className="font-medium text-emidias-primary">+ Cadastrar Novo Usuário</option>
-                                        </select>
-                                    </div>
-
-                                    {/* Selected Users List */}
-                                    {selectedUserIds.length > 0 && (
-                                        <div className="flex flex-wrap gap-2 mb-4">
-                                            {selectedUserIds.map(id => {
-                                                const user = clientUsers.find(u => u.id === id);
-                                                if (!user) return null;
-                                                return (
-                                                    <div key={id} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-2 border border-blue-100">
-                                                        <span>{user.name}</span>
-                                                        <button
-                                                            onClick={() => handleRemoveUser(id)}
-                                                            className="hover:text-blue-900 focus:outline-none"
-                                                        >
-                                                            <X size={14} />
-                                                        </button>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Selecionar Cliente</label>
+                                    <select
+                                        value={selectedUserId}
+                                        onChange={(e) => setSelectedUserId(e.target.value === 'new' ? 'new' : Number(e.target.value))}
+                                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-emidias-primary focus:ring focus:ring-emidias-primary/20 p-2.5 text-gray-700"
+                                    >
+                                        <option value="">Selecione um usuário...</option>
+                                        {clientUsers.map(u => (
+                                            <option key={u.id} value={u.id}>
+                                                {u.name} - {u.email}
+                                            </option>
+                                        ))}
+                                        <option value="new" className="font-medium text-emidias-primary">+ Cadastrar Novo Usuário</option>
+                                    </select>
                                 </div>
 
-                                {isCreatingNew && (
-                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3 animate-in fade-in slide-in-from-top-2 relative">
-                                        <button
-                                            onClick={() => setIsCreatingNew(false)}
-                                            className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-                                        >
-                                            <X size={16} />
-                                        </button>
+                                {selectedUserId === 'new' && (
+                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3 animate-in fade-in slide-in-from-top-2">
                                         <div className="flex items-center gap-2 text-sm font-medium text-gray-800 mb-2">
                                             <UserPlus size={16} /> Novo Cadastro
                                         </div>
@@ -294,19 +231,9 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                                                 className="w-full rounded-md border-gray-300 text-sm p-2 focus:border-emidias-primary focus:ring-1 focus:ring-emidias-primary"
                                             />
                                         </div>
-
-                                        <button
-                                            onClick={handleCreateUser}
-                                            disabled={isLoading || !newUser.name || !newUser.email}
-                                            className="w-full py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            {isLoading ? <Loader2 className="animate-spin" size={14} /> : <Plus size={14} />}
-                                            Cadastrar e Selecionar
-                                        </button>
-
-                                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                                        <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
                                             <Mail size={12} />
-                                            As credenciais serão enviadas por email.
+                                            As credenciais de acesso serão enviadas para este email.
                                         </p>
                                     </div>
                                 )}
@@ -326,11 +253,11 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
 
                                 <button
                                     onClick={handlePortalShare}
-                                    disabled={isLoading || selectedUserIds.length === 0}
+                                    disabled={isLoading || (!selectedUserId && selectedUserId !== 'new')}
                                     className="w-full py-3 bg-emidias-primary hover:bg-emidias-primary-dark text-white rounded-xl font-semibold shadow-lg shadow-blue-500/10 hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                                 >
                                     {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Share2 size={20} />}
-                                    Compartilhar com {selectedUserIds.length > 0 ? `${selectedUserIds.length} usuário(s)` : 'Selecionados'}
+                                    {selectedUserId === 'new' ? 'Cadastrar e Compartilhar' : 'Compartilhar Acesso'}
                                 </button>
                             </div>
                         </div>

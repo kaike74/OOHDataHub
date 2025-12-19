@@ -48,13 +48,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                     -- Calculated totals
                     COUNT(pi.id) as total_itens,
                     SUM(pi.valor_locacao + pi.valor_papel + pi.valor_lona) as total_valor,
-                    SUM(COALESCE(pi.fluxo_diario, po.fluxo, 0)) as total_impactos,
-                    (
-                        SELECT json_group_array(json_object('email', cu.email, 'name', cu.name))
-                        FROM proposta_shares ps2
-                        JOIN client_users cu ON ps2.client_user_id = cu.id
-                        WHERE ps2.proposal_id = p.id
-                    ) as shared_with_json
+                    SUM(COALESCE(pi.fluxo_diario, po.fluxo, 0)) as total_impactos
                 FROM propostas p
                 JOIN proposta_shares ps ON p.id = ps.proposal_id
                 JOIN clientes c ON p.id_cliente = c.id
@@ -73,7 +67,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
 
             const proposals = results.map((r: any) => ({
                 ...r,
-                shared_with: r.shared_with_json ? JSON.parse(r.shared_with_json) : []
+                shared_with: [] // Clients don't see who else it's shared with
             }));
 
             return new Response(JSON.stringify(proposals), { headers });
