@@ -75,9 +75,7 @@ export interface User {
     email: string;
     name: string | null;
     role: 'master' | 'editor' | 'viewer' | 'client';
-    created_at: string;
-    client_id?: number;
-    clientId?: number; // Legacy/Alternative
+    created_at?: string;
     client_name?: string | null;
 }
 

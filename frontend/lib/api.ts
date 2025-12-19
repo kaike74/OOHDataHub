@@ -234,7 +234,7 @@ export const api = {
     getAllClientUsers: () => fetchAPI('/api/clients'),
     getClientUsers: (clientId: number) => fetchAPI(`/api/clients/by-client/${clientId}`),
 
-    registerClientUser: (data: { client_id: number; name: string; email: string }) => fetchAPI('/api/clients/register', {
+    registerClientUser: (data: { name: string; email: string }) => fetchAPI('/api/clients/register', {
         method: 'POST',
         body: JSON.stringify(data)
     }),

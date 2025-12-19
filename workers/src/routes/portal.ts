@@ -14,7 +14,7 @@ async function requireClientAuth(request: Request, env: Env) {
 
     // Verify user exists in client_users
     const user = await env.DB.prepare(
-        'SELECT id, client_id, name, email FROM client_users WHERE id = ?'
+        'SELECT id, name, email FROM client_users WHERE id = ?'
     ).bind(payload.userId).first();
 
     if (!user) throw new Error('User not found');
