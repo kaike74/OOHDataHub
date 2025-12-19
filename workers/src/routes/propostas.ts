@@ -275,12 +275,12 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     (
                         SELECT json_group_array(json_object('email', cu.email, 'name', cu.name))
                         FROM proposta_shares ps
-                        JOIN client_users cu ON ps.client_user_id = cu.id
+                        JOIN usuarios_externos cu ON ps.client_user_id = cu.id
                         WHERE ps.proposal_id = p.id
                     ) as shared_with
                 FROM propostas p
                 JOIN clientes c ON p.id_cliente = c.id
-                LEFT JOIN client_users creator ON p.created_by = creator.id
+                LEFT JOIN usuarios_externos creator ON p.created_by = creator.id
                 LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
                 GROUP BY p.id
                 ORDER BY p.created_at DESC

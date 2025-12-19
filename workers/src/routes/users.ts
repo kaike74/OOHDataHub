@@ -23,7 +23,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
         if (request.method === 'POST' && path === '/api/auth/setup') {
             // Check if any users exist
             const existingUsers = await env.DB.prepare(
-                'SELECT COUNT(*) as count FROM users'
+                'SELECT COUNT(*) as count FROM usuarios_internos'
             ).first() as { count: number } | null;
 
             if (existingUsers && existingUsers.count > 0) {
@@ -39,7 +39,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
             const passwordHash = await hashPassword(masterPassword);
 
             await env.DB.prepare(
-                'INSERT INTO users (email, password_hash, name, role) VALUES (?, ?, ?, ?)'
+                'INSERT INTO usuarios_internos (email, password_hash, name, role) VALUES (?, ?, ?, ?)'
             ).bind(masterEmail, passwordHash, 'Kaike Master', 'master').run();
 
             return new Response(JSON.stringify({
@@ -73,7 +73,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // Find user in INTERNAL users table
             const user = await env.DB.prepare(
-                'SELECT id, email, password_hash, name, role FROM users WHERE email = ?'
+                'SELECT id, email, password_hash, name, role FROM usuarios_internos WHERE email = ?'
             ).bind(email).first() as any;
 
             if (user) {
@@ -107,7 +107,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // If not found in internal users, check CLIENT users
             const clientUser = await env.DB.prepare(
-                'SELECT id, name, email, password_hash FROM client_users WHERE email = ?'
+                'SELECT id, name, email, password_hash FROM usuarios_externos WHERE email = ?'
             ).bind(email).first() as any;
 
             if (clientUser) {
@@ -161,7 +161,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // Get user with password hash
             const userWithHash = await env.DB.prepare(
-                'SELECT password_hash FROM users WHERE id = ?'
+                'SELECT password_hash FROM usuarios_internos WHERE id = ?'
             ).bind(user.id).first() as any;
 
             // Verify current password
@@ -178,7 +178,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // Update password
             await env.DB.prepare(
-                'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+                'UPDATE usuarios_internos SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
             ).bind(newHash, user.id).run();
 
             return new Response(JSON.stringify({ success: true }), { headers });
@@ -205,7 +205,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // Find user
             const user = await env.DB.prepare(
-                'SELECT id FROM users WHERE email = ?'
+                'SELECT id FROM usuarios_internos WHERE email = ?'
             ).bind(email).first() as any;
 
             // Always return success to prevent email enumeration
@@ -222,7 +222,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // Save token to database
             await env.DB.prepare(
-                'UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE id = ?'
+                'UPDATE usuarios_internos SET reset_token = ?, reset_token_expires = ? WHERE id = ?'
             ).bind(resetToken, expiresAt.toISOString(), user.id).run();
 
             // Send password reset email
@@ -262,7 +262,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // Find user with valid token
             const user = await env.DB.prepare(
-                'SELECT id FROM users WHERE reset_token = ? AND reset_token_expires > ?'
+                'SELECT id FROM usuarios_internos WHERE reset_token = ? AND reset_token_expires > ?'
             ).bind(token, new Date().toISOString()).first() as any;
 
             if (!user) {
@@ -277,7 +277,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // Update password and clear reset token
             await env.DB.prepare(
-                'UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+                'UPDATE usuarios_internos SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
             ).bind(passwordHash, user.id).run();
 
             return new Response(JSON.stringify({
@@ -297,7 +297,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
             await requireMaster(request, env);
 
             const { results } = await env.DB.prepare(
-                'SELECT id, email, name, role, created_at FROM users ORDER BY created_at DESC'
+                'SELECT id, email, name, role, created_at FROM usuarios_internos ORDER BY created_at DESC'
             ).all();
 
             return new Response(JSON.stringify(results), { headers });
@@ -329,7 +329,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // Check if user already exists
             const existing = await env.DB.prepare(
-                'SELECT id FROM users WHERE email = ?'
+                'SELECT id FROM usuarios_internos WHERE email = ?'
             ).bind(email).first();
 
             if (existing) {
@@ -345,7 +345,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // Insert user
             const result = await env.DB.prepare(
-                'INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)'
+                'INSERT INTO usuarios_internos (email, password_hash, role) VALUES (?, ?, ?)'
             ).bind(email, passwordHash, role || 'viewer').run();
 
             // Send welcome email
@@ -391,7 +391,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // Check if user exists
             const userExists = await env.DB.prepare(
-                'SELECT id FROM users WHERE id = ?'
+                'SELECT id FROM usuarios_internos WHERE id = ?'
             ).bind(userId).first();
 
             if (!userExists) {
@@ -403,7 +403,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // Update role
             await env.DB.prepare(
-                'UPDATE users SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+                'UPDATE usuarios_internos SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
             ).bind(role, userId).run();
 
             return new Response(JSON.stringify({
@@ -425,7 +425,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
                 });
             }
 
-            await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
+            await env.DB.prepare('DELETE FROM usuarios_internos WHERE id = ?').bind(userId).run();
 
             return new Response(JSON.stringify({ success: true }), { headers });
         }

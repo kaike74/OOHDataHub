@@ -12,9 +12,9 @@ async function requireClientAuth(request: Request, env: Env) {
 
     if (payload.role !== 'client') throw new Error('Unauthorized');
 
-    // Verify user exists in client_users
+    // Verify user exists in usuarios_externos
     const user = await env.DB.prepare(
-        'SELECT id, name, email FROM client_users WHERE id = ?'
+        'SELECT id, name, email FROM usuarios_externos WHERE id = ?'
     ).bind(payload.userId).first();
 
     if (!user) throw new Error('User not found');
@@ -53,13 +53,13 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                     (
                         SELECT json_group_array(json_object('email', cu.email, 'name', cu.name))
                         FROM proposta_shares ps2
-                        JOIN client_users cu ON ps2.client_user_id = cu.id
+                        JOIN usuarios_externos cu ON ps2.client_user_id = cu.id
                         WHERE ps2.proposal_id = p.id
                     ) as shared_with
                 FROM propostas p
                 JOIN proposta_shares ps ON p.id = ps.proposal_id
                 JOIN clientes c ON p.id_cliente = c.id
-                LEFT JOIN client_users creator ON p.created_by = creator.id
+                LEFT JOIN usuarios_externos creator ON p.created_by = creator.id
                 LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
                 LEFT JOIN pontos_ooh po ON pi.id_ooh = po.id
                 WHERE ps.client_user_id = ?

@@ -20,7 +20,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             await requireAuth(request, env);
             const { results } = await env.DB.prepare(`
                 SELECT cu.id, cu.name, cu.email, cu.created_at, cu.last_login
-                FROM client_users cu
+                FROM usuarios_externos cu
                 ORDER BY cu.created_at DESC
             `).all();
             return new Response(JSON.stringify(results), { headers });
@@ -38,7 +38,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             return new Response(JSON.stringify({ error: 'Email and password required' }), { status: 400, headers });
         }
 
-        const stmt = env.DB.prepare('SELECT * FROM client_users WHERE email = ?').bind(email);
+        const stmt = env.DB.prepare('SELECT * FROM usuarios_externos WHERE email = ?').bind(email);
         const user = await stmt.first();
 
         if (!user || !await verifyPassword(password, user.password_hash as string)) {
@@ -56,7 +56,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
         const token = await generateClientToken(clientUser);
 
         // Update last login
-        await env.DB.prepare('UPDATE client_users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(user.id).run();
+        await env.DB.prepare('UPDATE usuarios_externos SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(user.id).run();
 
         return new Response(JSON.stringify({
             token,
@@ -83,7 +83,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             }
 
             // Check if email exists
-            const existing = await env.DB.prepare('SELECT id FROM client_users WHERE email = ?').bind(email).first();
+            const existing = await env.DB.prepare('SELECT id FROM usuarios_externos WHERE email = ?').bind(email).first();
             if (existing) {
                 return new Response(JSON.stringify({ error: 'Email já cadastrado' }), { status: 409, headers });
             }
@@ -97,7 +97,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             const passwordHash = await hashPassword(generatedPassword);
 
             const result = await env.DB.prepare(
-                'INSERT INTO client_users (email, password_hash, name) VALUES (?, ?, ?)'
+                'INSERT INTO usuarios_externos (email, password_hash, name) VALUES (?, ?, ?)'
             ).bind(email, passwordHash, name).run();
 
             // Send Email
@@ -130,7 +130,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             // via proposta_shares (not directly linked to client)
             const { results } = await env.DB.prepare(`
                 SELECT DISTINCT cu.id, cu.name, cu.email, cu.created_at, cu.last_login
-                FROM client_users cu
+                FROM usuarios_externos cu
                 JOIN proposta_shares ps ON cu.id = ps.client_user_id
                 JOIN propostas p ON ps.proposal_id = p.id
                 WHERE p.id_cliente = ?
@@ -151,7 +151,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             const { results } = await env.DB.prepare(`
                 SELECT cu.id, cu.name, cu.email, cu.created_at, cu.last_login,
                 (SELECT COUNT(*) FROM proposta_shares ps WHERE ps.client_user_id = cu.id) as shared_count
-                FROM client_users cu
+                FROM usuarios_externos cu
                 ORDER BY cu.created_at DESC
             `).all();
             return new Response(JSON.stringify(results), { headers });
@@ -188,7 +188,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             // Delete shares first
             await env.DB.prepare('DELETE FROM proposta_shares WHERE client_user_id = ?').bind(userId).run();
             // Delete user
-            const res = await env.DB.prepare('DELETE FROM client_users WHERE id = ?').bind(userId).run();
+            const res = await env.DB.prepare('DELETE FROM usuarios_externos WHERE id = ?').bind(userId).run();
 
             if (res.meta.changes === 0) {
                 return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers });
@@ -207,7 +207,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             const userId = path.split('/')[4];
 
             // Get user info for email
-            const user = await env.DB.prepare('SELECT * FROM client_users WHERE id = ?').bind(userId).first();
+            const user = await env.DB.prepare('SELECT * FROM usuarios_externos WHERE id = ?').bind(userId).first();
             if (!user) {
                 return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers });
             }
@@ -219,7 +219,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
 
             const passwordHash = await hashPassword(newPassword);
 
-            await env.DB.prepare('UPDATE client_users SET password_hash = ? WHERE id = ?')
+            await env.DB.prepare('UPDATE usuarios_externos SET password_hash = ? WHERE id = ?')
                 .bind(passwordHash, userId)
                 .run();
 

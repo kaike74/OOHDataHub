@@ -117,7 +117,7 @@ export async function requireAuth(request: Request, env: Env): Promise<User> {
 
     // Fetch user from database
     const user = await env.DB.prepare(
-        'SELECT id, email, name, role FROM users WHERE id = ?'
+        'SELECT id, email, name, role FROM usuarios_internos WHERE id = ?'
     ).bind(payload.userId).first() as User | null;
 
     if (!user) {
