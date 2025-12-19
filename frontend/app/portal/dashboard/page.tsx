@@ -16,13 +16,14 @@ interface Proposal {
     created_by: number | null;
     creator_name?: string;
     creator_email?: string;
+    shared_with: { email: string; name: string }[];
 }
 
 export default function PortalDashboard() {
     const router = useRouter();
     const [proposals, setProposals] = useState<Proposal[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+    const [user, setUser] = useState<{ id: number; name: string; email: string } | null>(null);
 
     useEffect(() => {
         checkAuth();
@@ -79,6 +80,15 @@ export default function PortalDashboard() {
         return (valor / impactos) * 1000;
     };
 
+    const getInitials = (name: string) => {
+        return name
+            .split(' ')
+            .map(n => n[0])
+            .slice(0, 2)
+            .join('')
+            .toUpperCase();
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
@@ -116,11 +126,6 @@ export default function PortalDashboard() {
                         <h1 className="text-2xl font-bold text-gray-900">Minhas Propostas</h1>
                         <p className="text-gray-500 mt-1">Acompanhe as propostas compartilhadas com você</p>
                     </div>
-                    {/* Placeholder for future search/filter */}
-                    {/* <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                        <input type="text" placeholder="Buscar..." className="pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                    </div> */}
                 </div>
 
                 {isLoading ? (
@@ -141,11 +146,12 @@ export default function PortalDashboard() {
                             <table className="w-full">
                                 <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Proposta</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Investimento</th>
-                                        <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Impactos</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[30%]">Proposta</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Criado Por</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Compartilhado Com</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
+                                        <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Investimento</th>
                                         <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">CPM</th>
-                                        <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -155,7 +161,7 @@ export default function PortalDashboard() {
                                             className="hover:bg-gray-50 transition-colors cursor-pointer group"
                                             onClick={() => router.push(`/portal/view?id=${proposal.id}`)}
                                         >
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition-colors">
                                                         <FileText size={18} />
@@ -163,45 +169,58 @@ export default function PortalDashboard() {
                                                     <div>
                                                         <div className="font-medium text-gray-900">{proposal.nome}</div>
                                                         <div className="text-xs text-gray-500">{proposal.total_itens} pontos</div>
-
-                                                        {/* CREATED BY ROW */}
-                                                        <div className="mt-1 flex items-center gap-2 text-xs text-gray-400">
-                                                            <span>Em {new Date(proposal.created_at).toLocaleDateString()}</span>
-                                                            <span>•</span>
-                                                            <span>Por:</span>
-                                                            <span className="font-medium text-gray-600">
-                                                                {(() => {
-                                                                    if (!proposal.created_by) return 'E-Mídias';
-                                                                    // @ts-ignore
-                                                                    if (user && proposal.created_by === user.id) return 'Você';
-                                                                    return proposal.creator_name || proposal.creator_email || 'Usuário';
-                                                                })()}
-                                                            </span>
-                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <div className="text-sm font-medium text-gray-900">{formatCurrency(proposal.total_valor)}</div>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${user && proposal.created_by === user.id
+                                                        ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20'
+                                                        : !proposal.created_by
+                                                            ? 'bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-600/20'
+                                                            : 'bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10'
+                                                    }`}>
+                                                    {(() => {
+                                                        if (!proposal.created_by) return 'E-Mídias';
+                                                        if (user && proposal.created_by === user.id) return 'Você';
+                                                        return proposal.creator_name || proposal.creator_email?.split('@')[0] || 'Outro Usuário';
+                                                    })()}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex -space-x-2 overflow-hidden items-center">
+                                                    {proposal.shared_with && proposal.shared_with.length > 0 ? (
+                                                        <>
+                                                            {proposal.shared_with.slice(0, 3).map((u, i) => (
+                                                                <div
+                                                                    key={i}
+                                                                    className="relative inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600 cursor-help"
+                                                                    title={`${u.name}\n${u.email}`}
+                                                                >
+                                                                    {getInitials(u.name)}
+                                                                </div>
+                                                            ))}
+                                                            {proposal.shared_with.length > 3 && (
+                                                                <div className="relative inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-50 flex items-center justify-center text-xs font-medium text-gray-500">
+                                                                    +{proposal.shared_with.length - 3}
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400 italic">Privado</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {new Date(proposal.created_at).toLocaleDateString()}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <div className="text-sm text-gray-600">{formatNumber(proposal.total_impactos)}</div>
+                                                <div className="text-sm font-medium text-gray-900">{formatCurrency(proposal.total_valor)}</div>
+                                                <div className="text-xs text-gray-500">{formatNumber(proposal.total_impactos)} imp.</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
                                                 <div className="text-sm text-gray-600 font-mono">
                                                     {formatCurrency(calculateCPM(proposal.total_valor, proposal.total_impactos))}
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        router.push(`/portal/view?id=${proposal.id}`);
-                                                    }}
-                                                    className="p-2 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"
-                                                >
-                                                    <ExternalLink size={18} />
-                                                </button>
                                             </td>
                                         </tr>
                                     ))}
