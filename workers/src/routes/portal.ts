@@ -311,37 +311,55 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
 
         // GET /api/portal/history/:type/:id - Get audit log history
         if (path.startsWith('/api/portal/history/') && request.method === 'GET') {
-            const user = await requireClientAuth(request, env);
             const pathParts = path.split('/');
-            const type = pathParts[4]; // 'proposals' or table name really
+            const itemType = pathParts[4]; // 'proposals' or 'points'
             const id = pathParts[5];
 
+            let user = null;
+            let userType = '';
+
+            try {
+                // Try Agency Auth First
+                user = await requireAuth(request, env);
+                userType = 'agency';
+            } catch {
+                // Fallback to Client Auth
+                try {
+                    user = await requireClientAuth(request, env);
+                    userType = 'client';
+                } catch {
+                    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+                }
+            }
+
             // Verify access (basic check)
-            if (type === 'proposals') {
+            if (itemType === 'proposals' && userType === 'client') {
+                // Verify client share access
                 const share = await env.DB.prepare(
                     'SELECT id FROM proposta_shares WHERE proposal_id = ? AND client_user_id = ?'
                 ).bind(id, user.id).first();
                 if (!share) return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
-
-                const { results } = await env.DB.prepare(`
-                    SELECT al.*, 
-                           CASE WHEN al.user_type = 'client' THEN cu.name 
-                                WHEN al.user_type = 'agency' THEN ui.name 
-                                ELSE 'Sistema' END as user_name
-                    FROM audit_logs al
-                    LEFT JOIN usuarios_externos cu ON al.user_type = 'client' AND al.changed_by = cu.id
-                    LEFT JOIN usuarios_internos ui ON al.user_type = 'agency' AND al.changed_by = ui.id
-                    WHERE al.table_name = 'propostas' AND al.record_id = ?
-                    ORDER BY al.created_at DESC
-                `).bind(id).all();
-
-                return new Response(JSON.stringify(results.map((r: any) => ({
-                    ...r,
-                    changes: r.changes ? JSON.parse(r.changes) : {}
-                }))), { headers });
             }
 
-            return new Response(JSON.stringify({ error: 'Invalid type' }), { status: 400, headers });
+            // Map frontend types to DB table names
+            const tableName = itemType === 'proposals' ? 'propostas' : 'pontos_ooh';
+
+            const { results } = await env.DB.prepare(`
+                SELECT al.*, 
+                       CASE WHEN al.user_type = 'client' THEN cu.name 
+                            WHEN al.user_type = 'agency' THEN ui.name 
+                            ELSE 'Sistema' END as user_name
+                FROM audit_logs al
+                LEFT JOIN usuarios_externos cu ON al.user_type = 'client' AND al.changed_by = cu.id
+                LEFT JOIN usuarios_internos ui ON al.user_type = 'agency' AND al.changed_by = ui.id
+                WHERE al.table_name = ? AND al.record_id = ?
+                ORDER BY al.created_at DESC
+            `).bind(tableName, id).all();
+
+            return new Response(JSON.stringify(results.map((r: any) => ({
+                ...r,
+                changes: r.changes ? JSON.parse(r.changes) : {}
+            }))), { headers });
         }
     } catch (e: any) {
         console.error(e);

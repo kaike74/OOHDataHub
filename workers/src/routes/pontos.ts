@@ -1,6 +1,8 @@
 import { Env } from '../index';
 import { corsHeaders } from '../utils/cors';
 import { getCache, setCache, CACHE_KEYS, CACHE_TTL, invalidatePontoCache } from '../utils/cache';
+import { requireAuth } from '../utils/auth';
+import { logAudit } from '../utils/audit';
 
 export async function handlePontos(request: Request, env: Env, path: string): Promise<Response> {
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
@@ -26,8 +28,8 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
       FROM pontos_ooh p
       LEFT JOIN exibidoras e ON p.id_exibidora = e.id
       LEFT JOIN imagens i ON p.id = i.id_ponto
-      LEFT JOIN produtos pr ON p.id = pr.id_ponto
-      WHERE p.status = 'ativo'
+      LEFT JOIN produtos pr ON pr.id_ponto = p.id
+      WHERE p.status = 'ativo' AND p.deleted_at IS NULL
       GROUP BY p.id
       ORDER BY p.created_at DESC
     `).all();
@@ -224,18 +226,34 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
         }
     }
 
-    // DELETE /api/pontos/:id - Deletar ponto
+    // DELETE /api/pontos/:id - Deletar ponto (Soft Delete)
     if (request.method === 'DELETE' && path.match(/^\/api\/pontos\/\d+$/)) {
-        const id = path.split('/').pop();
+        try {
+            const user = await requireAuth(request, env);
+            const id = path.split('/').pop();
 
-        await env.DB.prepare(
-            "UPDATE pontos_ooh SET status = 'inativo' WHERE id = ?"
-        ).bind(id).run();
+            await env.DB.prepare(
+                "UPDATE pontos_ooh SET deleted_at = CURRENT_TIMESTAMP, status = 'inativo' WHERE id = ?"
+            ).bind(id).run();
 
-        // Invalidate cache
-        await invalidatePontoCache(env, Number(id));
+            // Log Audit
+            await logAudit(env, {
+                tableName: 'pontos_ooh',
+                recordId: Number(id),
+                action: 'DELETE',
+                changedBy: user.id,
+                userType: 'agency',
+                changes: { status: 'moved_to_trash' }
+            });
 
-        return new Response(JSON.stringify({ success: true }), { headers });
+            // Invalidate cache
+            await invalidatePontoCache(env, Number(id));
+
+            return new Response(JSON.stringify({ success: true }), { headers });
+        } catch (e: any) {
+            console.error(e);
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
     }
 
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
