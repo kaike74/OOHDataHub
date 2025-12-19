@@ -62,7 +62,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             }
 
             // Client role override (just to be safe)
-            const comissao = role === 'client' ? 'CLIENT' : (data.comissao || 'V4');
+            const comissao = role === 'client' ? 'V0' : (data.comissao || 'V4');
 
             const res = await env.DB.prepare(
                 'INSERT INTO propostas (id_cliente, nome, comissao, created_by) VALUES (?, ?, ?, ?)'

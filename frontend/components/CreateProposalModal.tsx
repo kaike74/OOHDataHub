@@ -7,9 +7,10 @@ import { useRouter } from 'next/navigation';
 interface CreateProposalModalProps {
     isOpen: boolean;
     onClose: () => void;
+    initialClientId?: number;
 }
 
-export default function CreateProposalModal({ isOpen, onClose }: CreateProposalModalProps) {
+export default function CreateProposalModal({ isOpen, onClose, initialClientId }: CreateProposalModalProps) {
     const router = useRouter();
     const user = useStore((state) => state.user);
     const setSelectedProposta = useStore((state) => state.setSelectedProposta);
@@ -47,12 +48,13 @@ export default function CreateProposalModal({ isOpen, onClose }: CreateProposalM
             console.log('User when opening modal:', user);
 
             if (user?.role === 'client') {
-                // Support both snake_case (backend default) and camelCase (potential frontend transformation)
-                const cId = user.client_id || user.clientId;
+                // If initialClientId is passed (from Portal Dashboard Grouping), use it
+                // Otherwise try fallback to user's linked client
+                const cId = initialClientId || user.client_id || user.clientId;
 
                 if (cId) {
                     setSelectedClientId(Number(cId));
-                    setCommission('CLIENT');
+                    setCommission('V0'); // Strict V0 for Clients
                 } else {
                     console.error('User is client but missing client_id. Store state:', user);
                     setError('Erro: Identificação do cliente não encontrada. Por favor, faça LOGOUT e LOGIN novamente para atualizar suas credenciais.');
@@ -62,7 +64,7 @@ export default function CreateProposalModal({ isOpen, onClose }: CreateProposalM
                 setCommission('V4');
             }
         }
-    }, [isOpen, user]);
+    }, [isOpen, user, initialClientId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
