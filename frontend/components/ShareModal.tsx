@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Copy, Check, QrCode, ExternalLink, Loader2, Share2, Users, UserPlus, Mail, Link as LinkIcon } from 'lucide-react';
+import { X, Copy, Check, QrCode, ExternalLink, Loader2, Share2, Users, UserPlus, Mail, Link as LinkIcon, Search } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Proposta } from '@/lib/types';
 // import { toast } from 'sonner';
@@ -34,6 +34,12 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
     const [isAddingNew, setIsAddingNew] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredUsers = clientUsers.filter(user =>
+        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     useEffect(() => {
         if (isOpen) {
@@ -214,33 +220,90 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
 
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Selecionar Usuários</label>
-                                    <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-2 bg-gray-50/50 space-y-1 custom-scrollbar">
-                                        {clientUsers.length === 0 && <p className="text-sm text-gray-500 p-2 text-center">Nenhum usuário encontrado.</p>}
-                                        {clientUsers.map(u => (
-                                            <div
-                                                key={u.id}
-                                                onClick={() => toggleUserSelection(u.id)}
-                                                className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${selectedUserIds.includes(u.id) ? 'bg-blue-50 border border-blue-100' : 'hover:bg-gray-100 border border-transparent'}`}
-                                            >
-                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedUserIds.includes(u.id) ? 'bg-emidias-primary border-emidias-primary text-white' : 'bg-white border-gray-300'}`}>
-                                                    {selectedUserIds.includes(u.id) && <Check size={12} />}
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Quem tem acesso</label>
+
+                                    {/* Selected Users Chips */}
+                                    <div className="flex flex-wrap gap-2 mb-3">
+                                        {selectedUserIds.map((id) => {
+                                            const user = clientUsers.find(u => u.id === id);
+                                            if (!user) return null;
+                                            return (
+                                                <div key={id} className="flex items-center gap-1 pl-2 pr-1 py-1 rounded-full bg-blue-50 border border-blue-100 text-sm text-blue-700 animate-in fade-in zoom-in duration-200">
+                                                    <span className="text-xs font-semibold">{user.name}</span>
+                                                    <button
+                                                        onClick={() => toggleUserSelection(user.id)}
+                                                        className="p-0.5 hover:bg-blue-200 rounded-full transition-colors"
+                                                    >
+                                                        <X size={12} />
+                                                    </button>
                                                 </div>
-                                                <div className="flex-1 overflow-hidden">
-                                                    <div className="text-sm font-medium text-gray-900 truncate">{u.name}</div>
-                                                    <div className="text-xs text-gray-500 truncate">{u.email}</div>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
 
-                                    <button
-                                        onClick={() => setIsAddingNew(!isAddingNew)}
-                                        className={`mt-3 text-sm font-medium flex items-center gap-1.5 transition-colors ${isAddingNew ? 'text-emidias-primary' : 'text-gray-500 hover:text-emidias-primary'}`}
-                                    >
-                                        <UserPlus size={16} />
-                                        {isAddingNew ? 'Cancelar Cadastro' : 'Cadastrar Novo Usuário'}
-                                    </button>
+                                    {/* Search / Add Input */}
+                                    <div className="relative group">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Search size={16} className="text-gray-400 group-focus-within:text-emidias-primary transition-colors" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Adicionar pessoas (nome ou email)..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emidias-primary/20 focus:border-emidias-primary transition-all sm:text-sm"
+                                        />
+
+                                        {/* Dropdown Results */}
+                                        {searchQuery && (
+                                            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-xl py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm animate-in slide-in-from-top-2">
+                                                {filteredUsers.length > 0 ? (
+                                                    filteredUsers.map((user) => (
+                                                        <div
+                                                            key={user.id}
+                                                            onClick={() => {
+                                                                toggleUserSelection(user.id);
+                                                                setSearchQuery('');
+                                                            }}
+                                                            className="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-50 transition-colors flex items-center gap-3"
+                                                        >
+                                                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-500 uppercase">
+                                                                {user.name.charAt(0)}
+                                                            </div>
+                                                            <div>
+                                                                <span className="block truncate font-medium text-gray-900">{user.name}</span>
+                                                                <span className="block truncate text-xs text-gray-500">{user.email}</span>
+                                                            </div>
+                                                            {selectedUserIds.includes(user.id) && (
+                                                                <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-emidias-primary">
+                                                                    <Check size={16} />
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div
+                                                        className="cursor-pointer select-none relative py-3 pl-3 pr-9 hover:bg-gray-50 transition-colors text-gray-500"
+                                                        onClick={() => {
+                                                            setIsAddingNew(true);
+                                                            setNewUser(prev => ({ ...prev, email: searchQuery }));
+                                                            setSearchQuery('');
+                                                        }}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="p-1.5 bg-gray-100 rounded-lg">
+                                                                <UserPlus size={16} />
+                                                            </div>
+                                                            <div>
+                                                                <span className="block font-medium text-gray-900">Convidar "{searchQuery}"</span>
+                                                                <span className="block text-xs text-gray-500">Clique para cadastrar este novo usuário</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {isAddingNew && (

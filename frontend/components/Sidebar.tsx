@@ -172,8 +172,8 @@ export default function Sidebar() {
             }
             // Helper function to calculate value with commission
             const calcularValorComissao = (valorBase: number, comissao: string): number => {
-                // Client Special Pricing: Double Base (2x) (Client View or V0 commission)
-                if (comissao === 'CLIENT' || comissao === 'V0' || user?.role === 'client') {
+                // Client Special Pricing: Double Base (2x) (V0 commission)
+                if (comissao === 'V0' || comissao === 'CLIENT' || user?.role === 'client') {
                     return parseFloat((valorBase * 2).toFixed(2));
                 }
 

@@ -121,11 +121,11 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
             `).bind(proposalId).all();
 
             /* Client Pricing Logic:
-             * IF Proposal Commission is 'CLIENT' (Created by Client user)
+             * IF Proposal Commission is 'V0' (Created by Client user)
              * THEN Recalculate values dynamically (Double Base) to ensure consistency (ignoring potential sync errors)
              * ELSE Use stored values (Respects Agency Commission V1-V4)
              */
-            const isClientCommission = proposal.comissao === 'CLIENT';
+            const isClientCommission = proposal.comissao === 'V0' || proposal.comissao === 'CLIENT'; // Support legacy CLIENT for now
 
             // Format monetary values
             const processedItems = items.map((item: any) => {
@@ -133,7 +133,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                 let valor_papel = item.valor_papel || 0;
                 let valor_lona = item.valor_lona || 0;
 
-                // Dynamic Recalculation for CLIENT commission
+                // Dynamic Recalculation for V0 commission (Client Created)
                 if (isClientCommission && item.produtos) {
                     try {
                         const produtos = JSON.parse(item.produtos);
@@ -143,7 +143,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                             p.tipo.toLowerCase().includes('bissemanal')
                         );
                         if (locacaoProd) {
-                            valor_locacao = locacaoProd.valor * 2;
+                            valor_locacao = locacaoProd.valor * 2; // Strict V0 Rule: Double Base
                         }
 
                         const papelProd = produtos.find((p: any) => p.tipo.toLowerCase().includes('papel'));
