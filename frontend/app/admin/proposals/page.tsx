@@ -37,6 +37,8 @@ export default function AdminProposalsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>({});
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [creatingForClientId, setCreatingForClientId] = useState<number | undefined>(undefined);
+    const [creatingForClientName, setCreatingForClientName] = useState<string | undefined>(undefined);
 
     const setSelectedProposta = useStore((state) => state.setSelectedProposta);
     const setCurrentView = useStore((state) => state.setCurrentView);
@@ -115,7 +117,16 @@ export default function AdminProposalsPage() {
     return (
         <div className="min-h-screen bg-emidias-gray-50 pb-10">
             {/* Modal */}
-            <CreateProposalModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
+            <CreateProposalModal
+                isOpen={isCreateModalOpen}
+                onClose={() => {
+                    setIsCreateModalOpen(false);
+                    setCreatingForClientId(undefined);
+                    setCreatingForClientName(undefined);
+                }}
+                initialClientId={creatingForClientId}
+                initialClientName={creatingForClientName}
+            />
 
             {/* Header */}
             <header className="gradient-primary px-4 sm:px-6 flex items-center justify-between flex-shrink-0 z-40 fixed top-0 left-0 right-0 h-[70px] border-b-4 border-emidias-accent shadow-emidias-xl">
@@ -194,13 +205,9 @@ export default function AdminProposalsPage() {
                         <FileText className="mx-auto text-emidias-gray-300 mb-3" size={48} />
                         <p className="text-emidias-gray-500 font-medium mb-4">Nenhuma proposta encontrada</p>
                         {user?.role === 'client' && (
-                            <button
-                                onClick={() => setIsCreateModalOpen(true)}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-emidias-accent text-white rounded-xl hover:bg-emidias-accent-dark transition-all font-bold shadow-lg hover:-translate-y-0.5"
-                            >
-                                <Plus size={20} />
-                                Criar Minha Primeira Proposta
-                            </button>
+                            <p className="text-sm text-gray-400 max-w-md text-center">
+                                Ainda não há propostas compartilhadas com você. Entre em contato com a equipe para criar sua primeira proposta.
+                            </p>
                         )}
                     </div>
                 ) : (
@@ -324,7 +331,12 @@ export default function AdminProposalsPage() {
                                             {/* Client Only: "New Proposal" Card at the end of the list */}
                                             {user?.role === 'client' && (
                                                 <div
-                                                    onClick={() => setIsCreateModalOpen(true)}
+                                                    onClick={() => {
+                                                        console.log('🔵 Opening modal for client (admin page):', { clientId, clientName: group.client_name });
+                                                        setCreatingForClientId(clientId);
+                                                        setCreatingForClientName(group.client_name);
+                                                        setIsCreateModalOpen(true);
+                                                    }}
                                                     className="p-4 bg-emidias-gray-50 hover:bg-emidias-gray-100 cursor-pointer flex items-center justify-center gap-2 text-emidias-gray-500 hover:text-emidias-accent transition-all border-dashed border-2 border-transparent hover:border-emidias-accent/30"
                                                 >
                                                     <Plus size={20} />
