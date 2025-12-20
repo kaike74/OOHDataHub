@@ -107,7 +107,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
             // If not found in internal users, check CLIENT users
             const clientUser = await env.DB.prepare(
-                'SELECT id, name, email, password_hash FROM usuarios_externos WHERE email = ?'
+                'SELECT id, name, email, password_hash, verified FROM usuarios_externos WHERE email = ?'
             ).bind(email).first() as any;
 
             if (clientUser) {
@@ -115,6 +115,13 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
                 if (!isValid) {
                     return new Response(JSON.stringify({ error: 'Credenciais inválidas' }), {
                         status: 401,
+                        headers,
+                    });
+                }
+
+                if (!clientUser.verified) {
+                    return new Response(JSON.stringify({ error: 'Email não verificado. Verifique sua caixa de entrada.' }), {
+                        status: 403,
                         headers,
                     });
                 }

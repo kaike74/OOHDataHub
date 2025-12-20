@@ -37,6 +37,8 @@ export default function SignupPage() {
         setMounted(true);
     }, []);
 
+    const [success, setSuccess] = useState(false);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -49,7 +51,6 @@ export default function SignupPage() {
         }
 
         try {
-            // Using the existing endpoint but now it accepts password
             const response = await api.registerClientPublic({
                 name,
                 email,
@@ -57,21 +58,14 @@ export default function SignupPage() {
                 inviteToken: inviteToken || undefined
             });
 
-            if (response.success && response.token) {
+            // If success but NO token, it means verification required
+            if (response.success && !response.token) {
+                setSuccess(true);
+            } else if (response.success && response.token) {
                 setAuth(response.user, response.token);
-                // Redirect logic
-                if (inviteToken) {
-                    // Try to guess proposal? Or just general dashboard
-                    // The backend accepts the invite, so user now has access.
-                    // Ideal: Redirect to the proposal they were invited to?
-                    // BUT we don't know the proposal ID here easily unless returned.
-                    // For now, dashboard is safe.
-                    router.push('/admin/proposals');
-                } else {
-                    router.push('/admin/proposals');
-                }
+                // Redirect to Portal, NOT Admin
+                router.push('/portal/dashboard');
             } else {
-                // If backend requires verification or manual approval (unlikely for this flow)
                 router.push('/login?registered=true');
             }
 
@@ -81,6 +75,28 @@ export default function SignupPage() {
             setIsLoading(false);
         }
     };
+
+    if (success) {
+        return (
+            <div className="min-h-screen bg-white flex items-center justify-center p-4">
+                <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-emidias-xl border border-emidias-gray-100 text-center animate-fade-in-scale">
+                    <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600">
+                        <Mail size={32} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Verifique seu email</h2>
+                    <p className="text-gray-500 mb-8">
+                        Enviamos um link de confirmação para <strong>{email}</strong>. <br />
+                        Por favor, clique no link para ativar sua conta.
+                    </p>
+                    <Link href="/login">
+                        <Button variant="outline" className="w-full">
+                            Voltar para Login
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">

@@ -698,3 +698,272 @@ export async function sendClientWelcomeEmail(
         console.error('[CLIENT EMAIL] User credentials (manual):', email, temporaryPassword);
     }
 }
+
+/**
+ * Send verification email to new CLIENT user
+ */
+export async function sendVerificationEmail(
+    env: Env,
+    email: string,
+    token: string
+): Promise<void> {
+    const gmailClientEmail = (env as any).GMAIL_CLIENT_EMAIL;
+    const gmailPrivateKey = (env as any).GMAIL_PRIVATE_KEY;
+    const frontendUrl = (env as any).FRONTEND_URL || 'http://localhost:3000';
+
+    if (!gmailClientEmail || !gmailPrivateKey) {
+        console.warn('Email not configured. Verification Token:', token);
+        console.warn('Verify URL:', `${frontendUrl}/verify?token=${token}`);
+        return;
+    }
+
+    try {
+        console.log('[VERIFY EMAIL] Starting email send process...');
+
+        const now = Math.floor(Date.now() / 1000);
+        const jwtHeader = { alg: 'RS256', typ: 'JWT' };
+        const jwtClaim = {
+            iss: gmailClientEmail,
+            sub: 'emidias@hubradios.com',
+            scope: 'https://www.googleapis.com/auth/gmail.send',
+            aud: 'https://oauth2.googleapis.com/token',
+            exp: now + 3600,
+            iat: now
+        };
+
+        const privateKeyPem = gmailPrivateKey.replace(/\\n/g, '\n');
+        const privateKeyBuffer = pemToArrayBuffer(privateKeyPem);
+
+        const cryptoKey = await crypto.subtle.importKey(
+            'pkcs8',
+            privateKeyBuffer,
+            { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+            false,
+            ['sign']
+        );
+
+        const jwtHeaderB64 = base64UrlEncode(JSON.stringify(jwtHeader));
+        const jwtClaimB64 = base64UrlEncode(JSON.stringify(jwtClaim));
+        const jwtUnsigned = `${jwtHeaderB64}.${jwtClaimB64}`;
+
+        const signature = await crypto.subtle.sign(
+            'RSASSA-PKCS1-v1_5',
+            cryptoKey,
+            new TextEncoder().encode(jwtUnsigned)
+        );
+
+        const jwtSignatureB64 = base64UrlEncode(signature);
+        const jwt = `${jwtUnsigned}.${jwtSignatureB64}`;
+
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+        });
+
+        if (!tokenResponse.ok) {
+            const tokenResponseText = await tokenResponse.text();
+            throw new Error(`Failed to get access token: ${tokenResponseText}`);
+        }
+
+        const tokenData = await tokenResponse.json() as any;
+        const access_token = tokenData.access_token;
+
+        const verifyUrl = `${frontendUrl}/verify?token=${token}`;
+        const subject = 'Verifique seu email - OOH Data Hub';
+        const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #ec4899 0%, #2563eb 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+        .button { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #ec4899 0%, #2563eb 100%); color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Verifique seu Email</h1>
+        </div>
+        <div class="content">
+            <p>Olá,</p>
+            <p>Obrigado por criar sua conta no <strong>OOH Data Hub</strong>.</p>
+            <p>Para ativar sua conta, clique no botão abaixo:</p>
+            
+            <p style="text-align: center;">
+                <a href="${verifyUrl}" class="button">Verificar Email</a>
+            </p>
+
+            <p>Ou copie este link:</p>
+            <p style="background: white; padding: 10px; border-radius: 5px; word-break: break-all;">${verifyUrl}</p>
+        </div>
+        <div class="footer">
+            <p>OOH Data Hub - Sistema de Gestão E-MÍDIAS</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+        const emailLines = [
+            `To: ${email}`,
+            `From: ${gmailClientEmail}`,
+            `Subject: ${subject}`,
+            'MIME-Version: 1.0',
+            'Content-Type: text/html; charset=utf-8',
+            '',
+            htmlBody
+        ];
+        const rawEmail = emailLines.join('\r\n');
+        const encodedEmail = base64UrlEncode(rawEmail);
+
+        const sendResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${access_token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ raw: encodedEmail }),
+        });
+
+        if (!sendResponse.ok) {
+            const sendResponseText = await sendResponse.text();
+            throw new Error(`Failed to send email: ${sendResponseText}`);
+        }
+
+        console.log('[VERIFY EMAIL] ✅ Email sent successfully to:', email);
+    } catch (error) {
+        console.error('[VERIFY EMAIL] ❌ Error:', error);
+    }
+}
+
+/**
+ * Send invite email to external user
+ */
+export async function sendUserInviteEmail(
+    env: Env,
+    email: string,
+    token: string
+): Promise<void> {
+    const gmailClientEmail = (env as any).GMAIL_CLIENT_EMAIL;
+    const gmailPrivateKey = (env as any).GMAIL_PRIVATE_KEY;
+    const frontendUrl = (env as any).FRONTEND_URL || 'http://localhost:3000';
+
+    if (!gmailClientEmail || !gmailPrivateKey) {
+        console.warn('Email not configured. Invite Token:', token);
+        return;
+    }
+
+    try {
+        const now = Math.floor(Date.now() / 1000);
+        const jwtHeader = { alg: 'RS256', typ: 'JWT' };
+        const jwtClaim = {
+            iss: gmailClientEmail,
+            sub: 'emidias@hubradios.com',
+            scope: 'https://www.googleapis.com/auth/gmail.send',
+            aud: 'https://oauth2.googleapis.com/token',
+            exp: now + 3600,
+            iat: now
+        };
+
+        const privateKeyPem = gmailPrivateKey.replace(/\\n/g, '\n');
+        const privateKeyBuffer = pemToArrayBuffer(privateKeyPem);
+
+        const cryptoKey = await crypto.subtle.importKey(
+            'pkcs8',
+            privateKeyBuffer,
+            { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+            false,
+            ['sign']
+        );
+
+        const jwtHeaderB64 = base64UrlEncode(JSON.stringify(jwtHeader));
+        const jwtClaimB64 = base64UrlEncode(JSON.stringify(jwtClaim));
+        const jwtUnsigned = `${jwtHeaderB64}.${jwtClaimB64}`;
+
+        const signature = await crypto.subtle.sign(
+            'RSASSA-PKCS1-v1_5',
+            cryptoKey,
+            new TextEncoder().encode(jwtUnsigned)
+        );
+
+        const jwtSignatureB64 = base64UrlEncode(signature);
+        const jwt = `${jwtUnsigned}.${jwtSignatureB64}`;
+
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+        });
+
+        if (!tokenResponse.ok) throw new Error('Failed to get access token');
+        const tokenData = await tokenResponse.json() as any;
+        const access_token = tokenData.access_token;
+
+        const inviteUrl = `${frontendUrl}/signup?invite=${token}&email=${encodeURIComponent(email)}`;
+        const subject = 'Convite para colaborar - OOH Data Hub';
+        const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+        .button { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%); color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Você foi convidado!</h1>
+        </div>
+        <div class="content">
+            <p>Olá,</p>
+            <p>Você foi convidado para colaborar em uma proposta no <strong>OOH Data Hub</strong>.</p>
+            <p>Para aceitar o convite e criar sua conta, clique no botão abaixo:</p>
+            
+            <p style="text-align: center;">
+                <a href="${inviteUrl}" class="button">Aceitar Convite</a>
+            </p>
+
+            <p>Se você já tem uma conta, basta fazer login.</p>
+        </div>
+        <div class="footer">
+            <p>OOH Data Hub - Sistema de Gestão E-MÍDIAS</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+        const emailLines = [
+            `To: ${email}`,
+            `From: ${gmailClientEmail}`,
+            `Subject: ${subject}`,
+            'MIME-Version: 1.0',
+            'Content-Type: text/html; charset=utf-8',
+            '',
+            htmlBody
+        ];
+        const rawEmail = emailLines.join('\r\n');
+        const encodedEmail = base64UrlEncode(rawEmail);
+
+        await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${access_token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ raw: encodedEmail }),
+        });
+
+        console.log('[INVITE EMAIL] Sent to:', email);
+    } catch (error) {
+        console.error('[INVITE EMAIL] Error:', error);
+    }
+}

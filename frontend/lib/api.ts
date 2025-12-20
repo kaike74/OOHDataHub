@@ -244,6 +244,11 @@ export const api = {
         body: JSON.stringify(data)
     }),
 
+    verifyEmail: (token: string) => fetchAPI('/api/clients/verify-email', {
+        method: 'POST',
+        body: JSON.stringify({ token })
+    }),
+
     shareProposalWithUser: (proposalId: number, clientUserId: number) => fetchAPI('/api/portal/share', {
         method: 'POST',
         body: JSON.stringify({ proposal_id: proposalId, client_user_id: clientUserId })

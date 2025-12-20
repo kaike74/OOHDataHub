@@ -4,6 +4,7 @@ import {
     hashPassword,
     verifyPassword,
     sendClientWelcomeEmail,
+    sendVerificationEmail,
     requireAuth,
     generateClientToken,
     verifyToken,
@@ -84,6 +85,11 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
 
         if (!user || !await verifyPassword(password, user.password_hash as string)) {
             return new Response(JSON.stringify({ error: 'Credenciais inválidas' }), { status: 401, headers });
+        }
+
+        // Check verification
+        if (!user.verified) {
+            return new Response(JSON.stringify({ error: 'Email não verificado. Verifique sua caixa de entrada.' }), { status: 403, headers });
         }
 
         // Generate Token using consistent auth helper
@@ -193,9 +199,14 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
 
             const passwordHash = await hashPassword(password);
 
+            // Generate verification token
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            const verificationToken = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+
             const result = await env.DB.prepare(
-                'INSERT INTO usuarios_externos (email, password_hash, name) VALUES (?, ?, ?)'
-            ).bind(email, passwordHash, name).run();
+                'INSERT INTO usuarios_externos (email, password_hash, name, verified, verification_token) VALUES (?, ?, ?, 0, ?)'
+            ).bind(email, passwordHash, name, verificationToken).run();
 
             const userId = result.meta.last_row_id;
 
@@ -213,25 +224,58 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
                 await env.DB.batch(batch);
             }
 
-            // Generate token for immediate login
-            const clientUser: ClientUser = {
-                id: userId as number,
-                name: name,
-                email: email,
-                role: 'client'
-            };
-            const token = await generateClientToken(clientUser);
+            // Send Verification Email
+            await sendVerificationEmail(env, email, verificationToken);
 
             return new Response(JSON.stringify({
                 success: true,
-                token,
-                user: clientUser,
-                message: "Conta criada com sucesso!"
+                message: "Conta criada! Verifique seu email para ativar."
             }), { headers });
 
         } catch (e: any) {
             console.error(e);
             return new Response(JSON.stringify({ error: e.message || 'Erro ao criar conta' }), { status: 500, headers });
+        }
+    }
+
+    // POST /api/clients/verify-email
+    if (path === '/api/clients/verify-email' && request.method === 'POST') {
+        try {
+            const { token } = await request.json() as any;
+
+            if (!token) {
+                return new Response(JSON.stringify({ error: 'Token obrigatório' }), { status: 400, headers });
+            }
+
+            // Find user with token
+            const user = await env.DB.prepare('SELECT * FROM usuarios_externos WHERE verification_token = ?').bind(token).first();
+
+            if (!user) {
+                return new Response(JSON.stringify({ error: 'Token inválido ou expirado' }), { status: 400, headers });
+            }
+
+            // Update user
+            await env.DB.prepare('UPDATE usuarios_externos SET verified = 1, verification_token = NULL WHERE id = ?').bind(user.id).run();
+
+            // Generate token for auto-login
+            const clientUser: ClientUser = {
+                id: user.id as number,
+                name: user.name as string,
+                email: user.email as string,
+                role: 'client'
+            };
+            const authToken = await generateClientToken(clientUser);
+
+            return new Response(JSON.stringify({
+                success: true,
+                token: authToken,
+                user: clientUser,
+                message: "Email verificado com sucesso!"
+            }), { headers });
+
+        } catch (e: any) {
+            console.error(e);
+            return new Response(JSON.stringify({ error: e.message || 'Erro ao verificar email' }), { status: 500, headers });
         }
     }
 

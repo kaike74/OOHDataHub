@@ -33,7 +33,7 @@ export default function LoginPage() {
             const response = await api.login(email, password);
             setAuth(response.user, response.token);
             if (response.user.role === 'client') {
-                router.push('/admin/proposals');
+                router.push('/portal/dashboard');
             } else {
                 router.push('/');
             }
