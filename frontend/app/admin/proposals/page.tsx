@@ -91,7 +91,7 @@ export default function AdminProposalsPage() {
 
         try {
             await api.deleteProposta(id);
-            setPropostas(current => current.filter(p => p.id !== id));
+            setProposals(current => current.filter(p => p.id !== id));
         } catch (error) {
             console.error('Error deleting proposal:', error);
             alert('Falha ao excluir proposta');
@@ -266,7 +266,7 @@ export default function AdminProposalsPage() {
                                                 >
                                                     {/* Status Strip */}
                                                     <div className={`absolute top-0 inset-x-0 h-1.5 rounded-t-2xl ${proposal.status === 'aprovada' ? 'bg-gradient-to-r from-green-400 to-green-600' :
-                                                            proposal.status === 'em_negociacao' ? 'bg-gradient-to-r from-blue-400 to-blue-600' : 'bg-gray-200'
+                                                        proposal.status === 'em_negociacao' ? 'bg-gradient-to-r from-blue-400 to-blue-600' : 'bg-gray-200'
                                                         }`} />
 
                                                     {/* Header with Icon and Actions */}
@@ -308,7 +308,7 @@ export default function AdminProposalsPage() {
                                                         <div className="flex flex-col text-right">
                                                             <span className="text-[10px] text-gray-400 uppercase font-semibold">Status</span>
                                                             <span className={`font-medium ${proposal.status === 'aprovada' ? 'text-green-600' :
-                                                                    proposal.status === 'em_negociacao' ? 'text-blue-600' : 'text-gray-600'
+                                                                proposal.status === 'em_negociacao' ? 'text-blue-600' : 'text-gray-600'
                                                                 }`}>
                                                                 {proposal.status?.replace('_', ' ')}
                                                             </span>
