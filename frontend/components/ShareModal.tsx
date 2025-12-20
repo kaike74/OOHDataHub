@@ -25,8 +25,25 @@ interface ClientUser {
 export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProps) {
     const user = useStore(state => state.user);
     const [mode, setMode] = useState<'public' | 'portal'>('public'); // Default to public
+    const [isLoading, setIsLoading] = useState(false);
 
-    // ... (state)
+    // Public Link State
+    const [shareUrl, setShareUrl] = useState('');
+    const [copied, setCopied] = useState(false);
+
+    // Portal State
+    const [clientUsers, setClientUsers] = useState<ClientUser[]>([]);
+    const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]); // Array of IDs or 'new'
+    const [newUser, setNewUser] = useState({ email: '' });
+    const [isAddingNew, setIsAddingNew] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredUsers = clientUsers.filter(user =>
+        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     const isOwner = user && proposta && (user.role !== 'client' || user.id === proposta.created_by);
     const canInvite = !!isOwner;
@@ -36,24 +53,147 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
         if (!canInvite) {
             setMode('public');
         } else {
-            // If owner, maybe default to portal? or keep public. 
-            // Let's keep existing logic or default to portal if owner opens it?
-            // User didn't specify default. 'portal' is fine if owner.
-            setMode('portal');
+            // If owner, default to portal or user choice?
+            // Existing logic or default to portal if owner opens it?
+            // Let's set to portal if it's the first render or just update mode if strict validation failed
+            // But if user switches modes, we don't want to force it back.
+            // Oh, the dependency is `isOpen`.
+            if (isOpen && mode === 'public') setMode('portal'); // Suggest Portal to owner? Or default.
         }
     }, [canInvite, isOpen]);
 
-    // ... (rest of effects)
+    useEffect(() => {
+        if (isOpen) {
+            setErrorMessage('');
+            setSuccessMessage('');
+            setSelectedUserIds([]); // Reset selection on open
+            setIsAddingNew(false);
+        }
+        if (isOpen && proposta && mode === 'portal') {
+            fetchClientUsers();
+        }
+    }, [isOpen, proposta, mode]);
 
-    // ... (generatePublicLink, toggleUserSelection)
+    // Auto-generate link when switching to public mode
+    useEffect(() => {
+        if (isOpen && proposta && mode === 'public' && !shareUrl && !isLoading) {
+            generatePublicLink();
+        }
+    }, [mode, isOpen, proposta, shareUrl]);
 
-    // ... (handlePortalShare)
+    const fetchClientUsers = async () => {
+        // Fetch ALL users to allow cross-client sharing if needed
+        try {
+            const users = await api.getAllClientUsers();
+            setClientUsers(users || []);
+        } catch (error) {
+            console.error('Failed to fetch client users', error);
+        }
+    }
 
-    // ... (copyToClipboard)
+    const generatePublicLink = async () => {
+        if (!proposta) return;
+        setIsLoading(true);
+        setErrorMessage('');
+        try {
+            const res = await api.shareProposta(proposta.id);
+            if (res.success && res.token) {
+                const url = `${window.location.origin}/portal/view?token=${res.token}`;
+                setShareUrl(url);
+            } else {
+                setErrorMessage('Falha ao gerar link');
+            }
+        } catch (err: any) {
+            setErrorMessage(err.message || 'Erro ao conectar');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const toggleUserSelection = (id: string | number) => {
+        setSelectedUserIds(prev =>
+            prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]
+        );
+    };
+
+    const handlePortalShare = async () => {
+        if (!proposta) return;
+        setIsLoading(true);
+        setSuccessMessage('');
+        setErrorMessage('');
+
+        const usersToShare: number[] = [];
+        let inviteSent = false;
+
+        try {
+            // 1. Handle New Email Invite (Google Sheets style)
+            if (isAddingNew && newUser.email) {
+                const res = await api.inviteProposalUser(proposta.id, newUser.email);
+                if (res.success) {
+                    inviteSent = true;
+                } else {
+                    throw new Error(res.error || 'Falha ao enviar convite');
+                }
+            }
+
+            // 2. Handle Selected Users (Existing IDs)
+            const existingIds = selectedUserIds.filter(id => typeof id === 'number').map(Number);
+            let shareCount = 0;
+
+            for (const userId of existingIds) {
+                try {
+                    const shareRes = await api.shareProposalWithUser(proposta.id, userId);
+                    if (shareRes.success) {
+                        shareCount++;
+                    }
+                } catch (e) {
+                    console.error(`Falha ao compartilhar com usuário ${userId}`, e);
+                }
+            }
+
+            if (inviteSent || shareCount > 0) {
+                setSuccessMessage(
+                    (inviteSent && shareCount === 0) ? `Convite enviado para ${newUser.email}` :
+                        (inviteSent && shareCount > 0) ? `Convite enviado e ${shareCount} usuários adicionados` :
+                            `Compartilhado com ${shareCount} usuários`
+                );
+
+                if (isAddingNew) {
+                    setNewUser({ email: '' });
+                    setIsAddingNew(false);
+                }
+                setSelectedUserIds([]); // Reset selection
+                // Refresh list eventually?
+            } else {
+                if (!isAddingNew && existingIds.length === 0) throw new Error('Selecione alguém para compartilhar');
+                throw new Error('Nenhuma ação realizada');
+            }
+
+        } catch (err: any) {
+            setErrorMessage(err.message || 'Erro ao compartilhar');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     return (
         <Modal
-        // ... (props)
+            isOpen={isOpen}
+            onClose={onClose}
+            title={
+                <div className="flex items-center gap-2">
+                    <Share2 size={24} />
+                    Compartilhar Proposta
+                </div>
+            }
+            maxWidth="lg"
+            className="flex flex-col max-h-[90vh]"
         >
             <div className="flex flex-col h-full">
                 {/* Tabs - Only show if canInvite (Owner/Internal) */}
@@ -77,9 +217,6 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                         </button>
                     </div>
                 )}
-
-                {/* Content */}
-                {/* ... */}
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
