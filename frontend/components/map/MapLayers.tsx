@@ -14,7 +14,18 @@ import { cn } from '@/lib/utils';
 // Rate Limiter Helper
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const PRESET_COLORS = ['#EF4444', '#F97316', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#000000', '#78716c'];
+const PRESET_COLORS = [
+    '#EF4444', // Red-500
+    '#F97316', // Orange-500
+    '#F59E0B', // Amber-500
+    '#10B981', // Emerald-500
+    '#3B82F6', // Blue-500
+    '#6366F1', // Indigo-500
+    '#8B5CF6', // Violet-500
+    '#EC4899', // Pink-500
+    '#06055B', // Emidias Primary
+    '#FC1E75', // Emidias Accent
+];
 
 export default function MapLayers() {
     const customLayers = useStore((state) => state.customLayers);
