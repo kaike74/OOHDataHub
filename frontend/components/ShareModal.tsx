@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Copy, Check, QrCode, ExternalLink, Loader2, Share2, Users, UserPlus, Mail, Link as LinkIcon, Search } from 'lucide-react';
+import { Copy, Check, ExternalLink, Share2, Users, UserPlus, Mail, Link as LinkIcon, Search, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Proposta } from '@/lib/types';
-// import { toast } from 'sonner';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 interface ShareModalProps {
     isOpen: boolean;
@@ -117,7 +119,6 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                 });
                 if (res.success && res.userId) {
                     usersToShare.push(Number(res.userId));
-                    // Add to list and select visually? Actually we just share below.
                 } else {
                     throw new Error(res.error || 'Falha ao criar usuário');
                 }
@@ -170,48 +171,46 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
         setTimeout(() => setCopied(false), 2000);
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100 flex flex-col max-h-[90vh]">
-                {/* Header */}
-                <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
-                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        <Share2 className="text-emidias-primary" size={24} />
-                        Compartilhar Proposta
-                    </h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors">
-                        <X size={20} />
-                    </button>
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={
+                <div className="flex items-center gap-2">
+                    <Share2 size={24} />
+                    Compartilhar Proposta
                 </div>
-
+            }
+            maxWidth="lg"
+            className="flex flex-col max-h-[90vh]"
+        >
+            <div className="flex flex-col h-full">
                 {/* Tabs */}
-                <div className="flex border-b border-gray-100">
+                <div className="flex border-b border-gray-100 mb-6 -mx-6 px-6 bg-gray-50/50">
                     <button
                         onClick={() => setMode('portal')}
-                        className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${mode === 'portal' ? 'text-emidias-primary bg-blue-50/50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                        className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${mode === 'portal' ? 'text-emidias-primary' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'}`}
                     >
                         <Users size={18} />
                         Portal do Cliente
-                        {mode === 'portal' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emidias-primary" />}
+                        {mode === 'portal' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emidias-primary to-emidias-accent" />}
                     </button>
                     <button
                         onClick={() => setMode('public')}
-                        className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${mode === 'public' ? 'text-emidias-primary bg-blue-50/50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                        className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${mode === 'public' ? 'text-emidias-primary' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'}`}
                     >
                         <LinkIcon size={18} />
                         Link Público
-                        {mode === 'public' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emidias-primary" />}
+                        {mode === 'public' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emidias-primary to-emidias-accent" />}
                     </button>
                 </div>
 
                 {/* Content */}
-                <div className="p-6 overflow-y-auto custom-scrollbar">
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
                     {mode === 'portal' ? (
-                        <div className="space-y-6">
-                            <div className="bg-blue-50 rounded-xl p-4 text-sm text-blue-800 flex gap-3">
-                                <Share2 className="flex-shrink-0 mt-0.5" size={18} />
+                        <div className="space-y-6 pb-2">
+                            <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-sm text-blue-900 flex gap-3">
+                                <Share2 className="flex-shrink-0 mt-0.5 text-blue-600" size={18} />
                                 <p>
                                     Compartilhe via <strong>Portal do Cliente</strong>. O cliente recebe um email com login e senha para acessar essa e outras propostas em um painel seguro.
                                 </p>
@@ -227,13 +226,13 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                                             const user = clientUsers.find(u => u.id === id);
                                             if (!user) return null;
                                             return (
-                                                <div key={id} className="flex items-center gap-1 pl-2 pr-1 py-1 rounded-full bg-blue-50 border border-blue-100 text-sm text-blue-700 animate-in fade-in zoom-in duration-200">
-                                                    <span className="text-xs font-semibold">{user.name}</span>
+                                                <div key={id} className="flex items-center gap-1 pl-3 pr-1 py-1 rounded-full bg-emidias-primary/10 border border-emidias-primary/20 text-sm text-emidias-primary font-medium animate-fade-in-scale">
+                                                    <span>{user.name}</span>
                                                     <button
                                                         onClick={() => toggleUserSelection(user.id)}
-                                                        className="p-0.5 hover:bg-blue-200 rounded-full transition-colors"
+                                                        className="p-0.5 hover:bg-emidias-primary/20 rounded-full transition-colors ml-1"
                                                     >
-                                                        <X size={12} />
+                                                        <X size={14} />
                                                     </button>
                                                 </div>
                                             );
@@ -242,20 +241,17 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
 
                                     {/* Search / Add Input */}
                                     <div className="relative group">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <Search size={16} className="text-gray-400 group-focus-within:text-emidias-primary transition-colors" />
-                                        </div>
-                                        <input
-                                            type="text"
+                                        <Input
+                                            icon={<Search size={18} />}
                                             placeholder="Adicionar pessoas (nome ou email)..."
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emidias-primary/20 focus:border-emidias-primary transition-all sm:text-sm"
+                                            className="bg-gray-50/50"
                                         />
 
                                         {/* Dropdown Results */}
                                         {searchQuery && (
-                                            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-xl py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm animate-in slide-in-from-top-2">
+                                            <div className="absolute z-20 mt-1 w-full bg-white shadow-emidias-xl max-h-60 rounded-xl py-1 overflow-auto border border-gray-100 animate-fade-in-up">
                                                 {filteredUsers.length > 0 ? (
                                                     filteredUsers.map((user) => (
                                                         <div
@@ -264,34 +260,34 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                                                                 toggleUserSelection(user.id);
                                                                 setSearchQuery('');
                                                             }}
-                                                            className="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-50 transition-colors flex items-center gap-3"
+                                                            className="cursor-pointer select-none relative py-3 pl-4 pr-4 hover:bg-gray-50 transition-colors flex items-center gap-3 border-b border-gray-50 last:border-0"
                                                         >
-                                                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-500 uppercase">
+                                                            <div className="w-10 h-10 rounded-full bg-gradient-subtle flex items-center justify-center text-sm font-bold text-gray-600 uppercase border border-gray-200">
                                                                 {user.name.charAt(0)}
                                                             </div>
-                                                            <div>
-                                                                <span className="block truncate font-medium text-gray-900">{user.name}</span>
+                                                            <div className="flex-1">
+                                                                <span className="block font-medium text-gray-900">{user.name}</span>
                                                                 <span className="block truncate text-xs text-gray-500">{user.email}</span>
                                                             </div>
                                                             {selectedUserIds.includes(user.id) && (
-                                                                <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-emidias-primary">
-                                                                    <Check size={16} />
-                                                                </span>
+                                                                <div className="text-emidias-success">
+                                                                    <Check size={18} />
+                                                                </div>
                                                             )}
                                                         </div>
                                                     ))
                                                 ) : (
                                                     <div
-                                                        className="cursor-pointer select-none relative py-3 pl-3 pr-9 hover:bg-gray-50 transition-colors text-gray-500"
+                                                        className="cursor-pointer select-none relative py-4 px-4 hover:bg-gray-50 transition-colors text-gray-500"
                                                         onClick={() => {
                                                             setIsAddingNew(true);
                                                             setNewUser(prev => ({ ...prev, email: searchQuery }));
                                                             setSearchQuery('');
                                                         }}
                                                     >
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="p-1.5 bg-gray-100 rounded-lg">
-                                                                <UserPlus size={16} />
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2 bg-emidias-primary/10 rounded-lg text-emidias-primary">
+                                                                <UserPlus size={20} />
                                                             </div>
                                                             <div>
                                                                 <span className="block font-medium text-gray-900">Convidar "{searchQuery}"</span>
@@ -306,31 +302,29 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                                 </div>
 
                                 {isAddingNew && (
-                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3 animate-in fade-in slide-in-from-top-2">
-                                        <div className="flex items-center gap-2 text-sm font-medium text-gray-800 mb-2">
-                                            <UserPlus size={16} /> Novo Cadastro
+                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4 animate-fade-in-up">
+                                        <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                                            <div className="w-8 h-8 rounded-lg bg-emidias-accent/10 flex items-center justify-center text-emidias-accent">
+                                                <UserPlus size={16} />
+                                            </div>
+                                            Novo Cadastro
                                         </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Nome Completo</label>
-                                            <input
-                                                type="text"
-                                                value={newUser.name}
-                                                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                                                placeholder="Ex: João Silva"
-                                                className="w-full rounded-md border-gray-300 text-sm p-2 focus:border-emidias-primary focus:ring-1 focus:ring-emidias-primary"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-500 mb-1">Email Corporativo</label>
-                                            <input
-                                                type="email"
-                                                value={newUser.email}
-                                                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                                                placeholder="joao@empresa.com"
-                                                className="w-full rounded-md border-gray-300 text-sm p-2 focus:border-emidias-primary focus:ring-1 focus:ring-emidias-primary"
-                                            />
-                                        </div>
-                                        <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                                        <Input
+                                            label="Nome Completo"
+                                            placeholder="Ex: João Silva"
+                                            value={newUser.name}
+                                            onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                                            className="bg-white"
+                                        />
+                                        <Input
+                                            label="Email Corporativo"
+                                            placeholder="joao@empresa.com"
+                                            type="email"
+                                            value={newUser.email}
+                                            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                                            className="bg-white"
+                                        />
+                                        <p className="text-xs text-gray-500 flex items-center gap-1">
                                             <Mail size={12} />
                                             As credenciais de acesso serão enviadas para este email.
                                         </p>
@@ -338,71 +332,76 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                                 )}
 
                                 {successMessage && (
-                                    <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-lg text-sm font-medium animate-in zoom-in">
+                                    <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-xl text-sm font-medium border border-green-100 animate-fade-in-scale">
                                         <Check size={18} />
                                         {successMessage}
                                     </div>
                                 )}
 
                                 {errorMessage && (
-                                    <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center animate-in zoom-in">
+                                    <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl text-center border border-red-100 animate-fade-in-scale">
                                         {errorMessage}
                                     </div>
                                 )}
 
-                                <button
+                                <Button
                                     onClick={handlePortalShare}
                                     disabled={isLoading || (selectedUserIds.length === 0 && !isAddingNew)}
-                                    className="w-full py-3 bg-emidias-primary hover:bg-emidias-primary-dark text-white rounded-xl font-semibold shadow-lg shadow-blue-500/10 hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                                    isLoading={isLoading}
+                                    className="w-full"
+                                    leftIcon={!isLoading && <Share2 size={18} />}
                                 >
-                                    {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Share2 size={20} />}
                                     {isAddingNew && selectedUserIds.length === 0 ? 'Cadastrar e Compartilhar' : `Compartilhar (${selectedUserIds.length + (isAddingNew ? 1 : 0)})`}
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     ) : (
-                        <div className="space-y-6">
-                            <div className="text-center">
-                                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <ExternalLink className="text-blue-600" size={24} />
+                        <div className="space-y-8 py-4">
+                            <div className="text-center space-y-2">
+                                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-100 shadow-sm">
+                                    <ExternalLink className="text-emidias-primary" size={32} />
                                 </div>
-                                <h3 className="font-medium text-gray-900">Link Público</h3>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Gera um link direto onde qualquer pessoa com o link pode visualizar a proposta (sem valores de custo).
+                                <h3 className="font-bold text-xl text-gray-900">Link Público</h3>
+                                <p className="text-sm text-gray-500 max-w-xs mx-auto">
+                                    Gere um link direto onde qualquer pessoa pode visualizar a proposta (sem valores de custo).
                                 </p>
                             </div>
 
                             {!shareUrl ? (
                                 <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                                    <Loader2 className="animate-spin mb-2 text-emidias-primary" size={24} />
-                                    <span className="text-sm">Gerando link público...</span>
+                                    <div className="w-8 h-8 border-2 border-emidias-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+                                    <span className="text-sm font-medium">Gerando link seguro...</span>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
-                                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block">Link de Acesso</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            readOnly
-                                            value={shareUrl}
-                                            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 focus:outline-none"
-                                        />
-                                        <button
-                                            onClick={copyToClipboard}
-                                            className={`px-3 py-2 rounded-lg border flex items-center gap-2 transition-all ${copied ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-                                        >
-                                            {copied ? <Check size={18} /> : <Copy size={18} />}
-                                        </button>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Link de Acesso</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                readOnly
+                                                value={shareUrl}
+                                                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-600 focus:outline-none font-mono"
+                                            />
+                                            <Button
+                                                onClick={copyToClipboard}
+                                                variant={copied ? "secondary" : "outline"}
+                                                className={copied ? "text-green-600 border-green-200 bg-green-50" : ""}
+                                                leftIcon={copied ? <Check size={18} /> : <Copy size={18} />}
+                                            >
+                                                {copied ? 'Copiado!' : 'Copiar'}
+                                            </Button>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-center mt-2">
-                                        <a href={shareUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-emidias-primary hover:underline flex items-center gap-1">
-                                            Abir link <ExternalLink size={12} />
+                                    <div className="flex justify-center">
+                                        <a href={shareUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-emidias-primary hover:text-emidias-accent transition-colors flex items-center gap-1">
+                                            Testar link em nova aba <ExternalLink size={12} />
                                         </a>
                                     </div>
                                 </div>
                             )}
 
                             {errorMessage && mode === 'public' && (
-                                <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center animate-in zoom-in">
+                                <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl text-center border border-red-100 animate-fade-in-scale">
                                     {errorMessage}
                                 </div>
                             )}
@@ -410,6 +409,6 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                     )}
                 </div>
             </div>
-        </div>
+        </Modal>
     );
 }

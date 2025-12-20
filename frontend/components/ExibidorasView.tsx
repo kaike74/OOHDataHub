@@ -4,6 +4,9 @@ import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { Building2, MapPin, Search, X, Plus } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { SafeImage } from '@/components/ui/SafeImage';
 
 export default function ExibidorasView() {
     const exibidoras = useStore((state) => state.exibidoras);
@@ -87,131 +90,124 @@ export default function ExibidorasView() {
         setCurrentView('map');
     };
 
-    const handleClearSearch = () => {
-        setSearchQuery('');
-    };
-
     const handleNewExibidora = () => {
         setExibidoraModalOpen(true);
     };
 
     return (
-        <div className="h-full w-full overflow-y-auto bg-gray-50 p-4">
+        <div className="h-full w-full overflow-y-auto bg-gray-50 p-4 custom-scrollbar">
             <div className="max-w-[1600px] mx-auto">
                 {/* Header */}
-                <div className="mb-6 flex items-start justify-between gap-4">
+                <div className="mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-emidias-primary mb-2">
+                        <h1 className="text-3xl font-bold text-emidias-primary mb-2 tracking-tight">
                             Exibidoras
                         </h1>
                         <p className="text-gray-600">
-                            {filteredExibidoras.length} de {exibidoras.length} exibidora{exibidoras.length !== 1 ? 's' : ''}
+                            Gerencie seus parceiros de mídia OOH. Total de {filteredExibidoras.length} cadastrada{filteredExibidoras.length !== 1 ? 's' : ''}.
                         </p>
                     </div>
 
                     {/* Search and Actions */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                         {/* Search Field */}
-                        <div className="relative">
-                            <div className="flex items-center gap-2 bg-white rounded-lg shadow-md border border-gray-200 transition-all focus-within:border-emidias-primary focus-within:shadow-lg">
-                                <div className="pl-3 text-gray-400">
-                                    <Search size={18} />
-                                </div>
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Buscar exibidora..."
-                                    className="py-2 pr-2 outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent w-64"
-                                />
-                                {searchQuery && (
+                        <div className="relative w-full sm:w-80">
+                            <Input
+                                placeholder="Buscar exibidora, cidade ou contato..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="bg-white"
+                                icon={<Search size={18} />}
+                                rightElement={searchQuery && (
                                     <button
-                                        onClick={handleClearSearch}
-                                        className="pr-3 text-gray-400 hover:text-emidias-primary transition"
+                                        onClick={() => setSearchQuery('')}
+                                        className="text-gray-400 hover:text-emidias-primary transition p-1"
                                     >
-                                        <X size={16} />
+                                        <X size={14} />
                                     </button>
                                 )}
-                            </div>
+                            />
                         </div>
 
                         {/* Register Button */}
-                        <button
+                        <Button
                             onClick={handleNewExibidora}
-                            className="px-4 py-2 bg-emidias-accent text-white rounded-lg hover:bg-[#E01A6A] flex items-center gap-2 transition font-medium hover-lift shadow-lg"
+                            className="bg-emidias-accent hover:bg-emidias-accent/90 shadow-lg"
+                            leftIcon={<Plus size={20} />}
                         >
-                            <Plus size={20} />
-                            <span>Cadastrar Exibidora</span>
-                        </button>
+                            Cadastrar
+                        </Button>
                     </div>
                 </div>
 
                 {/* Grid de Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {filteredExibidoras.map((exibidora) => (
                         <div
                             key={exibidora.id}
                             onClick={() => handleExibidoraClick(exibidora)}
-                            className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all cursor-pointer hover-lift overflow-hidden group"
+                            className="group bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full"
                         >
                             {/* Logo */}
-                            <div className="h-32 bg-gradient-to-br from-emidias-primary to-emidias-accent flex items-center justify-center relative overflow-hidden">
+                            <div className="h-40 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center relative overflow-hidden p-6">
                                 {exibidora.logo_r2_key ? (
-                                    <img
+                                    <SafeImage
                                         src={api.getImageUrl(exibidora.logo_r2_key)}
                                         alt={exibidora.nome}
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-contain mix-blend-multiply transition-transform group-hover:scale-105 duration-500"
                                     />
                                 ) : (
-                                    <Building2 size={48} className="text-white/80" />
+                                    <Building2 size={48} className="text-gray-300" />
                                 )}
 
                                 {/* Badge de total de pontos */}
-                                {exibidora.totalPontos > 0 && (
-                                    <div className="absolute top-2 right-2 bg-white text-emidias-primary px-2 py-1 rounded-full text-xs font-bold shadow-lg">
-                                        {exibidora.totalPontos} ponto{exibidora.totalPontos !== 1 ? 's' : ''}
-                                    </div>
-                                )}
+                                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-emidias-primary px-3 py-1 rounded-full text-xs font-bold shadow-sm border border-gray-100">
+                                    {exibidora.totalPontos} ponto{exibidora.totalPontos !== 1 ? 's' : ''}
+                                </div>
                             </div>
 
                             {/* Conteúdo */}
-                            <div className="p-4">
+                            <div className="p-5 flex-1 flex flex-col">
                                 {/* Nome */}
-                                <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-emidias-accent transition line-clamp-1">
+                                <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-emidias-accent transition-colors line-clamp-1">
                                     {exibidora.nome}
                                 </h3>
 
                                 {/* CNPJ */}
                                 {exibidora.cnpj && (
-                                    <p className="text-xs text-gray-500 mb-3">
-                                        CNPJ: {exibidora.cnpj}
+                                    <p className="text-xs text-gray-500 mb-4 font-mono bg-gray-50 inline-block px-1.5 py-0.5 rounded border border-gray-100 w-fit">
+                                        {exibidora.cnpj}
                                     </p>
                                 )}
 
-                                {/* Regiões */}
-                                {exibidora.cidades.length > 0 && (
-                                    <div className="space-y-1.5">
-                                        <div className="flex items-center gap-1.5 text-emidias-accent">
-                                            <MapPin size={14} />
-                                            <span className="text-xs font-semibold">Regiões de Atuação</span>
+                                <div className="mt-auto space-y-3">
+                                    {/* Regiões */}
+                                    {exibidora.cidades.length > 0 ? (
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-center gap-1.5 text-gray-500">
+                                                <MapPin size={14} />
+                                                <span className="text-xs font-semibold uppercase tracking-wider">Atuação</span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {exibidora.cidades.slice(0, 3).map((cidade, idx) => (
+                                                    <span
+                                                        key={idx}
+                                                        className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-md text-xs font-medium border border-gray-200"
+                                                    >
+                                                        {cidade}
+                                                    </span>
+                                                ))}
+                                                {exibidora.cidades.length > 3 && (
+                                                    <span className="px-2 py-0.5 bg-emidias-accent/5 text-emidias-accent rounded-md text-xs font-bold border border-emidias-accent/10">
+                                                        +{exibidora.cidades.length - 3}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {exibidora.cidades.slice(0, 2).map((cidade, idx) => (
-                                                <span
-                                                    key={idx}
-                                                    className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs font-medium"
-                                                >
-                                                    {cidade}
-                                                </span>
-                                            ))}
-                                            {exibidora.cidades.length > 2 && (
-                                                <span className="px-2 py-0.5 bg-emidias-accent/10 text-emidias-accent rounded-full text-xs font-medium">
-                                                    +{exibidora.cidades.length - 2}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
+                                    ) : (
+                                        <p className="text-xs text-gray-400 italic">Sem pontos cadastrados</p>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -219,33 +215,45 @@ export default function ExibidorasView() {
 
                 {/* Empty state */}
                 {filteredExibidoras.length === 0 && exibidoras.length > 0 && (
-                    <div className="text-center py-20">
-                        <Search size={64} className="mx-auto text-gray-300 mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                    <div className="text-center py-20 animate-in fade-in zoom-in duration-500">
+                        <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100">
+                            <Search size={32} className="text-gray-300" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
                             Nenhuma exibidora encontrada
                         </h3>
-                        <p className="text-gray-500">
-                            Tente ajustar sua pesquisa
+                        <p className="text-gray-500 max-w-sm mx-auto">
+                            Não encontramos resultados para "{searchQuery}". Tente buscar por outro termo ou limpe os filtros.
                         </p>
+                        <Button
+                            variant="outline"
+                            onClick={() => setSearchQuery('')}
+                            className="mt-6"
+                        >
+                            Limpar Busca
+                        </Button>
                     </div>
                 )}
 
                 {exibidoras.length === 0 && (
-                    <div className="text-center py-20">
-                        <Building2 size={64} className="mx-auto text-gray-300 mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                            Nenhuma exibidora cadastrada
+                    <div className="text-center py-24 animate-in fade-in zoom-in duration-500">
+                        <div className="bg-gray-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-dashed border-gray-200">
+                            <Building2 size={40} className="text-gray-300" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                            Comece cadastrando suas exibidoras
                         </h3>
-                        <p className="text-gray-500 mb-4">
-                            Adicione exibidoras para começar a gerenciar seus pontos OOH
+                        <p className="text-gray-500 mb-8 max-w-md mx-auto leading-relaxed">
+                            Adicione as empresas parceiras para gerenciar seus pontos de mídia exterior de forma organizada.
                         </p>
-                        <button
+                        <Button
                             onClick={handleNewExibidora}
-                            className="px-6 py-3 bg-emidias-accent text-white rounded-lg hover:bg-[#E01A6A] inline-flex items-center gap-2 transition font-medium hover-lift shadow-lg"
+                            size="lg"
+                            className="bg-emidias-accent hover:bg-emidias-accent/90 shadow-xl shadow-emidias-accent/20"
+                            leftIcon={<Plus size={24} />}
                         >
-                            <Plus size={20} />
                             Cadastrar Primeira Exibidora
-                        </button>
+                        </Button>
                     </div>
                 )}
             </div>

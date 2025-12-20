@@ -167,16 +167,19 @@ export default function HomePage() {
       <main className="flex-1 relative mt-[70px]">
         {/* Loading State */}
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-emidias-gray-50 z-20">
-            <div className="text-center animate-fade-in-up">
+          <div className="absolute inset-0 z-20 bg-emidias-gray-50 p-6 flex gap-6 animate-pulse">
+            {/* Simulate Map/Content Area */}
+            <div className="flex-1 bg-gray-200 rounded-2xl h-full shadow-inner opacity-70"></div>
+            {/* Simulate Sidebar (Desktop only) */}
+            <div className="hidden lg:block w-80 bg-gray-200 rounded-2xl h-full shadow-inner opacity-70"></div>
+
+            {/* Loading Indicator Overlay */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="relative">
-                <div className="w-20 h-20 rounded-full border-4 border-emidias-gray-200 border-t-emidias-accent animate-spin mx-auto" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <MapPin size={28} className="text-emidias-accent animate-pulse" />
-                </div>
+                <div className="w-16 h-16 rounded-full border-4 border-gray-300 border-t-emidias-accent animate-spin mb-4"></div>
+                <MapPin size={24} className="text-emidias-accent absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[calc(50%+16px)]" />
               </div>
-              <p className="text-emidias-gray-600 text-lg mt-6 font-medium">Carregando sistema...</p>
-              <p className="text-emidias-gray-400 text-sm mt-2">Preparando mapa e dados</p>
+              <p className="text-emidias-primary font-bold text-lg">Carregando OOH Data Hub...</p>
             </div>
           </div>
         )}

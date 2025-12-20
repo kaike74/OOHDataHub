@@ -2,11 +2,13 @@
 
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { formatCurrency, formatDate } from '@/lib/utils';
-import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye, ChevronLeft, ChevronRight, Phone, Mail, Trash2, DollarSign, Tag, Calendar, ExternalLink, Loader2, Calculator, ShoppingCart } from 'lucide-react';
+import { formatCurrency, formatDate, cn } from '@/lib/utils';
+import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye, ChevronLeft, ChevronRight, Phone, Mail, Trash2, DollarSign, Tag, Calendar, ExternalLink, Loader2, ShoppingCart } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { Contato, Proposta } from '@/lib/types';
+import type { Contato } from '@/lib/types';
 import HistoryModal from '@/components/HistoryModal';
+import { Button } from '@/components/ui/Button';
+import { SafeImage } from '@/components/ui/SafeImage';
 
 // Componente para exibir contatos da exibidora
 function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undefined }) {
@@ -34,29 +36,29 @@ function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undef
     if (loading || contatos.length === 0) return null;
 
     return (
-        <div className="mt-4 space-y-2">
-            <p className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">Contatos</p>
+        <div className="mt-3 space-y-2">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Contatos</p>
             {contatos.map((contato) => (
-                <div key={contato.id} className="p-3 bg-emidias-gray-50 rounded-lg border border-emidias-gray-100 hover:border-emidias-accent/30 transition-all">
+                <div key={contato.id} className="p-2.5 bg-gray-50/50 rounded-lg border border-gray-100 hover:border-emidias-accent/30 transition-all group">
                     {contato.nome && (
-                        <p className="font-medium text-emidias-gray-900 text-sm">{contato.nome}</p>
+                        <p className="font-semibold text-gray-800 text-xs">{contato.nome}</p>
                     )}
-                    <div className="flex flex-wrap gap-3 mt-2">
+                    <div className="flex flex-col gap-1.5 mt-1.5">
                         {contato.telefone && (
                             <a
                                 href={`tel:${contato.telefone}`}
-                                className="flex items-center gap-1.5 text-xs text-emidias-gray-600 hover:text-emidias-accent transition-colors"
+                                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-emidias-accent transition-colors"
                             >
-                                <Phone size={12} />
+                                <Phone size={10} />
                                 {contato.telefone}
                             </a>
                         )}
                         {contato.email && (
                             <a
                                 href={`mailto:${contato.email}`}
-                                className="flex items-center gap-1.5 text-xs text-emidias-gray-600 hover:text-emidias-accent transition-colors"
+                                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-emidias-accent transition-colors"
                             >
-                                <Mail size={12} />
+                                <Mail size={10} />
                                 {contato.email}
                             </a>
                         )}
@@ -204,23 +206,10 @@ export default function Sidebar() {
                 p.tipo.toLowerCase().includes('mensal')
             );
 
-            // DEBUG: Log what we found
-            console.log('🔍 Produtos do ponto:', selectedPonto.produtos);
-            console.log('📄 Papel encontrado:', papelProduto);
-            console.log('🎨 Lona encontrado:', lonaProduto);
-            console.log('🏠 Locação encontrada:', locacaoProduto);
-
             // Calculate values with proper rounding to 2 decimal places
             const valorPapel = papelProduto ? parseFloat((papelProduto.valor * 1.25).toFixed(2)) : 0;
             const valorLona = lonaProduto ? parseFloat((lonaProduto.valor * 1.25).toFixed(2)) : 0;
             const valorLocacao = locacaoProduto ? calcularValorComissao(locacaoProduto.valor, selectedProposta.comissao) : 0;
-
-            console.log('💰 Valores calculados:', {
-                papel: valorPapel,
-                lona: valorLona,
-                locacao: valorLocacao,
-                comissao: selectedProposta.comissao
-            });
 
             // Default item structure
             const item = {
@@ -236,28 +225,20 @@ export default function Sidebar() {
                 fluxo_diario: selectedPonto.fluxo || 0 // Store current fluxo for consistent calculations
             };
 
-            console.log('📦 Item que será enviado ao backend:', item);
-
             // Fetch current items
             const data = await api.getProposta(selectedProposta.id);
             const currentItens = data.itens || [];
 
             // Check if already in cart
             if (currentItens.some((i: any) => i.id_ooh === selectedPonto.id)) {
-                // Silently return or show a toast (future feature)
                 return;
             }
 
             const newItens = [...currentItens, item];
-
-            console.log('📤 Enviando para o backend:', newItens);
             await api.updateCart(selectedProposta.id, newItens);
 
-            // Refetch to get updated proposal with normalized data
+            // Refetch to get updated proposal
             const updatedProposta = await api.getProposta(selectedProposta.id);
-            console.log('📥 Resposta do backend:', updatedProposta);
-
-            // Update global store to trigger UI updates (Map pins, CartTable)
             useStore.getState().refreshProposta(updatedProposta);
 
         } catch (error) {
@@ -307,59 +288,59 @@ export default function Sidebar() {
 
     return (
         <>
-            {/* Overlay */}
+            {/* Overlay - z-30 to be under the sidebar (z-40) but above map */}
             <div
-                className="fixed inset-0 bg-black/30 backdrop-blur-sm z-20 lg:hidden transition-opacity"
+                className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 transition-opacity lg:hidden animate-in fade-in"
                 onClick={handleClose}
             />
 
-            {/* Sidebar */}
-            <div className="fixed right-0 top-[70px] h-[calc(100vh-70px)] w-full sm:w-[420px] bg-white shadow-emidias-2xl z-50 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col animate-slide-in-right">
-                {/* Close Button - Floating */}
-                <button
-                    onClick={handleClose}
-                    className="absolute top-4 right-4 z-50 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105 backdrop-blur-sm"
-                    title="Fechar"
-                >
-                    <X size={20} strokeWidth={2.5} />
-                </button>
+            {/* Sidebar - z-40, consistent with NavigationMenu */}
+            <div className="fixed right-0 top-16 h-[calc(100vh-64px)] w-full sm:w-80 bg-white/95 backdrop-blur-xl shadow-emidias-2xl z-40 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col border-l border-white/20 animate-in slide-in-from-right">
 
                 {/* Header com imagens / Carrossel */}
-                <div className="relative h-48 bg-gradient-to-br from-emidias-primary to-emidias-accent flex-shrink-0">
+                <div className="relative h-44 bg-gray-100 flex-shrink-0 group">
+                    <button
+                        onClick={handleClose}
+                        className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-md opacity-0 group-hover:opacity-100"
+                        title="Fechar"
+                    >
+                        <X size={18} strokeWidth={2.5} />
+                    </button>
+
                     {imagens.length > 0 ? (
                         <>
-                            <img
+                            <SafeImage
                                 src={api.getImageUrl(imagens[currentImageIndex])}
                                 alt={`Imagem ${currentImageIndex + 1}`}
-                                className="w-full h-full object-cover transition-opacity duration-500"
+                                className="w-full h-full object-cover"
                             />
 
                             {/* Gradient Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
                             {/* Navigation Arrows */}
                             {imagens.length > 1 && (
                                 <>
                                     <button
                                         onClick={prevImage}
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 text-white rounded-full flex items-center justify-center transition-all hover:scale-110"
+                                        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 text-white/80 hover:text-white rounded-full flex items-center justify-center transition-all hover:bg-black/20"
                                     >
-                                        <ChevronLeft size={28} strokeWidth={2.5} />
+                                        <ChevronLeft size={24} strokeWidth={2.5} />
                                     </button>
                                     <button
                                         onClick={nextImage}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 text-white rounded-full flex items-center justify-center transition-all hover:scale-110"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 text-white/80 hover:text-white rounded-full flex items-center justify-center transition-all hover:bg-black/20"
                                     >
-                                        <ChevronRight size={28} strokeWidth={2.5} />
+                                        <ChevronRight size={24} strokeWidth={2.5} />
                                     </button>
 
                                     {/* Dots Indicator */}
-                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                                         {imagens.map((_, index) => (
                                             <button
                                                 key={index}
                                                 onClick={() => goToImage(index)}
-                                                className={`carousel-dot ${index === currentImageIndex ? 'active' : ''}`}
+                                                className={`w-1.5 h-1.5 rounded-full transition-all ${index === currentImageIndex ? 'bg-white w-3' : 'bg-white/40 hover:bg-white/60'}`}
                                             />
                                         ))}
                                     </div>
@@ -367,39 +348,48 @@ export default function Sidebar() {
                             )}
                         </>
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center">
+                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
                             <div className="text-center">
-                                <MapPin size={64} className="text-white/30 mx-auto mb-2" />
-                                <p className="text-white/50 text-sm">Sem imagens</p>
+                                <MapPin size={40} className="text-gray-300 mx-auto mb-2" />
+                                <p className="text-gray-400 text-xs">Sem imagens</p>
                             </div>
                         </div>
                     )}
 
-                    {/* Meta Info Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-                        <h2 className="text-2xl font-bold mb-1 drop-shadow-lg">
-                            {selectedPonto.codigo_ooh}
-                        </h2>
-                        <div className="flex items-center gap-2 text-sm text-white/80">
-                            <Calendar size={14} />
-                            <span>{formatDate(selectedPonto.created_at)}</span>
+                    {/* Meta Info Overlay - Compact */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 pt-10 text-white leading-tight">
+                        <div className="flex items-end justify-between">
+                            <div>
+                                <h2 className="text-xl font-bold mb-0.5 drop-shadow-md tracking-tight">
+                                    {selectedPonto.codigo_ooh}
+                                </h2>
+                                <div className="flex items-center gap-1.5 text-xs text-white/90 font-medium">
+                                    <Calendar size={12} />
+                                    <span>{formatDate(selectedPonto.created_at)}</span>
+                                </div>
+                            </div>
+                            <span className="badge bg-white/20 backdrop-blur-md border border-white/10 text-white text-xs px-2 py-0.5 rounded-md font-medium">
+                                {selectedPonto.tipo || 'OOH'}
+                            </span>
                         </div>
                     </div>
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto">
-                    <div className="p-6 space-y-6">
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="p-5 space-y-6">
                         {/* Info Items */}
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {/* Endereço */}
-                            <div className="sidebar-info-item">
-                                <MapPin className="sidebar-info-icon" />
+                            <div className="flex gap-3">
+                                <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
+                                    <MapPin size={16} />
+                                </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">Endereço</p>
-                                    <p className="text-emidias-gray-900 font-medium mt-0.5">{selectedPonto.endereco}</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Endereço</p>
+                                    <p className="text-gray-900 font-medium text-sm mt-0.5 leading-snug">{selectedPonto.endereco}</p>
                                     {selectedPonto.cidade && selectedPonto.uf && (
-                                        <p className="text-sm text-emidias-gray-500 mt-0.5">
+                                        <p className="text-xs text-gray-500 mt-0.5">
                                             {selectedPonto.cidade} - {selectedPonto.uf}
                                         </p>
                                     )}
@@ -408,20 +398,22 @@ export default function Sidebar() {
 
                             {/* Exibidora */}
                             {selectedPonto.exibidora_nome && (
-                                <div className="sidebar-info-item">
-                                    <Building2 className="sidebar-info-icon" />
+                                <div className="flex gap-3">
+                                    <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
+                                        <Building2 size={16} />
+                                    </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">Exibidora</p>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Exibidora</p>
                                         <button
                                             onClick={handleExibidoraClick}
-                                            className="group flex items-center gap-1 text-emidias-gray-900 font-medium mt-0.5 hover:text-emidias-accent transition-colors"
+                                            className="group flex items-center gap-1 text-gray-900 font-medium text-sm mt-0.5 hover:text-emidias-accent transition-colors"
                                         >
                                             {selectedPonto.exibidora_nome}
-                                            <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                                         </button>
                                         {selectedPonto.exibidora_cnpj && (
-                                            <p className="text-xs text-emidias-gray-500 mt-0.5 font-mono">
-                                                CNPJ: {selectedPonto.exibidora_cnpj}
+                                            <p className="text-[10px] text-gray-400 mt-0.5 font-mono">
+                                                {selectedPonto.exibidora_cnpj}
                                             </p>
                                         )}
 
@@ -430,38 +422,30 @@ export default function Sidebar() {
                                 </div>
                             )}
 
+                            {/* Divider with subtle gradient */}
+                            <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+
                             {/* Grid de Informações Secundárias */}
-                            <div className="grid grid-cols-2 gap-3 pt-2">
+                            <div className="grid grid-cols-2 gap-4">
                                 {/* Medidas */}
                                 {selectedPonto.medidas && (
-                                    <div className="sidebar-info-item flex-col items-start">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Ruler className="w-4 h-4 text-emidias-accent" />
-                                            <p className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">Medidas</p>
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-1.5 text-emidias-accent">
+                                            <Ruler size={14} />
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Medidas</p>
                                         </div>
-                                        <p className="text-emidias-gray-900 font-medium text-sm">{selectedPonto.medidas}</p>
+                                        <p className="text-gray-900 font-semibold text-sm pl-0.5">{selectedPonto.medidas}</p>
                                     </div>
                                 )}
 
                                 {/* Fluxo */}
                                 {selectedPonto.fluxo && (
-                                    <div className="sidebar-info-item flex-col items-start">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Users className="w-4 h-4 text-emidias-accent" />
-                                            <p className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">Fluxo</p>
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-1.5 text-emidias-accent">
+                                            <Users size={14} />
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Fluxo</p>
                                         </div>
-                                        <p className="text-emidias-gray-900 font-medium text-sm">{selectedPonto.fluxo.toLocaleString()}/dia</p>
-                                    </div>
-                                )}
-
-                                {/* Tipo */}
-                                {selectedPonto.tipo && (
-                                    <div className="sidebar-info-item flex-col items-start col-span-2">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Tag className="w-4 h-4 text-emidias-accent" />
-                                            <p className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">Tipo</p>
-                                        </div>
-                                        <span className="badge badge-accent">{selectedPonto.tipo}</span>
+                                        <p className="text-gray-900 font-semibold text-sm pl-0.5">{selectedPonto.fluxo.toLocaleString()}/dia</p>
                                     </div>
                                 )}
                             </div>
@@ -469,16 +453,17 @@ export default function Sidebar() {
 
                         {/* Produtos e Valores */}
                         {produtos.length > 0 && (
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <DollarSign className="w-5 h-5 text-emidias-accent" />
-                                    <h3 className="font-semibold text-emidias-gray-900">
-                                        {user?.role === 'client' ? 'Valores Médios (Mercado)' : 'Produtos e Valores'}
+                            <div className="bg-gray-50/80 rounded-xl p-4 border border-gray-100 space-y-3">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="p-1 rounded-md bg-white border border-gray-200 shadow-sm text-emidias-success">
+                                        <DollarSign size={14} />
+                                    </div>
+                                    <h3 className="font-semibold text-gray-800 text-sm">
+                                        {user?.role === 'client' ? 'Valores Estimados' : 'Tabela de Preços'}
                                     </h3>
                                 </div>
                                 <div className="space-y-2">
                                     {produtos.map((produto, idx) => {
-                                        // Calculate display value
                                         let displayValue = produto.valor;
                                         const isLocacao = produto.tipo.toLowerCase().includes('locação') ||
                                             produto.tipo.toLowerCase().includes('locacao') ||
@@ -487,25 +472,23 @@ export default function Sidebar() {
 
                                         if (user?.role === 'client') {
                                             if (isLocacao) {
-                                                displayValue = produto.valor * 2; // Double Base for Clients
+                                                displayValue = produto.valor * 2;
                                             } else {
-                                                displayValue = produto.valor * 1.25; // Production + 25% for Clients (Standard)
+                                                displayValue = produto.valor * 1.25;
                                             }
                                         }
 
                                         return (
-                                            <div key={idx} className="p-4 bg-gradient-to-r from-emidias-gray-50 to-transparent rounded-xl border border-emidias-gray-100 hover:border-emidias-accent/30 transition-all">
-                                                <div className="flex justify-between items-start gap-3">
-                                                    <div className="flex-1 min-w-0">
-                                                        <span className="font-semibold text-emidias-gray-900">{produto.tipo}</span>
-                                                        {produto.periodo && (
-                                                            <p className="text-xs text-emidias-gray-500 mt-1">{produto.periodo}</p>
-                                                        )}
-                                                    </div>
-                                                    <span className="text-lg font-bold text-emidias-accent whitespace-nowrap">
-                                                        {formatCurrency(displayValue)}
-                                                    </span>
+                                            <div key={idx} className="flex justify-between items-center text-sm py-1.5 border-b border-gray-200/50 last:border-0">
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium text-gray-700">{produto.tipo}</span>
+                                                    {produto.periodo && (
+                                                        <span className="text-[10px] text-gray-400 uppercase tracking-wider">{produto.periodo}</span>
+                                                    )}
                                                 </div>
+                                                <span className="font-bold text-gray-900">
+                                                    {formatCurrency(displayValue)}
+                                                </span>
                                             </div>
                                         );
                                     })}
@@ -517,12 +500,12 @@ export default function Sidebar() {
                         {selectedPonto.observacoes && (
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
-                                    <FileText className="w-5 h-5 text-emidias-accent" />
-                                    <h3 className="font-semibold text-emidias-gray-900">Observações</h3>
+                                    <FileText size={14} className="text-gray-400" />
+                                    <h3 className="font-bold text-xs uppercase text-gray-400 tracking-widest">Observações</h3>
                                 </div>
-                                <p className="text-emidias-gray-600 text-sm leading-relaxed whitespace-pre-wrap bg-emidias-gray-50 p-4 rounded-xl border border-emidias-gray-100">
+                                <div className="text-gray-600 text-xs leading-relaxed whitespace-pre-wrap bg-yellow-50/50 p-3 rounded-xl border border-yellow-100/50">
                                     {selectedPonto.observacoes}
-                                </p>
+                                </div>
                             </div>
                         )}
 
@@ -530,88 +513,94 @@ export default function Sidebar() {
                         {selectedPonto.ponto_referencia && (
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
-                                    <MapPin className="w-5 h-5 text-emidias-accent" />
-                                    <h3 className="font-semibold text-emidias-gray-900">Ponto de Referência</h3>
+                                    <MapPin size={14} className="text-gray-400" />
+                                    <h3 className="font-bold text-xs uppercase text-gray-400 tracking-widest">Ponto de Referência</h3>
                                 </div>
-                                <p className="text-emidias-gray-600 text-sm leading-relaxed whitespace-pre-wrap bg-emidias-blue-50/50 p-4 rounded-xl border border-emidias-blue-100">
+                                <div className="text-gray-600 text-xs leading-relaxed whitespace-pre-wrap bg-blue-50/50 p-3 rounded-xl border border-blue-100/50">
                                     {selectedPonto.ponto_referencia}
-                                </p>
+                                </div>
                             </div>
                         )}
+
+                        {/* Bottom Spacer */}
+                        <div className="h-12"></div>
                     </div>
                 </div>
 
-                {/* Actions Footer - Fixed */}
-                <div className="flex-shrink-0 p-4 border-t border-emidias-gray-100 bg-white/80 backdrop-blur-sm">
-                    {/* Icon-only action buttons in a compact row */}
-                    <div className="flex items-center justify-around gap-2">
-                        {/* Street View */}
-                        {selectedPonto.latitude && selectedPonto.longitude && (
-                            <button
-                                onClick={handleStreetView}
-                                className="flex items-center justify-center w-11 h-11 rounded-lg bg-emidias-accent/10 text-emidias-accent hover:bg-emidias-accent hover:text-white transition-all hover:scale-105"
-                                title="Ver no Street View"
-                            >
-                                <Eye size={20} />
-                            </button>
-                        )}
-
-                        {/* Only show Edit/History/Delete when NOT in proposal view */}
-                        {!selectedProposta && (
-                            <>
-                                {/* Edit */}
-                                <button
-                                    onClick={handleEdit}
-                                    className="flex items-center justify-center w-11 h-11 rounded-lg bg-emidias-primary/10 text-emidias-primary hover:bg-emidias-primary hover:text-white transition-all hover:scale-105"
-                                    title="Editar"
+                {/* Actions Footer - Glassmorphic */}
+                <div className="flex-shrink-0 p-3 border-t border-gray-100 bg-white/80 backdrop-blur-md">
+                    <div className="flex items-center justify-between gap-2">
+                        {/* Left Group */}
+                        <div className="flex gap-2">
+                            {/* Street View */}
+                            {selectedPonto.latitude && selectedPonto.longitude && (
+                                <Button
+                                    onClick={handleStreetView}
+                                    variant="outline"
+                                    size="icon"
+                                    className="rounded-xl h-10 w-10 border-gray-200 text-gray-600 hover:text-emidias-primary hover:border-emidias-primary/30"
+                                    title="Ver no Street View"
                                 >
-                                    <Pencil size={18} />
-                                </button>
+                                    <Eye size={18} />
+                                </Button>
+                            )}
 
-                                {/* History */}
-                                <button
-                                    onClick={handleHistory}
-                                    className="flex items-center justify-center w-11 h-11 rounded-lg bg-emidias-gray-100 text-emidias-gray-600 hover:bg-emidias-gray-200 hover:text-emidias-gray-900 transition-all hover:scale-105"
-                                    title="Histórico"
+                            {/* Edit/History - Hidden in proposal view */}
+                            {!selectedProposta && (
+                                <>
+                                    <Button
+                                        onClick={handleEdit}
+                                        variant="outline"
+                                        size="icon"
+                                        className="rounded-xl h-10 w-10 border-gray-200 text-gray-600 hover:text-emidias-primary hover:border-emidias-primary/30"
+                                        title="Editar"
+                                    >
+                                        <Pencil size={18} />
+                                    </Button>
+                                    <Button
+                                        onClick={handleHistory}
+                                        variant="outline"
+                                        size="icon"
+                                        className="rounded-xl h-10 w-10 border-gray-200 text-gray-600 hover:text-emidias-primary hover:border-emidias-primary/30"
+                                        title="Histórico"
+                                    >
+                                        <History size={18} />
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Right Group / Main Action */}
+                        <div className="flex gap-2 flex-1 justify-end">
+                            {selectedProposta && (() => {
+                                const isInCart = selectedProposta.itens?.some((i: any) => i.id_ooh === selectedPonto.id) || false;
+                                return (
+                                    <Button
+                                        onClick={handleAddToProposal}
+                                        variant={isInCart ? "danger" : "primary"}
+                                        className={cn(
+                                            "flex-1 shadow-md hover:shadow-lg transition-all rounded-xl gap-2 font-semibold",
+                                            isInCart ? "bg-red-500 hover:bg-red-600" : "bg-emidias-primary hover:bg-emidias-primary-dark"
+                                        )}
+                                    >
+                                        <ShoppingCart size={18} />
+                                        <span className="truncate">{isInCart ? 'Remover' : 'Adicionar'}</span>
+                                    </Button>
+                                );
+                            })()}
+
+                            {!selectedProposta && user?.role === 'master' && (
+                                <Button
+                                    onClick={handleDelete}
+                                    disabled={isDeleting}
+                                    variant="outline"
+                                    size="icon"
+                                    className="rounded-xl h-10 w-10 border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200"
                                 >
-                                    <History size={18} />
-                                </button>
-                            </>
-                        )}
-
-                        {/* Add/Remove from Proposal - Dynamic Button */}
-                        {selectedProposta && (() => {
-                            const isInCart = selectedProposta.itens?.some((i: any) => i.id_ooh === selectedPonto.id) || false;
-                            return (
-                                <button
-                                    onClick={handleAddToProposal}
-                                    className={`flex items-center justify-center w-auto px-4 h-11 rounded-lg transition-all hover:scale-105 shadow-lg gap-2 font-semibold ${isInCart
-                                        ? 'bg-red-600 text-white hover:bg-red-700 shadow-red-600/20'
-                                        : 'bg-green-600 text-white hover:bg-green-700 shadow-green-600/20'
-                                        }`}
-                                    title={isInCart ? 'Tirar do carrinho' : `Adicionar à ${selectedProposta.nome}`}
-                                >
-                                    <ShoppingCart size={18} />
-                                    <span className="hidden sm:inline">{isInCart ? 'Tirar do carrinho' : 'Adicionar'}</span>
-                                </button>
-                            );
-                        })()}
-
-                        {/* Delete - Master Only (hide when in proposal view) */}
-                        {!selectedProposta && user?.role === 'master' && (
-                            <button
-                                onClick={handleDelete}
-                                disabled={isDeleting}
-                                className="flex items-center justify-center w-11 h-11 rounded-lg bg-emidias-danger/10 text-emidias-danger hover:bg-emidias-danger hover:text-white transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="Deletar Ponto"
-                            >
-                                {isDeleting ? (
-                                    <Loader2 size={18} className="animate-spin" />
-                                ) : (
-                                    <Trash2 size={18} />
-                                )}
-                            </button>
-                        )}
+                                    {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -8,6 +8,8 @@ import { api } from '@/lib/api';
 import { CustomMarker, MapLayer } from '@/lib/types';
 import { Layers, Upload, X, Eye, EyeOff, Trash2, FileSpreadsheet, MapPin, Check, ChevronRight, Loader2, AlertCircle, Palette, Table as TableIcon, Edit2, Maximize2, Minimize2, Save } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
+import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/utils';
 
 // Rate Limiter Helper
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -356,16 +358,7 @@ export default function MapLayers() {
 
             if (address) {
                 // Remove old marker for this "line" (Logic gap: we don't track which marker corresponds to which row index easily unless we map them.
-                // Simplified approach: Search marker by title/latlng? No, duplications.
-                // Better approach: We add an index or ID to the MARKER matching the ROW.
-                // For now, let's just ADD a new marker and try to remove the old one if we can identify it.
-                // FUTURE IMPROVEMENT: Map Row Index to Marker ID.
-
-                // For "Quick Fix": Just geocode and ADD. User can delete old one manually on map if needed.
-                // Or better: Re-geocode entire layer? Too slow.
-
-                // Let's rely on finding marker by previous title? Risky.
-                // Let's implement a simple geocode-and-update-store logic for the user to see the "move".
+                // Simplified approach: Re-geocode and ADD.
 
                 const geocoder = new google.maps.Geocoder();
                 try {
@@ -443,7 +436,7 @@ export default function MapLayers() {
             <div className="absolute top-20 left-4 z-10 font-sans">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="bg-white p-3 rounded-lg shadow-lg hover:bg-gray-50 transition-colors group"
+                    className="bg-white p-3 rounded-xl shadow-emidias-md hover:bg-gray-50 transition-colors group border border-gray-100"
                     title="Camadas Personalizadas"
                 >
                     <Layers className="text-gray-700 group-hover:text-emidias-accent transition-colors" size={24} />
@@ -455,15 +448,15 @@ export default function MapLayers() {
                 </button>
 
                 {isOpen && (
-                    <div className="absolute top-14 left-0 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col max-h-[80vh]">
-                        <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-                            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                    <div className="absolute top-14 left-0 w-80 bg-white/95 backdrop-blur-xl rounded-2xl shadow-emidias-2xl border border-white/20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col max-h-[80vh]">
+                        <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0 bg-white/50">
+                            <h3 className="font-semibold text-emidias-primary flex items-center gap-2">
                                 <Layers size={18} className="text-emidias-accent" />
                                 Minhas Camadas
                             </h3>
-                            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                <X size={18} />
-                            </button>
+                            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-8 w-8 rounded-full">
+                                <X size={16} />
+                            </Button>
                         </div>
 
                         <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
@@ -480,12 +473,12 @@ export default function MapLayers() {
                                         {customLayers.map(layer => {
                                             const progress = processingStatus[layer.id];
                                             return (
-                                                <div key={layer.id} className="relative flex flex-col p-2 bg-gray-50 border border-gray-200 rounded-md hover:bg-white transition-colors group">
+                                                <div key={layer.id} className="relative flex flex-col p-3 bg-gray-50/50 border border-gray-100 rounded-xl hover:bg-white hover:shadow-sm transition-all group">
                                                     <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-2 overflow-hidden flex-1">
+                                                        <div className="flex items-center gap-3 overflow-hidden flex-1">
                                                             <button
                                                                 onClick={() => setActiveColorPicker(activeColorPicker === layer.id ? null : layer.id)}
-                                                                className="w-4 h-4 rounded-full flex-shrink-0 border border-black/10 hover:scale-110 transition-transform"
+                                                                className="w-4 h-4 rounded-full flex-shrink-0 border border-black/10 hover:scale-110 transition-transform shadow-sm"
                                                                 style={{ backgroundColor: layer.color }}
                                                                 title="Mudar cor"
                                                             />
@@ -498,7 +491,7 @@ export default function MapLayers() {
                                                                     onChange={(e) => setTempLayerName(e.target.value)}
                                                                     onBlur={saveLayerName}
                                                                     onKeyDown={(e) => e.key === 'Enter' && saveLayerName()}
-                                                                    className="text-sm font-medium text-gray-700 bg-white border border-blue-300 rounded px-1 min-w-0 w-full"
+                                                                    className="text-sm font-medium text-gray-700 bg-white border border-emidias-primary/30 rounded px-1.5 py-0.5 min-w-0 w-full outline-none ring-1 ring-emidias-primary"
                                                                 />
                                                             ) : (
                                                                 <div
@@ -517,15 +510,31 @@ export default function MapLayers() {
                                                                 <Loader2 size={14} className="animate-spin text-emidias-accent" />
                                                             ) : (
                                                                 <>
-                                                                    <button onClick={() => handleToggleVisibility(layer.id, layer.visible)} className="p-1 hover:bg-gray-200 rounded text-gray-500">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() => handleToggleVisibility(layer.id, layer.visible)}
+                                                                        className="h-7 w-7 text-gray-400 hover:text-emidias-primary"
+                                                                    >
                                                                         {layer.visible ? <Eye size={14} /> : <EyeOff size={14} />}
-                                                                    </button>
-                                                                    <button onClick={() => handleOpenTable(layer.id)} className="p-1 hover:bg-blue-100 hover:text-blue-500 rounded text-gray-500" title="Abrir Tabela">
+                                                                    </Button>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() => handleOpenTable(layer.id)}
+                                                                        className="h-7 w-7 text-gray-400 hover:text-blue-500 hover:bg-blue-50"
+                                                                        title="Abrir Tabela"
+                                                                    >
                                                                         <TableIcon size={14} />
-                                                                    </button>
-                                                                    <button onClick={() => handleRemoveLayer(layer.id)} className="p-1 hover:bg-red-100 hover:text-red-500 rounded text-gray-500">
+                                                                    </Button>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() => handleRemoveLayer(layer.id)}
+                                                                        className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                                                                    >
                                                                         <Trash2 size={14} />
-                                                                    </button>
+                                                                    </Button>
                                                                 </>
                                                             )}
                                                         </div>
@@ -533,11 +542,11 @@ export default function MapLayers() {
 
                                                     {/* Color Picker */}
                                                     {activeColorPicker === layer.id && (
-                                                        <div className="absolute top-8 left-0 z-20 bg-white p-2 rounded-lg shadow-xl border border-gray-200 grid grid-cols-5 gap-1 animate-in zoom-in-95 duration-200">
+                                                        <div className="absolute top-10 left-0 z-20 bg-white p-3 rounded-xl shadow-xl border border-gray-200 grid grid-cols-5 gap-2 animate-in zoom-in-95 duration-200">
                                                             {PRESET_COLORS.map(color => (
                                                                 <button
                                                                     key={color}
-                                                                    className="w-5 h-5 rounded-full hover:scale-110 transition-transform border border-black/10"
+                                                                    className="w-6 h-6 rounded-full hover:scale-110 transition-transform border border-black/10 shadow-sm"
                                                                     style={{ backgroundColor: color }}
                                                                     onClick={() => handleColorChange(layer.id, color)}
                                                                 />
@@ -547,7 +556,7 @@ export default function MapLayers() {
 
                                                     {/* Progress Bar */}
                                                     {progress && (
-                                                        <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                                        <div className="mt-2 w-full bg-gray-100 rounded-full h-1 overflow-hidden">
                                                             <div
                                                                 className="bg-emidias-accent h-full transition-all duration-300"
                                                                 style={{ width: `${(progress.current / progress.total) * 100}%` }}
@@ -560,13 +569,16 @@ export default function MapLayers() {
                                     </div>
 
                                     {/* ADD BUTTON (Bottom) */}
-                                    <div className="mt-4 pt-2 border-t border-gray-100">
+                                    <div className="mt-4 pt-4 border-t border-gray-100">
                                         <div {...getRootProps()}>
                                             <input {...getInputProps()} />
-                                            <button className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:bg-gray-50 hover:border-emidias-accent hover:text-emidias-accent transition-all">
-                                                <Upload size={16} />
-                                                Adicionar camada (XLSX/CSV)
-                                            </button>
+                                            <Button
+                                                variant="outline"
+                                                className="w-full border-dashed border-gray-300 hover:border-emidias-accent hover:text-emidias-accent hover:bg-emidias-accent/5 backdrop-blur-none"
+                                            >
+                                                <Upload size={16} className="mr-2" />
+                                                Adicionar Nova Camada
+                                            </Button>
                                         </div>
                                     </div>
                                 </>
@@ -575,60 +587,96 @@ export default function MapLayers() {
                             {/* WIZARD: ADDRESS & NAME SELECTION */}
                             {step === 'address' && (
                                 <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
-                                    <div className="flex items-start gap-3 bg-blue-50 p-3 rounded-lg">
-                                        <MapPin className="text-blue-600 mt-0.5" size={18} />
+                                    <div className="flex items-start gap-3 bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                                        <div className="p-2 bg-blue-100 rounded-lg">
+                                            <MapPin className="text-blue-600" size={18} />
+                                        </div>
                                         <div>
-                                            <h4 className="text-sm font-bold text-blue-900">Endereço</h4>
-                                            <p className="text-xs text-blue-700 mt-1">Colunas de localização (ex: Rua, Cidade).</p>
+                                            <h4 className="text-sm font-bold text-blue-900">Localização</h4>
+                                            <p className="text-xs text-blue-700 mt-0.5 leading-relaxed">Selecione as colunas que compõem o endereço (ex: Rua, Cidade, Numero).</p>
                                         </div>
                                     </div>
-                                    <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+                                    <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl divide-y divide-gray-100 bg-gray-50/50">
                                         {headers.map(header => (
                                             <div
                                                 key={header}
-                                                className={`p-2.5 flex items-center cursor-pointer hover:bg-gray-50 ${selectedAddressCols.includes(header) ? 'bg-blue-50' : ''}`}
+                                                className={cn(
+                                                    "p-3 flex items-center cursor-pointer transition-colors hover:bg-white",
+                                                    selectedAddressCols.includes(header) && "bg-blue-50/50"
+                                                )}
                                                 onClick={() => toggleAddressCol(header)}
                                             >
-                                                <div className={`w-4 h-4 rounded border flex items-center justify-center mr-3 ${selectedAddressCols.includes(header) ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
-                                                    {selectedAddressCols.includes(header) && <Check size={10} className="text-white" />}
+                                                <div className={cn(
+                                                    "w-5 h-5 rounded border flex items-center justify-center mr-3 transition-all",
+                                                    selectedAddressCols.includes(header) ? "bg-blue-500 border-blue-500" : "border-gray-300 bg-white"
+                                                )}>
+                                                    {selectedAddressCols.includes(header) && <Check size={12} className="text-white" />}
                                                 </div>
-                                                <span className="text-sm text-gray-700">{header}</span>
+                                                <span className="text-sm text-gray-700 font-medium">{header}</span>
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="flex gap-2">
-                                        <button onClick={resetState} className="px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 rounded">Cancelar</button>
-                                        <button onClick={() => setStep('name')} disabled={selectedAddressCols.length === 0} className="flex-1 bg-emidias-accent text-white py-2 rounded text-sm font-medium hover:bg-emidias-accent-dark disabled:opacity-50">Próximo</button>
+                                    <div className="flex gap-3">
+                                        <Button variant="ghost" size="sm" onClick={resetState} className="flex-1">
+                                            Cancelar
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            onClick={() => setStep('name')}
+                                            disabled={selectedAddressCols.length === 0}
+                                            className="flex-1"
+                                            rightIcon={<ChevronRight size={16} />}
+                                        >
+                                            Próximo
+                                        </Button>
                                     </div>
                                 </div>
                             )}
 
                             {step === 'name' && (
                                 <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
-                                    <div className="flex items-start gap-3 bg-indigo-50 p-3 rounded-lg">
-                                        <FileSpreadsheet className="text-indigo-600 mt-0.5" size={18} />
+                                    <div className="flex items-start gap-3 bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                                        <div className="p-2 bg-indigo-100 rounded-lg">
+                                            <FileSpreadsheet className="text-indigo-600" size={18} />
+                                        </div>
                                         <div>
-                                            <h4 className="text-sm font-bold text-indigo-900">Nome</h4>
-                                            <p className="text-xs text-indigo-700 mt-1">Coluna para o nome do local.</p>
+                                            <h4 className="text-sm font-bold text-indigo-900">Identificação</h4>
+                                            <p className="text-xs text-indigo-700 mt-0.5 leading-relaxed">Selecione a coluna que contém o nome do local.</p>
                                         </div>
                                     </div>
-                                    <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+                                    <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl divide-y divide-gray-100 bg-gray-50/50">
                                         {headers.map(header => (
                                             <div
                                                 key={header}
-                                                className={`p-2.5 flex items-center cursor-pointer hover:bg-gray-50 ${selectedNameCol === header ? 'bg-indigo-50' : ''}`}
+                                                className={cn(
+                                                    "p-3 flex items-center cursor-pointer transition-colors hover:bg-white",
+                                                    selectedNameCol === header && "bg-indigo-50/50"
+                                                )}
                                                 onClick={() => setSelectedNameCol(header)}
                                             >
-                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center mr-3 ${selectedNameCol === header ? 'border-indigo-500' : 'border-gray-300'}`}>
-                                                    {selectedNameCol === header && <div className="w-2 h-2 rounded-full bg-indigo-500" />}
+                                                <div className={cn(
+                                                    "w-5 h-5 rounded-full border flex items-center justify-center mr-3 transition-all",
+                                                    selectedNameCol === header ? "border-indigo-500" : "border-gray-300 bg-white"
+                                                )}>
+                                                    {selectedNameCol === header && <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />}
                                                 </div>
-                                                <span className="text-sm text-gray-700">{header}</span>
+                                                <span className="text-sm text-gray-700 font-medium">{header}</span>
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="flex gap-2">
-                                        <button onClick={() => setStep('address')} className="px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 rounded">Voltar</button>
-                                        <button onClick={handleCreateLayer} disabled={!selectedNameCol} className="flex-1 bg-emidias-accent text-white py-2 rounded text-sm font-medium hover:bg-emidias-accent-dark disabled:opacity-50">Concluir</button>
+                                    <div className="flex gap-3">
+                                        <Button variant="ghost" size="sm" onClick={() => setStep('address')} className="flex-1">
+                                            Voltar
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            onClick={handleCreateLayer}
+                                            disabled={!selectedNameCol}
+                                            className="flex-1"
+                                            rightIcon={<Check size={16} />}
+                                        >
+                                            Concluir
+                                        </Button>
                                     </div>
                                 </div>
                             )}
@@ -638,45 +686,41 @@ export default function MapLayers() {
                 }
             </div >
 
-            {/* --- TABLE DRAWER (BOTTOM) --- */}
             {/* --- TABLE WINDOW (FLOATING) --- */}
             {
                 isTableOpen && activeLayer && (
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 w-[900px] max-w-[90vw] h-[600px] max-h-[80vh] bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 w-[900px] max-w-[90vw] h-[600px] max-h-[80vh] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200">
                         {/* Header */}
-                        <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-200 rounded-t-xl cursor-move">
+                        <div className="flex items-center justify-between px-6 py-4 bg-gray-50/80 border-b border-gray-100 rounded-t-2xl cursor-move backdrop-blur-sm">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white rounded-lg shadow-sm">
+                                <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100">
                                     <TableIcon size={20} className="text-emidias-accent" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-gray-800 text-lg">{activeLayer.name}</h3>
-                                    <p className="text-xs text-gray-500">{activeLayer.data?.length || 0} registros encontrados</p>
+                                    <h3 className="font-bold text-gray-800 text-lg tracking-tight">{activeLayer.name}</h3>
+                                    <p className="text-xs text-gray-500 font-medium">{activeLayer.data?.length || 0} registros encontrados</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                {/* Min/Max buttons could go here if implemented properly for window, but for now just close */}
-                                <button onClick={() => setIsTableOpen(false)} className="p-2 hover:bg-red-50 hover:text-red-500 rounded-lg text-gray-400 transition-colors">
-                                    <X size={20} />
-                                </button>
-                            </div>
+                            <Button size="icon" variant="ghost" onClick={() => setIsTableOpen(false)} className="rounded-full hover:bg-red-50 hover:text-red-500">
+                                <X size={20} />
+                            </Button>
                         </div>
 
                         {/* Table Content */}
                         <div className="flex-1 overflow-auto custom-scrollbar p-1">
                             <table className="w-full text-sm text-left border-collapse">
-                                <thead className="sticky top-0 bg-white/95 backdrop-blur shadow-sm z-10 text-xs uppercase tracking-wider text-gray-500 font-bold">
+                                <thead className="sticky top-0 bg-white shadow-sm z-10 text-xs uppercase tracking-wider text-gray-500 font-bold">
                                     <tr>
                                         {activeLayer.headers?.map(header => (
-                                            <th key={header} className="px-6 py-3 border-b border-gray-100 whitespace-nowrap">
+                                            <th key={header} className="px-6 py-3 border-b border-gray-100 whitespace-nowrap bg-gray-50/50">
                                                 {header}
                                             </th>
                                         ))}
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100">
+                                <tbody className="divide-y divide-gray-50">
                                     {activeLayer.data?.slice(0, 500).map((row, i) => (
-                                        <tr key={i} className="hover:bg-blue-50/50 group transition-colors odd:bg-gray-50/30">
+                                        <tr key={i} className="hover:bg-blue-50/30 group transition-colors odd:bg-gray-50/30">
                                             {activeLayer.headers?.map(header => (
                                                 <td key={header} className="p-0 border-r border-transparent min-w-[150px]">
                                                     {viewingLayerId === 'preview' ? (
@@ -686,7 +730,7 @@ export default function MapLayers() {
                                                             type="text"
                                                             defaultValue={row[header]}
                                                             onBlur={(e) => handleCellChange(i, header, e.target.value)}
-                                                            className="w-full px-6 py-3 bg-transparent focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 outline-none truncate text-gray-700 placeholder-transparent"
+                                                            className="w-full px-6 py-3 bg-transparent focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 outline-none truncate text-gray-700 placeholder-transparent transition-all"
                                                         />
                                                     )}
                                                 </td>
@@ -705,13 +749,13 @@ export default function MapLayers() {
                         {/* Footer Actions (Only for Wizard) */}
                         {step === 'table-preview' && (
                             <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-xl flex justify-between items-center">
-                                <p className="text-sm text-gray-500">Verifique se os dados estão corretos antes de continuar.</p>
-                                <button
+                                <p className="text-sm text-gray-500 font-medium">Verifique se os dados estão corretos antes de continuar.</p>
+                                <Button
                                     onClick={handleContinueFromTable}
-                                    className="bg-emidias-accent text-white px-6 py-2.5 rounded-lg font-bold hover:bg-emidias-accent-dark shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                                    rightIcon={<ChevronRight size={18} />}
                                 >
-                                    Configurar Geocodificação <ChevronRight size={18} />
-                                </button>
+                                    Configurar Geocodificação
+                                </Button>
                             </div>
                         )}
                     </div>

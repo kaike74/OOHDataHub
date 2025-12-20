@@ -9,6 +9,10 @@ import { Proposta } from '@/lib/types';
 import PropostaModal from './PropostaModal';
 import HistoryModal from './HistoryModal';
 import { api } from '@/lib/api';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { SafeImage } from '@/components/ui/SafeImage';
 
 // Extended type for frontend usage with stats
 interface ExtendedProposta extends Proposta {
@@ -118,7 +122,11 @@ export default function PropostasView() {
                                 <div className="absolute inset-0 bg-emidias-accent/20 rounded-2xl blur-lg group-hover:blur-xl transition-all opacity-0 group-hover:opacity-100" />
                                 <div className="relative w-20 h-20 rounded-2xl bg-white border border-gray-100 shadow-lg p-2 flex items-center justify-center overflow-hidden">
                                     {selectedCliente.logo_url ? (
-                                        <img src={api.getImageUrl(selectedCliente.logo_url)} alt="Logo" className="w-full h-full object-contain" />
+                                        <SafeImage
+                                            src={api.getImageUrl(selectedCliente.logo_url)}
+                                            alt="Logo"
+                                            className="w-full h-full object-contain"
+                                        />
                                     ) : (
                                         <span className="text-3xl font-bold text-gray-300">{selectedCliente.nome.substring(0, 2).toUpperCase()}</span>
                                     )}
@@ -145,21 +153,21 @@ export default function PropostasView() {
                         </div>
 
                         <div className="flex flex-col gap-3 w-full md:w-auto">
-                            <button
+                            <Button
                                 onClick={() => setIsPropostaModalOpen(true)}
-                                className="btn-base btn-primary h-12 px-6 shadow-lg shadow-emidias-accent/20 hover:shadow-emidias-accent/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 text-base"
+                                size="lg"
+                                leftIcon={<Plus size={20} className="stroke-[3px]" />}
+                                className="shadow-lg shadow-emidias-accent/20 hover:shadow-emidias-accent/40"
                             >
-                                <Plus size={20} className="stroke-[3px]" />
-                                <span>Criar Nova Proposta</span>
-                            </button>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                <input
-                                    type="text"
+                                Criar Nova Proposta
+                            </Button>
+                            <div className="relative w-full sm:w-80">
+                                <Input
+                                    icon={<Search size={18} />}
                                     placeholder="Buscar propostas..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emidias-accent/20 focus:border-emidias-accent outline-none transition-all"
+                                    className="bg-gray-50 focus:bg-white"
                                 />
                             </div>
                         </div>
@@ -171,12 +179,30 @@ export default function PropostasView() {
             <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
                 <div className="max-w-7xl mx-auto">
                     {isLoading ? (
-                        <div className="flex flex-col items-center justify-center h-64 gap-4">
-                            <Loader2 className="animate-spin text-emidias-accent" size={40} />
-                            <p className="text-gray-400 animate-pulse">Carregando propostas...</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {[...Array(8)].map((_, i) => (
+                                <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4">
+                                    <div className="flex justify-between items-start">
+                                        <Skeleton className="h-10 w-10 rounded-xl" />
+                                        <div className="flex gap-2">
+                                            <Skeleton className="h-8 w-8 rounded-lg" />
+                                            <Skeleton className="h-8 w-8 rounded-lg" />
+                                        </div>
+                                    </div>
+                                    <Skeleton className="h-6 w-3/4 rounded-md" />
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-full rounded-md" />
+                                        <Skeleton className="h-4 w-5/6 rounded-md" />
+                                    </div>
+                                    <div className="pt-4 border-t border-gray-100 grid grid-cols-2 gap-4">
+                                        <Skeleton className="h-8 w-full rounded-md" />
+                                        <Skeleton className="h-8 w-full rounded-md" />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     ) : filteredPropostas.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-300">
+                        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-300 animate-in fade-in zoom-in duration-500">
                             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                                 <FileText size={32} className="text-gray-300" />
                             </div>
@@ -190,7 +216,7 @@ export default function PropostasView() {
                             </button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in slide-in-from-bottom-4 duration-500">
                             {filteredPropostas.map((proposta) => (
                                 <div
                                     key={proposta.id}
@@ -199,7 +225,7 @@ export default function PropostasView() {
                                 >
                                     {/* Status Line */}
                                     <div className={`absolute top-0 inset-x-0 h-1 rounded-t-2xl transition-all ${proposta.status === 'aprovada' ? 'bg-green-500' :
-                                            proposta.status === 'em_negociacao' ? 'bg-blue-500' : 'bg-gray-300'
+                                        proposta.status === 'em_negociacao' ? 'bg-blue-500' : 'bg-gray-300'
                                         }`} />
 
                                     <div className="flex justify-between items-start mb-4 mt-2">
@@ -239,10 +265,10 @@ export default function PropostasView() {
                                         <div className="flex items-center justify-between text-sm">
                                             <span className="text-gray-500">Status</span>
                                             <span className={`px-2 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wider ${proposta.status === 'aprovada'
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : proposta.status === 'em_negociacao'
-                                                        ? 'bg-blue-100 text-blue-700'
-                                                        : 'bg-yellow-100 text-yellow-700'
+                                                ? 'bg-green-100 text-green-700'
+                                                : proposta.status === 'em_negociacao'
+                                                    ? 'bg-blue-100 text-blue-700'
+                                                    : 'bg-yellow-100 text-yellow-700'
                                                 }`}>
                                                 {proposta.status.replace('_', ' ')}
                                             </span>

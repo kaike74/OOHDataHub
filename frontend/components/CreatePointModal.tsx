@@ -3,8 +3,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { X, Upload, Plus, Trash2, MapPin, Loader2 } from 'lucide-react';
+import { X, Upload, Plus, Trash2, MapPin, Loader2, Image as ImageIcon, Ruler, Users, DollarSign, ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
+import { cn } from '@/lib/utils';
 
 interface Custo {
   produto: string; // Locação, Papel, Lona
@@ -23,11 +28,6 @@ const TIPOS_OOH = [
   'Painel rodoviário',
   'Abrigo'
 ];
-
-const PRODUTOS_CUSTO = ['Locação', 'Papel', 'Lona'];
-
-const PERIODOS = ['Bissemanal', 'Mensal', 'Unitário'];
-
 
 export default function CreatePointModal() {
   const isModalOpen = useStore((state) => state.isModalOpen);
@@ -82,11 +82,9 @@ export default function CreatePointModal() {
 
       // Parse tipos se existir
       if (editingPonto.tipo) {
-        // Usar 'tipo' (coluna do DB) ao invés de 'tipos'
         const tiposArray = editingPonto.tipo.split(',').map(t => t.trim()).filter(Boolean);
         setTipos(tiposArray);
       } else if (editingPonto.tipos) {
-        // Fallback para 'tipos' se existir
         const tiposArray = editingPonto.tipos.split(',').map(t => t.trim()).filter(Boolean);
         setTipos(tiposArray);
       } else {
@@ -99,7 +97,6 @@ export default function CreatePointModal() {
       // Parse produtos com formatação
       if (editingPonto.produtos && editingPonto.produtos.length > 0) {
         setCustos(editingPonto.produtos.map(p => {
-          // Formatar valor para exibição
           const reais = Math.floor(p.valor);
           const centavos = Math.round((p.valor - reais) * 100);
           const valorFormatado = `R$ ${reais.toLocaleString('pt-BR')},${centavos.toString().padStart(2, '0')}`;
@@ -121,7 +118,6 @@ export default function CreatePointModal() {
         setImagesPreviews([]);
       }
 
-      // Limpar imagens novas ao editar
       setImages([]);
     }
   }, [editingPonto, isModalOpen]);
@@ -132,7 +128,6 @@ export default function CreatePointModal() {
       setLatitude(streetViewCoordinates.lat.toString());
       setLongitude(streetViewCoordinates.lng.toString());
 
-      // Fazer geocoding reverso para obter endereço
       const reverseGeocode = async () => {
         try {
           const geocoder = new google.maps.Geocoder();
@@ -144,11 +139,8 @@ export default function CreatePointModal() {
             setEndereco(result.results[0].formatted_address);
 
             const addressComponents = result.results[0].address_components;
-
-            // Priorizar locality (cidade) ao invés de administrative_area_level_2 (província/condado)
             const cidadeComponent = addressComponents.find(c => c.types.includes('locality')) ||
               addressComponents.find(c => c.types.includes('administrative_area_level_2'));
-
             const ufComponent = addressComponents.find(c => c.types.includes('administrative_area_level_1'));
             const paisComponent = addressComponents.find(c => c.types.includes('country'));
 
@@ -156,7 +148,6 @@ export default function CreatePointModal() {
             if (ufComponent) setUf(ufComponent.short_name);
             if (paisComponent) setPais(paisComponent.long_name);
 
-            // Auto-fill ponto de referência
             fetchPontoReferencia(streetViewCoordinates.lat, streetViewCoordinates.lng);
           }
         } catch (error) {
@@ -171,7 +162,6 @@ export default function CreatePointModal() {
   // Selecionar automaticamente a exibidora recém-criada
   useEffect(() => {
     if (!isExibidoraModalOpen && isModalOpen && exibidoras.length > 0 && !idExibidora) {
-      // Quando o ExibidoraModal fecha e não há exibidora selecionada, seleciona a mais recente
       const latestExibidora = exibidoras[exibidoras.length - 1];
       if (latestExibidora) {
         setIdExibidora(latestExibidora.id.toString());
@@ -182,8 +172,6 @@ export default function CreatePointModal() {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.filter(file => file.type.startsWith('image/'));
     setImages(prev => [...prev, ...newFiles]);
-
-    // Criar previews
     newFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -222,17 +210,10 @@ export default function CreatePointModal() {
 
   const updateCusto = (index: number, field: keyof Custo, value: string) => {
     const newCustos = [...custos];
-
-    // Format currency for valor field
     if (field === 'valor') {
-      // Remove tudo exceto números
       const numbers = value.replace(/\D/g, '');
-
-      // Formatar com R$
       if (numbers.length > 0) {
-        // Converter para número (em centavos)
         const numValue = parseInt(numbers, 10);
-        // Formatar: dividir por 100 para centavos, formatar com vírgula
         const reais = Math.floor(numValue / 100);
         const centavos = numValue % 100;
         const formatted = `R$ ${reais.toLocaleString('pt-BR')},${centavos.toString().padStart(2, '0')}`;
@@ -241,13 +222,11 @@ export default function CreatePointModal() {
         newCustos[index][field] = '';
       }
     } else if (field === 'produto') {
-      // Validar se já existe este produto
       const produtoJaExiste = custos.some((c, i) => i !== index && c.produto === value && value !== '');
       if (produtoJaExiste) {
         setErrors({ ...errors, custos: `Produto "${value}" já foi adicionado` });
         return;
       } else {
-        // Limpar erro se havia
         if (errors.custos) {
           const { custos: _, ...rest } = errors;
           setErrors(rest);
@@ -258,7 +237,6 @@ export default function CreatePointModal() {
       newCustos[index][field] = value;
     }
 
-    // Se mudou o produto e não é Locação, limpar período
     if (field === 'produto' && value !== 'Locação') {
       newCustos[index].periodo = '';
     }
@@ -266,56 +244,45 @@ export default function CreatePointModal() {
     setCustos(newCustos);
   };
 
-  // Auto-fill Ponto de Referência usando Google Places API
   const fetchPontoReferencia = async (lat: number, lng: number) => {
     setIsFetchingReferencia(true);
     try {
       const service = new google.maps.places.PlacesService(document.createElement('div'));
       const location = new google.maps.LatLng(lat, lng);
 
-      // Buscar lugares próximos
       service.nearbySearch(
         {
           location,
-          radius: 500, // 500m radius
+          radius: 500,
           rankBy: google.maps.places.RankBy.PROMINENCE
         },
         (results, status) => {
           if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
-            // Filtrar lugares relevantes
             const relevantTypes = ['shopping_mall', 'supermarket', 'hospital', 'school', 'university', 'park', 'stadium', 'transit_station'];
             const relevantPlaces = results.filter(place =>
               place.types?.some(type => relevantTypes.includes(type))
             ).slice(0, 3);
 
-            // Montar texto de referência
             const partes: string[] = [];
 
             if (relevantPlaces.length > 0) {
               const mainPlace = relevantPlaces[0];
               partes.push(`Próximo a: ${mainPlace.name}`);
-
               if (relevantPlaces.length > 1) {
                 partes.push(`Região: ${relevantPlaces.slice(1).map(p => p.name).join(', ')}`);
               }
             }
 
-            // Adicionar nome da rua/cruzamento via Geocoding
             const geocoder = new google.maps.Geocoder();
             geocoder.geocode({ location: { lat, lng } }, (geoResults, geoStatus) => {
               if (geoStatus === 'OK' && geoResults && geoResults[0]) {
                 const addressComponents = geoResults[0].address_components;
                 const route = addressComponents.find(c => c.types.includes('route'));
-
-                if (route) {
-                  partes.unshift(`Cruzamento: ${route.long_name}`);
-                }
-
+                if (route) partes.unshift(`Cruzamento: ${route.long_name}`);
                 setPontoReferencia(partes.join('\n'));
               } else if (partes.length > 0) {
                 setPontoReferencia(partes.join('\n'));
               }
-
               setIsFetchingReferencia(false);
             });
           } else {
@@ -329,7 +296,6 @@ export default function CreatePointModal() {
     }
   };
 
-  // Geocoding do endereço
   const geocodeAddress = async () => {
     if (!endereco) {
       setErrors({ ...errors, endereco: 'Digite um endereço' });
@@ -346,13 +312,9 @@ export default function CreatePointModal() {
         setLatitude(location.lat().toString());
         setLongitude(location.lng().toString());
 
-        // Extrair cidade, UF e país
         const addressComponents = result.results[0].address_components;
-
-        // Priorizar locality (cidade) ao invés de administrative_area_level_2 (província/condado)
         const cidadeComponent = addressComponents.find(c => c.types.includes('locality')) ||
           addressComponents.find(c => c.types.includes('administrative_area_level_2'));
-
         const ufComponent = addressComponents.find(c => c.types.includes('administrative_area_level_1'));
         const paisComponent = addressComponents.find(c => c.types.includes('country'));
 
@@ -361,8 +323,6 @@ export default function CreatePointModal() {
         if (paisComponent) setPais(paisComponent.long_name);
 
         setErrors({ ...errors, endereco: '' });
-
-        // Auto-fill ponto de referência
         fetchPontoReferencia(location.lat(), location.lng());
       } else {
         setErrors({ ...errors, endereco: 'Endereço não encontrado' });
@@ -375,26 +335,21 @@ export default function CreatePointModal() {
     }
   };
 
-  // Validação
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
-
     if (!codigoOoh) newErrors.codigoOoh = 'Código OOH é obrigatório';
     if (!endereco) newErrors.endereco = 'Endereço é obrigatório';
     if (!latitude || !longitude) newErrors.coordenadas = 'Coordenadas são obrigatórias';
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const validateStep2 = () => {
     const newErrors: Record<string, string> = {};
-
     if (!idExibidora) newErrors.idExibidora = 'Exibidora é obrigatória';
     if (custos.some(c => c.produto && !c.valor)) {
       newErrors.custos = 'Preencha o valor para todos os custos';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -433,22 +388,16 @@ export default function CreatePointModal() {
           }))
       };
 
-      console.log('CreatePointModal - Dados sendo enviados:', pontoData);
-      console.log('CreatePointModal - País:', pais, '-> Final:', pontoData.pais);
-
       let pontoId: number;
 
       if (editingPonto) {
-        // Atualizar ponto existente
         await api.updatePonto(editingPonto.id, pontoData);
         pontoId = editingPonto.id;
       } else {
-        // Criar novo ponto
         const newPonto = await api.createPonto(pontoData);
         pontoId = newPonto.id;
       }
 
-      // Upload de novas imagens
       if (images.length > 0) {
         await Promise.all(
           images.map((file, index) =>
@@ -457,11 +406,8 @@ export default function CreatePointModal() {
         );
       }
 
-      // Atualizar lista de pontos
       const pontos = await api.getPontos();
       setPontos(pontos);
-
-      // Fechar modal e limpar
       handleClose();
     } catch (error: any) {
       console.error('Erro ao salvar ponto:', error);
@@ -476,7 +422,6 @@ export default function CreatePointModal() {
     setEditingPonto(null);
     setStreetViewCoordinates(null);
     setTimeout(() => {
-      // Reset form
       setCurrentStep(1);
       setCodigoOoh('');
       setEndereco('');
@@ -498,503 +443,375 @@ export default function CreatePointModal() {
     }, 300);
   };
 
-  if (!isModalOpen) return null;
+  const handleIdExibidoraChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (e.target.value === 'CREATE_NEW') {
+      useStore.getState().setExibidoraModalOpen(true);
+      if (idExibidora) {
+        setTimeout(() => setIdExibidora(idExibidora), 0);
+      }
+    } else {
+      setIdExibidora(e.target.value);
+    }
+  };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Overlay */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={handleClose}
-      />
-
-      {/* Modal */}
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="gradient-primary px-6 py-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-white">
-              {editingPonto ? 'Editar Ponto OOH' : 'Novo Ponto OOH'}
-            </h2>
-            <p className="text-white/80 text-sm mt-1">
-              Etapa {currentStep} de 2
-            </p>
-          </div>
-          <button
-            onClick={handleClose}
-            className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-lg transition"
-          >
-            <X size={24} />
-          </button>
+    <Modal
+      isOpen={isModalOpen}
+      onClose={handleClose}
+      title={
+        <div className="flex items-center gap-2">
+          <MapPin size={24} />
+          {editingPonto ? 'Editar Ponto OOH' : 'Novo Ponto OOH'}
         </div>
+      }
+      maxWidth="4xl"
+      footer={
+        <div className="flex items-center justify-between w-full">
+          <div className="text-sm text-gray-500 font-medium">
+            Etapa {currentStep} de 2
+          </div>
+          <div className="flex gap-3">
+            {currentStep === 1 ? (
+              <Button variant="ghost" onClick={handleClose}>
+                Cancelar
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => setCurrentStep(1)} leftIcon={<ArrowLeft size={16} />}>
+                Voltar
+              </Button>
+            )}
 
+            {currentStep === 1 ? (
+              <Button onClick={handleNext} rightIcon={<ArrowRight size={16} />}>
+                Próximo
+              </Button>
+            ) : (
+              <Button onClick={handleSubmit} isLoading={isLoading} rightIcon={<Check size={16} />}>
+                {editingPonto ? 'Salvar Alterações' : 'Criar Ponto'}
+              </Button>
+            )}
+          </div>
+        </div>
+      }
+    >
+      <div className="space-y-6">
         {/* Progress Bar */}
-        <div className="bg-gray-100 h-2">
+        <div className="relative h-1 bg-gray-100 rounded-full mb-6 overflow-hidden">
           <div
-            className="bg-emidias-accent h-full transition-all duration-300"
+            className="absolute left-0 top-0 h-full bg-emidias-primary transition-all duration-300 ease-out"
             style={{ width: `${(currentStep / 2) * 100}%` }}
           />
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {currentStep === 1 && (
-            <div className="space-y-6">
-              {/* Código OOH */}
-              <div>
-                <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                  Código OOH <span className="text-emidias-accent">*</span>
-                </label>
-                <input
-                  type="text"
+        {/* Form Content */}
+        <div className="min-h-[400px]">
+          {currentStep === 1 ? (
+            <div className="space-y-6 animate-in slide-in-from-right-4 fade-in duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Imagens Dropzone */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-emidias-gray-700 mb-2">
+                    Fotos do Ponto
+                  </label>
+
+                  {imagesPreviews.length > 0 ? (
+                    <div className="grid grid-cols-4 gap-4">
+                      {imagesPreviews.map((preview, index) => (
+                        <div key={index} className="relative group aspect-square rounded-xl overflow-hidden border border-gray-200">
+                          <img
+                            src={preview}
+                            alt={`Preview ${index}`}
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              onClick={() => removeImage(index)}
+                              className="rounded-full w-8 h-8 p-0"
+                            >
+                              <Trash2 size={14} />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      <div {...getRootProps()} className="flex items-center justify-center aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-emidias-primary hover:bg-gray-50 cursor-pointer transition-all">
+                        <input {...getInputProps()} />
+                        <Plus className="text-gray-300 hover:text-emidias-primary" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      {...getRootProps()}
+                      className={cn(
+                        "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 bg-gray-50/50",
+                        isDragActive
+                          ? "border-emidias-accent bg-pink-50/50 ring-2 ring-emidias-accent/20"
+                          : "border-gray-200 hover:border-emidias-primary/50 hover:bg-white"
+                      )}
+                    >
+                      <input {...getInputProps()} />
+                      <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center mx-auto mb-3">
+                        <ImageIcon className="text-emidias-primary" size={24} />
+                      </div>
+                      <p className="text-emidias-primary font-medium">
+                        {isDragActive ? 'Solte as fotos aqui' : 'Arraste fotos ou clique para enviar'}
+                      </p>
+                      <p className="text-gray-400 text-xs mt-1">
+                        PNG, JPG, WEBP (máx. 5MB)
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <Input
+                  label="Código OOH"
+                  placeholder="Ex: OOH-001"
                   value={codigoOoh}
                   onChange={(e) => setCodigoOoh(e.target.value)}
-                  className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                  placeholder="Ex: OOH-001"
+                  error={errors.codigoOoh}
+                  required
                 />
-                {errors.codigoOoh && (
-                  <p className="text-red-500 text-sm mt-1">{errors.codigoOoh}</p>
-                )}
-              </div>
 
-              {/* Endereço com Geocoding */}
-              <div>
-                <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                  Endereço Completo <span className="text-emidias-accent">*</span>
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={endereco}
-                    onChange={(e) => setEndereco(e.target.value)}
-                    className="flex-1 px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                    placeholder="Rua, número, bairro, cidade - UF"
-                  />
-                  <button
-                    onClick={geocodeAddress}
-                    disabled={isGeocoding}
-                    className="px-4 py-3 bg-emidias-success text-white rounded-lg hover:bg-emidias-success-light transition font-medium flex items-center gap-2 disabled:opacity-50"
-                  >
-                    {isGeocoding ? (
-                      <Loader2 className="animate-spin" size={20} />
-                    ) : (
-                      <MapPin size={20} />
-                    )}
-                    Buscar
-                  </button>
+                {/* Endereço com botão de busca */}
+                <div className="md:col-span-2">
+                  <div className="flex gap-2 items-end">
+                    <Input
+                      label="Endereço Completo"
+                      placeholder="Rua, número, bairro, cidade - UF"
+                      value={endereco}
+                      onChange={(e) => setEndereco(e.target.value)}
+                      error={errors.endereco}
+                      className="flex-1"
+                      required
+                    />
+                    <Button
+                      onClick={geocodeAddress}
+                      disabled={isGeocoding}
+                      className="mb-[2px] h-[46px]" // Alinhamento visual com input
+                      leftIcon={isGeocoding ? undefined : <MapPin size={18} />}
+                    >
+                      {isGeocoding ? <Loader2 className="animate-spin" size={18} /> : 'Buscar'}
+                    </Button>
+                  </div>
                 </div>
-                {errors.endereco && (
-                  <p className="text-red-500 text-sm mt-1">{errors.endereco}</p>
-                )}
-              </div>
 
-              {/* Coordenadas */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                    Latitude <span className="text-emidias-accent">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
-                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                    placeholder="-23.5505"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                    Longitude <span className="text-emidias-accent">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
-                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                    placeholder="-46.6333"
-                  />
-                </div>
-              </div>
-              {errors.coordenadas && (
-                <p className="text-red-500 text-sm mt-1">{errors.coordenadas}</p>
-              )}
-
-              {/* Cidade, UF e País */}
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                    Cidade
-                  </label>
-                  <input
-                    type="text"
-                    value={cidade}
-                    onChange={(e) => setCidade(e.target.value)}
-                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                    placeholder="São Paulo"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                    UF
-                  </label>
-                  <input
-                    type="text"
-                    value={uf}
-                    onChange={(e) => setUf(e.target.value.toUpperCase())}
-                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                    placeholder="SP"
-                    maxLength={2}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                    País
-                  </label>
-                  <input
-                    type="text"
-                    value={pais}
-                    onChange={(e) => setPais(e.target.value)}
-                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                    placeholder="Brasil"
-                  />
-                </div>
-              </div>
-
-              {/* Observações */}
-              <div>
-                <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                  Observações
-                </label>
-                <textarea
-                  value={observacoes}
-                  onChange={(e) => setObservacoes(e.target.value)}
-                  className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition resize-none"
-                  placeholder="Informações adicionais sobre o ponto..."
-                  rows={3}
+                <Input
+                  label="Latitude"
+                  value={latitude}
+                  onChange={(e) => setLatitude(e.target.value)}
+                  placeholder="-23.5505"
+                  required
                 />
-              </div>
+                <Input
+                  label="Longitude"
+                  value={longitude}
+                  onChange={(e) => setLongitude(e.target.value)}
+                  placeholder="-46.6333"
+                  required
+                  error={errors.coordenadas}
+                />
 
-              {/* Ponto de Referência */}
-              <div>
-                <label className="block text-sm font-semibold text-emidias-primary mb-2 flex items-center justify-between">
-                  <span>Ponto de Referência</span>
+                <div className="grid grid-cols-3 gap-4 md:col-span-2">
+                  <Input label="Cidade" value={cidade} onChange={(e) => setCidade(e.target.value)} />
+                  <Input label="UF" value={uf} onChange={(e) => setUf(e.target.value.toUpperCase())} maxLength={2} />
+                  <Input label="País" value={pais} onChange={(e) => setPais(e.target.value)} />
+                </div>
+
+                <div className="md:col-span-2">
+                  <Textarea
+                    label="Ponto de Referência"
+                    value={pontoReferencia}
+                    onChange={(e) => setPontoReferencia(e.target.value)}
+                    placeholder="Próximo ao Shopping..."
+                    rows={2}
+                  />
                   {isFetchingReferencia && (
-                    <span className="text-xs text-emidias-accent flex items-center gap-1">
-                      <Loader2 size={12} className="animate-spin" />
-                      Buscando referências...
-                    </span>
+                    <p className="text-xs text-emidias-accent mt-1 flex items-center gap-1 animate-pulse">
+                      <Loader2 size={10} className="animate-spin" />
+                      Buscando referências automáticas...
+                    </p>
                   )}
-                </label>
-                <textarea
-                  value={pontoReferencia}
-                  onChange={(e) => setPontoReferencia(e.target.value)}
-                  className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition resize-none"
-                  placeholder="Ex: Próximo ao Shopping ABC, Cruzamento Av. Principal..."
-                  rows={3}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Este campo é preenchido automaticamente após o geocoding, mas você pode editá-lo livremente.
-                </p>
+                </div>
               </div>
             </div>
-          )}
-
-          {currentStep === 2 && (
-            <div className="space-y-6">
-              {/* Exibidora */}
-              <div>
-                <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                  Exibidora <span className="text-emidias-accent">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    value={idExibidora}
-                    onChange={(e) => {
-                      if (e.target.value === 'CREATE_NEW') {
-                        useStore.getState().setExibidoraModalOpen(true);
-                        // Manter o valor anterior se houver
-                        if (idExibidora) {
-                          setTimeout(() => setIdExibidora(idExibidora), 0);
-                        }
-                      } else {
-                        setIdExibidora(e.target.value);
-                      }
-                    }}
-                    className="w-full py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition appearance-none"
-                    style={{
-                      paddingLeft: idExibidora && idExibidora !== 'CREATE_NEW' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key ? '52px' : '16px',
-                      paddingRight: '16px'
-                    }}
-                  >
-                    <option value="CREATE_NEW" className="text-gray-600" style={{ fontStyle: 'italic' }}>
-                      + Cadastrar nova exibidora
-                    </option>
-                    {exibidoras.map((ex) => (
-                      <option key={ex.id} value={ex.id}>
-                        {ex.nome}
-                      </option>
-                    ))}
-                  </select>
-                  {/* Logo preview when filled */}
-                  {idExibidora && idExibidora !== 'CREATE_NEW' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key && (
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded overflow-hidden pointer-events-none bg-white">
-                      <img
-                        src={api.getImageUrl(exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key || '')}
-                        alt="Logo"
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  )}
-                </div>
-                {errors.idExibidora && (
-                  <p className="text-red-500 text-sm mt-1">{errors.idExibidora}</p>
-                )}
-              </div>
-
-              {/* Medidas e Fluxo */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                    Medidas
+          ) : (
+            <div className="space-y-6 animate-in slide-in-from-right-4 fade-in duration-300">
+              {/* Step 2 Content */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-emidias-gray-700 mb-2">
+                    Exibidora <span className="text-emidias-accent">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={medidas}
-                    onChange={(e) => setMedidas(e.target.value)}
-                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                    placeholder="Ex: 9x3m"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                    Fluxo (pessoas/dia)
-                  </label>
-                  <input
-                    type="number"
-                    value={fluxo}
-                    onChange={(e) => setFluxo(e.target.value)}
-                    className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                    placeholder="50000"
-                  />
-                </div>
-              </div>
-
-              {/* Tipo (Multiselect) */}
-              <div>
-                <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                  Tipo
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {TIPOS_OOH.map((tipo) => (
-                    <button
-                      key={tipo}
-                      type="button"
-                      onClick={() => toggleTipo(tipo)}
-                      className={`px-3 py-2 rounded-lg border-2 transition font-medium text-sm ${tipos.includes(tipo)
-                        ? 'border-emidias-accent bg-pink-50 text-emidias-accent'
-                        : 'border-emidias-gray/30 hover:border-emidias-accent text-gray-700'
-                        }`}
-                    >
-                      {tipo}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Custos */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="block text-sm font-semibold text-emidias-primary">
-                    Custos
-                  </label>
-                  <button
-                    type="button"
-                    onClick={addCusto}
-                    className="text-emidias-accent hover:text-emidias-primary text-sm font-medium flex items-center gap-1"
-                  >
-                    <Plus size={16} />
-                    Adicionar
-                  </button>
-                </div>
-
-                <div className="space-y-3">
-                  {custos.map((custo, index) => (
-                    <div key={index} className="flex gap-3 items-start p-4 bg-gray-50 rounded-lg">
-                      <div className="flex-1 grid grid-cols-3 gap-3">
-                        <select
-                          value={custo.produto}
-                          onChange={(e) => updateCusto(index, 'produto', e.target.value)}
-                          className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                        >
-                          <option value="">Produto...</option>
-                          {PRODUTOS_CUSTO.map((produto) => (
-                            <option key={produto} value={produto}>
-                              {produto}
-                            </option>
-                          ))}
-                        </select>
-
-                        <input
-                          type="text"
-                          value={custo.valor}
-                          onChange={(e) => updateCusto(index, 'valor', e.target.value)}
-                          className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                          placeholder="R$ 1.000,00"
-                        />
-
-                        {/* Período só aparece se produto = Locação */}
-                        {custo.produto === 'Locação' ? (
-                          <select
-                            value={custo.periodo}
-                            onChange={(e) => updateCusto(index, 'periodo', e.target.value)}
-                            className="px-3 py-2 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                          >
-                            <option value="">Período...</option>
-                            {PERIODOS.map((periodo) => (
-                              <option key={periodo} value={periodo}>
-                                {periodo}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <div className="px-3 py-2 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-sm">
-                            N/A
-                          </div>
-                        )}
-                      </div>
-
-                      {custos.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeCusto(index)}
-                          className="text-red-500 hover:text-red-700 p-2"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                  <div className="relative">
+                    <select
+                      value={idExibidora}
+                      onChange={handleIdExibidoraChange}
+                      className={cn(
+                        "w-full h-[46px] rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emidias-primary/20 focus-visible:border-emidias-primary transition-all appearance-none cursor-pointer",
+                        errors.idExibidora && "border-emidias-danger"
                       )}
-                    </div>
-                  ))}
-                </div>
-                {errors.custos && (
-                  <p className="text-red-500 text-sm mt-1">{errors.custos}</p>
-                )}
-              </div>
+                      // Custom style for icon padding if selected
+                      style={{
+                        paddingLeft: idExibidora && idExibidora !== 'CREATE_NEW' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key ? '52px' : '16px'
+                      }}
+                    >
+                      <option value="">Selecione uma exibidora</option>
+                      <option value="CREATE_NEW" className="font-semibold text-emidias-primary">+ Cadastrar Nova Exibidora</option>
+                      {exibidoras.map(ex => (
+                        <option key={ex.id} value={ex.id}>{ex.nome}</option>
+                      ))}
+                    </select>
 
-              {/* Upload de Imagens */}
-              <div>
-                <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                  Imagens
-                </label>
-                <div
-                  {...getRootProps()}
-                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${isDragActive
-                    ? 'border-emidias-accent bg-pink-50'
-                    : 'border-emidias-gray/30 hover:border-emidias-accent'
-                    }`}
-                >
-                  <input {...getInputProps()} />
-                  <Upload className="mx-auto text-emidias-gray mb-3" size={32} />
-                  <p className="text-emidias-primary font-medium">
-                    {isDragActive ? 'Solte as imagens aqui' : 'Arraste imagens ou clique para selecionar'}
-                  </p>
-                  <p className="text-gray-500 text-sm mt-1">
-                    PNG, JPG, JPEG ou WEBP (múltiplas imagens)
-                  </p>
-                </div>
-
-                {/* Previews */}
-                {imagesPreviews.length > 0 && (
-                  <div className="mt-4 grid grid-cols-4 gap-3">
-                    {imagesPreviews.map((preview, index) => (
-                      <div key={index} className="relative group">
+                    {/* Selected Logo Preview */}
+                    {idExibidora && idExibidora !== 'CREATE_NEW' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key && (
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded overflow-hidden pointer-events-none bg-white border border-gray-100 p-0.5">
                         <img
-                          src={preview}
-                          alt={`Preview ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg"
+                          src={api.getImageUrl(exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key || '')}
+                          alt=""
+                          className="w-full h-full object-contain"
                         />
-                        <button
-                          onClick={() => removeImage(index)}
-                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+                      </div>
+                    )}
+                  </div>
+                  {errors.idExibidora && <p className="text-xs text-red-500 mt-1">{errors.idExibidora}</p>}
+                </div>
+
+                <Input
+                  label="Medidas"
+                  value={medidas}
+                  onChange={(e) => setMedidas(e.target.value)}
+                  placeholder="Ex: 9x3m"
+                  icon={<Ruler size={16} />}
+                />
+
+                <Input
+                  label="Fluxo Diário"
+                  value={fluxo}
+                  onChange={(e) => setFluxo(e.target.value)}
+                  placeholder="50000"
+                  type="number"
+                  icon={<Users size={16} />}
+                />
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-emidias-gray-700 mb-2">
+                    Tipos de Painel
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {TIPOS_OOH.map(tipo => (
+                      <button
+                        key={tipo}
+                        type="button"
+                        onClick={() => toggleTipo(tipo)}
+                        className={cn(
+                          "px-4 py-2 rounded-lg text-sm font-medium transition-all border",
+                          tipos.includes(tipo)
+                            ? "bg-emidias-primary text-white border-emidias-primary shadow-md shadow-emidias-primary/20"
+                            : "bg-white text-gray-600 border-gray-200 hover:border-emidias-primary hover:text-emidias-primary"
+                        )}
+                      >
+                        {tipo}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tabela de Preços Dinâmica */}
+                <div className="md:col-span-2 bg-gray-50/50 rounded-xl p-5 border border-gray-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="text-sm font-semibold text-emidias-gray-700 flex items-center gap-2">
+                      <DollarSign size={16} className="text-emidias-accent" />
+                      Tabela de Preços (Estimativa)
+                    </label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addCusto}
+                      leftIcon={<Plus size={14} />}
+                      className="bg-white"
+                    >
+                      Adicionar
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {custos.map((custo, index) => (
+                      <div key={index} className="flex gap-3 items-start animate-in slide-in-from-top-2">
+                        <div className="flex-1 grid grid-cols-3 gap-3">
+                          <div className="relative">
+                            <select
+                              value={custo.produto}
+                              onChange={(e) => updateCusto(index, 'produto', e.target.value)}
+                              className="w-full h-10 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emidias-primary focus:ring-2 focus:ring-emidias-primary/20 outline-none transition-all placeholder:text-gray-400"
+                            >
+                              <option value="" disabled>Selecione...</option>
+                              <option value="Locação">Locação</option>
+                              <option value="Papel">Papel</option>
+                              <option value="Lona">Lona</option>
+                            </select>
+                          </div>
+
+                          <Input
+                            value={custo.valor}
+                            onChange={(e) => updateCusto(index, 'valor', e.target.value)}
+                            placeholder="R$ 0,00"
+                            className="h-10 bg-white"
+                          // Simplified input without label wrapper for grid
+                          />
+
+                          {custo.produto === 'Locação' ? (
+                            <select
+                              value={custo.periodo}
+                              onChange={(e) => updateCusto(index, 'periodo', e.target.value)}
+                              className="w-full h-10 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emidias-primary focus:ring-2 focus:ring-emidias-primary/20 outline-none transition-all"
+                            >
+                              <option value="">Período...</option>
+                              <option value="Bissemanal">Bissemana</option>
+                              <option value="Mensal">Mensal</option>
+                              <option value="Unitário">Unitário</option>
+                            </select>
+                          ) : (
+                            <div className="w-full h-10 bg-gray-100 rounded-lg border border-transparent" />
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="icon"
+                          onClick={() => removeCusto(index)}
+                          className="h-10 w-10 shrink-0 rounded-lg"
+                          title="Remover"
                         >
-                          <X size={16} />
-                        </button>
+                          <Trash2 size={16} />
+                        </Button>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
+                  {errors.custos && <p className="text-xs text-red-500 mt-2">{errors.custos}</p>}
+                </div>
 
-              {/* Observações */}
-              <div>
-                <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                  Observações
-                </label>
-                <textarea
-                  value={observacoes}
-                  onChange={(e) => setObservacoes(e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition resize-none"
-                  placeholder="Informações adicionais sobre o ponto..."
-                />
+                <div className="md:col-span-2">
+                  <Textarea
+                    label="Observações Gerais"
+                    value={observacoes}
+                    onChange={(e) => setObservacoes(e.target.value)}
+                    rows={3}
+                  />
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* Error de submit */}
-          {errors.submit && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600">{errors.submit}</p>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between">
-          <div>
-            {currentStep === 2 && (
-              <button
-                onClick={() => setCurrentStep(1)}
-                className="px-6 py-2 text-emidias-primary hover:bg-gray-100 rounded-lg transition font-medium"
-              >
-                Voltar
-              </button>
-            )}
+        {errors.submit && (
+          <div className="rounded-xl bg-red-50 p-4 border border-red-200 text-sm text-red-600 animate-in zoom-in">
+            {errors.submit}
           </div>
+        )}
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleClose}
-              className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition font-medium"
-            >
-              Cancelar
-            </button>
-
-            {currentStep === 1 ? (
-              <button
-                onClick={handleNext}
-                className="px-6 py-2 gradient-primary text-white rounded-lg hover-lift transition font-medium shadow-lg"
-              >
-                Próximo
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={isLoading}
-                className="px-6 py-2 bg-emidias-accent text-white rounded-lg hover:bg-[#E01A6A] hover-lift transition font-medium shadow-lg disabled:opacity-50 flex items-center gap-2"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="animate-spin" size={20} />
-                    Salvando...
-                  </>
-                ) : (
-                  'Salvar Ponto'
-                )}
-              </button>
-            )}
-          </div>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }

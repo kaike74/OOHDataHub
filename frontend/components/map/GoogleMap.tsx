@@ -9,6 +9,7 @@ import MapTooltip from '@/components/MapTooltip';
 import MapLayers from './MapLayers';
 import AIChat from '@/components/AIChat';
 import { MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
@@ -444,7 +445,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             {/* Context Menu */}
             {contextMenu && !isStreetViewMode && (
                 <div
-                    className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden"
+                    className="fixed z-50 bg-white rounded-xl shadow-emidias-xl border border-gray-200 overflow-hidden"
                     style={{
                         left: `${contextMenu.x}px`,
                         top: `${contextMenu.y}px`,
@@ -452,19 +453,21 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                     }}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="px-4 py-2 bg-gray-50 border-b border-gray-200">
-                        <p className="text-xs font-mono text-gray-600">
+                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                        <p className="text-xs font-mono text-gray-500 mb-1">
                             {contextMenu.lat.toFixed(6)}, {contextMenu.lng.toFixed(6)}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                        <p className="text-sm text-gray-700 font-medium line-clamp-2">
                             {contextMenu.address}
                         </p>
                     </div>
                     <button
                         onClick={handleCadastrarNoMapa}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 transition flex items-center gap-3 text-sm font-medium text-gray-700"
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 text-sm font-semibold text-emidias-primary"
                     >
-                        <MapPin size={16} className="text-emidias-accent" />
+                        <div className="bg-emidias-accent/10 p-2 rounded-full">
+                            <MapPin size={16} className="text-emidias-accent" />
+                        </div>
                         Cadastrar OOH aqui
                     </button>
                 </div>
@@ -473,24 +476,25 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             {/* Botão Street View */}
             {isStreetViewMode && streetViewPosition && (
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
-                    <button
+                    <Button
                         onClick={handleCadastrarAqui}
-                        className="px-6 py-3 bg-emidias-accent hover:bg-[#E01A6A] text-white rounded-lg shadow-2xl font-bold flex items-center gap-2 transition hover-lift animate-pulse"
+                        className="bg-emidias-accent hover:bg-emidias-accent/90 shadow-2xl animate-pulse"
+                        size="lg"
+                        leftIcon={<MapPin size={20} />}
                     >
-                        <MapPin size={20} />
-                        📍 Cadastrar Aqui
-                    </button>
-                    <div className="text-center mt-2 bg-black/60 text-white text-xs px-3 py-1 rounded-full">
+                        Cadastrar Aqui
+                    </Button>
+                    <div className="text-center mt-2 bg-black/60 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full font-mono">
                         {streetViewPosition.lat.toFixed(6)}, {streetViewPosition.lng.toFixed(6)}
                     </div>
                 </div>
             )}
 
             {!isLoaded && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
                     <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                        <p className="text-gray-600">Carregando mapa...</p>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emidias-primary mx-auto mb-4"></div>
+                        <p className="text-gray-500 font-medium">Carregando mapa...</p>
                     </div>
                 </div>
             )}

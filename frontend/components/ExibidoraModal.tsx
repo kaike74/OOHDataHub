@@ -3,8 +3,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { X, Upload, Loader2, Building2, Plus, Trash2 } from 'lucide-react';
+import { Download, Upload, Building2, Plus, Trash2, Phone, Mail } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
+import { cn } from '@/lib/utils';
 
 interface Contato {
     id?: number;
@@ -82,7 +87,8 @@ export default function ExibidoraModal() {
         maxSize: 5242880, // 5MB
     });
 
-    const removeLogo = () => {
+    const removeLogo = (e: React.MouseEvent) => {
+        e.stopPropagation();
         setLogoFile(null);
         setLogoPreview('');
     };
@@ -100,8 +106,8 @@ export default function ExibidoraModal() {
         return value;
     };
 
-    const handleCNPJChange = (value: string) => {
-        const formatted = formatCNPJ(value);
+    const handleCNPJChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const formatted = formatCNPJ(e.target.value);
         setCnpj(formatted);
     };
 
@@ -180,7 +186,6 @@ export default function ExibidoraModal() {
                 await Promise.all(
                     contatos.map(c => {
                         if (c.id) {
-                            // Atualizar contato existente
                             return api.updateContato(c.id, {
                                 nome: c.nome || null,
                                 telefone: c.telefone || null,
@@ -188,7 +193,6 @@ export default function ExibidoraModal() {
                                 observacoes: c.observacoes || null
                             });
                         } else {
-                            // Criar novo contato
                             return api.createContato({
                                 id_exibidora: exibidoraId,
                                 nome: c.nome || null,
@@ -205,11 +209,9 @@ export default function ExibidoraModal() {
             const exibidoras = await api.getExibidoras();
             setExibidoras(exibidoras);
 
-            // Fechar modal e limpar
             handleClose();
         } catch (error: any) {
             console.error('Erro ao salvar exibidora:', error);
-            // Tratar erro de CNPJ duplicado
             if (error.message && error.message.includes('UNIQUE constraint failed: exibidoras.cnpj')) {
                 setErrors({ cnpj: 'Este CNPJ já está cadastrado' });
             } else {
@@ -224,7 +226,6 @@ export default function ExibidoraModal() {
         setModalOpen(false);
         setEditingExibidora(null);
         setTimeout(() => {
-            // Reset form
             setNome('');
             setCnpj('');
             setRazaoSocial('');
@@ -232,268 +233,202 @@ export default function ExibidoraModal() {
             setObservacoes('');
             setLogoFile(null);
             setLogoPreview('');
-            setContatos([]); // Limpar contatos
+            setContatos([]);
             setErrors({});
         }, 300);
     };
 
-    if (!isModalOpen) return null;
-
     return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            {/* Overlay */}
-            <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                onClick={handleClose}
-            />
-
-            {/* Modal */}
-            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-                {/* Header */}
-                <div className="gradient-primary px-6 py-4 flex items-center justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold text-white">
-                            {editingExibidora ? 'Editar Exibidora' : 'Nova Exibidora'}
-                        </h2>
-                        <p className="text-white/80 text-sm mt-1">
-                            Preencha os dados da exibidora
-                        </p>
-                    </div>
-                    <button
-                        onClick={handleClose}
-                        className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-lg transition"
-                    >
-                        <X size={24} />
-                    </button>
+        <Modal
+            isOpen={isModalOpen}
+            onClose={handleClose}
+            title={
+                <div className="flex items-center gap-2">
+                    <Building2 size={24} />
+                    {editingExibidora ? 'Editar Exibidora' : 'Nova Exibidora'}
                 </div>
+            }
+            maxWidth="2xl"
+            footer={
+                <div className="flex items-center justify-end gap-3 w-full">
+                    <Button variant="ghost" onClick={handleClose}>
+                        Cancelar
+                    </Button>
+                    <Button onClick={handleSubmit} isLoading={isLoading}>
+                        {editingExibidora ? 'Salvar Alterações' : 'Criar Exibidora'}
+                    </Button>
+                </div>
+            }
+            className="flex flex-col max-h-[90vh]"
+        >
+            <div className="space-y-6 pb-2">
+                {/* Logo Upload */}
+                <div>
+                    <label className="block text-sm font-semibold text-emidias-gray-700 mb-2">
+                        Logo da Exibidora
+                    </label>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6">
-                    <div className="space-y-6">
-                        {/* Logo Upload */}
-                        <div>
-                            <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                                Logo da Exibidora
-                            </label>
-
-                            {logoPreview ? (
-                                <div className="relative w-full h-48 bg-gradient-to-br from-emidias-primary to-emidias-accent rounded-lg flex items-center justify-center overflow-hidden group">
-                                    <img
-                                        src={logoPreview}
-                                        alt="Logo preview"
-                                        className="w-full h-full object-contain p-4 bg-white/10"
-                                    />
-                                    <button
-                                        onClick={removeLogo}
-                                        className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                </div>
-                            ) : (
-                                <div
-                                    {...getRootProps()}
-                                    className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${isDragActive
-                                        ? 'border-emidias-accent bg-pink-50'
-                                        : 'border-emidias-gray/30 hover:border-emidias-accent'
-                                        }`}
+                    {logoPreview ? (
+                        <div className="relative w-full h-40 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center overflow-hidden group border border-gray-200">
+                            <img
+                                src={logoPreview}
+                                alt="Logo preview"
+                                className="w-full h-full object-contain p-4 mix-blend-multiply"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Button
+                                    variant="danger"
+                                    size="sm"
+                                    onClick={removeLogo}
+                                    className="rounded-full w-10 h-10 p-0"
                                 >
-                                    <input {...getInputProps()} />
-                                    <Building2 className="mx-auto text-emidias-gray mb-3" size={48} />
-                                    <p className="text-emidias-primary font-medium">
-                                        {isDragActive ? 'Solte a logo aqui' : 'Arraste a logo ou clique para selecionar'}
-                                    </p>
-                                    <p className="text-gray-500 text-sm mt-1">
-                                        PNG, JPG, JPEG ou WEBP (máx. 5MB)
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Nome */}
-                        <div>
-                            <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                                Nome da Exibidora <span className="text-emidias-accent">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                value={nome}
-                                onChange={(e) => setNome(e.target.value)}
-                                className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                                placeholder="Ex: Empresa de Mídia Exterior"
-                            />
-                            {errors.nome && (
-                                <p className="text-red-500 text-sm mt-1">{errors.nome}</p>
-                            )}
-                        </div>
-
-                        {/* CNPJ */}
-                        <div>
-                            <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                                CNPJ <span className="text-emidias-accent">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                value={cnpj}
-                                onChange={(e) => handleCNPJChange(e.target.value)}
-                                className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                                placeholder="00.000.000/0000-00"
-                                maxLength={18}
-                            />
-                            {errors.cnpj && (
-                                <p className="text-red-500 text-sm mt-1">{errors.cnpj}</p>
-                            )}
-                        </div>
-
-                        {/* Razão Social */}
-                        <div>
-                            <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                                Razão Social
-                            </label>
-                            <input
-                                type="text"
-                                value={razaoSocial}
-                                onChange={(e) => setRazaoSocial(e.target.value)}
-                                className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition"
-                                placeholder="Digite a razão social"
-                            />
-                        </div>
-
-                        {/* Endereço de Faturamento */}
-                        <div>
-                            <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                                Endereço de Faturamento
-                            </label>
-                            <textarea
-                                value={endereco}
-                                onChange={(e) => setEndereco(e.target.value)}
-                                rows={3}
-                                className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition resize-none"
-                                placeholder="Rua, número, bairro, cidade - UF, CEP"
-                            />
-                        </div>
-
-
-
-                        {/* Observações */}
-                        <div>
-                            <label className="block text-sm font-semibold text-emidias-primary mb-2">
-                                Observações
-                            </label>
-                            <textarea
-                                value={observacoes}
-                                onChange={(e) => setObservacoes(e.target.value)}
-                                rows={4}
-                                className="w-full px-4 py-3 border border-emidias-gray/30 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition resize-none"
-                                placeholder="Informações adicionais sobre a exibidora..."
-                            />
-                        </div>
-
-                        {/* Contatos */}
-                        <div>
-                            <div className="flex items-center justify-between mb-3">
-                                <label className="block text-sm font-semibold text-emidias-primary">
-                                    Contatos
-                                </label>
-                                <button
-                                    type="button"
-                                    onClick={addContato}
-                                    className="flex items-center gap-2 px-3 py-2 text-sm bg-emidias-accent text-white rounded-lg hover:bg-[#E01A6A] transition"
-                                >
-                                    <Plus size={16} />
-                                    Adicionar Contato
-                                </button>
+                                    <Trash2 size={18} />
+                                </Button>
                             </div>
-
-                            {contatos.length === 0 ? (
-                                <p className="text-gray-500 text-sm italic">Nenhum contato cadastrado</p>
-                            ) : (
-                                <div className="space-y-4">
-                                    {contatos.map((contato, index) => (
-                                        <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-sm font-medium text-gray-700">Contato {index + 1}</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeContato(index)}
-                                                    className="text-red-500 hover:text-red-700 transition"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-
-                                            <input
-                                                type="text"
-                                                value={contato.nome}
-                                                onChange={(e) => updateContato(index, 'nome', e.target.value)}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition text-sm"
-                                                placeholder="Nome da pessoa"
-                                            />
-
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <input
-                                                    type="text"
-                                                    value={contato.telefone}
-                                                    onChange={(e) => updateContato(index, 'telefone', e.target.value)}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition text-sm"
-                                                    placeholder="Telefone"
-                                                />
-                                                <input
-                                                    type="email"
-                                                    value={contato.email}
-                                                    onChange={(e) => updateContato(index, 'email', e.target.value)}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition text-sm"
-                                                    placeholder="E-mail"
-                                                />
-                                            </div>
-
-                                            <textarea
-                                                value={contato.observacoes}
-                                                onChange={(e) => updateContato(index, 'observacoes', e.target.value)}
-                                                rows={2}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emidias-primary focus:border-transparent transition resize-none text-sm"
-                                                placeholder="Observações sobre este contato..."
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
                         </div>
-                    </div>
-
-                    {/* Error de submit */}
-                    {errors.submit && (
-                        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-red-600">{errors.submit}</p>
+                    ) : (
+                        <div
+                            {...getRootProps()}
+                            className={cn(
+                                "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 bg-gray-50/50",
+                                isDragActive
+                                    ? "border-emidias-accent bg-pink-50/50 ring-2 ring-emidias-accent/20"
+                                    : "border-gray-200 hover:border-emidias-primary/50 hover:bg-white"
+                            )}
+                        >
+                            <input {...getInputProps()} />
+                            <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center mx-auto mb-3">
+                                <Upload className="text-emidias-primary" size={24} />
+                            </div>
+                            <p className="text-emidias-primary font-medium">
+                                {isDragActive ? 'Solte a logo aqui' : 'Arraste ou clique para enviar'}
+                            </p>
+                            <p className="text-gray-400 text-xs mt-1">
+                                PNG, JPG, WEBP (máx. 5MB)
+                            </p>
                         </div>
                     )}
                 </div>
 
-                {/* Footer */}
-                <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3">
-                    <button
-                        onClick={handleClose}
-                        className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition font-medium"
-                    >
-                        Cancelar
-                    </button>
-
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isLoading}
-                        className="px-6 py-2 bg-emidias-accent text-white rounded-lg hover:bg-[#E01A6A] hover-lift transition font-medium shadow-lg disabled:opacity-50 flex items-center gap-2"
-                    >
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="animate-spin" size={20} />
-                                Salvando...
-                            </>
-                        ) : (
-                            editingExibidora ? 'Salvar Alterações' : 'Criar Exibidora'
-                        )}
-                    </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                        label="Nome (Fantasia)"
+                        value={nome}
+                        onChange={(e) => setNome(e.target.value)}
+                        placeholder="Ex: Empresa de Mídia"
+                        error={errors.nome}
+                        required
+                    />
+                    <Input
+                        label="CNPJ"
+                        value={cnpj}
+                        onChange={handleCNPJChange}
+                        placeholder="00.000.000/0000-00"
+                        maxLength={18}
+                        error={errors.cnpj}
+                        required
+                    />
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                        label="Razão Social"
+                        value={razaoSocial}
+                        onChange={(e) => setRazaoSocial(e.target.value)}
+                        placeholder="Razão Social Ltda"
+                    />
+                    <Input
+                        label="Endereço"
+                        value={endereco}
+                        onChange={(e) => setEndereco(e.target.value)}
+                        placeholder="Endereço completo"
+                    />
+                </div>
+
+                <Textarea
+                    label="Observações"
+                    value={observacoes}
+                    onChange={(e) => setObservacoes(e.target.value)}
+                    placeholder="Informações adicionais..."
+                    rows={3}
+                />
+
+                {/* Contatos */}
+                <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
+                    <div className="flex items-center justify-between mb-4">
+                        <label className="text-sm font-semibold text-emidias-gray-700 flex items-center gap-2">
+                            <Phone size={16} className="text-emidias-primary" />
+                            Contatos
+                        </label>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={addContato}
+                            leftIcon={<Plus size={14} />}
+                            className="bg-white border-dashed border-gray-300 hover:border-emidias-accent hover:text-emidias-accent"
+                        >
+                            Adicionar
+                        </Button>
+                    </div>
+
+                    {contatos.length === 0 ? (
+                        <div className="text-center py-6 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
+                            Nenhum contato cadastrado
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {contatos.map((contato, index) => (
+                                <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm space-y-3 relative group">
+                                    <button
+                                        type="button"
+                                        onClick={() => removeContato(index)}
+                                        className="absolute top-2 right-2 p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <Input
+                                            placeholder="Nome"
+                                            value={contato.nome}
+                                            onChange={(e) => updateContato(index, 'nome', e.target.value)}
+                                            className="bg-gray-50/50 border-gray-200"
+                                        />
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Input
+                                                placeholder="Telefone"
+                                                value={contato.telefone}
+                                                onChange={(e) => updateContato(index, 'telefone', e.target.value)}
+                                                className="bg-gray-50/50 border-gray-200"
+                                            />
+                                            <Input
+                                                placeholder="Email"
+                                                value={contato.email}
+                                                onChange={(e) => updateContato(index, 'email', e.target.value)}
+                                                className="bg-gray-50/50 border-gray-200"
+                                            />
+                                        </div>
+                                    </div>
+                                    <Textarea
+                                        placeholder="Observações do contato..."
+                                        value={contato.observacoes}
+                                        onChange={(e) => updateContato(index, 'observacoes', e.target.value)}
+                                        rows={1}
+                                        className="min-h-[40px] bg-gray-50/50 border-gray-200 resize-none text-xs"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {errors.submit && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm animate-in zoom-in">
+                        {errors.submit}
+                    </div>
+                )}
             </div>
-        </div>
+        </Modal>
     );
 }
