@@ -32,7 +32,7 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
     // Portal State
     const [clientUsers, setClientUsers] = useState<ClientUser[]>([]);
     const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]); // Array of IDs or 'new'
-    const [newUser, setNewUser] = useState({ name: '', email: '' });
+    const [newUser, setNewUser] = useState({ email: '' });
     const [isAddingNew, setIsAddingNew] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -140,7 +140,7 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                 );
 
                 if (isAddingNew) {
-                    setNewUser({ name: '', email: '' });
+                    setNewUser({ email: '' });
                     setIsAddingNew(false);
                 }
                 setSelectedUserIds([]); // Reset selection
@@ -299,15 +299,8 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                                             <div className="w-8 h-8 rounded-lg bg-emidias-accent/10 flex items-center justify-center text-emidias-accent">
                                                 <UserPlus size={16} />
                                             </div>
-                                            Novo Cadastro
+                                            Convidar Novo Usuário
                                         </div>
-                                        <Input
-                                            label="Nome Completo"
-                                            placeholder="Ex: João Silva"
-                                            value={newUser.name}
-                                            onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                                            className="bg-white"
-                                        />
                                         <Input
                                             label="Email Corporativo"
                                             placeholder="joao@empresa.com"
@@ -318,7 +311,7 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                                         />
                                         <p className="text-xs text-gray-500 flex items-center gap-1">
                                             <Mail size={12} />
-                                            As credenciais de acesso serão enviadas para este email.
+                                            O usuário receberá um convite por email para se cadastrar e acessar a proposta.
                                         </p>
                                     </div>
                                 )}
