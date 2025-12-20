@@ -98,6 +98,8 @@ export interface Proposta {
     comissao: 'V2' | 'V3' | 'V4';
     status: string;
     created_at: string;
+    created_by?: number | null;
+    public_token?: string;
     itens?: PropostaItem[];
 }
 
