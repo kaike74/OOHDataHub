@@ -25,9 +25,12 @@ import {
     Eye,
     Target,
     BarChart3,
-    Share2
+    Share2,
+    FileSpreadsheet,
+    FileText as FilePdfIcon
 } from 'lucide-react';
 import ShareModal from './ShareModal';
+import { Button } from '@/components/ui/Button';
 import {
     useReactTable,
     getCoreRowModel,
@@ -1064,36 +1067,46 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                 onClick={onToggle}
             >
                 <div className="flex items-center gap-4">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onToggle(); }}
-                        className="p-1 hover:bg-gray-100 rounded text-gray-500 transition-colors"
-                    >
-                        <ChevronDown size={20} className={`transform transition-transform duration-300 ${isOpen ? '' : 'rotate-180'}`} />
-                    </button>
-                    <h3 className="font-semibold text-gray-800 text-sm">Carrinho ({itens.length})</h3>
+                    <div className="flex items-center gap-2">
+                        <div
+                            onClick={(e) => { e.stopPropagation(); onToggle(); }}
+                            className="p-1 hover:bg-gray-100 rounded text-gray-500 transition-colors cursor-pointer"
+                        >
+                            <ChevronDown size={20} className={`transform transition-transform duration-300 ${isOpen ? '' : 'rotate-180'}`} />
+                        </div>
+                        <h3 className="font-semibold text-gray-800 text-sm">Carrinho ({itens.length})</h3>
+                    </div>
 
-                    <button
+                    <Button
                         onClick={(e) => { e.stopPropagation(); setIsShareModalOpen(true); }}
-                        className="ml-4 flex items-center gap-1.5 px-3 py-1.5 bg-emidias-primary text-white text-xs font-medium rounded-md hover:bg-emidias-primary-dark transition-colors shadow-sm"
-                        title="Gerar link compartilhável"
+                        variant="primary"
+                        size="sm"
+                        className="ml-4 shadow-sm"
+                        leftIcon={<Share2 size={14} />}
                     >
-                        <Share2 size={14} /> Compartilhar
-                    </button>
+                        Compartilhar
+                    </Button>
 
                     {isClientView && (
                         <div className="flex items-center gap-2 ml-4 border-l border-gray-200 pl-4">
-                            <button
+                            <Button
                                 onClick={(e) => { e.stopPropagation(); handleExportExcel(); }}
-                                className="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700 transition"
+                                variant="outline"
+                                size="sm"
+                                className="text-green-600 border-green-200 hover:bg-green-50 hover:border-green-300"
+                                leftIcon={<FileSpreadsheet size={14} />}
                             >
                                 Excel
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={(e) => { e.stopPropagation(); handleExportPDF(); }}
-                                className="px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition"
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                                leftIcon={<FilePdfIcon size={14} />}
                             >
                                 PDF
-                            </button>
+                            </Button>
                         </div>
                     )}
 
@@ -1106,7 +1119,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                             <span className="text-xs font-bold">{Object.keys(rowSelection).length}</span>
                             <div className="h-4 w-px bg-blue-200 mx-1" />
 
-                            <button
+                            <Button
                                 onClick={() => {
                                     const selectedIds = Object.keys(rowSelection).map(Number);
                                     const updatedItens = itens.filter(item => !selectedIds.includes(item.id));
@@ -1115,10 +1128,13 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                                     refreshProposta({ ...selectedProposta!, itens: updatedItens });
                                     api.updateCart(selectedProposta!.id, updatedItens).catch(console.error);
                                 }}
-                                className="text-xs font-medium hover:text-red-700 flex items-center gap-1 text-red-600 transition-colors"
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:bg-red-50 hover:text-red-700 h-6 px-2 text-xs"
+                                leftIcon={<Trash2 size={14} />}
                             >
-                                <Trash2 size={14} /> Remover Selecionados
-                            </button>
+                                Remover Selecionados
+                            </Button>
                         </div>
                     )}
                 </div>
@@ -1196,21 +1212,23 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
 
 
                     {/* Grouping Menu */}
-                    <button
+                    <Button
                         onClick={() => setIsGroupMenuOpen(!isGroupMenuOpen)}
-                        className={`p-1.5 rounded-md transition-all flex items-center gap-1 ${isGroupMenuOpen || groupBy !== 'none' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 border border-transparent'}`}
+                        variant="ghost"
+                        size="sm"
+                        className={`gap-1 ${isGroupMenuOpen || groupBy !== 'none' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}
                         title="Agrupar por"
                     >
                         <Layers size={16} />
                         {groupBy !== 'none' && (
-                            <span className="text-[10px] font-semibold uppercase tracking-wide">
+                            <span className="text-[10px] font-semibold uppercase tracking-wide ml-1">
                                 {groupBy === 'pais' && 'País'}
                                 {groupBy === 'uf' && 'UF'}
                                 {groupBy === 'cidade' && 'Cidade'}
                                 {groupBy === 'exibidora_nome' && 'Exibidora'}
                             </span>
                         )}
-                    </button>
+                    </Button>
 
                     {/* Grouping Dropdown */}
                     {isGroupMenuOpen && (
@@ -1247,13 +1265,15 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                         </>
                     )}
 
-                    <button
+                    <Button
                         onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                        className={`p-1.5 rounded-md transition-all ${isSettingsOpen ? 'bg-gray-100 text-gray-900 shadow-inner' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}
+                        variant="ghost"
+                        size="icon"
+                        className={`${isSettingsOpen ? 'bg-gray-100 text-gray-900 shadow-inner' : 'text-gray-500 hover:bg-gray-50'}`}
                         title="Configurações da tabela"
                     >
                         <Eye size={16} />
-                    </button>
+                    </Button>
 
                     {isSettingsOpen && (
                         <>

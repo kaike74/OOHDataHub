@@ -5,6 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Lock, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import AnimatedBackground from '@/components/AnimatedBackground';
 
 function ResetPasswordForm() {
     const [token, setToken] = useState('');
@@ -55,123 +59,131 @@ function ResetPasswordForm() {
     };
 
     return (
-        <div className="min-h-screen bg-white flex">
-            {/* Left Side - Logo */}
-            <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-pink-50 to-blue-50 items-center justify-center p-12 relative overflow-hidden">
-                <div className="absolute top-20 left-20 w-64 h-64 bg-pink-200 rounded-full opacity-20 blur-3xl"></div>
-                <div className="absolute bottom-20 right-20 w-80 h-80 bg-blue-200 rounded-full opacity-20 blur-3xl"></div>
+        <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+            <AnimatedBackground />
 
-                <div className="relative z-10">
-                    <Image
-                        src="/assets/logo.png"
-                        alt="E-MÍDIAS Logo"
-                        width={400}
-                        height={400}
-                        className="drop-shadow-2xl"
-                        priority
-                    />
-                </div>
-            </div>
-
-            {/* Right Side - Form */}
-            <div className="flex-1 flex items-center justify-center p-8">
-                <div className="w-full max-w-md">
-                    {/* Mobile Logo */}
-                    <div className="lg:hidden mb-8 text-center">
-                        <Image
-                            src="/assets/logo.png"
-                            alt="E-MÍDIAS Logo"
-                            width={120}
-                            height={120}
-                            className="mx-auto"
-                            priority
-                        />
-                    </div>
-
-                    {/* Header */}
-                    <div className="mb-8">
-                        <h1 className="text-4xl font-bold text-gray-900 mb-2">Redefinir Senha</h1>
-                        <p className="text-gray-600">Digite sua nova senha</p>
-                    </div>
-
-                    {success ? (
-                        <div className="space-y-6">
-                            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-4 rounded-lg">
-                                <p className="font-medium mb-2">Senha redefinida com sucesso!</p>
-                                <p className="text-sm">
-                                    Você será redirecionado para a página de login em alguns segundos...
-                                </p>
-                            </div>
-                            <Link
-                                href="/login"
-                                className="block w-full text-center bg-gradient-to-r from-pink-500 to-blue-600 hover:from-pink-600 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-                            >
-                                Ir para Login
-                            </Link>
+            {/* Main Content */}
+            <div className="relative z-10 w-full max-w-6xl flex flex-col lg:flex-row items-center gap-12 lg:gap-20 transition-all duration-700 animate-in fade-in slide-in-from-bottom-4">
+                {/* Left Side - Logo */}
+                <div className="flex-1 flex items-center justify-center lg:justify-start lg:pl-8">
+                    <div className="relative group cursor-pointer" onClick={() => router.push('/login')}>
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-full blur-2xl scale-110 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                        <div className="relative transition-transform duration-500 ease-out group-hover:scale-[1.02]">
+                            <Image
+                                src="/assets/logo.png"
+                                alt="E-MÍDIAS Logo"
+                                width={280}
+                                height={280}
+                                className="relative z-10 lg:w-[340px] lg:h-[340px]"
+                                priority
+                            />
                         </div>
-                    ) : (
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div>
-                                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Nova Senha
-                                </label>
-                                <input
+                    </div>
+                </div>
+
+                {/* Right Side - Form */}
+                <div className="w-full max-w-md lg:pl-12">
+                    <div className="bg-white p-8 sm:p-10 rounded-2xl shadow-emidias-xl border border-emidias-gray-100 group/card relative transition-all duration-500 hover:shadow-2xl">
+                        {/* Subtle glow on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-2xl blur-2xl scale-110 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
+                        {/* Header */}
+                        <div className="mb-8 text-center lg:text-left">
+                            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                                Redefinir Senha
+                            </h2>
+                            <p className="text-gray-500">
+                                Digite sua nova senha abaixo
+                            </p>
+                        </div>
+
+                        {success ? (
+                            <div className="space-y-6 animate-in fade-in zoom-in duration-300">
+                                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-8 rounded-xl text-center">
+                                    <CheckCircle2 size={48} className="mx-auto mb-4 text-green-600" />
+                                    <p className="font-bold text-lg mb-2">Sucesso!</p>
+                                    <p className="text-sm">
+                                        Sua senha foi redefinida. Redirecionando para login...
+                                    </p>
+                                </div>
+                                <Button
+                                    onClick={() => router.push('/login')}
+                                    className="w-full"
+                                    variant="primary"
+                                    rightIcon={<ArrowRight size={20} />}
+                                >
+                                    Ir para Login agora
+                                </Button>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <Input
+                                    label="Nova Senha"
                                     id="newPassword"
                                     type="password"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     placeholder="••••••••"
                                     required
-                                    minLength={6}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition"
+                                    icon={<Lock size={20} />}
                                 />
-                            </div>
 
-                            <div>
-                                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Confirmar Nova Senha
-                                </label>
-                                <input
+                                <Input
+                                    label="Confirmar Nova Senha"
                                     id="confirmPassword"
                                     type="password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     placeholder="••••••••"
                                     required
-                                    minLength={6}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition"
+                                    icon={<Lock size={20} />}
                                 />
-                            </div>
 
-                            {error && (
-                                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                                    {error}
-                                </div>
-                            )}
+                                {error && (
+                                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm flex items-center gap-2 animate-shake">
+                                        <div className="w-2 h-2 bg-red-600 rounded-full flex-shrink-0" />
+                                        {error}
+                                    </div>
+                                )}
 
-                            <button
-                                type="submit"
-                                disabled={isLoading || !token}
-                                className="w-full bg-gradient-to-r from-pink-500 to-blue-600 hover:from-pink-600 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-                            >
-                                {isLoading ? 'Redefinindo...' : 'Redefinir Senha'}
-                            </button>
-
-                            <div className="text-center">
-                                <Link
-                                    href="/login"
-                                    className="text-sm text-pink-600 hover:text-pink-700 font-medium transition"
+                                <Button
+                                    type="submit"
+                                    isLoading={isLoading}
+                                    disabled={!token}
+                                    className="w-full py-6 text-base"
+                                    variant="accent"
+                                    rightIcon={<ArrowRight size={20} />}
                                 >
-                                    Voltar ao login
-                                </Link>
-                            </div>
-                        </form>
-                    )}
+                                    Redefinir Senha
+                                </Button>
 
-                    <p className="mt-8 text-center text-sm text-gray-500">
-                        Apenas usuários autorizados com email @hubradios.com
-                    </p>
+                                <div className="text-center pt-2">
+                                    <Link
+                                        href="/login"
+                                        className="text-sm text-gray-500 hover:text-emidias-primary font-medium transition-colors hover:underline underline-offset-4 flex items-center justify-center gap-2"
+                                    >
+                                        <ArrowLeft size={16} />
+                                        Voltar ao login
+                                    </Link>
+                                </div>
+                            </form>
+                        )}
+
+                        {/* Footer */}
+                        <div className="mt-8 pt-6 border-t border-gray-200">
+                            <p className="text-center text-xs text-gray-400">
+                                @hubradios.com
+                            </p>
+                        </div>
+                    </div>
                 </div>
+            </div>
+
+            {/* Footer Branding */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
+                <p className="text-xs text-gray-400 tracking-wider">
+                    E-MÍDIAS &copy; {new Date().getFullYear()}
+                </p>
             </div>
         </div>
     );

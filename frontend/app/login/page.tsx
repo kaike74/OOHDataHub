@@ -6,7 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -198,7 +200,7 @@ export default function LoginPage() {
 
                 {/* Right Side - Login Card */}
                 <div className="w-full max-w-md lg:pl-12">
-                    <div className="bg-white p-8 sm:p-10 rounded-2xl shadow-xl border border-emidias-gray-100 animate-fade-in-scale group/card relative transition-all duration-500 hover:shadow-2xl" style={{ animationDelay: '0.2s' }}>
+                    <div className="bg-white p-8 sm:p-10 rounded-2xl shadow-emidias-xl border border-emidias-gray-100 animate-fade-in-scale group/card relative transition-all duration-500 hover:shadow-2xl" style={{ animationDelay: '0.2s' }}>
                         {/* Subtle glow on hover - same as logo */}
                         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-2xl blur-2xl scale-110 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
@@ -213,80 +215,58 @@ export default function LoginPage() {
                         </div>
 
                         {/* Login Form */}
-                        <form onSubmit={handleSubmit} className="space-y-5">
+                        <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Email Field */}
-                            <div className="space-y-2">
-                                <label htmlFor="email" className="block text-sm font-medium text-emidias-gray-700">
-                                    Email
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-emidias-gray-400">
-                                        <Mail size={20} />
-                                    </div>
-                                    <input
-                                        id="email"
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="seuemail@hubradios.com"
-                                        required
-                                        className="input-base pl-12 pr-4"
-                                    />
-                                </div>
-                            </div>
+                            <Input
+                                label="Email"
+                                id="email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="seuemail@hubradios.com"
+                                required
+                                icon={<Mail size={20} />}
+                            />
 
                             {/* Password Field */}
-                            <div className="space-y-2">
-                                <label htmlFor="password" className="block text-sm font-medium text-emidias-gray-700">
-                                    Senha
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-emidias-gray-400">
-                                        <Lock size={20} />
-                                    </div>
-                                    <input
-                                        id="password"
-                                        type={showPassword ? 'text' : 'password'}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="Digite sua senha"
-                                        required
-                                        className="input-base pl-12 pr-12"
-                                    />
+                            <Input
+                                label="Senha"
+                                id="password"
+                                type={showPassword ? 'text' : 'password'}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Digite sua senha"
+                                required
+                                icon={<Lock size={20} />}
+                                rightElement={
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-emidias-gray-400 hover:text-emidias-gray-600 transition-colors"
+                                        className="text-emidias-gray-400 hover:text-emidias-gray-600 transition-colors p-1"
                                     >
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
-                                </div>
-                            </div>
+                                }
+                            />
 
                             {/* Error Message */}
                             {error && (
-                                <div className="bg-emidias-danger/10 border border-emidias-danger/20 text-emidias-danger px-4 py-3 rounded-lg text-sm flex items-center gap-2 animate-shake">
-                                    <div className="w-2 h-2 bg-emidias-danger rounded-full flex-shrink-0" />
+                                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm flex items-center gap-2 animate-shake">
+                                    <div className="w-2 h-2 bg-red-600 rounded-full flex-shrink-0" />
                                     {error}
                                 </div>
                             )}
 
                             {/* Submit Button */}
-                            <button
+                            <Button
                                 type="submit"
-                                disabled={isLoading}
-                                className="w-full btn-base btn-accent py-4 text-base group relative overflow-hidden disabled:opacity-70 disabled:cursor-not-allowed"
+                                isLoading={isLoading}
+                                className="w-full py-6 text-base"
+                                variant="accent"
+                                rightIcon={<ArrowRight size={20} />}
                             >
-                                <span className={`flex items-center justify-center gap-2 transition-all ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
-                                    Entrar
-                                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                                </span>
-                                {isLoading && (
-                                    <span className="absolute inset-0 flex items-center justify-center">
-                                        <Loader2 size={24} className="animate-spin" />
-                                    </span>
-                                )}
-                            </button>
+                                Entrar
+                            </Button>
 
                             {/* Forgot Password Link */}
                             <div className="text-center pt-2">
@@ -321,4 +301,3 @@ export default function LoginPage() {
         </div>
     );
 }
-

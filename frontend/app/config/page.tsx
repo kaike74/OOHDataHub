@@ -14,17 +14,17 @@ import {
     Shield,
     Users,
     Lock,
-    Bell,
-    Palette,
-    Settings,
     ChevronRight,
     Mail,
     Calendar,
-    Loader2,
+    CheckCircle2,
     Eye,
-    EyeOff,
-    CheckCircle2
+    EyeOff
 } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 interface UserData {
     id: number;
@@ -176,7 +176,7 @@ export default function ConfigPage() {
             case 'editor':
                 return 'badge badge-primary';
             default:
-                return 'badge bg-emidias-gray-100 text-emidias-gray-600';
+                return 'badge bg-gray-100 text-gray-600';
         }
     };
 
@@ -192,30 +192,33 @@ export default function ConfigPage() {
     };
 
     return (
-        <div className="min-h-screen bg-emidias-gray-50">
+        <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <header className="gradient-primary text-white sticky top-0 z-50 shadow-emidias-lg">
+            <header className="bg-gradient-to-r from-emidias-primary to-[#0A0970] text-white sticky top-0 z-50 shadow-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         <div className="flex items-center gap-4">
-                            <button
+                            <Button
                                 onClick={() => router.push('/')}
-                                className="p-2 hover:bg-white/10 rounded-lg transition-all hover:-translate-x-0.5"
+                                variant="ghost"
+                                size="icon"
+                                className="text-white hover:bg-white/10"
                             >
                                 <ArrowLeft size={22} />
-                            </button>
+                            </Button>
                             <div>
                                 <h1 className="text-xl font-bold">Configurações</h1>
                                 <p className="text-xs text-white/60">Gerencie sua conta e preferências</p>
                             </div>
                         </div>
-                        <button
+                        <Button
                             onClick={handleLogout}
-                            className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all text-sm font-medium"
+                            variant="ghost"
+                            className="text-white hover:bg-white/10"
+                            leftIcon={<LogOut size={18} />}
                         >
-                            <LogOut size={18} />
                             <span className="hidden sm:inline">Sair</span>
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </header>
@@ -225,7 +228,7 @@ export default function ConfigPage() {
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Sidebar Navigation */}
                     <aside className="lg:w-72 flex-shrink-0">
-                        <div className="card-base p-4 lg:sticky lg:top-24">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:sticky lg:top-24">
                             <nav className="space-y-1">
                                 {navigationItems.map((item) => {
                                     const Icon = item.icon;
@@ -235,18 +238,18 @@ export default function ConfigPage() {
                                         <button
                                             key={item.id}
                                             onClick={() => setActiveSection(item.id)}
-                                            className={`settings-nav-item w-full ${isActive ? 'active' : ''}`}
+                                            className={`w-full flex items-center p-3 rounded-xl transition-all ${isActive ? 'bg-emidias-primary text-white shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
                                         >
                                             <Icon size={20} className={isActive ? 'text-white' : 'text-emidias-accent'} />
-                                            <div className="flex-1 text-left">
-                                                <p className={`font-medium text-sm ${isActive ? 'text-white' : 'text-emidias-gray-900'}`}>
+                                            <div className="flex-1 text-left ml-3">
+                                                <p className={`font-medium text-sm ${isActive ? 'text-white' : 'text-gray-900'}`}>
                                                     {item.label}
                                                 </p>
-                                                <p className={`text-xs ${isActive ? 'text-white/70' : 'text-emidias-gray-500'}`}>
+                                                <p className={`text-xs ${isActive ? 'text-white/70' : 'text-gray-500'}`}>
                                                     {item.description}
                                                 </p>
                                             </div>
-                                            <ChevronRight size={16} className={`${isActive ? 'text-white' : 'text-emidias-gray-400'} transition-transform ${isActive ? 'rotate-90' : ''}`} />
+                                            <ChevronRight size={16} className={`${isActive ? 'text-white' : 'text-gray-400'} transition-transform ${isActive ? 'rotate-90' : ''}`} />
                                         </button>
                                     );
                                 })}
@@ -258,37 +261,40 @@ export default function ConfigPage() {
                     <main className="flex-1 min-w-0">
                         {/* Profile Section */}
                         {activeSection === 'profile' && (
-                            <div className="space-y-6 animate-fade-in-up">
-                                <div className="card-base p-6">
+                            <div className="space-y-6 animate-in fade-in-up duration-500">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                     <div className="flex items-center gap-4 mb-6">
-                                        <div className="w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-emidias-lg">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-emidias-primary to-emidias-primary-light rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-md">
                                             {user.email[0].toUpperCase()}
                                         </div>
                                         <div>
-                                            <h2 className="text-xl font-bold text-emidias-gray-900">
+                                            <h2 className="text-xl font-bold text-gray-900">
                                                 Minha Conta
                                             </h2>
-                                            <p className="text-sm text-emidias-gray-500">
+                                            <p className="text-sm text-gray-500">
                                                 Informações do seu perfil
                                             </p>
                                         </div>
                                     </div>
 
                                     <div className="space-y-4">
-                                        <div className="sidebar-info-item">
-                                            <Mail className="sidebar-info-icon" />
+                                        <div className="flex items-start gap-4 p-4 rounded-lg bg-gray-50">
+                                            <Mail className="text-emidias-primary mt-0.5" />
                                             <div>
-                                                <p className="text-xs font-medium text-emidias-gray-500 uppercase tracking-wider">Email</p>
-                                                <p className="text-emidias-gray-900 font-medium">{user.email}</p>
+                                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Email</p>
+                                                <p className="text-gray-900 font-medium">{user.email}</p>
                                             </div>
                                         </div>
 
-                                        <div className="sidebar-info-item">
-                                            <Shield className="sidebar-info-icon" />
+                                        <div className="flex items-start gap-4 p-4 rounded-lg bg-gray-50">
+                                            <Shield className="text-emidias-primary mt-0.5" />
                                             <div className="flex-1">
-                                                <p className="text-xs font-medium text-emidias-gray-500 uppercase tracking-wider">Nível de Acesso</p>
+                                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Nível de Acesso</p>
                                                 <div className="flex items-center gap-2 mt-1">
-                                                    <span className={getRoleBadge(user.role)}>
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === 'master' ? 'bg-purple-100 text-purple-800' :
+                                                            user.role === 'editor' ? 'bg-blue-100 text-blue-800' :
+                                                                'bg-gray-100 text-gray-800'
+                                                        }`}>
                                                         {getRoleLabel(user.role)}
                                                     </span>
                                                 </div>
@@ -298,36 +304,36 @@ export default function ConfigPage() {
                                 </div>
 
                                 {/* Role Permissions Info */}
-                                <div className="card-base p-6">
-                                    <h3 className="text-lg font-semibold text-emidias-gray-900 mb-4">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
                                         Suas Permissões
                                     </h3>
                                     <div className="grid sm:grid-cols-2 gap-3">
-                                        <div className="flex items-center gap-3 p-3 bg-emidias-success/5 rounded-lg border border-emidias-success/10">
-                                            <CheckCircle2 size={18} className="text-emidias-success" />
-                                            <span className="text-sm text-emidias-gray-700">Visualizar pontos</span>
+                                        <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
+                                            <CheckCircle2 size={18} className="text-green-600" />
+                                            <span className="text-sm text-gray-700">Visualizar pontos</span>
                                         </div>
                                         {(user.role === 'editor' || user.role === 'master') && (
                                             <>
-                                                <div className="flex items-center gap-3 p-3 bg-emidias-success/5 rounded-lg border border-emidias-success/10">
-                                                    <CheckCircle2 size={18} className="text-emidias-success" />
-                                                    <span className="text-sm text-emidias-gray-700">Criar e editar pontos</span>
+                                                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
+                                                    <CheckCircle2 size={18} className="text-green-600" />
+                                                    <span className="text-sm text-gray-700">Criar e editar pontos</span>
                                                 </div>
-                                                <div className="flex items-center gap-3 p-3 bg-emidias-success/5 rounded-lg border border-emidias-success/10">
-                                                    <CheckCircle2 size={18} className="text-emidias-success" />
-                                                    <span className="text-sm text-emidias-gray-700">Gerenciar exibidoras</span>
+                                                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
+                                                    <CheckCircle2 size={18} className="text-green-600" />
+                                                    <span className="text-sm text-gray-700">Gerenciar exibidoras</span>
                                                 </div>
                                             </>
                                         )}
                                         {user.role === 'master' && (
                                             <>
-                                                <div className="flex items-center gap-3 p-3 bg-emidias-success/5 rounded-lg border border-emidias-success/10">
-                                                    <CheckCircle2 size={18} className="text-emidias-success" />
-                                                    <span className="text-sm text-emidias-gray-700">Deletar pontos</span>
+                                                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
+                                                    <CheckCircle2 size={18} className="text-green-600" />
+                                                    <span className="text-sm text-gray-700">Deletar pontos</span>
                                                 </div>
-                                                <div className="flex items-center gap-3 p-3 bg-emidias-success/5 rounded-lg border border-emidias-success/10">
-                                                    <CheckCircle2 size={18} className="text-emidias-success" />
-                                                    <span className="text-sm text-emidias-gray-700">Gerenciar usuários</span>
+                                                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
+                                                    <CheckCircle2 size={18} className="text-green-600" />
+                                                    <span className="text-sm text-gray-700">Gerenciar usuários</span>
                                                 </div>
                                             </>
                                         )}
@@ -338,106 +344,84 @@ export default function ConfigPage() {
 
                         {/* Security Section */}
                         {activeSection === 'security' && (
-                            <div className="space-y-6 animate-fade-in-up">
-                                <div className="card-base p-6">
+                            <div className="space-y-6 animate-in fade-in-up duration-500">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                     <div className="flex items-center gap-3 mb-6">
                                         <div className="w-12 h-12 bg-emidias-accent/10 rounded-xl flex items-center justify-center">
                                             <Key size={24} className="text-emidias-accent" />
                                         </div>
                                         <div>
-                                            <h2 className="text-xl font-bold text-emidias-gray-900">
+                                            <h2 className="text-xl font-bold text-gray-900">
                                                 Alterar Senha
                                             </h2>
-                                            <p className="text-sm text-emidias-gray-500">
+                                            <p className="text-sm text-gray-500">
                                                 Mantenha sua conta segura
                                             </p>
                                         </div>
                                     </div>
 
                                     {passwordSuccess && (
-                                        <div className="mb-6 p-4 bg-emidias-success/10 border border-emidias-success/20 rounded-lg flex items-center gap-3 animate-fade-in-up">
-                                            <CheckCircle2 size={20} className="text-emidias-success" />
-                                            <p className="text-emidias-success font-medium">Senha alterada com sucesso!</p>
+                                        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                                            <CheckCircle2 size={20} className="text-green-600" />
+                                            <p className="text-green-700 font-medium">Senha alterada com sucesso!</p>
                                         </div>
                                     )}
 
                                     <form onSubmit={handleChangePassword} className="space-y-5">
-                                        <div className="space-y-2">
-                                            <label className="block text-sm font-medium text-emidias-gray-700">
-                                                Senha Atual
-                                            </label>
-                                            <div className="relative">
-                                                <input
-                                                    type={showCurrentPassword ? 'text' : 'password'}
-                                                    value={currentPassword}
-                                                    onChange={(e) => setCurrentPassword(e.target.value)}
-                                                    required
-                                                    className="input-base pr-12"
-                                                    placeholder="Digite sua senha atual"
-                                                />
+                                        <Input
+                                            label="Senha Atual"
+                                            type={showCurrentPassword ? 'text' : 'password'}
+                                            value={currentPassword}
+                                            onChange={(e) => setCurrentPassword(e.target.value)}
+                                            required
+                                            placeholder="Digite sua senha atual"
+                                            rightElement={
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-emidias-gray-400 hover:text-emidias-gray-600 transition-colors"
+                                                    className="text-gray-400 hover:text-gray-600 p-1"
                                                 >
                                                     {showCurrentPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                                 </button>
-                                            </div>
-                                        </div>
+                                            }
+                                        />
 
-                                        <div className="space-y-2">
-                                            <label className="block text-sm font-medium text-emidias-gray-700">
-                                                Nova Senha
-                                            </label>
-                                            <div className="relative">
-                                                <input
-                                                    type={showNewPassword ? 'text' : 'password'}
-                                                    value={newPassword}
-                                                    onChange={(e) => setNewPassword(e.target.value)}
-                                                    required
-                                                    minLength={6}
-                                                    className="input-base pr-12"
-                                                    placeholder="Mínimo 6 caracteres"
-                                                />
+                                        <Input
+                                            label="Nova Senha"
+                                            type={showNewPassword ? 'text' : 'password'}
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            required
+                                            placeholder="Mínimo 6 caracteres"
+                                            rightElement={
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowNewPassword(!showNewPassword)}
-                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-emidias-gray-400 hover:text-emidias-gray-600 transition-colors"
+                                                    className="text-gray-400 hover:text-gray-600 p-1"
                                                 >
                                                     {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                                 </button>
-                                            </div>
-                                        </div>
+                                            }
+                                        />
 
-                                        <div className="space-y-2">
-                                            <label className="block text-sm font-medium text-emidias-gray-700">
-                                                Confirmar Nova Senha
-                                            </label>
-                                            <input
-                                                type="password"
-                                                value={confirmPassword}
-                                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                                required
-                                                minLength={6}
-                                                className="input-base"
-                                                placeholder="Repita a nova senha"
-                                            />
-                                        </div>
+                                        <Input
+                                            label="Confirmar Nova Senha"
+                                            type="password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            required
+                                            placeholder="Repita a nova senha"
+                                        />
 
-                                        <button
+                                        <Button
                                             type="submit"
-                                            disabled={passwordLoading}
-                                            className="btn-base btn-accent w-full py-3 disabled:opacity-70"
+                                            isLoading={passwordLoading}
+                                            className="w-full"
+                                            leftIcon={<Key size={18} />}
+                                            variant="accent"
                                         >
-                                            {passwordLoading ? (
-                                                <Loader2 size={20} className="animate-spin" />
-                                            ) : (
-                                                <>
-                                                    <Key size={18} />
-                                                    Alterar Senha
-                                                </>
-                                            )}
-                                        </button>
+                                            Alterar Senha
+                                        </Button>
                                     </form>
                                 </div>
                             </div>
@@ -445,120 +429,109 @@ export default function ConfigPage() {
 
                         {/* Users Section */}
                         {activeSection === 'users' && user.role === 'master' && (
-                            <div className="space-y-6 animate-fade-in-up">
+                            <div className="space-y-6 animate-in fade-in-up duration-500">
                                 {/* Users Header */}
-                                <div className="card-base p-6">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                     <div className="flex items-center justify-between mb-6">
                                         <div className="flex items-center gap-3">
                                             <div className="w-12 h-12 bg-emidias-accent/10 rounded-xl flex items-center justify-center">
                                                 <Users size={24} className="text-emidias-accent" />
                                             </div>
                                             <div>
-                                                <h2 className="text-xl font-bold text-emidias-gray-900">
+                                                <h2 className="text-xl font-bold text-gray-900">
                                                     Gerenciar Usuários
                                                 </h2>
-                                                <p className="text-sm text-emidias-gray-500">
+                                                <p className="text-sm text-gray-500">
                                                     {users.length} usuário{users.length !== 1 ? 's' : ''} cadastrado{users.length !== 1 ? 's' : ''}
                                                 </p>
                                             </div>
                                         </div>
-                                        <button
+                                        <Button
                                             onClick={() => setShowInviteForm(!showInviteForm)}
-                                            className={`btn-base ${showInviteForm ? 'btn-secondary' : 'btn-accent'} py-2.5 px-4`}
+                                            variant={showInviteForm ? 'secondary' : 'accent'}
+                                            leftIcon={<UserPlus size={18} />}
                                         >
-                                            <UserPlus size={18} />
                                             <span className="hidden sm:inline">
                                                 {showInviteForm ? 'Cancelar' : 'Convidar'}
                                             </span>
-                                        </button>
+                                        </Button>
                                     </div>
 
                                     {/* Invite Form */}
                                     {showInviteForm && (
-                                        <form onSubmit={handleInvite} className="p-5 bg-emidias-gray-50 rounded-xl space-y-4 mb-6 animate-fade-in-up">
-                                            <h3 className="font-semibold text-emidias-gray-900">Convidar Novo Usuário</h3>
+                                        <form onSubmit={handleInvite} className="p-5 bg-gray-50 rounded-xl space-y-4 mb-6 animate-in fade-in slide-in-from-top-2 border border-gray-200">
+                                            <h3 className="font-semibold text-gray-900">Convidar Novo Usuário</h3>
                                             <div className="grid sm:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <label className="block text-sm font-medium text-emidias-gray-700">
-                                                        Email (@hubradios.com)
-                                                    </label>
-                                                    <input
-                                                        type="email"
-                                                        value={inviteEmail}
-                                                        onChange={(e) => setInviteEmail(e.target.value)}
-                                                        placeholder="usuario@hubradios.com"
-                                                        required
-                                                        className="input-base"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <label className="block text-sm font-medium text-emidias-gray-700">
-                                                        Nível de Acesso
-                                                    </label>
-                                                    <select
-                                                        value={inviteRole}
-                                                        onChange={(e) => setInviteRole(e.target.value as 'master' | 'editor' | 'viewer')}
-                                                        className="input-base"
-                                                    >
-                                                        <option value="viewer">Visualizador</option>
-                                                        <option value="editor">Editor</option>
-                                                        <option value="master">Master</option>
-                                                    </select>
-                                                </div>
+                                                <Input
+                                                    label="Email (@hubradios.com)"
+                                                    type="email"
+                                                    value={inviteEmail}
+                                                    onChange={(e) => setInviteEmail(e.target.value)}
+                                                    placeholder="usuario@hubradios.com"
+                                                    required
+                                                />
+                                                <Select
+                                                    label="Nível de Acesso"
+                                                    value={inviteRole}
+                                                    onChange={(e) => setInviteRole(e.target.value as 'master' | 'editor' | 'viewer')}
+                                                    options={[
+                                                        { value: 'viewer', label: 'Visualizador' },
+                                                        { value: 'editor', label: 'Editor' },
+                                                        { value: 'master', label: 'Master' }
+                                                    ]}
+                                                />
                                             </div>
-                                            <button
+                                            <Button
                                                 type="submit"
-                                                disabled={inviteLoading}
-                                                className="btn-base btn-primary w-full py-3 disabled:opacity-70"
+                                                isLoading={inviteLoading}
+                                                className="w-full"
+                                                variant="primary"
+                                                leftIcon={<Mail size={18} />}
                                             >
-                                                {inviteLoading ? (
-                                                    <Loader2 size={20} className="animate-spin" />
-                                                ) : (
-                                                    <>
-                                                        <Mail size={18} />
-                                                        Enviar Convite
-                                                    </>
-                                                )}
-                                            </button>
+                                                Enviar Convite
+                                            </Button>
                                         </form>
                                     )}
 
                                     {/* Users List */}
                                     {loading ? (
-                                        <div className="py-12 text-center">
-                                            <Loader2 size={40} className="animate-spin mx-auto text-emidias-accent mb-4" />
-                                            <p className="text-emidias-gray-500">Carregando usuários...</p>
+                                        <div className="space-y-4">
+                                            {[1, 2, 3].map(i => (
+                                                <Skeleton key={i} className="h-20 w-full rounded-xl" />
+                                            ))}
                                         </div>
                                     ) : (
                                         <div className="space-y-3">
                                             {users.map((u, index) => (
                                                 <div
                                                     key={u.id}
-                                                    className="card-interactive p-4"
-                                                    style={{ animationDelay: `${index * 0.05}s` }}
+                                                    className="bg-white p-4 rounded-xl border border-gray-200 hover:border-emidias-accent hover:shadow-md transition-all duration-200"
                                                 >
                                                     <div className="flex items-center gap-4">
-                                                        <div className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                                                        <div className="w-12 h-12 bg-gradient-to-br from-emidias-primary to-emidias-primary-light rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
                                                             {u.email[0].toUpperCase()}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="font-semibold text-emidias-gray-900 truncate">
+                                                            <p className="font-semibold text-gray-900 truncate">
                                                                 {u.email}
                                                             </p>
                                                             <div className="flex items-center gap-2 mt-1">
-                                                                <Calendar size={12} className="text-emidias-gray-400" />
-                                                                <span className="text-xs text-emidias-gray-500">
+                                                                <Calendar size={12} className="text-gray-400" />
+                                                                <span className="text-xs text-gray-500">
                                                                     {new Date(u.created_at).toLocaleDateString('pt-BR')}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-3">
                                                             {u.id === user.id ? (
-                                                                <span className={getRoleBadge(u.role)}>
+                                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${u.role === 'master' ? 'bg-purple-100 text-purple-800' :
+                                                                        u.role === 'editor' ? 'bg-blue-100 text-blue-800' :
+                                                                            'bg-gray-100 text-gray-800'
+                                                                    }`}>
                                                                     {getRoleLabel(u.role)}
                                                                 </span>
                                                             ) : (
-                                                                <select
+                                                                <Select
                                                                     value={u.role}
                                                                     onChange={async (e) => {
                                                                         const newRole = e.target.value as 'master' | 'editor' | 'viewer';
@@ -569,22 +542,24 @@ export default function ConfigPage() {
                                                                             alert('Erro ao atualizar nível de acesso: ' + (error.message || 'Erro desconhecido'));
                                                                         }
                                                                     }}
-                                                                    className="text-sm px-3 py-1.5 rounded-lg border-2 border-emidias-gray-200 hover:border-emidias-accent focus:border-emidias-accent focus:outline-none transition-colors font-medium"
-                                                                    title="Alterar nível de acesso"
-                                                                >
-                                                                    <option value="viewer">Visualizador</option>
-                                                                    <option value="editor">Editor</option>
-                                                                    <option value="master">Master</option>
-                                                                </select>
+                                                                    options={[
+                                                                        { value: 'viewer', label: 'Visualizador' },
+                                                                        { value: 'editor', label: 'Editor' },
+                                                                        { value: 'master', label: 'Master' }
+                                                                    ]}
+                                                                    className="w-40 text-sm py-1.5 h-auto"
+                                                                />
                                                             )}
                                                             {u.id !== user.id && (
-                                                                <button
+                                                                <Button
                                                                     onClick={() => handleDeleteUser(u.id, u.email)}
-                                                                    className="p-2 text-emidias-danger hover:bg-emidias-danger/10 rounded-lg transition-all hover:scale-105"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="text-red-500 hover:bg-red-50 hover:text-red-600"
                                                                     title="Remover usuário"
                                                                 >
                                                                     <Trash2 size={18} />
-                                                                </button>
+                                                                </Button>
                                                             )}
                                                         </div>
                                                     </div>

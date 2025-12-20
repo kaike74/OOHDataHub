@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
-import { useStore } from '@/lib/store';
-import { Trash2, RefreshCw, FileText, MapPin, Loader2, Search } from 'lucide-react';
+import { Trash2, RefreshCw, FileText, MapPin, Loader2 } from 'lucide-react';
 import HistoryModal from './HistoryModal';
+import { Button } from '@/components/ui/Button';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 type TrashType = 'proposals' | 'points';
 
@@ -67,52 +68,50 @@ export default function TrashView() {
     };
 
     return (
-        <div className="h-full flex flex-col bg-emidias-gray-50">
+        <div className="h-full flex flex-col bg-gray-50">
             {/* Header */}
-            <div className="bg-white border-b border-emidias-gray-200 px-6 py-8">
-                <h1 className="text-2xl font-bold text-emidias-gray-900 flex items-center gap-2">
-                    <Trash2 className="text-emidias-danger" />
+            <div className="bg-white border-b border-gray-200 px-6 py-8">
+                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <Trash2 className="text-red-600" />
                     Lixeira / Arquivo
                 </h1>
-                <p className="text-emidias-gray-500 mt-1">
+                <p className="text-gray-500 mt-1">
                     Itens excluídos permanecem aqui por 30 dias antes da exclusão permanente.
                 </p>
 
                 <div className="flex gap-4 mt-6">
-                    <button
+                    <Button
                         onClick={() => setActiveTab('proposals')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'proposals'
-                                ? 'bg-emidias-primary text-white shadow-md'
-                                : 'bg-white text-emidias-gray-600 hover:bg-gray-50 border border-gray-200'
-                            }`}
+                        variant={activeTab === 'proposals' ? 'primary' : 'outline'}
+                        className="w-32"
                     >
                         Propostas
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={() => setActiveTab('points')}
-                        className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'points'
-                                ? 'bg-emidias-primary text-white shadow-md'
-                                : 'bg-white text-emidias-gray-600 hover:bg-gray-50 border border-gray-200'
-                            }`}
+                        variant={activeTab === 'points' ? 'primary' : 'outline'}
+                        className="w-32"
                     >
                         Pontos OOH
-                    </button>
+                    </Button>
                 </div>
             </div>
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
                 {isLoading ? (
-                    <div className="flex justify-center items-center h-40">
-                        <Loader2 className="animate-spin text-emidias-primary" size={32} />
+                    <div className="space-y-4">
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+                        ))}
                     </div>
                 ) : items.length === 0 ? (
-                    <div className="text-center py-20 text-emidias-gray-400">
+                    <div className="text-center py-20 text-gray-400">
                         <Trash2 size={48} className="mx-auto mb-4 opacity-20" />
                         <p>A lixeira está vazia.</p>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-xl shadow-sm border border-emidias-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-in fade-in-up duration-500">
                         <table className="w-full">
                             <thead className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase">
                                 <tr>
@@ -124,7 +123,7 @@ export default function TrashView() {
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {items.map((item) => (
-                                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                                    <tr key={item.id} className="hover:bg-gray-50 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${activeTab === 'proposals' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'
@@ -150,23 +149,27 @@ export default function TrashView() {
                                             {new Date(item.deleted_at).toLocaleString()}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button
+                                            <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                                <Button
                                                     onClick={() => handleRestore(item.id)}
                                                     disabled={processingId === item.id}
-                                                    className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-green-600 hover:bg-green-50 hover:text-green-700"
                                                     title="Restaurar"
                                                 >
                                                     {processingId === item.id ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
-                                                </button>
-                                                <button
+                                                </Button>
+                                                <Button
                                                     onClick={() => handleDeletePermanent(item.id)}
                                                     disabled={processingId === item.id}
-                                                    className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-red-500 hover:bg-red-50 hover:text-red-600"
                                                     title="Excluir Permanentemente"
                                                 >
                                                     <Trash2 size={18} />
-                                                </button>
+                                                </Button>
                                             </div>
                                         </td>
                                     </tr>

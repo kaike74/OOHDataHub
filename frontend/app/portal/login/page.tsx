@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
-import { Loader2, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 export default function PortalLoginPage() {
     const router = useRouter();
@@ -20,12 +22,6 @@ export default function PortalLoginPage() {
         try {
             const res = await api.portalLogin(email, password);
             if (res.token) {
-                // Token is stored in localStorage by api.ts helper if response structure matches, 
-                // but api.portalLogin returns JSON.
-                // We need to store it manually because api.ts logic for getToken reads from storage, 
-                // but doesn't write. The main app likely uses a store for this.
-                // For portal, we'll manually set the localStorage key we defined in api.ts
-
                 localStorage.setItem('ooh-client-auth-storage', JSON.stringify({
                     state: {
                         token: res.token,
@@ -49,7 +45,7 @@ export default function PortalLoginPage() {
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-gray-100">
                 <div className="p-8">
                     <div className="text-center mb-8">
-                        <div className="h-12 w-12 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4 text-white font-bold text-xl shadow-lg shadow-blue-600/20">
+                        <div className="h-12 w-12 bg-emidias-primary rounded-xl flex items-center justify-center mx-auto mb-4 text-white font-bold text-xl shadow-lg shadow-emidias-primary/20">
                             ODH
                         </div>
                         <h1 className="text-2xl font-bold text-gray-900">Portal do Cliente</h1>
@@ -57,35 +53,25 @@ export default function PortalLoginPage() {
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-gray-700 uppercase tracking-wide">Email Corporativo</label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                                    placeholder="seu@email.com"
-                                    required
-                                />
-                            </div>
-                        </div>
+                        <Input
+                            label="Email Corporativo"
+                            icon={<Mail size={18} />}
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="seu@email.com"
+                            required
+                        />
 
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-gray-700 uppercase tracking-wide">Senha</label>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                <input
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                                    placeholder="Sua senha temporária"
-                                    required
-                                />
-                            </div>
-                        </div>
+                        <Input
+                            label="Senha"
+                            icon={<Lock size={18} />}
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Sua senha"
+                            required
+                        />
 
                         {error && (
                             <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center font-medium animate-in zoom-in">
@@ -93,14 +79,15 @@ export default function PortalLoginPage() {
                             </div>
                         )}
 
-                        <button
+                        <Button
                             type="submit"
-                            disabled={isLoading}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                            isLoading={isLoading}
+                            className="w-full mt-2"
+                            rightIcon={<ArrowRight size={20} />}
+                            variant="primary"
                         >
-                            {isLoading ? <Loader2 className="animate-spin" size={20} /> : <ArrowRight size={20} />}
                             Entrar no Portal
-                        </button>
+                        </Button>
                     </form>
                 </div>
                 <div className="p-4 bg-gray-50 border-t border-gray-100 text-center">

@@ -18,6 +18,7 @@ import TrashView from '@/components/TrashView';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { Plus, Filter, Menu, MapPin, Building2, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -87,14 +88,14 @@ export default function HomePage() {
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-emidias-gray-50">
       {/* Header */}
-      <header className="gradient-primary px-4 sm:px-6 flex items-center justify-between flex-shrink-0 z-40 fixed top-0 left-0 right-0 h-[70px] border-b-4 border-emidias-accent shadow-emidias-xl">
+      <header className="bg-gradient-to-r from-emidias-primary to-[#0A0970] px-4 sm:px-6 flex items-center justify-between flex-shrink-0 z-40 fixed top-0 left-0 right-0 h-[70px] border-b-4 border-emidias-accent shadow-xl text-white">
         {/* Logo OOH Data Hub - Left */}
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex w-10 h-10 bg-white/10 rounded-xl items-center justify-center backdrop-blur-sm">
             <MapPin size={22} className="text-emidias-accent" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
               OOH Data Hub
             </h1>
             <p className="text-[10px] sm:text-xs text-white/60 hidden sm:block">
@@ -105,38 +106,40 @@ export default function HomePage() {
 
         {/* Logo E-MÍDIAS - Center */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
-          <img
-            src="https://raw.githubusercontent.com/kaike74/distribuicaoemidias/main/logo%20E-MIDIAS%20png%20fundo%20escuro%20HORIZONTAL%20(1).png"
-            alt="E-MÍDIAS Logo"
-            className="h-10 lg:h-12 object-contain drop-shadow-lg animate-pulse-gentle"
-          />
+          <div className="text-xl font-bold tracking-tight text-white/90">
+            OOH DATA HUB
+          </div>
         </div>
 
         {/* Actions - Right */}
         <div className="flex items-center gap-2 sm:gap-3">
           {currentView === 'map' && (
             <>
-              <button
-                onClick={() => setIsFiltersOpen(true)}
-                className="relative px-3 sm:px-4 py-2.5 text-white/80 hover:text-white hover:bg-white/10 rounded-xl flex items-center gap-2 transition-all"
-              >
-                <Filter size={20} />
-                <span className="hidden sm:inline font-medium">Filtros</span>
+              <div className="relative">
+                <Button
+                  onClick={() => setIsFiltersOpen(true)}
+                  variant="ghost"
+                  className="text-white/80 hover:text-white hover:bg-white/10"
+                  leftIcon={<Filter size={20} />}
+                >
+                  <span className="hidden sm:inline">Filtros</span>
+                </Button>
                 {activeFiltersCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-emidias-accent text-white text-xs font-bold rounded-full flex items-center justify-center animate-bounce-gentle">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-emidias-accent text-white text-xs font-bold rounded-full flex items-center justify-center animate-bounce-gentle pointer-events-none">
                     {activeFiltersCount}
                   </span>
                 )}
-              </button>
+              </div>
 
               {userRole !== 'client' && (
-                <button
+                <Button
                   onClick={() => setModalOpen(true)}
-                  className="px-3 sm:px-5 py-2.5 bg-emidias-accent text-white rounded-xl hover:bg-emidias-accent-dark flex items-center gap-2 transition-all font-semibold hover-lift shadow-accent"
+                  variant="accent"
+                  className="shadow-accent"
+                  leftIcon={<Plus size={20} strokeWidth={2.5} />}
                 >
-                  <Plus size={20} strokeWidth={2.5} />
                   <span className="hidden sm:inline">Novo Ponto</span>
-                </button>
+                </Button>
               )}
             </>
           )}
@@ -186,19 +189,19 @@ export default function HomePage() {
 
         {/* Error State */}
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-emidias-gray-50 z-20">
-            <div className="card-base p-8 max-w-md mx-4 text-center animate-shake">
-              <div className="w-16 h-16 bg-emidias-danger/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MapPin size={32} className="text-emidias-danger" />
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-20">
+            <div className="bg-white p-8 rounded-xl shadow-lg max-w-md mx-4 text-center animate-shake border border-gray-200">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MapPin size={32} className="text-red-500" />
               </div>
-              <h3 className="text-emidias-gray-900 font-bold text-xl mb-2">Erro ao carregar</h3>
-              <p className="text-emidias-gray-600 mb-6">{error}</p>
-              <button
+              <h3 className="text-gray-900 font-bold text-xl mb-2">Erro ao carregar</h3>
+              <p className="text-gray-600 mb-6">{error}</p>
+              <Button
                 onClick={() => window.location.reload()}
-                className="btn-base btn-primary px-6 py-3"
+                variant="primary"
               >
                 Tentar novamente
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -213,17 +216,17 @@ export default function HomePage() {
 
             {/* Stats Badge - Bottom Left */}
             <div className="absolute bottom-6 left-6 z-10 hidden lg:flex items-center gap-3">
-              <div className="glass-light px-4 py-2.5 rounded-xl shadow-emidias-lg flex items-center gap-3">
+              <div className="bg-white/90 backdrop-blur-md px-4 py-2.5 rounded-xl shadow-lg border border-white/20 flex items-center gap-3">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-emidias-accent rounded-full animate-pulse" />
-                  <span className="text-sm font-semibold text-emidias-gray-900">{pontos.length}</span>
-                  <span className="text-sm text-emidias-gray-500">pontos</span>
+                  <span className="text-sm font-semibold text-gray-900">{pontos.length}</span>
+                  <span className="text-sm text-gray-500">pontos</span>
                 </div>
-                <div className="w-px h-4 bg-emidias-gray-300" />
+                <div className="w-px h-4 bg-gray-300" />
                 <div className="flex items-center gap-2">
                   <Building2 size={14} className="text-emidias-primary" />
-                  <span className="text-sm font-semibold text-emidias-gray-900">{exibidoras.length}</span>
-                  <span className="text-sm text-emidias-gray-500">exibidoras</span>
+                  <span className="text-sm font-semibold text-gray-900">{exibidoras.length}</span>
+                  <span className="text-sm text-gray-500">exibidoras</span>
                 </div>
               </div>
             </div>

@@ -6,8 +6,11 @@ import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
 import GoogleMap from '@/components/map/GoogleMap';
 import CartTable from '@/components/CartTable';
-import { Loader2, LogOut, MapPin, ArrowLeft } from 'lucide-react';
+import { Loader2, LogOut, MapPin, ArrowLeft, User } from 'lucide-react';
 import { Proposta, PropostaItem, Ponto } from '@/lib/types';
+import { Button } from '@/components/ui/Button';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { formatCurrency } from '@/lib/utils';
 
 // Helper to map flat item to Ponto
 const mapItemToPonto = (item: any): Ponto => ({
@@ -147,10 +150,16 @@ const PortalViewContent = () => {
 
     if (isLoading) {
         return (
-            <div className="h-screen w-screen flex items-center justify-center bg-gray-50">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="animate-spin text-blue-600" size={48} />
-                    <p className="text-gray-500 font-medium">Carregando proposta...</p>
+            <div className="h-screen w-screen flex flex-col relative bg-gray-50 overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 z-50 p-4">
+                    <Skeleton className="h-20 w-full max-w-screen-xl mx-auto rounded-2xl" />
+                </div>
+                <div className="flex-1 bg-gray-200 animate-pulse" />
+                <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-white z-40 p-4">
+                    <div className="flex gap-4">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
                 </div>
             </div>
         );
@@ -165,12 +174,12 @@ const PortalViewContent = () => {
                     </div>
                     <h2 className="text-xl font-bold text-gray-900 mb-2">Erro</h2>
                     <p className="text-gray-600 mb-6">{error}</p>
-                    <button
+                    <Button
                         onClick={() => router.push('/login')}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                        variant="primary"
                     >
                         Voltar para Login
-                    </button>
+                    </Button>
                 </div>
             </div>
         );
@@ -180,14 +189,16 @@ const PortalViewContent = () => {
         <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-50 relative">
             {/* Header Overlay */}
             <div className="absolute top-0 left-0 right-0 z-40 p-4 pointer-events-none">
-                <div className="bg-white/90 backdrop-blur-md border border-gray-200 shadow-lg rounded-2xl p-4 flex items-center justify-between pointer-events-auto max-w-screen-xl mx-auto">
+                <div className="bg-white/90 backdrop-blur-md border border-gray-200 shadow-lg rounded-2xl p-4 flex items-center justify-between pointer-events-auto max-w-screen-xl mx-auto animate-in slide-in-from-top duration-500">
                     <div className="flex items-center gap-4">
-                        <button
+                        <Button
                             onClick={() => router.back()}
-                            className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full h-10 w-10"
                         >
                             <ArrowLeft size={20} />
-                        </button>
+                        </Button>
                         <div>
                             <h1 className="font-bold text-gray-900 text-lg leading-tight">{activeProposta?.nome}</h1>
                             <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -201,8 +212,8 @@ const PortalViewContent = () => {
                     <div className="flex items-center gap-4">
                         <div className="hidden sm:block text-right">
                             <div className="text-xs text-gray-500 uppercase tracking-widest font-semibold">Investimento Total</div>
-                            <div className="text-sm font-bold text-blue-600">
-                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                            <div className="text-sm font-bold text-emidias-primary">
+                                {formatCurrency(
                                     activeProposta?.itens?.reduce((acc, item) => acc + (item.valor_locacao || 0) * (item.qtd_bi_mes || 1), 0) || 0
                                 )}
                             </div>
@@ -228,16 +239,15 @@ const PortalViewContent = () => {
                                     })()}
                                 </button>
                             ) : (
-                                <button
+                                <Button
                                     onClick={() => router.push('/login')}
-                                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-xl hover:from-blue-700 hover:to-blue-800 transition shadow-md hover:shadow-lg"
+                                    variant="primary"
+                                    className="bg-gradient-to-r from-emidias-primary to-blue-700 shadow-md hover:shadow-lg"
+                                    leftIcon={<User size={16} />}
                                 >
-                                    <div className="p-1 bg-white/20 rounded-full">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                                    </div>
-                                    <span className="hidden sm:inline">Faça seu login para editar e criar suas propostas</span>
+                                    <span className="hidden sm:inline">Faça login para editar</span>
                                     <span className="sm:hidden">Login</span>
-                                </button>
+                                </Button>
                             )}
                         </div>
                     </div>
@@ -266,7 +276,7 @@ export default function PortalViewPage() {
     return (
         <Suspense fallback={
             <div className="h-screen w-screen flex items-center justify-center bg-gray-50">
-                <Loader2 className="animate-spin text-blue-600" size={48} />
+                <Loader2 className="animate-spin text-emidias-primary" size={48} />
             </div>
         }>
             <PortalViewContent />

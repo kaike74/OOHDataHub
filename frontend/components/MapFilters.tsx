@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { useStore } from '@/lib/store';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { X, Filter as FilterIcon, ChevronDown, ChevronUp, Search, MapPin, Building2, Tag, DollarSign, Globe, Check } from 'lucide-react';
 
 interface MapFiltersProps {
@@ -264,16 +266,12 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
     onChange: (value: string) => void;
     placeholder: string;
   }) => (
-    <div className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-emidias-gray-400" size={16} />
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="input-base pl-10 py-2.5 text-sm"
-      />
-    </div>
+    <Input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      icon={<Search size={16} />}
+    />
   );
 
   const CheckboxItem = ({
@@ -297,7 +295,7 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
         className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${checked
           ? 'bg-emidias-accent border-emidias-accent'
           : 'border-emidias-gray-300 group-hover:border-emidias-accent/50'
-        }`}>
+          }`}>
         {checked && <Check size={14} className="text-white" strokeWidth={3} />}
       </div>
       <span
@@ -332,12 +330,14 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
                 )}
               </div>
             </div>
-            <button
+            <Button
               onClick={onClose}
-              className="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+              variant="ghost"
+              size="icon"
+              className="text-white/80 hover:text-white hover:bg-white/10"
             >
               <X size={22} />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -352,12 +352,14 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
               <span className="text-sm text-emidias-gray-500">encontrados</span>
             </div>
             {activeFiltersCount > 0 && (
-              <button
+              <Button
                 onClick={handleClearAll}
-                className="text-xs font-medium text-emidias-accent hover:text-emidias-accent-dark transition-colors"
+                variant="ghost"
+                size="sm"
+                className="text-xs font-medium text-emidias-accent hover:text-emidias-accent-dark h-auto px-2 py-1"
               >
                 Limpar todos
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -457,22 +459,20 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">Mínimo</label>
-                  <input
+                  <Input
                     type="number"
                     value={valorMin}
                     onChange={(e) => setValorMin(e.target.value)}
                     placeholder={`R$ ${valores.min.toFixed(0)}`}
-                    className="input-base py-2.5 text-sm"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">Máximo</label>
-                  <input
+                  <Input
                     type="number"
                     value={valorMax}
                     onChange={(e) => setValorMax(e.target.value)}
                     placeholder={`R$ ${valores.max.toFixed(0)}`}
-                    className="input-base py-2.5 text-sm"
                   />
                 </div>
               </div>
@@ -485,18 +485,20 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
 
         {/* Footer */}
         <div className="flex-shrink-0 p-4 bg-white border-t border-emidias-gray-100 flex gap-3">
-          <button
+          <Button
             onClick={handleClearAll}
-            className="flex-1 btn-base btn-secondary py-3"
+            variant="secondary"
+            className="flex-1"
           >
             Limpar
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleApply}
-            className="flex-1 btn-base btn-accent py-3 hover-glow"
+            variant="accent"
+            className="flex-1 hover-glow"
           >
             Aplicar Filtros
-          </button>
+          </Button>
         </div>
       </div>
     </>

@@ -5,13 +5,16 @@ import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import {
-    Search, Plus, Filter, MoreVertical, Building2,
-    FileText, Calendar, DollarSign, Users, Loader2,
-    MapPin, Menu, ChevronDown, ChevronRight, History, Trash2, Coins
+    Search, Plus, Building2, FileText, Users, Loader2,
+    MapPin, Menu, ChevronDown, Trash2, Coins
 } from 'lucide-react';
 import NavigationMenu from '@/components/NavigationMenu';
 import { useRouter } from 'next/navigation';
 import CreateProposalModal from '@/components/CreateProposalModal';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { SafeImage } from '@/components/ui/SafeImage';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 interface AdminProposal {
     id: number;
@@ -127,7 +130,7 @@ export default function AdminProposalsPage() {
     });
 
     return (
-        <div className="min-h-screen bg-emidias-gray-50 pb-10">
+        <div className="min-h-screen bg-gray-50 pb-10">
             {/* Modal */}
             <CreateProposalModal
                 isOpen={isCreateModalOpen}
@@ -141,14 +144,14 @@ export default function AdminProposalsPage() {
             />
 
             {/* Header */}
-            <header className="gradient-primary px-4 sm:px-6 flex items-center justify-between flex-shrink-0 z-40 fixed top-0 left-0 right-0 h-[70px] border-b-4 border-emidias-accent shadow-emidias-xl">
+            <header className="bg-gradient-to-r from-emidias-primary to-[#0A0970] px-4 sm:px-6 flex items-center justify-between flex-shrink-0 z-40 fixed top-0 left-0 right-0 h-[70px] border-b-4 border-emidias-accent shadow-xl text-white">
                 {/* Logo OOH Data Hub - Left */}
                 <div className="flex items-center gap-3">
                     <div className="hidden sm:flex w-10 h-10 bg-white/10 rounded-xl items-center justify-center backdrop-blur-sm">
                         <MapPin size={22} className="text-emidias-accent" />
                     </div>
                     <div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
                             Admin Propostas
                         </h1>
                         <p className="text-[10px] sm:text-xs text-white/60 hidden sm:block">
@@ -159,24 +162,23 @@ export default function AdminProposalsPage() {
 
                 {/* Logo E-MÍDIAS - Center */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
-                    <img
-                        src="https://raw.githubusercontent.com/kaike74/distribuicaoemidias/main/logo%20E-MIDIAS%20png%20fundo%20escuro%20HORIZONTAL%20(1).png"
-                        alt="E-MÍDIAS Logo"
-                        className="h-10 lg:h-12 object-contain drop-shadow-lg"
-                    />
+                    <div className="text-xl font-bold tracking-tight text-white/90">
+                        OOH DATA HUB
+                    </div>
                 </div>
 
                 {/* Actions - Right */}
                 <div className="flex items-center gap-2 sm:gap-3">
                     {/* New Proposal Button - INTERNAL ONLY */}
                     {user?.role !== 'client' && (
-                        <button
+                        <Button
                             onClick={() => setIsCreateModalOpen(true)}
-                            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all font-medium backdrop-blur-sm"
+                            variant="primary" // Actually style it to look like the header buttons which are typically transparent or specific
+                            className="hidden sm:flex bg-white/10 hover:bg-white/20 text-white border-0"
+                            leftIcon={<Plus size={18} />}
                         >
-                            <Plus size={18} />
                             <span>Nova Proposta</span>
-                        </button>
+                        </Button>
                     )}
 
                     {/* Menu Button */}
@@ -194,28 +196,42 @@ export default function AdminProposalsPage() {
 
             <div className="max-w-7xl mx-auto p-6 mt-[80px]">
                 {/* Filters */}
-                <div className="bg-white p-4 rounded-xl shadow-emidias-sm border border-emidias-gray-200 mb-8 flex items-center gap-4">
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-8 flex items-center gap-4">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-emidias-gray-400" size={20} />
-                        <input
-                            type="text"
+                        <Input
                             placeholder="Buscar por cliente, proposta ou e-mail..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-3 bg-emidias-gray-50 border border-emidias-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emidias-accent/20 focus:border-emidias-accent transition-all text-emidias-gray-900"
+                            icon={<Search size={20} />}
+                            className="bg-gray-50 border-gray-200 focus:bg-white"
                         />
                     </div>
                 </div>
 
                 {/* Content */}
                 {loading ? (
-                    <div className="flex justify-center items-center h-64">
-                        <Loader2 className="animate-spin text-emidias-accent" size={32} />
+                    <div className="space-y-10">
+                        {[1, 2].map(i => (
+                            <div key={i} className="mb-8">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <Skeleton className="w-16 h-16 rounded-2xl" />
+                                    <div>
+                                        <Skeleton className="h-8 w-48 mb-2" />
+                                        <Skeleton className="h-4 w-32" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {[1, 2, 3, 4].map(j => (
+                                        <Skeleton key={j} className="h-64 w-full rounded-2xl" />
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : filteredGroupIds.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl border-2 border-dashed border-emidias-gray-200">
-                        <FileText className="mx-auto text-emidias-gray-300 mb-3" size={48} />
-                        <p className="text-emidias-gray-500 font-medium mb-4">Nenhuma proposta encontrada</p>
+                    <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl border-2 border-dashed border-gray-200 animate-in fade-in zoom-in duration-500">
+                        <FileText className="mx-auto text-gray-300 mb-3" size={48} />
+                        <p className="text-gray-500 font-medium mb-4">Nenhuma proposta encontrada</p>
                         {user?.role === 'client' && (
                             <p className="text-sm text-gray-400 max-w-md text-center">
                                 Ainda não há propostas compartilhadas com você. Entre em contato com a equipe para criar sua primeira proposta.
@@ -223,7 +239,7 @@ export default function AdminProposalsPage() {
                         )}
                     </div>
                 ) : (
-                    <div className="space-y-10">
+                    <div className="space-y-10 animate-in fade-in-up duration-500">
                         {filteredGroupIds.map(clientIdStr => {
                             const clientId = Number(clientIdStr);
                             const group = groupedProposals[clientId];
@@ -236,9 +252,13 @@ export default function AdminProposalsPage() {
                                         onClick={() => toggleGroup(clientId)}
                                         className="flex items-center gap-4 mb-4 cursor-pointer hover:opacity-80 transition-opacity"
                                     >
-                                        <div className="w-16 h-16 bg-white rounded-2xl border border-gray-200 flex items-center justify-center p-2 shadow-sm">
+                                        <div className="w-16 h-16 bg-white rounded-2xl border border-gray-200 flex items-center justify-center p-2 shadow-sm overflow-hidden relative">
                                             {group.client_logo ? (
-                                                <img src={api.getImageUrl(group.client_logo)} alt={group.client_name} className="w-full h-full object-contain" />
+                                                <SafeImage
+                                                    src={api.getImageUrl(group.client_logo)}
+                                                    alt={group.client_name}
+                                                    className="w-full h-full object-contain"
+                                                />
                                             ) : (
                                                 <Building2 className="text-gray-300" size={32} />
                                             )}
