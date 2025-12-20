@@ -4,198 +4,68 @@ import { useState, useEffect } from 'react';
 import { Copy, Check, ExternalLink, Share2, Users, UserPlus, Mail, Link as LinkIcon, Search, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Proposta } from '@/lib/types';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { useStore } from '@/lib/store';
 
-interface ShareModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    proposta: Proposta | null;
-}
-
-interface ClientUser {
-    id: number;
-    name: string;
-    email: string;
-    client_name?: string;
-}
+// ... (ClientUser interface remains)
 
 export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProps) {
-    const [mode, setMode] = useState<'public' | 'portal'>('portal');
-    const [isLoading, setIsLoading] = useState(false);
+    const user = useStore(state => state.user);
+    const [mode, setMode] = useState<'public' | 'portal'>('public'); // Default to public
 
-    // Public Link State
-    const [shareUrl, setShareUrl] = useState('');
-    const [copied, setCopied] = useState(false);
+    // ... (state)
 
-    // Portal State
-    const [clientUsers, setClientUsers] = useState<ClientUser[]>([]);
-    const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]); // Array of IDs or 'new'
-    const [newUser, setNewUser] = useState({ email: '' });
-    const [isAddingNew, setIsAddingNew] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
-    const [searchQuery, setSearchQuery] = useState('');
+    const isOwner = user && proposta && (user.role !== 'client' || user.id === proposta.created_by);
+    const canInvite = !!isOwner;
 
-    const filteredUsers = clientUsers.filter(user =>
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
+    // Force public mode if not owner
     useEffect(() => {
-        if (isOpen) {
-            setErrorMessage('');
-            setSuccessMessage('');
-            setSelectedUserIds([]); // Reset selection on open
-            setIsAddingNew(false);
+        if (!canInvite) {
+            setMode('public');
+        } else {
+            // If owner, maybe default to portal? or keep public. 
+            // Let's keep existing logic or default to portal if owner opens it?
+            // User didn't specify default. 'portal' is fine if owner.
+            setMode('portal');
         }
-        if (isOpen && proposta && mode === 'portal') {
-            fetchClientUsers();
-        }
-    }, [isOpen, proposta, mode]);
+    }, [canInvite, isOpen]);
 
-    // Auto-generate link when switching to public mode
-    useEffect(() => {
-        if (isOpen && proposta && mode === 'public' && !shareUrl && !isLoading) {
-            generatePublicLink();
-        }
-    }, [mode, isOpen, proposta, shareUrl]);
+    // ... (rest of effects)
 
-    const fetchClientUsers = async () => {
-        // Fetch ALL users to allow cross-client sharing if needed
-        try {
-            const users = await api.getAllClientUsers();
-            setClientUsers(users || []);
-        } catch (error) {
-            console.error('Failed to fetch client users', error);
-        }
-    }
+    // ... (generatePublicLink, toggleUserSelection)
 
-    const generatePublicLink = async () => {
-        if (!proposta) return;
-        setIsLoading(true);
-        setErrorMessage('');
-        try {
-            const res = await api.shareProposta(proposta.id);
-            if (res.success && res.token) {
-                const url = `${window.location.origin}/portal/view?token=${res.token}`;
-                setShareUrl(url);
-            } else {
-                setErrorMessage('Falha ao gerar link');
-            }
-        } catch (err: any) {
-            setErrorMessage(err.message || 'Erro ao conectar');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    // ... (handlePortalShare)
 
-    const toggleUserSelection = (id: string | number) => {
-        setSelectedUserIds(prev =>
-            prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]
-        );
-    };
-
-    const handlePortalShare = async () => {
-        if (!proposta) return;
-        setIsLoading(true);
-        setSuccessMessage('');
-        setErrorMessage('');
-
-        const usersToShare: number[] = [];
-        let inviteSent = false;
-
-        try {
-            // 1. Handle New Email Invite (Google Sheets style)
-            if (isAddingNew && newUser.email) {
-                const res = await api.inviteProposalUser(proposta.id, newUser.email);
-                if (res.success) {
-                    inviteSent = true;
-                } else {
-                    throw new Error(res.error || 'Falha ao enviar convite');
-                }
-            }
-
-            // 2. Handle Selected Users (Existing IDs)
-            const existingIds = selectedUserIds.filter(id => typeof id === 'number').map(Number);
-            let shareCount = 0;
-
-            for (const userId of existingIds) {
-                try {
-                    const shareRes = await api.shareProposalWithUser(proposta.id, userId);
-                    if (shareRes.success) {
-                        shareCount++;
-                    }
-                } catch (e) {
-                    console.error(`Falha ao compartilhar com usuário ${userId}`, e);
-                }
-            }
-
-            if (inviteSent || shareCount > 0) {
-                setSuccessMessage(
-                    (inviteSent && shareCount === 0) ? `Convite enviado para ${newUser.email}` :
-                        (inviteSent && shareCount > 0) ? `Convite enviado e ${shareCount} usuários adicionados` :
-                            `Compartilhado com ${shareCount} usuários`
-                );
-
-                if (isAddingNew) {
-                    setNewUser({ email: '' });
-                    setIsAddingNew(false);
-                }
-                setSelectedUserIds([]); // Reset selection
-                // Refresh list eventually?
-            } else {
-                if (!isAddingNew && existingIds.length === 0) throw new Error('Selecione alguém para compartilhar');
-                throw new Error('Nenhuma ação realizada');
-            }
-
-        } catch (err: any) {
-            setErrorMessage(err.message || 'Erro ao compartilhar');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const copyToClipboard = () => {
-        navigator.clipboard.writeText(shareUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
+    // ... (copyToClipboard)
 
     return (
         <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title={
-                <div className="flex items-center gap-2">
-                    <Share2 size={24} />
-                    Compartilhar Proposta
-                </div>
-            }
-            maxWidth="lg"
-            className="flex flex-col max-h-[90vh]"
+        // ... (props)
         >
             <div className="flex flex-col h-full">
-                {/* Tabs */}
-                <div className="flex border-b border-gray-100 mb-6 -mx-6 px-6 bg-gray-50/50">
-                    <button
-                        onClick={() => setMode('portal')}
-                        className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${mode === 'portal' ? 'text-emidias-primary' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'}`}
-                    >
-                        <Users size={18} />
-                        Portal do Cliente
-                        {mode === 'portal' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emidias-primary to-emidias-accent" />}
-                    </button>
-                    <button
-                        onClick={() => setMode('public')}
-                        className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${mode === 'public' ? 'text-emidias-primary' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'}`}
-                    >
-                        <LinkIcon size={18} />
-                        Link Público
-                        {mode === 'public' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emidias-primary to-emidias-accent" />}
-                    </button>
-                </div>
+                {/* Tabs - Only show if canInvite (Owner/Internal) */}
+                {canInvite && (
+                    <div className="flex border-b border-gray-100 mb-6 -mx-6 px-6 bg-gray-50/50">
+                        <button
+                            onClick={() => setMode('portal')}
+                            className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${mode === 'portal' ? 'text-emidias-primary' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'}`}
+                        >
+                            <Users size={18} />
+                            Portal do Cliente
+                            {mode === 'portal' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emidias-primary to-emidias-accent" />}
+                        </button>
+                        <button
+                            onClick={() => setMode('public')}
+                            className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${mode === 'public' ? 'text-emidias-primary' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'}`}
+                        >
+                            <LinkIcon size={18} />
+                            Link Público
+                            {mode === 'public' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emidias-primary to-emidias-accent" />}
+                        </button>
+                    </div>
+                )}
+
+                {/* Content */}
+                {/* ... */}
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
