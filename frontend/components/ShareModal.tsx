@@ -104,58 +104,50 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
         setErrorMessage('');
 
         const usersToShare: number[] = [];
+        let inviteSent = false;
 
         try {
-            // First, handle new user creation if active
-            if (isAddingNew) {
-                if (!newUser.name || !newUser.email) {
-                    setErrorMessage('Preencha nome e email para o novo usuário');
-                    setIsLoading(false);
-                    return;
-                }
-                const res = await api.registerClientUser({
-                    name: newUser.name,
-                    email: newUser.email
-                });
-                if (res.success && res.userId) {
-                    usersToShare.push(Number(res.userId));
+            // 1. Handle New Email Invite (Google Sheets style)
+            if (isAddingNew && newUser.email) {
+                const res = await api.inviteProposalUser(proposta.id, newUser.email);
+                if (res.success) {
+                    inviteSent = true;
                 } else {
-                    throw new Error(res.error || 'Falha ao criar usuário');
+                    throw new Error(res.error || 'Falha ao enviar convite');
                 }
             }
 
-            // Combine with selected existing users
+            // 2. Handle Selected Users (Existing IDs)
             const existingIds = selectedUserIds.filter(id => typeof id === 'number').map(Number);
-            usersToShare.push(...existingIds);
+            let shareCount = 0;
 
-            if (usersToShare.length === 0) throw new Error('Selecione pelo menos um usuário');
-
-            // Iterate and share
-            let successCount = 0;
-            for (const userId of usersToShare) {
+            for (const userId of existingIds) {
                 try {
                     const shareRes = await api.shareProposalWithUser(proposta.id, userId);
                     if (shareRes.success) {
-                        successCount++;
+                        shareCount++;
                     }
                 } catch (e) {
                     console.error(`Falha ao compartilhar com usuário ${userId}`, e);
                 }
             }
 
-            if (successCount > 0) {
-                setSuccessMessage(isAddingNew && successCount === 1
-                    ? `Convite enviado para ${newUser.email} com acesso à proposta!`
-                    : `Proposta compartilhada com ${successCount} usuário(s)!`);
+            if (inviteSent || shareCount > 0) {
+                setSuccessMessage(
+                    (inviteSent && shareCount === 0) ? `Convite enviado para ${newUser.email}` :
+                        (inviteSent && shareCount > 0) ? `Convite enviado e ${shareCount} usuários adicionados` :
+                            `Compartilhado com ${shareCount} usuários`
+                );
 
                 if (isAddingNew) {
                     setNewUser({ name: '', email: '' });
                     setIsAddingNew(false);
-                    fetchClientUsers(); // Refresh list
                 }
                 setSelectedUserIds([]); // Reset selection
+                // Refresh list eventually?
             } else {
-                throw new Error('Falha ao compartilhar proposta');
+                if (!isAddingNew && existingIds.length === 0) throw new Error('Selecione alguém para compartilhar');
+                throw new Error('Nenhuma ação realizada');
             }
 
         } catch (err: any) {

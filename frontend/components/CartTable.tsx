@@ -443,6 +443,67 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
             enableResizing: false,
         },
         {
+            id: 'status_validacao',
+            header: () => (
+                <div className="flex items-center gap-1.5 text-gray-500 font-normal">
+                    <Target size={13} />
+                    <span>Status</span>
+                </div>
+            ),
+            size: 130,
+            cell: ({ row }) => {
+                const status = row.original.status_validacao || 'PENDING';
+                const statusMap: Record<string, { label: string; color: string; bg: string }> = {
+                    'PENDING': { label: 'Pendente', color: 'text-gray-600', bg: 'bg-gray-100' },
+                    'VALIDATION': { label: 'Em Validação', color: 'text-blue-600', bg: 'bg-blue-50' },
+                    'APPROVED': { label: 'Aprovado', color: 'text-green-600', bg: 'bg-green-50' },
+                    'UNAVAILABLE': { label: 'Indisponível', color: 'text-red-600', bg: 'bg-red-50' }
+                };
+                const config = statusMap[status] || statusMap['PENDING'];
+
+                if (isClientView) {
+                    return (
+                        <div className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border border-transparent ${config.bg} ${config.color}`}>
+                            {config.label}
+                        </div>
+                    );
+                }
+
+                return (
+                    <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors">
+                        <select
+                            className={`w-full bg-transparent border-none text-[11px] font-medium focus:ring-0 p-0 cursor-pointer ${config.color}`}
+                            value={status}
+                            onChange={(e) => {
+                                const newStatus = e.target.value;
+                                const updates: any = { status_validacao: newStatus };
+                                // Auto-set approved_until if approving
+                                if (newStatus === 'APPROVED' && row.original.periodo_fim) {
+                                    updates.approved_until = row.original.periodo_fim;
+                                }
+                                updateItem(row.original.id, updates);
+
+                                // Trigger backend validation update specifically if needed, or rely on updateCart/updatePortalItems
+                                // If internal, updateCart handles regular fields. I need to make sure updateCart sends these new fields.
+                                // It does because it sends the whole item object.
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <option value="PENDING">Pendente</option>
+                            <option value="VALIDATION">Em Validação</option>
+                            <option value="APPROVED">Aprovado</option>
+                            <option value="UNAVAILABLE">Indisponível</option>
+                        </select>
+                        {status === 'APPROVED' && row.original.approved_until && (
+                            <div className="text-[9px] text-gray-400 mt-0.5">
+                                Até {new Date(row.original.approved_until).toLocaleDateString()}
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+        },
+        {
             accessorKey: 'uf',
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal">

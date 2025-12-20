@@ -271,6 +271,26 @@ export const api = {
         body: JSON.stringify({ itens })
     }),
 
+    // Proposal Workflow
+    inviteProposalUser: (proposalId: number, email: string) => fetchAPI(`/api/propostas/${proposalId}/invite`, {
+        method: 'POST',
+        body: JSON.stringify({ email })
+    }),
+
+    requestProposalAccess: (proposalId: number) => fetchAPI(`/api/propostas/${proposalId}/request-access`, {
+        method: 'POST'
+    }),
+
+    updateProposalStatus: (id: number, status: string) => fetchAPI(`/api/propostas/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status })
+    }),
+
+    validateProposalItems: (id: number, items: any[]) => fetchAPI(`/api/propostas/${id}/validate-items`, {
+        method: 'PUT',
+        body: JSON.stringify({ items })
+    }),
+
     getPublicProposal: (token: string) => fetchAPI(`/api/public/proposals/${token}`),
 
     // Layers

@@ -140,6 +140,8 @@ export interface PropostaItem {
     produto?: string;
     qtd_bi_mes?: number;
     status?: string; // Add status for ghost points
+    status_validacao?: 'PENDING' | 'VALIDATION' | 'APPROVED' | 'UNAVAILABLE';
+    approved_until?: string | null;
 }
 
 export interface CustomMarker {

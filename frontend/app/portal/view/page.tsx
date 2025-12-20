@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
 import GoogleMap from '@/components/map/GoogleMap';
 import CartTable from '@/components/CartTable';
-import { Loader2, LogOut, MapPin, ArrowLeft, User } from 'lucide-react';
+import { Loader2, LogOut, MapPin, ArrowLeft, User, Check } from 'lucide-react';
 import { Proposta, PropostaItem, Ponto } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -41,7 +41,7 @@ const mapItemToPonto = (item: any): Ponto => ({
 const PortalViewContent = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true); // Initial loading state
     const [error, setError] = useState('');
     const [activeProposta, setActiveProposta] = useState<Proposta | null>(null);
     const [isCartOpen, setIsCartOpen] = useState(true);
@@ -50,13 +50,23 @@ const PortalViewContent = () => {
     const setExibidoras = useStore((state) => state.setExibidoras); // Maybe empty?
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
+    // Auth Check
     useEffect(() => {
-        // Check auth on mount to avoid hydration mismatch
         const auth = localStorage.getItem('ooh-client-auth-storage');
-        setIsAuthenticated(!!auth);
+        if (auth) {
+            setIsAuthenticated(true);
+            try {
+                const userData = JSON.parse(auth)?.state?.user;
+                if (userData?.id) setCurrentUserId(userData.id);
+            } catch (e) {
+                console.error('Failed to parse user ID', e);
+            }
+        }
     }, []);
 
+    // Load Data
     useEffect(() => {
         const loadProposal = async () => {
             const token = searchParams.get('token');
@@ -218,6 +228,83 @@ const PortalViewContent = () => {
                                 )}
                             </div>
                         </div>
+
+                        {/* Workflow Buttons */}
+                        {isAuthenticated && activeProposta && (
+                            <div className="flex items-center gap-2 border-r border-gray-200 pr-4 mr-4">
+                                {/* Request Access Button for Non-Owners */}
+                                {currentUserId && activeProposta.created_by && currentUserId !== activeProposta.created_by && (
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 mr-2"
+                                        onClick={async () => {
+                                            if (!activeProposta || !activeProposta.id) return;
+                                            try {
+                                                const res = await api.requestProposalAccess(activeProposta.id);
+                                                alert(res.message || (res.success ? 'Solicitação enviada!' : 'Erro'));
+                                            } catch (e) {
+                                                alert('Erro ao solicitar acesso');
+                                            }
+                                        }}
+                                    >
+                                        Solicitar Edição
+                                    </Button>
+                                )}
+
+                                {(!activeProposta.status || activeProposta.status === 'RASCUNHO') && (
+                                    <Button
+                                        size="sm"
+                                        variant="primary"
+                                        onClick={async () => {
+                                            if (!activeProposta) return;
+                                            if (!confirm('Deseja enviar esta proposta para análise da equipe?')) return;
+                                            try {
+                                                await api.updateProposalStatus(activeProposta.id, 'EM_ANALISE');
+                                                setActiveProposta({ ...activeProposta, status: 'EM_ANALISE' });
+                                            } catch (e) {
+                                                alert('Erro ao atualizar status');
+                                            }
+                                        }}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                                    >
+                                        Solicitar Validação
+                                    </Button>
+                                )}
+
+                                {activeProposta.status === 'EM_ANALISE' && (
+                                    <div className="flex items-center gap-2">
+                                        <div className="px-3 py-1.5 rounded-full bg-orange-100 text-orange-700 text-xs font-bold uppercase tracking-wide">
+                                            Em Análise
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            variant="secondary"
+                                            className="text-green-700 bg-green-50 hover:bg-green-100 border-green-200"
+                                            onClick={async () => {
+                                                if (!activeProposta) return;
+                                                if (!confirm('Deseja aprovar esta proposta e encerrar a negociação?')) return;
+                                                try {
+                                                    await api.updateProposalStatus(activeProposta.id, 'APROVADO');
+                                                    setActiveProposta({ ...activeProposta, status: 'APROVADO' });
+                                                } catch (e) {
+                                                    alert('Erro ao aprovar proposta');
+                                                }
+                                            }}
+                                        >
+                                            Aprovar Proposta
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {activeProposta.status === 'APROVADO' && (
+                                    <div className="px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wide flex items-center gap-1">
+                                        <Check size={14} />
+                                        Proposta Aprovada
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Login/Dashboard Button */}
                         <div className="border-l border-gray-200 pl-4">

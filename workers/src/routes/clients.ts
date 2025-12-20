@@ -141,7 +141,19 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
                 'INSERT INTO usuarios_externos (email, password_hash, name) VALUES (?, ?, ?)'
             ).bind(email, passwordHash, name).run();
 
-            // Send Email
+            const userId = result.meta.last_row_id;
+
+            // Check for pending invites and accept them
+            const invites = await env.DB.prepare('SELECT * FROM proposta_invites WHERE email = ? AND status = "pending"').bind(email).all();
+            if (invites.results.length > 0) {
+                const batch = [];
+                for (const invite of invites.results) {
+                    batch.push(env.DB.prepare('INSERT OR IGNORE INTO proposta_shares (proposal_id, client_user_id) VALUES (?, ?)').bind(invite.proposal_id, userId));
+                    batch.push(env.DB.prepare('UPDATE proposta_invites SET status = "accepted" WHERE id = ?').bind(invite.id));
+                }
+                await env.DB.batch(batch);
+            }
+
             // Send Email
             await sendClientWelcomeEmail(env, email, generatedPassword);
 
@@ -149,7 +161,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             return new Response(JSON.stringify({
                 success: true,
                 message: "Usuário criado. Credenciais enviadas por email.",
-                userId: result.meta.last_row_id
+                userId: userId
             }), {
                 headers
             });
@@ -157,6 +169,69 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
         } catch (e: any) {
             console.error(e);
             return new Response(JSON.stringify({ error: e.message || 'Error registering client' }), { status: 500, headers });
+        }
+    }
+
+    // POST /api/clients/signup - Public Registration
+    if (path === '/api/clients/signup' && request.method === 'POST') {
+        try {
+            const { email, password, name } = await request.json() as any;
+
+            if (!email || !password || !name) {
+                return new Response(JSON.stringify({ error: 'Todos os campos são obrigatórios' }), { status: 400, headers });
+            }
+
+            if (password.length < 6) {
+                return new Response(JSON.stringify({ error: 'A senha deve ter pelo menos 6 caracteres' }), { status: 400, headers });
+            }
+
+            // Check if email exists
+            const existing = await env.DB.prepare('SELECT id FROM usuarios_externos WHERE email = ?').bind(email).first();
+            if (existing) {
+                return new Response(JSON.stringify({ error: 'Email já cadastrado' }), { status: 409, headers });
+            }
+
+            const passwordHash = await hashPassword(password);
+
+            const result = await env.DB.prepare(
+                'INSERT INTO usuarios_externos (email, password_hash, name) VALUES (?, ?, ?)'
+            ).bind(email, passwordHash, name).run();
+
+            const userId = result.meta.last_row_id;
+
+            // Check for pending invites and accept them automatically
+            const invites = await env.DB.prepare('SELECT * FROM proposta_invites WHERE email = ? AND status = "pending"').bind(email).all();
+
+            if (invites.results.length > 0) {
+                const batch = [];
+                for (const invite of invites.results) {
+                    // Create share
+                    batch.push(env.DB.prepare('INSERT OR IGNORE INTO proposta_shares (proposal_id, client_user_id) VALUES (?, ?)').bind(invite.proposal_id, userId));
+                    // Update invite status
+                    batch.push(env.DB.prepare('UPDATE proposta_invites SET status = "accepted" WHERE id = ?').bind(invite.id));
+                }
+                await env.DB.batch(batch);
+            }
+
+            // Generate token for immediate login
+            const clientUser: ClientUser = {
+                id: userId as number,
+                name: name,
+                email: email,
+                role: 'client'
+            };
+            const token = await generateClientToken(clientUser);
+
+            return new Response(JSON.stringify({
+                success: true,
+                token,
+                user: clientUser,
+                message: "Conta criada com sucesso!"
+            }), { headers });
+
+        } catch (e: any) {
+            console.error(e);
+            return new Response(JSON.stringify({ error: e.message || 'Erro ao criar conta' }), { status: 500, headers });
         }
     }
 
