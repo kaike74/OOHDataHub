@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
-import { ArrowLeft, Plus, Calendar, Coins, FileText, Loader2, History } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, Coins, FileText, Loader2, History, Trash2 } from 'lucide-react';
 import { Proposta } from '@/lib/types';
 import PropostaModal from './PropostaModal';
 import HistoryModal from './HistoryModal';
@@ -68,6 +68,19 @@ export default function PropostasView() {
             setCurrentView('map');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleDeleteProposta = async (id: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm('Deseja mover esta proposta para a lixeira?')) return;
+
+        try {
+            await api.deleteProposta(id);
+            setPropostas(current => current.filter(p => p.id !== id));
+        } catch (error) {
+            console.error('Error deleting proposal:', error);
+            alert('Falha ao excluir proposta');
         }
     };
 
@@ -149,6 +162,13 @@ export default function PropostasView() {
                                         title="Ver Histórico"
                                     >
                                         <History size={16} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => handleDeleteProposta(proposta.id, e)}
+                                        className="p-1.5 hover:bg-red-50 rounded-full text-gray-400 hover:text-red-500 transition-colors"
+                                        title="Excluir"
+                                    >
+                                        <Trash2 size={16} />
                                     </button>
                                     <div className="flex items-center gap-1">
                                         <Calendar size={14} />

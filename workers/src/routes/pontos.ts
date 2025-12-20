@@ -157,6 +157,7 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
     // PUT /api/pontos/:id - Atualizar ponto
     if (request.method === 'PUT' && path.match(/^\/api\/pontos\/\d+$/)) {
         try {
+            const user = await requireAuth(request, env);
             const id = path.split('/').pop();
             const data = await request.json() as any;
 
@@ -196,6 +197,9 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
             ).run();
 
             // Atualizar produtos: deletar antigos e inserir novos
+            // We'll track product changes for audit logs simply as "products_updated" for now due to complexity of diffing
+            let productsUpdated = false;
+
             if (data.produtos !== undefined) {
                 // Deletar produtos antigos
                 await env.DB.prepare('DELETE FROM produtos WHERE id_ponto = ?').bind(id).run();
@@ -208,7 +212,21 @@ export async function handlePontos(request: Request, env: Env, path: string): Pr
                         ).bind(id, prod.tipo, prod.valor, prod.periodo || null).run();
                     }
                 }
+                productsUpdated = true;
             }
+
+            // Log Audit
+            await logAudit(env, {
+                tableName: 'pontos_ooh',
+                recordId: Number(id),
+                action: 'UPDATE',
+                changedBy: user.id,
+                userType: 'agency',
+                changes: {
+                    ...data,
+                    products_updated: productsUpdated
+                }
+            });
 
             // Invalidate cache
             await invalidatePontoCache(env, Number(id));

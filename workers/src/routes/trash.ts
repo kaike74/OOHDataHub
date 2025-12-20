@@ -49,7 +49,7 @@ export const handleTrash = async (request: Request, env: Env, path: string) => {
 
             if (!tableName) return new Response(JSON.stringify({ error: 'Invalid type' }), { status: 400, headers });
 
-            const res = await env.DB.prepare(`UPDATE ${tableName} SET deleted_at = NULL WHERE id = ?`).bind(id).run();
+            const res = await env.DB.prepare(`UPDATE ${tableName} SET deleted_at = NULL, status = 'ativo' WHERE id = ?`).bind(id).run();
 
             if (res.meta.changes === 0) {
                 return new Response(JSON.stringify({ error: 'Item not found in trash' }), { status: 404, headers });
