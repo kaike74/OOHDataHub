@@ -5,8 +5,22 @@ import { Copy, Check, ExternalLink, Share2, Users, UserPlus, Mail, Link as LinkI
 import { api } from '@/lib/api';
 import { Proposta } from '@/lib/types';
 import { useStore } from '@/lib/store';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
-// ... (ClientUser interface remains)
+interface ShareModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    proposta: Proposta | null;
+}
+
+interface ClientUser {
+    id: number;
+    name: string;
+    email: string;
+    client_name?: string;
+}
 
 export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProps) {
     const user = useStore(state => state.user);
