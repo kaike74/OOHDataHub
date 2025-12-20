@@ -292,8 +292,8 @@ export default function ConfigPage() {
                                                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Nível de Acesso</p>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === 'master' ? 'bg-purple-100 text-purple-800' :
-                                                            user.role === 'editor' ? 'bg-blue-100 text-blue-800' :
-                                                                'bg-gray-100 text-gray-800'
+                                                        user.role === 'editor' ? 'bg-blue-100 text-blue-800' :
+                                                            'bg-gray-100 text-gray-800'
                                                         }`}>
                                                         {getRoleLabel(user.role)}
                                                     </span>
@@ -474,12 +474,11 @@ export default function ConfigPage() {
                                                     label="Nível de Acesso"
                                                     value={inviteRole}
                                                     onChange={(e) => setInviteRole(e.target.value as 'master' | 'editor' | 'viewer')}
-                                                    options={[
-                                                        { value: 'viewer', label: 'Visualizador' },
-                                                        { value: 'editor', label: 'Editor' },
-                                                        { value: 'master', label: 'Master' }
-                                                    ]}
-                                                />
+                                                >
+                                                    <option value="viewer">Visualizador</option>
+                                                    <option value="editor">Editor</option>
+                                                    <option value="master">Master</option>
+                                                </Select>
                                             </div>
                                             <Button
                                                 type="submit"
@@ -525,8 +524,8 @@ export default function ConfigPage() {
                                                         <div className="flex items-center gap-3">
                                                             {u.id === user.id ? (
                                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${u.role === 'master' ? 'bg-purple-100 text-purple-800' :
-                                                                        u.role === 'editor' ? 'bg-blue-100 text-blue-800' :
-                                                                            'bg-gray-100 text-gray-800'
+                                                                    u.role === 'editor' ? 'bg-blue-100 text-blue-800' :
+                                                                        'bg-gray-100 text-gray-800'
                                                                     }`}>
                                                                     {getRoleLabel(u.role)}
                                                                 </span>
@@ -542,13 +541,12 @@ export default function ConfigPage() {
                                                                             alert('Erro ao atualizar nível de acesso: ' + (error.message || 'Erro desconhecido'));
                                                                         }
                                                                     }}
-                                                                    options={[
-                                                                        { value: 'viewer', label: 'Visualizador' },
-                                                                        { value: 'editor', label: 'Editor' },
-                                                                        { value: 'master', label: 'Master' }
-                                                                    ]}
                                                                     className="w-40 text-sm py-1.5 h-auto"
-                                                                />
+                                                                >
+                                                                    <option value="viewer">Visualizador</option>
+                                                                    <option value="editor">Editor</option>
+                                                                    <option value="master">Master</option>
+                                                                </Select>
                                                             )}
                                                             {u.id !== user.id && (
                                                                 <Button
