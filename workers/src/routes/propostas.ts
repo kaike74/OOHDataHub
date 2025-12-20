@@ -396,7 +396,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
     }
 
     // POST /api/propostas/:id/invite - Convidar usuário por email (Google Sheets style)
-    if (request.method === 'POST' && path.match(/\/invite$/)) {
+    if (request.method === 'POST' && path.includes('/invite')) {
         try {
             const id = path.split('/')[3];
             const { email } = await request.json() as any;

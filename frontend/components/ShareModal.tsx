@@ -33,9 +33,8 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
 
     // Portal State
     const [clientUsers, setClientUsers] = useState<ClientUser[]>([]);
-    const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]); // Array of IDs or 'new'
-    const [newUser, setNewUser] = useState({ email: '' });
-    const [isAddingNew, setIsAddingNew] = useState(false);
+    const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]); // Array of IDs
+    const [pendingEmails, setPendingEmails] = useState<string[]>([]); // New emails to invite
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
@@ -53,12 +52,7 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
         if (!canInvite) {
             setMode('public');
         } else {
-            // If owner, default to portal or user choice?
-            // Existing logic or default to portal if owner opens it?
-            // Let's set to portal if it's the first render or just update mode if strict validation failed
-            // But if user switches modes, we don't want to force it back.
-            // Oh, the dependency is `isOpen`.
-            if (isOpen && mode === 'public') setMode('portal'); // Suggest Portal to owner? Or default.
+            if (isOpen && mode === 'public') setMode('portal');
         }
     }, [canInvite, isOpen]);
 
@@ -66,8 +60,9 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
         if (isOpen) {
             setErrorMessage('');
             setSuccessMessage('');
-            setSelectedUserIds([]); // Reset selection on open
-            setIsAddingNew(false);
+            setSelectedUserIds([]);
+            setPendingEmails([]);
+            setSearchQuery('');
         }
         if (isOpen && proposta && mode === 'portal') {
             fetchClientUsers();
@@ -82,7 +77,6 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
     }, [mode, isOpen, proposta, shareUrl]);
 
     const fetchClientUsers = async () => {
-        // Fetch ALL users to allow cross-client sharing if needed
         try {
             const users = await api.getAllClientUsers();
             setClientUsers(users || []);
@@ -116,30 +110,48 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
         );
     };
 
+    const addPendingEmail = (email: string) => {
+        if (email && email.includes('@') && !pendingEmails.includes(email)) {
+            setPendingEmails(prev => [...prev, email]);
+            setSearchQuery('');
+        }
+    };
+
+    const removePendingEmail = (email: string) => {
+        setPendingEmails(prev => prev.filter(e => e !== email));
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            // Check if input is an email and not matching an existing user
+            const isEmail = searchQuery.includes('@');
+            if (isEmail) {
+                addPendingEmail(searchQuery);
+            }
+        }
+    };
+
     const handlePortalShare = async () => {
         if (!proposta) return;
         setIsLoading(true);
         setSuccessMessage('');
         setErrorMessage('');
 
-        const usersToShare: number[] = [];
-        let inviteSent = false;
+        let inviteCount = 0;
+        let shareCount = 0;
 
         try {
-            // 1. Handle New Email Invite (Google Sheets style)
-            if (isAddingNew && newUser.email) {
-                const res = await api.inviteProposalUser(proposta.id, newUser.email);
+            // 1. Invite Pending Emails
+            for (const email of pendingEmails) {
+                const res = await api.inviteProposalUser(proposta.id, email);
                 if (res.success) {
-                    inviteSent = true;
-                } else {
-                    throw new Error(res.error || 'Falha ao enviar convite');
+                    inviteCount++;
                 }
             }
 
-            // 2. Handle Selected Users (Existing IDs)
+            // 2. Share with Selected Users (Existing IDs)
             const existingIds = selectedUserIds.filter(id => typeof id === 'number').map(Number);
-            let shareCount = 0;
-
             for (const userId of existingIds) {
                 try {
                     const shareRes = await api.shareProposalWithUser(proposta.id, userId);
@@ -151,22 +163,15 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                 }
             }
 
-            if (inviteSent || shareCount > 0) {
+            if (inviteCount > 0 || shareCount > 0) {
                 setSuccessMessage(
-                    (inviteSent && shareCount === 0) ? `Convite enviado para ${newUser.email}` :
-                        (inviteSent && shareCount > 0) ? `Convite enviado e ${shareCount} usuários adicionados` :
-                            `Compartilhado com ${shareCount} usuários`
+                    `Sucesso! ${inviteCount > 0 ? `${inviteCount} convites enviados. ` : ''}${shareCount > 0 ? `${shareCount} usuários adicionados.` : ''}`
                 );
-
-                if (isAddingNew) {
-                    setNewUser({ email: '' });
-                    setIsAddingNew(false);
-                }
-                setSelectedUserIds([]); // Reset selection
-                // Refresh list eventually?
+                setPendingEmails([]);
+                setSelectedUserIds([]);
             } else {
-                if (!isAddingNew && existingIds.length === 0) throw new Error('Selecione alguém para compartilhar');
-                throw new Error('Nenhuma ação realizada');
+                if (pendingEmails.length === 0 && existingIds.length === 0) throw new Error('Selecione alguém para compartilhar ou digite um email.');
+                throw new Error('Nenhuma ação realizada ou falha ao enviar.');
             }
 
         } catch (err: any) {
@@ -196,7 +201,7 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
             className="flex flex-col max-h-[90vh]"
         >
             <div className="flex flex-col h-full">
-                {/* Tabs - Only show if canInvite (Owner/Internal) */}
+                {/* Tabs */}
                 {canInvite && (
                     <div className="flex border-b border-gray-100 mb-6 -mx-6 px-6 bg-gray-50/50">
                         <button
@@ -218,14 +223,13 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                     </div>
                 )}
 
-                {/* Content */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                     {mode === 'portal' ? (
                         <div className="space-y-6 pb-2">
                             <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-sm text-blue-900 flex gap-3">
                                 <Share2 className="flex-shrink-0 mt-0.5 text-blue-600" size={18} />
                                 <p>
-                                    Compartilhe via <strong>Portal do Cliente</strong>. O cliente recebe um email com login e senha para acessar essa e outras propostas em um painel seguro.
+                                    Convide outros usuários para autorizá-los a editar junto com você.
                                 </p>
                             </div>
 
@@ -233,8 +237,9 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Quem tem acesso</label>
 
-                                    {/* Selected Users Chips */}
+                                    {/* Chips Container */}
                                     <div className="flex flex-wrap gap-2 mb-3">
+                                        {/* Existing Users Chips */}
                                         {selectedUserIds.map((id) => {
                                             const user = clientUsers.find(u => u.id === id);
                                             if (!user) return null;
@@ -250,6 +255,19 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                                                 </div>
                                             );
                                         })}
+
+                                        {/* Pending Emails Chips */}
+                                        {pendingEmails.map((email) => (
+                                            <div key={email} className="flex items-center gap-1 pl-3 pr-1 py-1 rounded-full bg-orange-100 border border-orange-200 text-sm text-orange-700 font-medium animate-fade-in-scale">
+                                                <span>{email}</span>
+                                                <button
+                                                    onClick={() => removePendingEmail(email)}
+                                                    className="p-0.5 hover:bg-orange-200 rounded-full transition-colors ml-1"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
                                     </div>
 
                                     {/* Search / Add Input */}
@@ -259,6 +277,7 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                                             placeholder="Adicionar pessoas (nome ou email)..."
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
+                                            onKeyDown={handleKeyDown}
                                             className="bg-gray-50/50"
                                         />
 
@@ -293,9 +312,9 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                                                     <div
                                                         className="cursor-pointer select-none relative py-4 px-4 hover:bg-gray-50 transition-colors text-gray-500"
                                                         onClick={() => {
-                                                            setIsAddingNew(true);
-                                                            setNewUser(prev => ({ ...prev, email: searchQuery }));
-                                                            setSearchQuery('');
+                                                            if (searchQuery.includes('@')) {
+                                                                addPendingEmail(searchQuery);
+                                                            }
                                                         }}
                                                     >
                                                         <div className="flex items-center gap-3">
@@ -304,7 +323,9 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                                                             </div>
                                                             <div>
                                                                 <span className="block font-medium text-gray-900">Convidar "{searchQuery}"</span>
-                                                                <span className="block text-xs text-gray-500">Clique para cadastrar este novo usuário</span>
+                                                                <span className="block text-xs text-gray-500">
+                                                                    {searchQuery.includes('@') ? "Pressione Enter para adicionar este email" : "Digite um email válido"}
+                                                                </span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -312,30 +333,10 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
                                             </div>
                                         )}
                                     </div>
+                                    <p className="text-xs text-gray-400 mt-2">
+                                        Pressione <strong>Enter</strong> para adicionar multiplos emails.
+                                    </p>
                                 </div>
-
-                                {isAddingNew && (
-                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4 animate-fade-in-up">
-                                        <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-                                            <div className="w-8 h-8 rounded-lg bg-emidias-accent/10 flex items-center justify-center text-emidias-accent">
-                                                <UserPlus size={16} />
-                                            </div>
-                                            Convidar Novo Usuário
-                                        </div>
-                                        <Input
-                                            label="Email Corporativo"
-                                            placeholder="joao@empresa.com"
-                                            type="email"
-                                            value={newUser.email}
-                                            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                                            className="bg-white"
-                                        />
-                                        <p className="text-xs text-gray-500 flex items-center gap-1">
-                                            <Mail size={12} />
-                                            O usuário receberá um convite por email para se cadastrar e acessar a proposta.
-                                        </p>
-                                    </div>
-                                )}
 
                                 {successMessage && (
                                     <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-xl text-sm font-medium border border-green-100 animate-fade-in-scale">
@@ -352,12 +353,12 @@ export default function ShareModal({ isOpen, onClose, proposta }: ShareModalProp
 
                                 <Button
                                     onClick={handlePortalShare}
-                                    disabled={isLoading || (selectedUserIds.length === 0 && !isAddingNew)}
+                                    disabled={isLoading || (selectedUserIds.length === 0 && pendingEmails.length === 0)}
                                     isLoading={isLoading}
                                     className="w-full"
-                                    leftIcon={!isLoading && <Share2 size={18} />}
+                                    leftIcon={!isLoading && <Mail size={18} />}
                                 >
-                                    {isAddingNew && selectedUserIds.length === 0 ? 'Cadastrar e Compartilhar' : `Compartilhar (${selectedUserIds.length + (isAddingNew ? 1 : 0)})`}
+                                    Convidar
                                 </Button>
                             </div>
                         </div>

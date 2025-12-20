@@ -282,10 +282,13 @@ export default function LoginPage() {
                         {/* Footer */}
                         <div className="mt-8 pt-6 border-t border-emidias-gray-200">
                             <p className="text-center text-sm text-emidias-gray-500">
-                                Apenas usuários autorizados
-                            </p>
-                            <p className="text-center text-xs text-emidias-gray-400 mt-1">
-                                @hubradios.com
+                                Não tem uma conta?{' '}
+                                <Link
+                                    href="/signup"
+                                    className="text-emidias-accent hover:text-emidias-accent-dark font-medium transition-colors hover:underline underline-offset-4"
+                                >
+                                    Criar conta
+                                </Link>
                             </p>
                         </div>
                     </div>
