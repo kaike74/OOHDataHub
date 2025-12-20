@@ -34,9 +34,18 @@ export async function handleClientes(request: Request, env: Env, path: string): 
     // GET /api/clientes/:id/propostas - Propostas do cliente
     if (request.method === 'GET' && path.match(/^\/api\/clientes\/\d+\/propostas$/)) {
         const id = path.split('/')[3]; // /api/clientes/ID/propostas
-        const { results } = await env.DB.prepare(
-            'SELECT * FROM propostas WHERE id_cliente = ? ORDER BY created_at DESC'
-        ).bind(id).all();
+
+        const { results } = await env.DB.prepare(`
+            SELECT 
+                p.*,
+                COUNT(pi.id) as total_itens,
+                SUM(pi.valor_locacao + pi.valor_papel + pi.valor_lona) as total_valor
+            FROM propostas p
+            LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
+            WHERE p.id_cliente = ? AND p.deleted_at IS NULL
+            GROUP BY p.id
+            ORDER BY p.created_at DESC
+        `).bind(id).all();
 
         return new Response(JSON.stringify(results), { headers });
     }
