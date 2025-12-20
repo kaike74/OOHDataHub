@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatCurrency } from '@/lib/utils';
 import {
     Search, Plus, Filter, MoreVertical, Building2,
     FileText, Calendar, DollarSign, Users, Loader2,
