@@ -54,14 +54,16 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             if (googleMapRef.current) return; // Prevent re-init
 
             try {
-                const { Loader } = await import('@googlemaps/js-api-loader');
-                const loader = new Loader({
-                    apiKey: GOOGLE_MAPS_API_KEY,
-                    version: "weekly",
-                    libraries: ["places", "geocoding"]
+                const { setOptions, importLibrary } = await import('@googlemaps/js-api-loader');
+
+                setOptions({
+                    key: GOOGLE_MAPS_API_KEY,
+                    v: "weekly",
                 });
 
-                await (loader as any).load();
+                await importLibrary("maps");
+                await importLibrary("geocoding");
+                await importLibrary("places");
 
                 if (!mapRef.current) return;
 
