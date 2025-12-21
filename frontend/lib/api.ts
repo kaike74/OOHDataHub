@@ -6,11 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8787';
 function getToken(): string | null {
     if (typeof window === 'undefined') return null;
     try {
-        // Check if we are in portal context
-        const isPortal = window.location.pathname.startsWith('/portal');
-        const storageKey = isPortal ? 'ooh-client-auth-storage' : 'ooh-auth-storage';
-
-        const storage = localStorage.getItem(storageKey);
+        const storage = localStorage.getItem('ooh-auth-storage');
         if (!storage) return null;
 
         const parsed = JSON.parse(storage);

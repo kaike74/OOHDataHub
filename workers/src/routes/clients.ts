@@ -74,7 +74,8 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
 
     // POST /api/clients/login - Public endpoint for client login
     if (path === '/api/clients/login' && request.method === 'POST') {
-        const { email, password } = await request.json() as any;
+        let { email, password } = await request.json() as any;
+        if (email) email = email.toLowerCase().trim();
 
         if (!email || !password) {
             return new Response(JSON.stringify({ error: 'Email and password required' }), { status: 400, headers });
@@ -123,7 +124,8 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
         try {
             await requireAuth(request, env); // Agency user only
 
-            const { email, name } = await request.json() as any;
+            let { email, name } = await request.json() as any;
+            if (email) email = email.toLowerCase().trim();
 
             if (!email || !name) {
                 return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers });
@@ -150,7 +152,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             const userId = result.meta.last_row_id;
 
             // Check for pending invites and accept them
-            const invites = await env.DB.prepare('SELECT * FROM proposta_invites WHERE email = ? AND status = "pending"').bind(email).all();
+            const invites = await env.DB.prepare('SELECT * FROM proposta_invites WHERE LOWER(email) = ? AND status = "pending"').bind(email).all();
             if (invites.results.length > 0) {
                 const batch = [];
                 for (const invite of invites.results) {
@@ -181,7 +183,8 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
     // POST /api/clients/signup - Public Registration
     if (path === '/api/clients/signup' && request.method === 'POST') {
         try {
-            const { email, password, name } = await request.json() as any;
+            let { email, password, name } = await request.json() as any;
+            if (email) email = email.toLowerCase().trim();
 
             if (!email || !password || !name) {
                 return new Response(JSON.stringify({ error: 'Todos os campos são obrigatórios' }), { status: 400, headers });
@@ -211,7 +214,8 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             const userId = result.meta.last_row_id;
 
             // Check for pending invites and accept them automatically
-            const invites = await env.DB.prepare('SELECT * FROM proposta_invites WHERE email = ? AND status = "pending"').bind(email).all();
+            // Use LOWER(email) to be safe, although we lowercased input.
+            const invites = await env.DB.prepare('SELECT * FROM proposta_invites WHERE LOWER(email) = ? AND status = "pending"').bind(email).all();
 
             if (invites.results.length > 0) {
                 const batch = [];
@@ -221,7 +225,13 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
                     // Update invite status
                     batch.push(env.DB.prepare('UPDATE proposta_invites SET status = "accepted" WHERE id = ?').bind(invite.id));
                 }
-                await env.DB.batch(batch);
+
+                try {
+                    await env.DB.batch(batch);
+                } catch (batchError) {
+                    console.error('Error processing invites batch:', batchError);
+                    // Don't fail the registration if invites fail, but maybe log it well.
+                }
             }
 
             // Send Verification Email

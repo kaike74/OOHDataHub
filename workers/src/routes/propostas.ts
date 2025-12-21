@@ -328,10 +328,10 @@ export async function handlePropostas(request: Request, env: Env, path: string):
     // GET /api/propostas/admin/list - Lista agregada para admin (Propostas, Clientes, Shares)
     if (request.method === 'GET' && path === '/api/propostas/admin/list') {
         try {
-            // Check auth (assuming middleware checks happen before or we check here)
-            // Ideally should verify if user is 'master' or 'editor'
+            const user = await requireAuth(request, env);
+            const isClient = user.role === 'client';
 
-            const query = `
+            let query = `
                 SELECT 
                     p.id, p.nome, p.created_at, p.status, p.comissao,
                     p.created_by, creator.email as creator_email, creator.name as creator_name,
@@ -351,11 +351,21 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                 LEFT JOIN usuarios_externos creator ON p.created_by = creator.id
                 LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
                 WHERE p.deleted_at IS NULL
+            `;
+
+            const params: any[] = [];
+
+            if (isClient) {
+                query += ` AND (p.created_by = ? OR EXISTS (SELECT 1 FROM proposta_shares ps WHERE ps.proposal_id = p.id AND ps.client_user_id = ?))`;
+                params.push(user.id, user.id);
+            }
+
+            query += `
                 GROUP BY p.id
                 ORDER BY p.created_at DESC
             `;
 
-            const { results } = await env.DB.prepare(query).all();
+            const { results } = await env.DB.prepare(query).bind(...params).all();
 
             // Store shared_with as parsed JSON
             const formattedResults = results.map((row: any) => ({
@@ -399,7 +409,8 @@ export async function handlePropostas(request: Request, env: Env, path: string):
     if (request.method === 'POST' && path.includes('/invite')) {
         try {
             const id = path.split('/')[3];
-            const { email } = await request.json() as any;
+            let { email } = await request.json() as any;
+            if (email) email = email.toLowerCase().trim();
 
             if (!email) {
                 return new Response(JSON.stringify({ error: 'Email obrigatório' }), { status: 400, headers });
@@ -536,7 +547,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             await logAudit(env, {
                 tableName: 'propostas',
                 recordId: Number(id),
-                action: 'UPDATE_STATUS',
+                action: 'UPDATE',
                 changedBy: payload.userId,
                 userType: payload.role as any,
                 changes: { status }

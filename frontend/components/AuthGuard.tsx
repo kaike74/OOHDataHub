@@ -32,7 +32,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         if (isAuthenticated && pathname === '/login') {
             const user = useStore.getState().user;
             if (user?.role === 'client') {
-                router.push('/portal/dashboard');
+                router.push('/admin/proposals');
             } else {
                 router.push('/');
             }

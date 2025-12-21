@@ -9,7 +9,7 @@ export interface User {
     id: number;
     email: string;
     name: string | null;
-    role: 'master' | 'editor' | 'viewer';
+    role: 'master' | 'editor' | 'viewer' | 'client';
 }
 
 export interface ClientUser {
@@ -115,10 +115,27 @@ export async function requireAuth(request: Request, env: Env): Promise<User> {
         throw new Error('Invalid token');
     }
 
-    // Fetch user from database
-    const user = await env.DB.prepare(
+    // Try finding internal user
+    let user = await env.DB.prepare(
         'SELECT id, email, name, role FROM usuarios_internos WHERE id = ?'
     ).bind(payload.userId).first() as User | null;
+
+    if (!user) {
+        // Try finding client user
+        const clientUser = await env.DB.prepare(
+            'SELECT id, email, name, role FROM usuarios_externos WHERE id = ?'
+        ).bind(payload.userId).first() as any;
+
+        if (clientUser) {
+            // Map to User interface (role 'client')
+            user = {
+                id: clientUser.id,
+                email: clientUser.email,
+                name: clientUser.name,
+                role: 'client' as any // Cast because User type might be strict
+            };
+        }
+    }
 
     if (!user) {
         throw new Error('User not found');

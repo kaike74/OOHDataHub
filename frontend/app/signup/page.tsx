@@ -63,8 +63,8 @@ export default function SignupPage() {
                 setSuccess(true);
             } else if (response.success && response.token) {
                 setAuth(response.user, response.token);
-                // Redirect to Portal, NOT Admin
-                router.push('/portal/dashboard');
+                // Redirect to Admin Proposals
+                router.push('/admin/proposals');
             } else {
                 router.push('/login?registered=true');
             }

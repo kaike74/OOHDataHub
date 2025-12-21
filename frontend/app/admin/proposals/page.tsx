@@ -340,14 +340,12 @@ export default function AdminProposalsPage() {
                                                                 {proposal.total_itens}
                                                             </span>
                                                         </div>
-                                                        {user?.role !== 'client' && (
-                                                            <div className="flex flex-col text-right">
-                                                                <span className="text-[10px] text-gray-400 uppercase font-semibold">Valor</span>
-                                                                <span className="text-gray-900 font-bold">
-                                                                    {formatCurrency(proposal.total_valor || 0)}
-                                                                </span>
-                                                            </div>
-                                                        )}
+                                                        <div className="flex flex-col text-right">
+                                                            <span className="text-[10px] text-gray-400 uppercase font-semibold">Valor</span>
+                                                            <span className="text-gray-900 font-bold">
+                                                                {formatCurrency(proposal.total_valor || 0)}
+                                                            </span>
+                                                        </div>
                                                     </div>
 
                                                     {/* Footer (Creator / Share) */}

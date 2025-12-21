@@ -51,100 +51,78 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
     // Inicializar mapa
     useEffect(() => {
         const initMap = async () => {
-            if (!mapRef.current || googleMapRef.current) return;
+            if (googleMapRef.current) return; // Prevent re-init
 
-            // Carrega o Google Maps API manualmente
-            if (!window.google) {
-                const script = document.createElement('script');
-                script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,geocoding`;
-                script.async = true;
-                script.defer = true;
-
-                await new Promise<void>((resolve, reject) => {
-                    script.onload = () => resolve();
-                    script.onerror = reject;
-                    document.head.appendChild(script);
+            try {
+                const { Loader } = await import('@googlemaps/js-api-loader');
+                const loader = new Loader({
+                    apiKey: GOOGLE_MAPS_API_KEY,
+                    version: "weekly",
+                    libraries: ["places", "geocoding"]
                 });
-            }
 
-            googleMapRef.current = new google.maps.Map(mapRef.current, {
-                center: { lat: -23.5505, lng: -46.6333 }, // São Paulo
-                zoom: 12,
-                mapTypeControl: true,
-                fullscreenControl: true,
-                streetViewControl: true,
-                zoomControl: true,
-                styles: [
-                    {
-                        featureType: 'poi',
-                        elementType: 'labels',
-                        stylers: [{ visibility: 'off' }],
-                    },
-                ],
-            });
+                await (loader as any).load();
 
-            // Configurar Street View
-            const panorama = googleMapRef.current.getStreetView();
-            streetViewRef.current = panorama;
+                if (!mapRef.current) return;
 
-            // Listener para detectar mudança para Street View
-            panorama.addListener('visible_changed', () => {
-                const isVisible = panorama.getVisible();
-                setIsStreetViewMode(isVisible);
+                googleMapRef.current = new google.maps.Map(mapRef.current, {
+                    center: { lat: -23.5505, lng: -46.6333 }, // São Paulo
+                    zoom: 12,
+                    mapTypeControl: true,
+                    fullscreenControl: true,
+                    streetViewControl: true,
+                    zoomControl: true,
+                    styles: [
+                        {
+                            featureType: 'poi',
+                            elementType: 'labels',
+                            stylers: [{ visibility: 'off' }],
+                        },
+                    ],
+                });
 
-                if (isVisible) {
-                    const position = panorama.getPosition();
-                    if (position) {
-                        setStreetViewPosition({
-                            lat: position.lat(),
-                            lng: position.lng()
-                        });
-                    }
-                }
-            });
+                // Configurar Street View
+                const panorama = googleMapRef.current.getStreetView();
+                streetViewRef.current = panorama;
 
-            // Listener para atualizar posição no Street View
-            panorama.addListener('position_changed', () => {
-                const position = panorama.getPosition();
-                if (position) {
-                    setStreetViewPosition({
-                        lat: position.lat(),
-                        lng: position.lng()
+                if (panorama) {
+                    panorama.addListener('visible_changed', () => {
+                        const isVisible = panorama.getVisible();
+                        setIsStreetViewMode(isVisible);
+                        if (isVisible) {
+                            const position = panorama.getPosition();
+                            if (position) setStreetViewPosition({ lat: position.lat(), lng: position.lng() });
+                        }
+                    });
+                    panorama.addListener('position_changed', () => {
+                        const position = panorama.getPosition();
+                        if (position) setStreetViewPosition({ lat: position.lat(), lng: position.lng() });
                     });
                 }
-            });
 
-            // Listener para context menu (botão direito)
-            googleMapRef.current.addListener('rightclick', async (event: google.maps.MapMouseEvent) => {
-                const lat = event.latLng?.lat();
-                const lng = event.latLng?.lng();
+                googleMapRef.current.addListener('rightclick', async (event: google.maps.MapMouseEvent) => {
+                    const lat = event.latLng?.lat();
+                    const lng = event.latLng?.lng();
 
-                if (lat !== undefined && lng !== undefined) {
-                    // Geocoding reverso para obter endereço
-                    try {
-                        const geocoder = new google.maps.Geocoder();
-                        const result = await geocoder.geocode({
-                            location: { lat, lng }
-                        });
+                    if (lat !== undefined && lng !== undefined) {
+                        try {
+                            const geocoder = new google.maps.Geocoder();
+                            const result = await geocoder.geocode({ location: { lat, lng } });
+                            const address = result.results[0]?.formatted_address || 'Endereço não encontrado';
 
-                        const address = result.results[0]?.formatted_address || 'Endereço não encontrado';
-
-                        // Calcular posição do menu na tela
-                        const domEvent = event.domEvent as MouseEvent;
-                        setContextMenu({
-                            x: domEvent.clientX,
-                            y: domEvent.clientY,
-                            lat,
-                            lng,
-                            address
-                        });
-                    } catch (error) {
-                        console.error('Erro ao buscar endereço:', error);
+                            const domEvent = event.domEvent as MouseEvent;
+                            setContextMenu({ x: domEvent.clientX, y: domEvent.clientY, lat, lng, address });
+                        } catch (error) {
+                            console.error('Erro ao buscar endereço:', error);
+                        }
                     }
-                }
-            });
+                });
 
-            setIsLoaded(true);
+                setIsLoaded(true);
+
+            } catch (error) {
+                console.error("Error loading Google Maps:", error);
+            }
         };
 
         initMap();
