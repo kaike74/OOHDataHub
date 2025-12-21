@@ -19,24 +19,30 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         // Skip check for portal routes (they handle their own auth or are public)
         if (pathname?.startsWith('/portal')) return;
 
+        // Public routes whitelist
+        const publicRoutes = ['/login', '/signup', '/verify', '/forgot-password', '/reset-password'];
+        if (publicRoutes.some(route => pathname?.startsWith(route))) return;
+
         // Se não está autenticado e não está na página de login, redireciona
-        if (!isAuthenticated && pathname !== '/login') {
+        if (!isAuthenticated) {
             router.push('/login');
         }
 
-        // Se está autenticado e está na página de login, redireciona para home ou dashboard
+        // Se está autenticado e está na página de login, redireciona
         if (isAuthenticated && pathname === '/login') {
             const user = useStore.getState().user;
             if (user?.role === 'client') {
-                router.push('/admin/proposals');
+                router.push('/portal/dashboard');
             } else {
                 router.push('/');
             }
         }
     }, [isAuthenticated, pathname, router]);
 
-    // Se não está autenticado e não está na página de login (e nao é portal), ou ainda não hidratou, não renderiza nada
-    if ((!isHydrated) || (!isAuthenticated && pathname !== '/login' && !pathname?.startsWith('/portal'))) {
+    // Se não está autenticado e não está em rota publica, ou ainda não hidratou
+    const isPublicRoute = ['/login', '/signup', '/verify', '/forgot-password', '/reset-password', '/portal'].some(r => pathname?.startsWith(r));
+
+    if ((!isHydrated) || (!isAuthenticated && !isPublicRoute)) {
         return (
             <div className="min-h-screen bg-gray-900 flex items-center justify-center">
                 <div className="text-white text-center">

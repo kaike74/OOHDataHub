@@ -326,36 +326,48 @@ const PortalViewContent = () => {
                                     })()}
                                 </button>
                             ) : (
-                                <Button
-                                    onClick={() => router.push('/login')}
-                                    variant="primary"
-                                    className="bg-gradient-to-r from-emidias-primary to-blue-700 shadow-md hover:shadow-lg"
-                                    leftIcon={<User size={16} />}
-                                >
-                                    <span className="hidden sm:inline">Faça login para editar</span>
-                                    <span className="sm:hidden">Login</span>
-                                </Button>
+
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        onClick={() => router.push('/signup')}
+                                        variant="outline"
+                                        className="hidden sm:flex border-emidias-primary text-emidias-primary hover:bg-emidias-primary/5"
+                                    >
+                                        Cadastrar
+                                    </Button>
+                                    <Button
+                                        onClick={() => router.push('/login')}
+                                        variant="primary"
+                                        className="bg-gradient-to-r from-emidias-primary to-blue-700 shadow-md hover:shadow-lg"
+                                        leftIcon={<User size={16} />}
+                                    >
+                                        <span className="hidden sm:inline">Login</span>
+                                        <span className="sm:hidden">Entrar</span>
+                                    </Button>
+                                </div>
                             )}
                         </div>
                     </div>
                 </div>
-            </div>
+            </div >
 
             {/* Map */}
-            <div className="absolute inset-0 z-0">
+            < div className="absolute inset-0 z-0" >
                 <GoogleMap />
-            </div>
+            </div >
 
             {/* Cart Table (Restricted) */}
-            {activeProposta && (
-                <CartTable
-                    isOpen={isCartOpen}
-                    onToggle={() => setIsCartOpen(!isCartOpen)}
-                    proposta={activeProposta}
-                    isClientView={true}
-                />
-            )}
-        </div>
+            {
+                activeProposta && (
+                    <CartTable
+                        isOpen={isCartOpen}
+                        onToggle={() => setIsCartOpen(!isCartOpen)}
+                        proposta={activeProposta}
+                        isClientView={true}
+                    />
+                )
+            }
+        </div >
     );
 }
 
