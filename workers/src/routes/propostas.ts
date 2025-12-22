@@ -377,7 +377,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     ) as shared_with
                 FROM propostas p
                 JOIN clientes c ON p.id_cliente = c.id
-                LEFT JOIN usuarios_externos creator ON p.id_cliente = creator.id_cliente AND p.created_by = creator.id
+                LEFT JOIN usuarios_externos creator ON p.created_by = creator.id
                 LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
                 WHERE p.deleted_at IS NULL
             `;
