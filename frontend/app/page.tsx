@@ -136,7 +136,7 @@ export default function HomePage() {
                 )}
               </div>
 
-              {userRole !== 'client' && (
+              {!selectedProposta && userRole !== 'client' && (
                 <Button
                   onClick={() => setModalOpen(true)}
                   variant="accent"

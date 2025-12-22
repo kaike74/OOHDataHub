@@ -1220,15 +1220,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                         )}
                     </div>
 
-                    <Button
-                        onClick={(e) => { e.stopPropagation(); setIsShareModalOpen(true); }}
-                        variant="primary"
-                        size="sm"
-                        className="ml-4 shadow-sm"
-                        leftIcon={<Share2 size={14} />}
-                    >
-                        Compartilhar
-                    </Button>
+
 
                     {isClientView && (
                         <div className="flex items-center gap-2 ml-4 border-l border-gray-200 pl-4">
