@@ -91,7 +91,11 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                 // If initialProposalId is provided (Public/Shared View)
                 if (initialProposalId) {
                     try {
-                        const proposta = await api.getProposta(initialProposalId);
+                        const proposalId = parseInt(initialProposalId, 10);
+                        if (isNaN(proposalId)) {
+                            throw new Error('ID da proposta inválido');
+                        }
+                        const proposta = await api.getProposta(proposalId);
                         setSelectedProposta(proposta);
                         // Ensure we are in map view to see the proposal
                         useStore.setState({ currentView: 'map' });
