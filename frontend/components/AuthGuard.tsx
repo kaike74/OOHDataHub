@@ -21,7 +21,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
         // Public routes whitelist
         const publicRoutes = ['/login', '/signup', '/verify', '/forgot-password', '/reset-password'];
-        if (publicRoutes.some(route => pathname?.startsWith(route))) return;
+        if (publicRoutes.some(route => pathname?.startsWith(route)) || pathname?.startsWith('/propostas/')) return;
 
         // Se não está autenticado e não está na página de login, redireciona
         if (!isAuthenticated) {
@@ -40,7 +40,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }, [isAuthenticated, pathname, router]);
 
     // Se não está autenticado e não está em rota publica, ou ainda não hidratou
-    const isPublicRoute = ['/login', '/signup', '/verify', '/forgot-password', '/reset-password', '/portal'].some(r => pathname?.startsWith(r));
+    const isPublicRoute = ['/login', '/signup', '/verify', '/forgot-password', '/reset-password', '/portal'].some(r => pathname?.startsWith(r)) || pathname?.startsWith('/propostas/');
 
     if ((!isHydrated) || (!isAuthenticated && !isPublicRoute)) {
         return (
