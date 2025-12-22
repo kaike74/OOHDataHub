@@ -245,6 +245,12 @@ export const api = {
         body: JSON.stringify({ token })
     }),
 
+    shareProposal: (id: number, data: { email?: string, role?: 'viewer' | 'editor' | 'admin', public_access_level?: 'none' | 'view' }) =>
+        fetchAPI(`/api/propostas/${id}/share`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+
     shareProposalWithUser: (proposalId: number, clientUserId: number) => fetchAPI('/api/portal/share', {
         method: 'POST',
         body: JSON.stringify({ proposal_id: proposalId, client_user_id: clientUserId })

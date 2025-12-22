@@ -17,8 +17,9 @@ import CartTable from '@/components/CartTable';
 import TrashView from '@/components/TrashView';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { Plus, Filter, Menu, MapPin, Building2, Loader2 } from 'lucide-react';
+import { Plus, Filter, Menu, MapPin, Building2, Loader2, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import ShareModal from '@/components/ShareModal';
 
 export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -39,6 +40,10 @@ export default function HomePage() {
   const filterExibidora = useStore((state) => state.filterExibidora);
   const filterCidade = useStore((state) => state.filterCidade);
   const filterTipos = useStore((state) => state.filterTipos);
+  const refreshProposta = useStore((state) => state.refreshProposta);
+
+  // Share Modal State
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Count active filters
   const activeFiltersCount = [
@@ -131,15 +136,26 @@ export default function HomePage() {
                 )}
               </div>
 
-              {userRole !== 'client' && (
+              {selectedProposta ? (
                 <Button
-                  onClick={() => setModalOpen(true)}
+                  onClick={() => setIsShareModalOpen(true)}
                   variant="accent"
-                  className="shadow-accent"
-                  leftIcon={<Plus size={20} strokeWidth={2.5} />}
+                  className="shadow-accent border-0 bg-green-600 hover:bg-green-700 text-white"
+                  leftIcon={<Share2 size={20} />}
                 >
-                  <span className="hidden sm:inline">Novo Ponto</span>
+                  <span className="hidden sm:inline">Compartilhar</span>
                 </Button>
+              ) : (
+                userRole !== 'client' && (
+                  <Button
+                    onClick={() => setModalOpen(true)}
+                    variant="accent"
+                    className="shadow-accent"
+                    leftIcon={<Plus size={20} strokeWidth={2.5} />}
+                  >
+                    <span className="hidden sm:inline">Novo Ponto</span>
+                  </Button>
+                )
               )}
             </>
           )}
@@ -254,7 +270,24 @@ export default function HomePage() {
         <CreatePointModal />
         <ExibidoraModal />
         <MapFilters isOpen={isFiltersOpen} onClose={() => setIsFiltersOpen(false)} />
+        <MapFilters isOpen={isFiltersOpen} onClose={() => setIsFiltersOpen(false)} />
         <NavigationMenu />
+
+        <ShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          proposta={selectedProposta}
+          onUpdate={async () => {
+            if (selectedProposta) {
+              try {
+                const updated = await api.getProposta(selectedProposta.id);
+                refreshProposta(updated);
+              } catch (e) {
+                console.error('Failed to refresh proposal', e);
+              }
+            }
+          }}
+        />
       </main>
     </div>
   );

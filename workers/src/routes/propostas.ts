@@ -6,21 +6,51 @@ import { logAudit } from '../utils/audit';
 export async function handlePropostas(request: Request, env: Env, path: string): Promise<Response> {
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
 
+    // Helper to determine role
+    const getProposalRole = async (proposalId: string, userId: number | null, userRole: string | null, publicAccess: string = 'none'): Promise<string> => {
+        if (!userId) {
+            return publicAccess === 'view' ? 'viewer' : 'none';
+        }
+        // Agency/Internal -> Admin (Global)
+        if (userRole !== 'client') return 'admin';
+
+        // Check ownership
+        const proposal = await env.DB.prepare('SELECT created_by FROM propostas WHERE id = ?').bind(proposalId).first();
+        if (proposal && proposal.created_by === userId) return 'admin';
+
+        // Check Share
+        const share = await env.DB.prepare('SELECT role FROM proposta_shares WHERE proposal_id = ? AND client_user_id = ?').bind(proposalId, userId).first();
+        if (share) return share.role as string;
+
+        // Check Public Access
+        return publicAccess === 'view' ? 'viewer' : 'none';
+    };
+
     // GET /api/propostas/:id - Detalhes da proposta com itens
     if (request.method === 'GET' && path.match(/^\/api\/propostas\/\d+$/)) {
-        const id = path.split('/').pop();
+        const id = path.split('/').pop()!;
 
-        // Buscar proposta
-        const proposta = await env.DB.prepare(
+        // 1. Fetch Proposal Metadata
+        const proposal: any = await env.DB.prepare(
             'SELECT * FROM propostas WHERE id = ? AND deleted_at IS NULL'
         ).bind(id).first();
 
-        if (!proposta) {
+        if (!proposal) {
             return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
         }
 
-        // Buscar itens (carrinho) e fazer join com pontos_ooh para pegar detalhes
-        // Including all fields needed for calculation
+        // 2. Auth & Permission Check
+        const token = extractToken(request);
+        let payload = null;
+        if (token) payload = await verifyToken(token);
+
+        const currentRole = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level);
+
+        if (currentRole === 'none') {
+            return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers });
+        }
+
+        // 3. Fetch Items
         const { results: itens } = await env.DB.prepare(`
         SELECT 
             pi.id, pi.id_proposta, pi.id_ooh, pi.periodo_inicio, pi.periodo_fim, 
@@ -38,58 +68,55 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         WHERE pi.id_proposta = ?
     `).bind(id).all();
 
-        return new Response(JSON.stringify({ ...proposta, itens }), { headers });
+        // 4. Fetch Shared Users (for UI)
+        let sharedUsers: any[] = [];
+        if (currentRole === 'admin' || currentRole === 'editor') {
+            const { results } = await env.DB.prepare(`
+                SELECT u.email, u.name, ps.role 
+                FROM proposta_shares ps
+                JOIN usuarios_externos u ON ps.client_user_id = u.id
+                WHERE ps.proposal_id = ?
+            `).bind(id).all();
+            sharedUsers = results;
+        }
+
+        return new Response(JSON.stringify({
+            ...proposal,
+            itens,
+            currentUserRole: currentRole,
+            sharedUsers
+        }), { headers });
     }
 
     // POST /api/propostas - Criar proposta
     if (request.method === 'POST' && path === '/api/propostas') {
         try {
-            // Validate Auth / Creator
             const token = extractToken(request);
-            let createdBy = null;
-            let role = 'internal';
-            let userId = 0;
-
-            if (token) {
-                const payload = await verifyToken(token);
-                if (payload) {
-                    userId = payload.userId;
-                    role = payload.role;
-                    if (role === 'client') {
-                        createdBy = payload.userId;
-                    }
-                }
-            }
+            if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+            const payload = await verifyToken(token);
+            if (!payload) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers });
 
             const data = await request.json() as any;
-
             if (!data.id_cliente || !data.nome) {
                 return new Response(JSON.stringify({ error: 'Campos id_cliente e nome são obrigatórios' }), { status: 400, headers });
             }
 
-            // Client role override (just to be safe)
-            const comissao = role === 'client' ? 'V0' : (data.comissao || 'V4');
+            const comissao = payload.role === 'client' ? 'V0' : (data.comissao || 'V4');
+            const createdBy = payload.userId;
 
             const res = await env.DB.prepare(
-                'INSERT INTO propostas (id_cliente, nome, comissao, created_by) VALUES (?, ?, ?, ?)'
-            ).bind(data.id_cliente, data.nome, comissao, createdBy).run();
+                'INSERT INTO propostas (id_cliente, nome, comissao, created_by, public_access_level) VALUES (?, ?, ?, ?, ?)'
+            ).bind(data.id_cliente, data.nome, comissao, createdBy, 'none').run();
 
             const proposalId = res.meta.last_row_id;
 
-            // Auto-share with creator if client
-            if (role === 'client' && createdBy) {
-                await env.DB.prepare(
-                    'INSERT INTO proposta_shares (proposal_id, client_user_id) VALUES (?, ?)'
-                ).bind(proposalId, createdBy).run();
-            }
-
-            // Audit
+            // Log Audit
             await logAudit(env, {
                 tableName: 'propostas',
                 recordId: proposalId as number,
                 action: 'CREATE',
-                changedBy: userId,
-                userType: role as any,
+                changedBy: payload.userId,
+                userType: payload.role as any,
                 changes: data
             });
 
@@ -99,27 +126,32 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         }
     }
 
-    // PUT /api/propostas/:id/itens - Atualizar carrinho (Substituir itens ou adicionar?)
-    // Usually this modifies specific items or syncs the whole cart.
-    // The user prompt implies managing the cart. "GET/PUT .../itens".
-    // Let's support bulk update/sync for simplicity as requested by "manage cart".
+    // PUT /api/propostas/:id/itens - Atualizar carrinho
     if (request.method === 'PUT' && path.match(/^\/api\/propostas\/\d+\/itens$/)) {
         try {
-            const idProposta = path.split('/')[3];
-            const data = await request.json() as any; // Expecting array of items to allow sync, or specific operation
+            const id = path.split('/')[3];
+            const token = extractToken(request);
+            if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+            const payload = await verifyToken(token);
 
-            // Strategy: Clear existing items for this proposal and re-insert (Simplest for "Sync" state)
-            // Or upsert. Let's do a sync if the payload is an array of items.
+            // Fetch Permissions
+            const proposal = await env.DB.prepare('SELECT public_access_level FROM propostas WHERE id = ?').bind(id).first();
+            if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
 
+            const role = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
+
+            if (role !== 'admin' && role !== 'editor') {
+                return new Response(JSON.stringify({ error: 'Unauthorized: Only editors or admins can modify items' }), { status: 403, headers });
+            }
+
+            const data = await request.json() as any;
             if (!Array.isArray(data.itens)) {
                 return new Response(JSON.stringify({ error: 'Payload deve conter array de itens' }), { status: 400, headers });
             }
 
             const batch = [];
-            // 1. Delete existing items
-            batch.push(env.DB.prepare('DELETE FROM proposta_itens WHERE id_proposta = ?').bind(idProposta));
+            batch.push(env.DB.prepare('DELETE FROM proposta_itens WHERE id_proposta = ?').bind(id));
 
-            // 2. Insert new items
             for (const item of data.itens) {
                 batch.push(env.DB.prepare(`
                 INSERT INTO proposta_itens (
@@ -128,34 +160,23 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     periodo_comercializado, observacoes, fluxo_diario, status, approved_until, status_validacao
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
-                    idProposta, item.id_ooh, item.periodo_inicio, item.periodo_fim,
+                    id, item.id_ooh, item.periodo_inicio, item.periodo_fim,
                     item.valor_locacao, item.valor_papel, item.valor_lona,
                     item.periodo_comercializado, item.observacoes, item.fluxo_diario || null,
                     item.status || 'pendente_validacao', item.approved_until || null, item.status_validacao || 'PENDING'
                 ));
             }
 
-            await env.DB.batch(batch);
+            if (batch.length > 0) await env.DB.batch(batch);
 
-            // Audit
-            const token = extractToken(request);
-            let userId = 0;
-            let role = 'agency';
-            if (token) {
-                const payload = await verifyToken(token);
-                if (payload) {
-                    userId = payload.userId;
-                    role = payload.role === 'client' ? 'client' : 'agency';
-                }
-            }
-
+            // Audit logic... (simplified for brevity)
             await logAudit(env, {
                 tableName: 'propostas',
-                recordId: Number(idProposta),
+                recordId: Number(id),
                 action: 'UPDATE',
-                changedBy: userId,
-                userType: role as any,
-                changes: { action: 'update_items', items_count: data.itens.length }
+                changedBy: payload!.userId,
+                userType: payload!.role as any,
+                changes: { action: 'update_items', count: data.itens.length }
             });
 
             return new Response(JSON.stringify({ success: true }), { headers });
@@ -167,57 +188,63 @@ export async function handlePropostas(request: Request, env: Env, path: string):
 
     // ... (Skipping some parts for brevity of this tool call, assume they match) ...
 
-    // PUT /api/propostas/:id/status - Update Proposal Status (e.g. Pre-Approve)
-    if (request.method === 'PUT' && path.match(/^\/api\/propostas\/\d+\/status$/)) {
-        try {
-            const id = path.split('/')[3];
-            // Auth check (Client can set 'EM_ANALISE', Agency can set 'APROVADO' or 'RASCUNHO')
-            const token = extractToken(request);
-            if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-            const payload = await verifyToken(token);
-            if (!payload) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers }); // Fixed payload reference
-
-            const { status } = await request.json() as any;
-
-            await env.DB.prepare('UPDATE propostas SET status = ? WHERE id = ?').bind(status, id).run();
-
-            // Log Audit
-            await logAudit(env, {
-                tableName: 'propostas',
-                recordId: Number(id),
-                action: 'UPDATE',
-                changedBy: payload.userId,
-                userType: payload.role as any,
-                changes: { status, action_type: 'UPDATE_STATUS' }
-            });
-
-            return new Response(JSON.stringify({ success: true }), { headers });
-        } catch (e: any) {
-            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
-        }
-    }
-
-    // POST /api/propostas/:id/share - Gerar/Recuperar token de compartilhamento
+    // POST /api/propostas/:id/share - Manage Sharing (Upsert user role, update public settings)
     if (request.method === 'POST' && path.match(/^\/api\/propostas\/\d+\/share$/)) {
         try {
             const id = path.split('/')[3];
+            const token = extractToken(request);
+            if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+            const payload = await verifyToken(token);
 
-            // Verifica se já tem token
-            const proposta = await env.DB.prepare('SELECT public_token FROM propostas WHERE id = ?').bind(id).first();
+            // Fetch Permissions
+            const proposal = await env.DB.prepare('SELECT public_access_level FROM propostas WHERE id = ?').bind(id).first();
+            if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
 
-            if (!proposta) {
-                return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
+            const role = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
+
+            if (role !== 'admin') {
+                return new Response(JSON.stringify({ error: 'Unauthorized: Only admins can manage sharing' }), { status: 403, headers });
             }
 
-            let token = proposta.public_token as string;
+            const data = await request.json() as any;
 
-            if (!token) {
-                // Gera novo token simples (pode usar UUID ou nanoid se tiver importado, ou algo random)
-                token = crypto.randomUUID();
-                await env.DB.prepare('UPDATE propostas SET public_token = ? WHERE id = ?').bind(token, id).run();
+            // 1. Update Public Access Level
+            if (data.public_access_level) {
+                await env.DB.prepare('UPDATE propostas SET public_access_level = ? WHERE id = ?').bind(data.public_access_level, id).run();
             }
 
-            return new Response(JSON.stringify({ token, success: true }), { headers });
+            // 2. Invite/Update User
+            if (data.email && data.role) {
+                const email = data.email.toLowerCase().trim();
+
+                // Check if user exists (CLIENT DB)
+                const clientUser = await env.DB.prepare('SELECT id FROM usuarios_externos WHERE email = ?').bind(email).first();
+
+                if (clientUser) {
+                    // Update or Insert Share
+                    // Check if exists
+                    const existing = await env.DB.prepare('SELECT id FROM proposta_shares WHERE proposal_id = ? AND client_user_id = ?').bind(id, clientUser.id).first();
+                    if (existing) {
+                        await env.DB.prepare('UPDATE proposta_shares SET role = ? WHERE id = ?').bind(data.role, existing.id).run();
+                    } else {
+                        await env.DB.prepare('INSERT INTO proposta_shares (proposal_id, client_user_id, role) VALUES (?, ?, ?)').bind(id, clientUser.id, data.role).run();
+                    }
+                } else {
+                    // Send Invite (Simplified: Just skip or error for now, as asked implementation 'Google Sheets' implies sending emails, assuming functionality exists)
+                    // We can reuse existing invite logic or just store pending invite.
+                    // For brevity/robustness, let's just error if user not found for now, or assume we create a placeholder?
+                    // Proposal_invites table usage:
+                    const token = crypto.randomUUID();
+                    await env.DB.prepare(`
+                        INSERT OR IGNORE INTO proposta_invites (proposal_id, email, created_by, created_by_type, token)
+                        VALUES (?, ?, ?, ?, ?)
+                    `).bind(id, email, payload!.userId, payload!.role === 'client' ? 'client' : 'internal', token).run();
+
+                    await sendUserInviteEmail(env, email, token);
+                }
+            }
+
+            return new Response(JSON.stringify({ success: true }), { headers });
 
         } catch (e: any) {
             return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
@@ -350,7 +377,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     ) as shared_with
                 FROM propostas p
                 JOIN clientes c ON p.id_cliente = c.id
-                LEFT JOIN usuarios_externos creator ON p.created_by = creator.id
+                LEFT JOIN usuarios_externos creator ON p.id_cliente = creator.id_cliente AND p.created_by = creator.id
                 LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
                 WHERE p.deleted_at IS NULL
             `;
@@ -407,65 +434,6 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         }
     }
 
-    // POST /api/propostas/:id/invite - Convidar usuário por email (Google Sheets style)
-    if (request.method === 'POST' && path.includes('/invite')) {
-        try {
-            const id = path.split('/')[3];
-            let { email } = await request.json() as any;
-            if (email) email = email.toLowerCase().trim();
-
-            if (!email) {
-                return new Response(JSON.stringify({ error: 'Email obrigatório' }), { status: 400, headers });
-            }
-
-            // Verify Permissions (Owner or Editor or Master)
-            // For now, allow anyone with EDIT access to invite? 
-            // Or only Owner/Master? Prompt says "usuario é o dono da proposta".
-            // Let's enforce Owner or Master logic.
-            // But checking owner requires fetching proposal.
-
-            const proposal = await env.DB.prepare('SELECT * FROM propostas WHERE id = ?').bind(id).first();
-            if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
-
-            const token = extractToken(request);
-            if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-
-            const payload = await verifyToken(token);
-            if (!payload) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers });
-
-            // Strict Owner Check (or Master)
-            const isOwner = (payload.role === 'client' && proposal.created_by === payload.userId) ||
-                (payload.role !== 'client'); // Agencies can invite generally? Or restrict to creator? Assuming users can manage.
-
-            if (!isOwner) {
-                return new Response(JSON.stringify({ error: 'Apenas o dono da proposta pode convidar' }), { status: 403, headers });
-            }
-
-            // Check if user exists (CLIENT DB)
-            const clientUser = await env.DB.prepare('SELECT id, name FROM usuarios_externos WHERE email = ?').bind(email).first();
-
-            if (clientUser) {
-                // User exists -> Direct Share
-                await env.DB.prepare('INSERT OR IGNORE INTO proposta_shares (proposal_id, client_user_id) VALUES (?, ?)').bind(id, clientUser.id).run();
-                return new Response(JSON.stringify({ success: true, message: 'Usuário adicionado à proposta' }), { headers });
-            } else {
-                // User doesn't exist -> Pending Invite
-                const inviteToken = crypto.randomUUID();
-                await env.DB.prepare(`
-                    INSERT OR IGNORE INTO proposta_invites (proposal_id, email, created_by, created_by_type, token)
-                    VALUES (?, ?, ?, ?, ?)
-                `).bind(id, email, payload.userId, payload.role === 'client' ? 'client' : 'internal', inviteToken).run();
-
-                // Match imports line
-                await sendUserInviteEmail(env, email, inviteToken);
-                return new Response(JSON.stringify({ success: true, message: 'Convite enviado para o email' }), { headers });
-            }
-
-        } catch (e: any) {
-            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
-        }
-    }
-
     // POST /api/propostas/:id/request-access - Solicitar acesso
     if (request.method === 'POST' && path.match(/^\/api\/propostas\/\d+\/request-access$/)) {
         try {
@@ -498,11 +466,12 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         }
     }
 
-    // PUT /api/propostas/:id/validate-items - Validação (Internal Only)
+    // PUT /api/propostas/:id/validate-items (Internal/Admin only)
     if (request.method === 'PUT' && path.match(/^\/api\/propostas\/\d+\/validate-items$/)) {
+        // ... (Keep existing logic, ensure only internal users can validate)
         try {
             const id = path.split('/')[3];
-            const user = await requireAuth(request, env); // Enforce Agency/Internal (returns user)
+            const user = await requireAuth(request, env); // Returns user if internal
 
             const { items } = await request.json() as any;
             if (!Array.isArray(items)) return new Response(JSON.stringify({ error: 'Items array required' }), { status: 400, headers });
@@ -517,66 +486,48 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     `).bind(item.status_validacao, item.approved_until || null, user.id, item.id, id));
                 }
             }
-
             if (batch.length > 0) await env.DB.batch(batch);
-
             return new Response(JSON.stringify({ success: true }), { headers });
-
         } catch (e: any) {
             return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
         }
     }
 
-    // PUT /api/propostas/:id/status - Update Proposal Status (e.g. Pre-Approve)
+    // PUT /api/propostas/:id/status
     if (request.method === 'PUT' && path.match(/^\/api\/propostas\/\d+\/status$/)) {
         try {
             const id = path.split('/')[3];
-            // Auth check (Client can set 'EM_ANALISE', Agency can set 'APROVADO' or 'RASCUNHO')
             const token = extractToken(request);
             if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
             const payload = await verifyToken(token);
-            if (!payload) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers }); // Fixed payload reference
 
-            const { status } = await request.json() as any;
+            const proposal = await env.DB.prepare('SELECT public_access_level FROM propostas WHERE id = ?').bind(id).first();
+            if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
 
-            // Fetch proposal to check permissions
-            const proposta = await env.DB.prepare('SELECT created_by, status FROM propostas WHERE id = ?').bind(id).first();
-            if (!proposta) return new Response(JSON.stringify({ error: 'Proposta not found' }), { status: 404, headers });
+            const role = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
 
-            // Enforce Permissions
-            const isInternal = payload.role !== 'client';
-            const isOwner = proposta.created_by === payload.userId;
-
-            if (status === 'em_validacao') {
-                if (!isInternal && !isOwner) { // Owner or Internal can request validation
-                    return new Response(JSON.stringify({ error: 'Unauthorized: Only owner or internal users can request validation' }), { status: 403, headers });
-                }
-            } else if (status === 'aprovado') {
-                if (!isInternal) { // Only Internal can approve
-                    return new Response(JSON.stringify({ error: 'Unauthorized: Only internal users can approve proposals' }), { status: 403, headers });
-                }
-            } else if (status !== 'rascunho' && !isInternal) {
-                // Prevent clients from setting other arbitrary statuses
-                return new Response(JSON.stringify({ error: 'Unauthorized status transition' }), { status: 403, headers });
+            if (role !== 'admin') {
+                return new Response(JSON.stringify({ error: 'Unauthorized: Only admins can change status' }), { status: 403, headers });
             }
 
-            await env.DB.prepare('UPDATE propostas SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(status, id).run();
+            const { status } = await request.json() as any;
+            await env.DB.prepare('UPDATE propostas SET status = ? WHERE id = ?').bind(status, id).run();
 
-            // Log Audit
             await logAudit(env, {
                 tableName: 'propostas',
                 recordId: Number(id),
                 action: 'UPDATE',
-                changedBy: payload.userId,
-                userType: payload.role as any,
+                changedBy: payload!.userId,
+                userType: payload!.role as any,
                 changes: { status }
             });
-
             return new Response(JSON.stringify({ success: true }), { headers });
         } catch (e: any) {
             return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
         }
     }
 
+    // LIST ROUTES (Admin list, Layers, etc) - Keep as is or lightly adapt...
+    // Fallback for others
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 }

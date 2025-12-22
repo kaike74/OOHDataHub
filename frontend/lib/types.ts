@@ -91,6 +91,12 @@ export interface Cliente {
     created_at: string;
 }
 
+export interface SharedUser {
+    email: string;
+    name: string | null;
+    role: 'viewer' | 'editor' | 'admin';
+}
+
 export interface Proposta {
     id: number;
     id_cliente: number;
@@ -100,6 +106,9 @@ export interface Proposta {
     created_at: string;
     created_by?: number | null;
     public_token?: string;
+    public_access_level?: 'none' | 'view'; // New
+    currentUserRole?: 'none' | 'viewer' | 'editor' | 'admin'; // New
+    sharedUsers?: SharedUser[]; // New
     itens?: PropostaItem[];
 }
 
