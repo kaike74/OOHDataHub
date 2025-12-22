@@ -1408,323 +1408,328 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                         </>
                     )}
 
-                    title="Configurações da tabela"
+                    <Button
+                        onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                        variant="ghost"
+                        size="icon"
+                        className={`${isSettingsOpen ? 'bg-gray-100 text-gray-900 shadow-inner' : 'text-gray-500 hover:bg-gray-50'}`}
+                        title="Configurações da tabela"
                     >
-                    <Eye size={16} />
-                </Button>
+                        <Eye size={16} />
+                    </Button>
 
-                <Button
-                    onClick={() => {
-                        handleShareUpdate(); // Ensure fresh data on open? Or just open.
-                        // Better to just open, and let modal init. But we might want refresh if needed.
-                        setIsShareModalOpen(true);
-                    }}
-                    variant="secondary" // Distinct style
-                    size="sm"
-                    className="gap-2 bg-green-50 text-green-700 hover:bg-green-100 border-green-200 shadow-sm"
-                    title="Compartilhar Proposta"
-                    leftIcon={<Share2 size={16} />}
-                >
-                    Compartilhar
-                </Button>
+                    <Button
+                        onClick={() => {
+                            handleShareUpdate(); // Ensure fresh data on open? Or just open.
+                            // Better to just open, and let modal init. But we might want refresh if needed.
+                            setIsShareModalOpen(true);
+                        }}
+                        variant="secondary" // Distinct style
+                        size="sm"
+                        className="gap-2 bg-green-50 text-green-700 hover:bg-green-100 border-green-200 shadow-sm"
+                        title="Compartilhar Proposta"
+                        leftIcon={<Share2 size={16} />}
+                    >
+                        Compartilhar
+                    </Button>
 
-                {isSettingsOpen && (
-                    <>
-                        <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
-                        <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
-                            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Colunas Visíveis</h4>
-                            <div className="max-h-60 overflow-y-auto px-1">
-                                {table.getAllLeafColumns()
-                                    .filter(col => col.id !== 'select' && col.id !== 'actions')
-                                    .map(column => {
-                                        if (!column.id) return null;
+                    {isSettingsOpen && (
+                        <>
+                            <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
+                            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
+                                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Colunas Visíveis</h4>
+                                <div className="max-h-60 overflow-y-auto px-1">
+                                    {table.getAllLeafColumns()
+                                        .filter(col => col.id !== 'select' && col.id !== 'actions')
+                                        .map(column => {
+                                            if (!column.id) return null;
 
-                                        // Map column IDs to readable labels
-                                        const columnLabels: Record<string, string> = {
-                                            'uf': 'UF',
-                                            'exibidora_nome': 'Exibidora',
-                                            'codigo_ooh': 'Código OOH',
-                                            'produto': 'Produto',
-                                            'medidas': 'Medidas',
-                                            'latitude': 'Latitude',
-                                            'longitude': 'Longitude',
-                                            'periodo': 'Período de Exibição',
-                                            'periodo_comercializado': 'Período comercializado',
-                                            'valor_locacao': 'Locação',
-                                            'valor_papel': 'Papel',
-                                            'valor_lona': 'Lona',
-                                            'qtd_bi_mes': 'Qtd. Bi/Mês',
-                                            'total_investimento': 'Investimento',
-                                            'cpm': 'CPM',
-                                            'impactos': 'Impactos',
-                                            'ponto_referencia': 'Ponto de Referência',
-                                            'observacoes': 'Observações'
-                                        };
+                                            // Map column IDs to readable labels
+                                            const columnLabels: Record<string, string> = {
+                                                'uf': 'UF',
+                                                'exibidora_nome': 'Exibidora',
+                                                'codigo_ooh': 'Código OOH',
+                                                'produto': 'Produto',
+                                                'medidas': 'Medidas',
+                                                'latitude': 'Latitude',
+                                                'longitude': 'Longitude',
+                                                'periodo': 'Período de Exibição',
+                                                'periodo_comercializado': 'Período comercializado',
+                                                'valor_locacao': 'Locação',
+                                                'valor_papel': 'Papel',
+                                                'valor_lona': 'Lona',
+                                                'qtd_bi_mes': 'Qtd. Bi/Mês',
+                                                'total_investimento': 'Investimento',
+                                                'cpm': 'CPM',
+                                                'impactos': 'Impactos',
+                                                'ponto_referencia': 'Ponto de Referência',
+                                                'observacoes': 'Observações'
+                                            };
 
-                                        const label = columnLabels[column.id] || column.id;
+                                            const label = columnLabels[column.id] || column.id;
 
-                                        return (
-                                            <div
-                                                key={column.id}
-                                                className="px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors"
-                                                onClick={column.getToggleVisibilityHandler()}
-                                            >
-                                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${column.getIsVisible() ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
-                                                    {column.getIsVisible() && <Check size={10} strokeWidth={3} />}
+                                            return (
+                                                <div
+                                                    key={column.id}
+                                                    className="px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors"
+                                                    onClick={column.getToggleVisibilityHandler()}
+                                                >
+                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${column.getIsVisible() ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
+                                                        {column.getIsVisible() && <Check size={10} strokeWidth={3} />}
+                                                    </div>
+                                                    <span className="text-sm text-gray-700 truncate select-none">
+                                                        {label}
+                                                    </span>
                                                 </div>
-                                                <span className="text-sm text-gray-700 truncate select-none">
-                                                    {label}
-                                                </span>
-                                            </div>
-                                        )
-                                    })}
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
-        </div>
-
-            {/* Table Area - Hidden when collapsed */ }
-    <div className={`flex-1 overflow-auto relative bg-gray-50/50 ${!isOpen ? 'hidden' : ''}`}>
-        <div
-            className="min-w-full inline-block align-top"
-            style={{ width: table.getTotalSize() }}
-        >
-            {/* Head */}
-            <div className="sticky top-0 z-10 bg-white font-normal text-[13px] text-gray-500 text-left flex border-b border-gray-200 group/header">
-                {table.getHeaderGroups().map(headerGroup => (
-                    <div key={headerGroup.id} className="flex flex-row w-full">
-                        {headerGroup.headers.map(header => (
-                            <div
-                                key={header.id}
-                                className="relative group px-3 py-2 border-r border-gray-200 last:border-r-0 flex items-center justify-between select-none hover:bg-gray-50 transition-colors"
-                                style={{ width: header.getSize(), flex: `0 0 ${header.getSize()}px` }}
-                            >
-                                <div
-                                    className="flex items-center gap-1.5 cursor-pointer hover:text-gray-900 truncate w-full"
-                                    onClick={header.column.getToggleSortingHandler()}
-                                >
-                                    {flexRender(header.column.columnDef.header, header.getContext())}
-                                    {{
-                                        asc: <ArrowUpDown size={12} className="text-gray-400 shrink-0" />,
-                                        desc: <ArrowUpDown size={12} className="text-gray-400 rotate-180 shrink-0" />,
-                                    }[header.column.getIsSorted() as string] ?? null}
+                                            )
+                                        })}
                                 </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
 
-                                {header.column.getCanResize() && (
+            {/* Table Area - Hidden when collapsed */}
+            <div className={`flex-1 overflow-auto relative bg-gray-50/50 ${!isOpen ? 'hidden' : ''}`}>
+                <div
+                    className="min-w-full inline-block align-top"
+                    style={{ width: table.getTotalSize() }}
+                >
+                    {/* Head */}
+                    <div className="sticky top-0 z-10 bg-white font-normal text-[13px] text-gray-500 text-left flex border-b border-gray-200 group/header">
+                        {table.getHeaderGroups().map(headerGroup => (
+                            <div key={headerGroup.id} className="flex flex-row w-full">
+                                {headerGroup.headers.map(header => (
                                     <div
-                                        onMouseDown={header.getResizeHandler()}
-                                        onTouchStart={header.getResizeHandler()}
-                                        className={`absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity z-20 ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
-                                    />
-                                )}
+                                        key={header.id}
+                                        className="relative group px-3 py-2 border-r border-gray-200 last:border-r-0 flex items-center justify-between select-none hover:bg-gray-50 transition-colors"
+                                        style={{ width: header.getSize(), flex: `0 0 ${header.getSize()}px` }}
+                                    >
+                                        <div
+                                            className="flex items-center gap-1.5 cursor-pointer hover:text-gray-900 truncate w-full"
+                                            onClick={header.column.getToggleSortingHandler()}
+                                        >
+                                            {flexRender(header.column.columnDef.header, header.getContext())}
+                                            {{
+                                                asc: <ArrowUpDown size={12} className="text-gray-400 shrink-0" />,
+                                                desc: <ArrowUpDown size={12} className="text-gray-400 rotate-180 shrink-0" />,
+                                            }[header.column.getIsSorted() as string] ?? null}
+                                        </div>
+
+                                        {header.column.getCanResize() && (
+                                            <div
+                                                onMouseDown={header.getResizeHandler()}
+                                                onTouchStart={header.getResizeHandler()}
+                                                className={`absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity z-20 ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
                             </div>
                         ))}
                     </div>
-                ))}
-            </div>
 
-            {/* Body */}
-            <div className="bg-white text-[13px]">
-                {/* Grouped View */}
-                {groupedData ? (
-                    <>
-                        {groupedData.map((group) => {
-                            const isCollapsed = collapsedGroups.has(group.name);
-                            const groupRows = table.getRowModel().rows.filter(row => {
-                                const groupKey = (row.original[groupBy as keyof PropostaItem] || 'Sem categoria') as string;
-                                return groupKey === group.name;
-                            });
+                    {/* Body */}
+                    <div className="bg-white text-[13px]">
+                        {/* Grouped View */}
+                        {groupedData ? (
+                            <>
+                                {groupedData.map((group) => {
+                                    const isCollapsed = collapsedGroups.has(group.name);
+                                    const groupRows = table.getRowModel().rows.filter(row => {
+                                        const groupKey = (row.original[groupBy as keyof PropostaItem] || 'Sem categoria') as string;
+                                        return groupKey === group.name;
+                                    });
 
-                            // Calculate group total
-                            const totals = group.items.reduce((acc, item) => {
-                                // Investimento
-                                let qtd = 1;
-                                let diffDays = 0;
+                                    // Calculate group total
+                                    const totals = group.items.reduce((acc, item) => {
+                                        // Investimento
+                                        let qtd = 1;
+                                        let diffDays = 0;
 
-                                if (item.periodo_inicio && item.periodo_fim) {
-                                    const start = new Date(item.periodo_inicio);
-                                    const end = new Date(item.periodo_fim);
-                                    const diffMs = end.getTime() - start.getTime();
-                                    diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-                                    qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                                }
+                                        if (item.periodo_inicio && item.periodo_fim) {
+                                            const start = new Date(item.periodo_inicio);
+                                            const end = new Date(item.periodo_fim);
+                                            const diffMs = end.getTime() - start.getTime();
+                                            diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+                                            qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                                        }
 
-                                const investimento = (item.valor_locacao || 0) * qtd;
-                                const impactos = (item.fluxo_diario || 0) * diffDays;
+                                        const investimento = (item.valor_locacao || 0) * qtd;
+                                        const impactos = (item.fluxo_diario || 0) * diffDays;
 
-                                return {
-                                    investimento: acc.investimento + investimento,
-                                    impactos: acc.impactos + impactos
-                                };
-                            }, { investimento: 0, impactos: 0 });
+                                        return {
+                                            investimento: acc.investimento + investimento,
+                                            impactos: acc.impactos + impactos
+                                        };
+                                    }, { investimento: 0, impactos: 0 });
 
-                            const cpm = totals.impactos > 0 ? (totals.investimento / totals.impactos) * 1000 : 0;
+                                    const cpm = totals.impactos > 0 ? (totals.investimento / totals.impactos) * 1000 : 0;
 
-                            return (
-                                <div key={group.name} className="border-b border-gray-200">
-                                    {/* Group Header */}
-                                    <div
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors sticky top-[37px] z-[5] border-b border-gray-200"
-                                        onClick={() => toggleGroupCollapse(group.name)}
-                                    >
-                                        {isCollapsed ? (
-                                            <ChevronRight size={14} className="text-gray-400 flex-shrink-0" />
-                                        ) : (
-                                            <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
-                                        )}
-                                        <span className="font-medium text-sm text-gray-800">{group.name}</span>
-                                        <span className="text-xs text-gray-400 bg-white px-1.5 rounded-sm border border-gray-200">
-                                            {group.count}
-                                        </span>
-                                        <div className="ml-auto flex items-center gap-4">
-                                            <div className="flex items-center gap-1.5 text-xs">
-                                                <span className="text-gray-400 uppercase tracking-wider text-[10px]">Impactos:</span>
-                                                <span className="font-medium text-gray-700">{formatNumber(totals.impactos)}</span>
+                                    return (
+                                        <div key={group.name} className="border-b border-gray-200">
+                                            {/* Group Header */}
+                                            <div
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors sticky top-[37px] z-[5] border-b border-gray-200"
+                                                onClick={() => toggleGroupCollapse(group.name)}
+                                            >
+                                                {isCollapsed ? (
+                                                    <ChevronRight size={14} className="text-gray-400 flex-shrink-0" />
+                                                ) : (
+                                                    <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
+                                                )}
+                                                <span className="font-medium text-sm text-gray-800">{group.name}</span>
+                                                <span className="text-xs text-gray-400 bg-white px-1.5 rounded-sm border border-gray-200">
+                                                    {group.count}
+                                                </span>
+                                                <div className="ml-auto flex items-center gap-4">
+                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                        <span className="text-gray-400 uppercase tracking-wider text-[10px]">Impactos:</span>
+                                                        <span className="font-medium text-gray-700">{formatNumber(totals.impactos)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                        <span className="text-gray-400 uppercase tracking-wider text-[10px]">CPM:</span>
+                                                        <span className="font-medium text-blue-600">{formatCurrency(cpm)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                        <span className="text-gray-400 uppercase tracking-wider text-[10px]">Investimento:</span>
+                                                        <span className="font-medium text-emerald-700">{formatCurrency(totals.investimento)}</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-1.5 text-xs">
-                                                <span className="text-gray-400 uppercase tracking-wider text-[10px]">CPM:</span>
-                                                <span className="font-medium text-blue-600">{formatCurrency(cpm)}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5 text-xs">
-                                                <span className="text-gray-400 uppercase tracking-wider text-[10px]">Investimento:</span>
-                                                <span className="font-medium text-emerald-700">{formatCurrency(totals.investimento)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    {/* Group Rows */}
-                                    {!isCollapsed && groupRows.map(row => (
-                                        <div
-                                            key={row.id}
-                                            data-row-id={row.original.id}
-                                            className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] 
+                                            {/* Group Rows */}
+                                            {!isCollapsed && groupRows.map(row => (
+                                                <div
+                                                    key={row.id}
+                                                    data-row-id={row.original.id}
+                                                    className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] 
                                                         ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}
                                                         ${row.original.status === 'pendente_validacao' ? 'opacity-70 bg-orange-50/30' : ''}
                                                     `}
-                                        >
-                                            {row.getVisibleCells().map(cell => {
-                                                const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
-                                                return (
-                                                    <div
-                                                        key={cell.id}
-                                                        className={`px-3 py-1.5 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
-                                                        style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
-                                                    >
-                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                        {/* Drag handle for ONLY specified editable cells */}
-                                                        {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
-                                                            focusedCell.rowId === row.original.id &&
-                                                            (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
-                                                                <div
-                                                                    className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
-                                                                    style={{ borderRadius: '0 0 2px 0' }}
-                                                                    title="Arrastar para preencher"
-                                                                    onMouseDown={(e) => {
-                                                                        e.preventDefault();
-                                                                        e.stopPropagation();
-                                                                        const columnId = cell.column.id!;
-                                                                        const currentItem = itens.find(item => item.id === row.original.id);
-                                                                        let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
-                                                                        if (columnId === 'periodo') {
-                                                                            value = {
-                                                                                periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
-                                                                                periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
-                                                                            };
-                                                                        }
-                                                                        startDragging(row.original.id, columnId, value);
-                                                                    }}
-                                                                />
-                                                            )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    ))}
-                                </div>
-                            );
-                        })}
-                    </>
-                ) : (
-                    /* Flat View */
-                    <>
-                        {table.getRowModel().rows.map(row => (
-                            <div
-                                key={row.id}
-                                data-row-id={row.original.id}
-                                className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] 
-                                            ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}
-                                            ${row.original.status === 'pendente_validacao' ? 'opacity-70 bg-orange-50/30' : ''}
-                                        `}
-                            >
-                                {row.getVisibleCells().map(cell => {
-                                    const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
-                                    return (
-                                        <div
-                                            key={cell.id}
-                                            className={`px-3 py-1.5 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
-                                            style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
-                                        >
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                            {/* Drag handle for ONLY specified editable cells */}
-                                            {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
-                                                focusedCell.rowId === row.original.id &&
-                                                (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
-                                                    <div
-                                                        className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
-                                                        style={{ borderRadius: '0 0 2px 0' }}
-                                                        title="Arrastar para preencher"
-                                                        onMouseDown={(e) => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            const columnId = cell.column.id!;
-
-                                                            // Get current value from itens state for real-time accuracy
-                                                            const currentItem = itens.find(item => item.id === row.original.id);
-                                                            let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
-
-                                                            // For período, use both values
-                                                            if (columnId === 'periodo') {
-                                                                value = {
-                                                                    periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
-                                                                    periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
-                                                                };
-                                                            }
-
-                                                            console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
-                                                            startDragging(row.original.id, columnId, value);
-                                                        }}
-                                                    />
-                                                )}
+                                                >
+                                                    {row.getVisibleCells().map(cell => {
+                                                        const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
+                                                        return (
+                                                            <div
+                                                                key={cell.id}
+                                                                className={`px-3 py-1.5 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                                                style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
+                                                            >
+                                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                                {/* Drag handle for ONLY specified editable cells */}
+                                                                {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
+                                                                    focusedCell.rowId === row.original.id &&
+                                                                    (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
+                                                                        <div
+                                                                            className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
+                                                                            style={{ borderRadius: '0 0 2px 0' }}
+                                                                            title="Arrastar para preencher"
+                                                                            onMouseDown={(e) => {
+                                                                                e.preventDefault();
+                                                                                e.stopPropagation();
+                                                                                const columnId = cell.column.id!;
+                                                                                const currentItem = itens.find(item => item.id === row.original.id);
+                                                                                let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
+                                                                                if (columnId === 'periodo') {
+                                                                                    value = {
+                                                                                        periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
+                                                                                        periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
+                                                                                    };
+                                                                                }
+                                                                                startDragging(row.original.id, columnId, value);
+                                                                            }}
+                                                                        />
+                                                                    )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ))}
                                         </div>
                                     );
                                 })}
+                            </>
+                        ) : (
+                            /* Flat View */
+                            <>
+                                {table.getRowModel().rows.map(row => (
+                                    <div
+                                        key={row.id}
+                                        data-row-id={row.original.id}
+                                        className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] 
+                                            ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}
+                                            ${row.original.status === 'pendente_validacao' ? 'opacity-70 bg-orange-50/30' : ''}
+                                        `}
+                                    >
+                                        {row.getVisibleCells().map(cell => {
+                                            const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
+                                            return (
+                                                <div
+                                                    key={cell.id}
+                                                    className={`px-3 py-1.5 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                                    style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
+                                                >
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                    {/* Drag handle for ONLY specified editable cells */}
+                                                    {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
+                                                        focusedCell.rowId === row.original.id &&
+                                                        (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
+                                                            <div
+                                                                className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
+                                                                style={{ borderRadius: '0 0 2px 0' }}
+                                                                title="Arrastar para preencher"
+                                                                onMouseDown={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    const columnId = cell.column.id!;
+
+                                                                    // Get current value from itens state for real-time accuracy
+                                                                    const currentItem = itens.find(item => item.id === row.original.id);
+                                                                    let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
+
+                                                                    // For período, use both values
+                                                                    if (columnId === 'periodo') {
+                                                                        value = {
+                                                                            periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
+                                                                            periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
+                                                                        };
+                                                                    }
+
+                                                                    console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
+                                                                    startDragging(row.original.id, columnId, value);
+                                                                }}
+                                                            />
+                                                        )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ))}
+                            </>
+                        )}
+
+                        {table.getRowModel().rows.length === 0 && (
+                            <div className="p-12 text-center text-gray-400 text-sm w-full flex flex-col items-center gap-3">
+                                <div className="p-3 bg-gray-100 rounded-full">
+                                    <Settings size={24} className="text-gray-300" />
+                                </div>
+                                <span>Nenhum ponto no carrinho.</span>
                             </div>
-                        ))}
-                    </>
-                )}
-
-                {table.getRowModel().rows.length === 0 && (
-                    <div className="p-12 text-center text-gray-400 text-sm w-full flex flex-col items-center gap-3">
-                        <div className="p-3 bg-gray-100 rounded-full">
-                            <Settings size={24} className="text-gray-300" />
-                        </div>
-                        <span>Nenhum ponto no carrinho.</span>
+                        )}
                     </div>
-                )}
+                </div>
             </div>
-        </div>
-    </div>
 
-    {/* Footer Summary - Always visible if open */ }
+            {/* Footer Summary - Always visible if open */}
 
-    <ShareModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        proposta={selectedProposta}
-        onUpdate={handleShareUpdate}
-    />
+            <ShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                proposta={selectedProposta}
+                onUpdate={handleShareUpdate}
+            />
         </div >
     );
 }
