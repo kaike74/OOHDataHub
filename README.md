@@ -75,6 +75,8 @@ OOHDataHub/
 
 ## 📚 Documentação
 - [Guia de Migrations e Banco de Dados](./docs/DATABASE_WORKFLOW.md)
+- [Contexto do Projeto e Regras de Negócio (PARA IA)](./docs/AI_CONTEXT.md)
+
 
 ## 🚀 Setup e Deploy
 
