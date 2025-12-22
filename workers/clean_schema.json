@@ -1,0 +1,234 @@
+[
+  {
+    "results": [
+      {
+        "name": "arquivos",
+        "type": "table",
+        "sql": "CREATE TABLE \"arquivos\" (     IDArquivo INTEGER PRIMARY KEY AUTOINCREMENT,     ExibidoraID INTEGER,     Titulo TEXT NOT NULL,     Arquivo TEXT NOT NULL,     Observacoes TEXT,     FOREIGN KEY (ExibidoraID) REFERENCES \"exibidoras_backup_legacy\"(id) )"
+      },
+      {
+        "name": "audit_logs",
+        "type": "table",
+        "sql": "CREATE TABLE audit_logs (     id INTEGER PRIMARY KEY AUTOINCREMENT,     table_name TEXT NOT NULL,     record_id INTEGER NOT NULL,     action TEXT NOT NULL CHECK (         action IN ('CREATE', 'UPDATE', 'DELETE', 'RESTORE')     ),     changed_by INTEGER,     user_type TEXT CHECK (user_type IN ('agency', 'client')),     changes TEXT,     created_at DATETIME DEFAULT CURRENT_TIMESTAMP )"
+      },
+      {
+        "name": "clientes",
+        "type": "table",
+        "sql": "CREATE TABLE clientes (     id INTEGER PRIMARY KEY AUTOINCREMENT,     nome TEXT NOT NULL,     logo_r2_key TEXT,     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP , logo_url TEXT)"
+      },
+      {
+        "name": "contatos",
+        "type": "table",
+        "sql": "CREATE TABLE contatos (\r\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\r\n    id_exibidora INTEGER NOT NULL,\r\n    nome TEXT,\r\n    telefone TEXT,\r\n    email TEXT,\r\n    observacoes TEXT,\r\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\r\n    FOREIGN KEY (id_exibidora) REFERENCES exibidoras(id)\r\n)"
+      },
+      {
+        "name": "d1_migrations",
+        "type": "table",
+        "sql": "CREATE TABLE d1_migrations(\n\t\tid         INTEGER PRIMARY KEY AUTOINCREMENT,\n\t\tname       TEXT UNIQUE,\n\t\tapplied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL\n)"
+      },
+      {
+        "name": "exibidoras",
+        "type": "table",
+        "sql": "CREATE TABLE exibidoras (\r\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\r\n  nome TEXT NOT NULL,\r\n  cnpj TEXT UNIQUE,\r\n  razao_social TEXT,\r\n  endereco TEXT,\r\n  telefone TEXT,\r\n  email TEXT,\r\n  logo_r2_key TEXT,\r\n  created_at DATETIME DEFAULT CURRENT_TIMESTAMP\r\n, observacoes TEXT)"
+      },
+      {
+        "name": "historico",
+        "type": "table",
+        "sql": "CREATE TABLE historico (\r\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\r\n  id_ponto INTEGER NOT NULL,\r\n  campo_alterado TEXT NOT NULL,\r\n  valor_anterior TEXT,\r\n  valor_novo TEXT,\r\n  usuario TEXT DEFAULT 'sistema',\r\n  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\r\n  FOREIGN KEY (id_ponto) REFERENCES pontos_ooh(id) ON DELETE CASCADE\r\n)"
+      },
+      {
+        "name": "idx_access_requests_proposal",
+        "type": "index",
+        "sql": "CREATE INDEX idx_access_requests_proposal ON proposta_access_requests(proposal_id)"
+      },
+      {
+        "name": "idx_audit_logs_created_at",
+        "type": "index",
+        "sql": "CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at)"
+      },
+      {
+        "name": "idx_audit_logs_record",
+        "type": "index",
+        "sql": "CREATE INDEX idx_audit_logs_record ON audit_logs(table_name, record_id)"
+      },
+      {
+        "name": "idx_clientes_nome",
+        "type": "index",
+        "sql": "CREATE INDEX idx_clientes_nome ON clientes(nome)"
+      },
+      {
+        "name": "idx_historico_data",
+        "type": "index",
+        "sql": "CREATE INDEX idx_historico_data ON historico(created_at)"
+      },
+      {
+        "name": "idx_historico_ponto",
+        "type": "index",
+        "sql": "CREATE INDEX idx_historico_ponto ON historico(id_ponto)"
+      },
+      {
+        "name": "idx_imagens_capa",
+        "type": "index",
+        "sql": "CREATE INDEX idx_imagens_capa ON imagens(id_ponto, eh_capa)"
+      },
+      {
+        "name": "idx_imagens_ponto",
+        "type": "index",
+        "sql": "CREATE INDEX idx_imagens_ponto ON imagens(id_ponto)"
+      },
+      {
+        "name": "idx_pontos_codigo",
+        "type": "index",
+        "sql": "CREATE INDEX idx_pontos_codigo ON pontos_ooh(codigo_ooh)"
+      },
+      {
+        "name": "idx_pontos_deleted_at",
+        "type": "index",
+        "sql": "CREATE INDEX idx_pontos_deleted_at ON pontos_ooh(deleted_at)"
+      },
+      {
+        "name": "idx_pontos_exibidora",
+        "type": "index",
+        "sql": "CREATE INDEX idx_pontos_exibidora ON pontos_ooh(id_exibidora)"
+      },
+      {
+        "name": "idx_pontos_pais",
+        "type": "index",
+        "sql": "CREATE INDEX idx_pontos_pais ON pontos_ooh(pais)"
+      },
+      {
+        "name": "idx_pontos_ponto_referencia",
+        "type": "index",
+        "sql": "CREATE INDEX idx_pontos_ponto_referencia ON pontos_ooh(ponto_referencia)"
+      },
+      {
+        "name": "idx_pontos_status",
+        "type": "index",
+        "sql": "CREATE INDEX idx_pontos_status ON pontos_ooh(status)"
+      },
+      {
+        "name": "idx_produtos_ponto",
+        "type": "index",
+        "sql": "CREATE INDEX idx_produtos_ponto ON produtos(id_ponto)"
+      },
+      {
+        "name": "idx_produtos_tipo",
+        "type": "index",
+        "sql": "CREATE INDEX idx_produtos_tipo ON produtos(tipo)"
+      },
+      {
+        "name": "idx_proposal_layers_proposta",
+        "type": "index",
+        "sql": "CREATE INDEX idx_proposal_layers_proposta ON proposal_layers(id_proposta)"
+      },
+      {
+        "name": "idx_proposta_invites_email",
+        "type": "index",
+        "sql": "CREATE INDEX idx_proposta_invites_email ON proposta_invites(email)"
+      },
+      {
+        "name": "idx_proposta_invites_token",
+        "type": "index",
+        "sql": "CREATE INDEX idx_proposta_invites_token ON proposta_invites(token)"
+      },
+      {
+        "name": "idx_proposta_shares_prop",
+        "type": "index",
+        "sql": "CREATE INDEX idx_proposta_shares_prop ON proposta_shares(proposal_id)"
+      },
+      {
+        "name": "idx_proposta_shares_user",
+        "type": "index",
+        "sql": "CREATE INDEX idx_proposta_shares_user ON proposta_shares(client_user_id)"
+      },
+      {
+        "name": "idx_propostas_deleted_at",
+        "type": "index",
+        "sql": "CREATE INDEX idx_propostas_deleted_at ON propostas(deleted_at)"
+      },
+      {
+        "name": "idx_propostas_status",
+        "type": "index",
+        "sql": "CREATE INDEX idx_propostas_status ON propostas(status)"
+      },
+      {
+        "name": "idx_users_email",
+        "type": "index",
+        "sql": "CREATE INDEX idx_users_email ON \"usuarios_internos\"(email)"
+      },
+      {
+        "name": "imagens",
+        "type": "table",
+        "sql": "CREATE TABLE imagens (\r\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\r\n  id_ponto INTEGER NOT NULL,\r\n  nome_arquivo TEXT NOT NULL,\r\n  r2_key TEXT NOT NULL,\r\n  ordem INTEGER DEFAULT 0,\r\n  eh_capa BOOLEAN DEFAULT 0,\r\n  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\r\n  FOREIGN KEY (id_ponto) REFERENCES pontos_ooh(id) ON DELETE CASCADE\r\n)"
+      },
+      {
+        "name": "pontos_ooh",
+        "type": "table",
+        "sql": "CREATE TABLE \"pontos_ooh\" (\r\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\r\n  codigo_ooh TEXT UNIQUE NOT NULL,\r\n  endereco TEXT NOT NULL,\r\n  latitude REAL,\r\n  longitude REAL,\r\n  cidade TEXT,\r\n  uf TEXT,\r\n  id_exibidora INTEGER,\r\n  medidas TEXT,\r\n  fluxo INTEGER,\r\n  tipo TEXT,\r\n  observacoes TEXT,\r\n  status TEXT DEFAULT 'ativo',\r\n  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\r\n  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, pais TEXT, created_by INTEGER REFERENCES \"usuarios_internos\"(id), updated_by INTEGER REFERENCES \"usuarios_internos\"(id), ponto_referencia TEXT, deleted_at DATETIME,\r\n  FOREIGN KEY (id_exibidora) REFERENCES exibidoras(id) ON DELETE SET NULL\r\n)"
+      },
+      {
+        "name": "produtos",
+        "type": "table",
+        "sql": "CREATE TABLE produtos (\r\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\r\n  id_ponto INTEGER NOT NULL,\r\n  tipo TEXT NOT NULL,\r\n  valor REAL NOT NULL,\r\n  periodo TEXT,\r\n  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\r\n  FOREIGN KEY (id_ponto) REFERENCES pontos_ooh(id) ON DELETE CASCADE\r\n)"
+      },
+      {
+        "name": "proposal_layers",
+        "type": "table",
+        "sql": "CREATE TABLE proposal_layers (     id TEXT PRIMARY KEY,     id_proposta INTEGER NOT NULL,     name TEXT NOT NULL,     color TEXT NOT NULL,     markers TEXT NOT NULL,     data TEXT,     visible BOOLEAN DEFAULT 1,     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,     FOREIGN KEY (id_proposta) REFERENCES propostas(id) ON DELETE CASCADE )"
+      },
+      {
+        "name": "proposta_access_requests",
+        "type": "table",
+        "sql": "CREATE TABLE proposta_access_requests (     id INTEGER PRIMARY KEY AUTOINCREMENT,     proposal_id INTEGER NOT NULL REFERENCES propostas(id) ON DELETE CASCADE,     user_id INTEGER NOT NULL,     user_type TEXT NOT NULL,     status TEXT DEFAULT 'pending',     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,     UNIQUE(proposal_id, user_id, user_type) )"
+      },
+      {
+        "name": "proposta_invites",
+        "type": "table",
+        "sql": "CREATE TABLE proposta_invites (     id INTEGER PRIMARY KEY AUTOINCREMENT,     proposal_id INTEGER NOT NULL REFERENCES propostas(id) ON DELETE CASCADE,     email TEXT NOT NULL,     created_by INTEGER,     created_by_type TEXT,     token TEXT NOT NULL UNIQUE,     status TEXT DEFAULT 'pending',     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,     UNIQUE(proposal_id, email) )"
+      },
+      {
+        "name": "proposta_itens",
+        "type": "table",
+        "sql": "CREATE TABLE proposta_itens (     id INTEGER PRIMARY KEY AUTOINCREMENT,     id_proposta INTEGER,     id_ooh INTEGER,     periodo_inicio DATE,     periodo_fim DATE,     valor_locacao DECIMAL(10, 2),     valor_papel DECIMAL(10, 2),     valor_lona DECIMAL(10, 2),     periodo_comercializado TEXT CHECK (periodo_comercializado IN ('bissemanal', 'mensal')),     observacoes TEXT,     fluxo_diario INTEGER, status TEXT DEFAULT 'ativo', client_comment TEXT, status_validacao TEXT DEFAULT 'PENDING', approved_until DATETIME,     FOREIGN KEY (id_proposta) REFERENCES propostas(id),     FOREIGN KEY (id_ooh) REFERENCES pontos_ooh(id) )"
+      },
+      {
+        "name": "proposta_shares",
+        "type": "table",
+        "sql": "CREATE TABLE proposta_shares (     id INTEGER PRIMARY KEY AUTOINCREMENT,     proposal_id INTEGER NOT NULL,     client_user_id INTEGER NOT NULL,     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,     FOREIGN KEY (proposal_id) REFERENCES propostas(id) ON DELETE CASCADE,     FOREIGN KEY (client_user_id) REFERENCES \"usuarios_externos\"(id) ON DELETE CASCADE,     UNIQUE(proposal_id, client_user_id) )"
+      },
+      {
+        "name": "propostas",
+        "type": "table",
+        "sql": "CREATE TABLE propostas (     id INTEGER PRIMARY KEY AUTOINCREMENT,     id_cliente INTEGER,     nome TEXT NOT NULL,     comissao TEXT,     status TEXT DEFAULT 'rascunho',     created_at DATETIME DEFAULT CURRENT_TIMESTAMP, public_token TEXT, created_by INTEGER, deleted_at DATETIME,     FOREIGN KEY (id_cliente) REFERENCES clientes(id) )"
+      },
+      {
+        "name": "usuarios_externos",
+        "type": "table",
+        "sql": "CREATE TABLE \"usuarios_externos\" (     id INTEGER PRIMARY KEY AUTOINCREMENT,     email TEXT NOT NULL UNIQUE,     password_hash TEXT NOT NULL,     name TEXT,     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,     last_login TIMESTAMP , verified BOOLEAN DEFAULT 0, verification_token TEXT)"
+      },
+      {
+        "name": "usuarios_internos",
+        "type": "table",
+        "sql": "CREATE TABLE \"usuarios_internos\" (\r\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\r\n  email TEXT UNIQUE NOT NULL,\r\n  password_hash TEXT NOT NULL,\r\n  name TEXT,\r\n  role TEXT NOT NULL DEFAULT 'viewer',\r\n  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\r\n  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP\r\n, reset_token TEXT, reset_token_expires DATETIME)"
+      }
+    ],
+    "success": true,
+    "meta": {
+      "served_by": "v3-prod",
+      "served_by_region": "ENAM",
+      "served_by_colo": "EWR",
+      "served_by_primary": true,
+      "timings": {
+        "sql_duration_ms": 0.1871
+      },
+      "duration": 0.1871,
+      "changes": 0,
+      "last_row_id": 0,
+      "changed_db": false,
+      "size_after": 249856,
+      "rows_read": 96,
+      "rows_written": 0,
+      "total_attempts": 1
+    }
+  }
+]

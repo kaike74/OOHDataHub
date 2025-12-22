@@ -54,49 +54,27 @@ Sistema moderno e completo de gestão de pontos OOH (Out-of-Home) com mapa inter
 OOHDataHub/
 ├── frontend/                    # Aplicação Next.js
 │   ├── app/                     # Páginas (App Router)
-│   │   ├── layout.tsx          # Layout principal
-│   │   └── page.tsx            # Página inicial com mapa
 │   ├── components/             # Componentes React
-│   │   ├── map/
-│   │   │   └── GoogleMap.tsx   # Componente do mapa
-│   │   ├── AddressSearch.tsx   # Busca de endereços
-│   │   ├── CreatePointModal.tsx # Formulário de cadastro/edição
-│   │   ├── ExibidorasView.tsx  # View de cards das exibidoras
-│   │   ├── ExibidoraSidebar.tsx # Gaveta de detalhes da exibidora
-│   │   ├── MapFilters.tsx      # Filtros do mapa
-│   │   ├── MapTooltip.tsx      # Tooltip ao passar mouse
-│   │   ├── NavigationMenu.tsx  # Menu de navegação
-│   │   └── Sidebar.tsx         # Gaveta de detalhes do ponto
 │   ├── lib/                    # Bibliotecas e utilitários
-│   │   ├── api.ts              # Cliente da API
-│   │   ├── store.ts            # Zustand store
-│   │   ├── types.ts            # Definições TypeScript
-│   │   └── utils.ts            # Funções auxiliares
 │   └── package.json
 │
 ├── workers/                    # Cloudflare Worker (API)
 │   ├── src/
-│   │   ├── routes/            # Endpoints da API
-│   │   │   ├── pontos.ts      # CRUD de pontos
-│   │   │   ├── exibidoras.ts  # CRUD de exibidoras
-│   │   │   ├── upload.ts      # Upload de imagens
-│   │   │   └── stats.ts       # Estatísticas
-│   │   ├── utils/
-│   │   │   └── cors.ts        # Configuração CORS
-│   │   └── index.ts           # Entry point do Worker
 │   ├── wrangler.toml          # Configuração Cloudflare
 │   └── package.json
 │
 ├── migrations/                 # Migrations do banco D1
-│   ├── 0001_initial.sql       # Schema inicial
-│   ├── 0002_indexes.sql       # Índices
-│   ├── 0005_production_schema.sql # Schema de produção
-│   ├── 0007_add_tipo_column.sql # Adiciona coluna tipo
-│   └── 0008_fix_final_cleanup.sql # Schema final completo
+│   └── 0001_schema_sync.sql   # Schema Base Sincronizado
+│
+├── docs/                       # Documentação
+│   └── DATABASE_WORKFLOW.md   # Guia de migrations
 │
 ├── .gitignore
 └── README.md
 ```
+
+## 📚 Documentação
+- [Guia de Migrations e Banco de Dados](./docs/DATABASE_WORKFLOW.md)
 
 ## 🚀 Setup e Deploy
 
