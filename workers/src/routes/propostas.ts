@@ -26,13 +26,15 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             pi.id, pi.id_proposta, pi.id_ooh, pi.periodo_inicio, pi.periodo_fim, 
             pi.valor_locacao, pi.valor_papel, pi.valor_lona, 
             pi.periodo_comercializado, pi.observacoes, pi.fluxo_diario, pi.status,
-            pi.status_validacao, pi.approved_until,
+            pi.status_validacao, pi.approved_until, pi.last_validated_at,
+            val_user.name as validator_name,
             p.endereco, p.cidade, p.uf, p.pais, p.codigo_ooh, p.tipo, p.medidas, p.ponto_referencia,
             p.latitude, p.longitude,
             e.nome as exibidora_nome
         FROM proposta_itens pi
         JOIN pontos_ooh p ON pi.id_ooh = p.id
         LEFT JOIN exibidoras e ON p.id_exibidora = e.id
+        LEFT JOIN usuarios_internos val_user ON pi.last_validated_by = val_user.id
         WHERE pi.id_proposta = ?
     `).bind(id).all();
 
@@ -500,7 +502,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
     if (request.method === 'PUT' && path.match(/^\/api\/propostas\/\d+\/validate-items$/)) {
         try {
             const id = path.split('/')[3];
-            await requireAuth(request, env); // Enforce Agency/Internal
+            const user = await requireAuth(request, env); // Enforce Agency/Internal (returns user)
 
             const { items } = await request.json() as any;
             if (!Array.isArray(items)) return new Response(JSON.stringify({ error: 'Items array required' }), { status: 400, headers });
@@ -510,9 +512,9 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                 if (item.id && item.status_validacao) {
                     batch.push(env.DB.prepare(`
                         UPDATE proposta_itens 
-                        SET status_validacao = ?, approved_until = ?
+                        SET status_validacao = ?, approved_until = ?, last_validated_by = ?, last_validated_at = CURRENT_TIMESTAMP
                         WHERE id = ? AND id_proposta = ?
-                    `).bind(item.status_validacao, item.approved_until || null, item.id, id));
+                    `).bind(item.status_validacao, item.approved_until || null, user.id, item.id, id));
                 }
             }
 
@@ -537,11 +539,28 @@ export async function handlePropostas(request: Request, env: Env, path: string):
 
             const { status } = await request.json() as any;
 
-            // Basic transition logic/permissions could go here
-            // Client: RASCUNHO -> EM_ANALISE
-            // Agency: Any
+            // Fetch proposal to check permissions
+            const proposta = await env.DB.prepare('SELECT created_by, status FROM propostas WHERE id = ?').bind(id).first();
+            if (!proposta) return new Response(JSON.stringify({ error: 'Proposta not found' }), { status: 404, headers });
 
-            await env.DB.prepare('UPDATE propostas SET status = ? WHERE id = ?').bind(status, id).run();
+            // Enforce Permissions
+            const isInternal = payload.role !== 'client';
+            const isOwner = proposta.created_by === payload.userId;
+
+            if (status === 'em_validacao') {
+                if (!isInternal && !isOwner) { // Owner or Internal can request validation
+                    return new Response(JSON.stringify({ error: 'Unauthorized: Only owner or internal users can request validation' }), { status: 403, headers });
+                }
+            } else if (status === 'aprovado') {
+                if (!isInternal) { // Only Internal can approve
+                    return new Response(JSON.stringify({ error: 'Unauthorized: Only internal users can approve proposals' }), { status: 403, headers });
+                }
+            } else if (status !== 'rascunho' && !isInternal) {
+                // Prevent clients from setting other arbitrary statuses
+                return new Response(JSON.stringify({ error: 'Unauthorized status transition' }), { status: 403, headers });
+            }
+
+            await env.DB.prepare('UPDATE propostas SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(status, id).run();
 
             // Log Audit
             await logAudit(env, {

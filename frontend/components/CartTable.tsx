@@ -45,6 +45,12 @@ import {
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/Tooltip';
 
 // Helper for formatted money
 const formatCurrency = (value: number) => {
@@ -139,6 +145,43 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
     const isResizingRef = useRef(false);
     const startYRef = useRef(0);
     const startHeightRef = useRef(0);
+
+    const user = useStore(state => state.user);
+    const isInternal = !!user && user.role !== 'client';
+    const showStatusColumn = isInternal || selectedProposta?.status === 'em_validacao' || selectedProposta?.status === 'aprovado';
+
+    const handleApproveProposal = async () => {
+        if (!selectedProposta) return;
+        if (!confirm('Deseja enviar esta proposta para validação?')) return;
+
+        try {
+            await api.updateProposalStatus(selectedProposta.id, 'em_validacao');
+            refreshProposta({ ...selectedProposta, status: 'em_validacao' });
+        } catch (error) {
+            console.error('Failed to approve proposal', error);
+            alert('Falha ao aprovar proposta');
+        }
+    };
+
+    const handleConcludeValidation = async () => {
+        if (!selectedProposta) return;
+        // Validate all items are final
+        const pendingItems = itens.filter(i => !['APPROVED', 'UNAVAILABLE'].includes(i.status_validacao || 'PENDING'));
+        if (pendingItems.length > 0) {
+            alert('Todos os itens devem estar Aprovados ou Indisponíveis para concluir.');
+            return;
+        }
+
+        if (!confirm('Deseja concluir a validação desta proposta? O cliente será notificado.')) return;
+
+        try {
+            await api.updateProposalStatus(selectedProposta.id, 'aprovado');
+            refreshProposta({ ...selectedProposta, status: 'aprovado' });
+        } catch (error) {
+            console.error('Failed to conclude validation', error);
+            alert('Falha ao concluir validação');
+        }
+    };
 
     // Initial Load
     useEffect(() => {
@@ -442,7 +485,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
             size: 32,
             enableResizing: false,
         },
-        {
+        ...(showStatusColumn ? [{
             id: 'status_validacao',
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal">
@@ -451,7 +494,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                 </div>
             ),
             size: 130,
-            cell: ({ row }) => {
+            cell: ({ row }: any) => {
                 const status = row.original.status_validacao || 'PENDING';
                 const statusMap: Record<string, { label: string; color: string; bg: string }> = {
                     'PENDING': { label: 'Pendente', color: 'text-gray-600', bg: 'bg-gray-100' },
@@ -461,48 +504,57 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                 };
                 const config = statusMap[status] || statusMap['PENDING'];
 
-                if (isClientView) {
-                    return (
-                        <div className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border border-transparent ${config.bg} ${config.color}`}>
-                            {config.label}
-                        </div>
-                    );
-                }
-
-                return (
-                    <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors">
-                        <select
-                            className={`w-full bg-transparent border-none text-[11px] font-medium focus:ring-0 p-0 cursor-pointer ${config.color}`}
-                            value={status}
-                            onChange={(e) => {
-                                const newStatus = e.target.value;
-                                const updates: any = { status_validacao: newStatus };
-                                // Auto-set approved_until if approving
-                                if (newStatus === 'APPROVED' && row.original.periodo_fim) {
-                                    updates.approved_until = row.original.periodo_fim;
-                                }
-                                updateItem(row.original.id, updates);
-
-                                // Trigger backend validation update specifically if needed, or rely on updateCart/updatePortalItems
-                                // If internal, updateCart handles regular fields. I need to make sure updateCart sends these new fields.
-                                // It does because it sends the whole item object.
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <option value="PENDING">Pendente</option>
-                            <option value="VALIDATION">Em Validação</option>
-                            <option value="APPROVED">Aprovado</option>
-                            <option value="UNAVAILABLE">Indisponível</option>
-                        </select>
-                        {status === 'APPROVED' && row.original.approved_until && (
-                            <div className="text-[9px] text-gray-400 mt-0.5">
-                                Até {new Date(row.original.approved_until).toLocaleDateString()}
+                const StatusBadge = (
+                    <div className={`h-full -m-2 p-2 hover:bg-gray-50 transition-colors flex items-center`}>
+                        {isClientView || !isInternal ? (
+                            <div className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border border-transparent ${config.bg} ${config.color}`}>
+                                {config.label}
                             </div>
+                        ) : (
+                            <select
+                                className={`w-full bg-transparent border-none text-[11px] font-medium focus:ring-0 p-0 cursor-pointer ${config.color}`}
+                                value={status}
+                                onChange={(e) => {
+                                    const newStatus = e.target.value;
+                                    const updates: any = { status_validacao: newStatus };
+                                    if (newStatus === 'APPROVED' && row.original.periodo_fim) {
+                                        updates.approved_until = row.original.periodo_fim;
+                                    }
+                                    updateItem(row.original.id, updates);
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <option value="PENDING">Pendente</option>
+                                <option value="VALIDATION">Em Validação</option>
+                                <option value="APPROVED">Aprovado</option>
+                                <option value="UNAVAILABLE">Indisponível</option>
+                            </select>
                         )}
                     </div>
                 );
+
+                if (!row.original.validator_name) return StatusBadge;
+
+                return (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                {StatusBadge}
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <div className="text-xs">
+                                    <p className="font-semibold">{config.label}</p>
+                                    <p className="opacity-90">{row.original.validator_name}</p>
+                                    <p className="opacity-75 text-[10px]">
+                                        {row.original.last_validated_at ? new Date(row.original.last_validated_at).toLocaleString() : ''}
+                                    </p>
+                                </div>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                );
             }
-        },
+        }] : []),
         {
             accessorKey: 'uf',
             header: () => (
@@ -975,7 +1027,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                 </button>
             )
         }
-    ], [updateItem, removeItem, pontos, setSelectedPonto, itens, focusedCell]);
+    ], [updateItem, removeItem, pontos, setSelectedPonto, itens, focusedCell, showStatusColumn, isClientView]);
 
     // Export Handlers
     const handleExportExcel = () => {
@@ -1136,6 +1188,26 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                             <ChevronDown size={20} className={`transform transition-transform duration-300 ${isOpen ? '' : 'rotate-180'}`} />
                         </div>
                         <h3 className="font-semibold text-gray-800 text-sm">Carrinho ({itens.length})</h3>
+                        {selectedProposta && selectedProposta.status === 'rascunho' && (
+                            <Button
+                                onClick={(e) => { e.stopPropagation(); handleApproveProposal(); }}
+                                variant="outline"
+                                size="sm"
+                                className="ml-2 h-7 px-2 text-xs border-green-200 text-green-700 hover:bg-green-50"
+                            >
+                                Aprovar Proposta
+                            </Button>
+                        )}
+                        {selectedProposta && selectedProposta.status === 'em_validacao' && isInternal && (
+                            <Button
+                                onClick={(e) => { e.stopPropagation(); handleConcludeValidation(); }}
+                                variant="primary"
+                                size="sm"
+                                className="ml-2 h-7 px-2 text-xs bg-green-600 hover:bg-green-700 border-transparent text-white"
+                            >
+                                Concluir Validação
+                            </Button>
+                        )}
                     </div>
 
                     <Button

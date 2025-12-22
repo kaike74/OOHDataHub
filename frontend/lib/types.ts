@@ -144,6 +144,9 @@ export interface PropostaItem {
     status?: string; // Add status for ghost points
     status_validacao?: 'PENDING' | 'VALIDATION' | 'APPROVED' | 'UNAVAILABLE';
     approved_until?: string | null;
+    last_validated_by?: number;
+    last_validated_at?: string;
+    validator_name?: string;
 }
 
 export interface CustomMarker {
