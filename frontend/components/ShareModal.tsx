@@ -6,19 +6,19 @@ import { Proposta, SharedUser } from '@/lib/types';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Copy, Globe, Lock, Mail, Check, X, User } from 'lucide-react';
+import { Copy, Globe, Lock, Settings, ChevronDown, Link, User as UserIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ShareModalProps {
     isOpen: boolean;
     onClose: () => void;
     proposta: Proposta | null;
-    onUpdate?: () => void; // Trigger refresh
+    onUpdate?: () => void;
 }
 
 export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: ShareModalProps) {
     const [email, setEmail] = useState('');
-    const [role, setRole] = useState<'viewer' | 'editor' | 'admin'>('viewer');
+    const [role, setRole] = useState<'viewer' | 'editor' | 'admin'>('editor'); // Default to editor like Sheets
     const [loading, setLoading] = useState(false);
     const [publicAccess, setPublicAccess] = useState<'none' | 'view'>('none');
     const [sharedUsers, setSharedUsers] = useState<SharedUser[]>([]);
@@ -35,13 +35,9 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
         setLoading(true);
         try {
             await api.shareProposal(proposta.id, { email, role });
-            toast.success('Convite enviado/atualizado com sucesso');
+            toast.success('Convite enviado');
             setEmail('');
             if (onUpdate) onUpdate();
-
-            // Optimistically update list if it's a new user or update
-            // Ideally onUpdate re-fetches, but for UX:
-            // (Logic to match onUpdate which should be passed from CartTable to refresh proposal)
         } catch (e: any) {
             toast.error(e.message || 'Erro ao convidar');
         } finally {
@@ -52,27 +48,18 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
     const handleUpdatePublicAccess = async (value: 'none' | 'view') => {
         if (!proposta) return;
         try {
-            // Optimistic update
             setPublicAccess(value);
             await api.shareProposal(proposta.id, { public_access_level: value });
-            toast.success('Permissão de acesso público atualizada');
             if (onUpdate) onUpdate();
         } catch (e: any) {
             toast.error('Erro ao atualizar permissão');
-            setPublicAccess(proposta.public_access_level || 'none'); // Revert
+            setPublicAccess(proposta.public_access_level || 'none');
         }
     };
 
     const handleUpdateUserRole = async (userEmail: string, newRole: string) => {
         if (!proposta) return;
         try {
-            // If newRole is 'remove', we might need a specific delete endpoint or handle it here.
-            // My backend currently supports upsert. 'remove' is not handled in backend yet?
-            // Wait, I didn't verify DELETE or 'remove' logic in backend. 
-            // I should add 'remove' to backend or just set role to 'none'?
-            // Let's assume for now I only update roles. Removal might need separate button or backend update.
-            // Proceeding with role update.
-
             await api.shareProposal(proposta.id, { email: userEmail, role: newRole as any });
             toast.success('Permissão atualizada');
             if (onUpdate) onUpdate();
@@ -85,139 +72,171 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
         if (!proposta) return;
         let url = `${window.location.origin}/propostas/${proposta.id}`;
         navigator.clipboard.writeText(url);
-        toast.success('Link copiado para a área de transferência');
+        toast.success('Link copiado');
     };
 
     if (!proposta) return null;
 
-    // Determine current user permissions (Admin can manage)
-    const canManage = proposta.currentUserRole === 'admin' || !proposta.currentUserRole; // Fallback if undefined (e.g. creator)
-    // Actually, backend sets currentUserRole.
+    const canManage = proposta.currentUserRole === 'admin' || !proposta.currentUserRole;
 
     return (
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Compartilhar Proposta"
-            subtitle={proposta.nome}
+            title={`Compartilhar "${proposta.nome}"`}
             maxWidth="md"
-            footer={
-                <div className="flex justify-between w-full items-center">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleCopyLink}
-                        leftIcon={<Copy size={14} />}
-                        className="text-blue-600 hover:bg-blue-50"
-                    >
-                        Copiar link
-                    </Button>
-                    <Button variant="primary" onClick={onClose}>
-                        Concluído
-                    </Button>
-                </div>
-            }
+            className="p-0 overflow-hidden rounded-xl" // Override default padding if needed, or rely on internal
+        // Custom header actions if Modal supports it, otherwise generic title
         >
-            <div className="space-y-6">
-                {/* Invite Section */}
-                <div className="space-y-3">
-                    <div className="flex gap-2">
-                        <div className="flex-1">
-                            <Input
-                                placeholder="Adicionar pessoas (email)"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                disabled={!canManage}
-                            />
-                        </div>
-                        <div className="w-32">
-                            <select
-                                className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-50 disabled:text-gray-400"
-                                value={role}
-                                onChange={(e) => setRole(e.target.value as any)}
-                                disabled={!canManage}
+            <div className="flex flex-col gap-6">
+                {/* Input Section */}
+                <div className="relative">
+                    <div className="flex rounded-md border border-gray-300 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 overflow-hidden">
+                        <input
+                            type="text"
+                            placeholder="Adicionar participantes, grupos, espaços e eventos da agenda"
+                            className="flex-1 w-full border-none px-4 py-3 text-base text-gray-900 placeholder:text-gray-500 focus:ring-0 outline-none"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
+                            disabled={!canManage}
+                        />
+                        {email && (
+                            <div className="pr-2 flex items-center bg-gray-50 border-l border-gray-200">
+                                <select
+                                    className="h-full bg-transparent border-none text-sm text-gray-600 font-medium focus:ring-0 cursor-pointer py-0 pl-3 pr-8"
+                                    value={role}
+                                    onChange={(e) => setRole(e.target.value as any)}
+                                >
+                                    <option value="viewer">Leitor</option>
+                                    <option value="editor">Editor</option>
+                                    <option value="admin">Administrador</option>
+                                </select>
+                            </div>
+                        )}
+                        {email && (
+                            <button
+                                onClick={handleInvite}
+                                disabled={loading}
+                                className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
                             >
-                                <option value="viewer">Leitor</option>
-                                <option value="editor">Editor</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div className="flex justify-end">
-                        <Button
-                            onClick={handleInvite}
-                            disabled={!email || loading || !canManage}
-                            isLoading={loading}
-                            size="sm"
-                        >
-                            Enviar
-                        </Button>
+                                Enviar
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                {/* General Access */}
-                <div className="space-y-3 pt-4 border-t border-gray-100">
-                    <h4 className="text-sm font-semibold text-gray-700">Acesso geral</h4>
-                    <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors group">
-                        <div className={`p-2 rounded-full ${publicAccess === 'none' ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-600'}`}>
-                            {publicAccess === 'none' ? <Lock size={20} /> : <Globe size={20} />}
-                        </div>
-                        <div className="flex-1">
-                            <select
-                                className="w-full bg-transparent border-none p-0 text-sm font-medium text-gray-700 focus:ring-0 cursor-pointer"
-                                value={publicAccess}
-                                onChange={(e) => handleUpdatePublicAccess(e.target.value as any)}
-                                disabled={!canManage}
-                            >
-                                <option value="none">Restrito</option>
-                                <option value="view">Qualquer pessoa com o link (Leitor)</option>
-                            </select>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                                {publicAccess === 'none'
-                                    ? 'Somente pessoas adicionadas podem acessar com este link'
-                                    : 'Qualquer pessoa na internet com este link pode ver'}
-                            </p>
-                        </div>
+                {/* People List */}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-base font-medium text-gray-900">Pessoas com acesso</h3>
                     </div>
-                </div>
 
-                {/* User List */}
-                <div className="space-y-4 pt-4 border-t border-gray-100">
-                    <h4 className="text-sm font-semibold text-gray-700">Pessoas com acesso</h4>
-                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                        {/* Owner implicit / derived? Backend returns sharedUsers. We should verify if owner is in list or separate. 
-                            Usually separate. For now listing sharedUsers. */}
+                    <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto">
+                        {/* Owner (Simulated for now if not in list, usually separate in real Sheets) */}
+                        {/* If we knew the owner name/email from backend, we'd list it first. 
+                            For now, assuming sharedUsers contains only invites. */}
+
+                        {/* Current User Me (if owner/creator logic known) */}
+                        <div className="flex items-center justify-between group">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-blue-700 text-white flex items-center justify-center text-sm font-medium">
+                                    {/* Placeholder for 'You' */}
+                                    VC
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-gray-900">Você</span>
+                                    <span className="text-xs text-gray-500">owner@example.com</span>
+                                </div>
+                            </div>
+                            <span className="text-sm text-gray-400 italic">Proprietário</span>
+                        </div>
+
 
                         {sharedUsers.map((user) => (
                             <div key={user.email} className="flex items-center justify-between group">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold uppercase">
-                                        {user.name ? user.name.slice(0, 2) : user.email.slice(0, 2)}
+                                    <div className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-medium uppercase">
+                                        {user.name ? user.name.slice(0, 1) : user.email.slice(0, 1)}
                                     </div>
-                                    <div>
-                                        <div className="text-sm font-medium text-gray-800">{user.name || user.email.split('@')[0]}</div>
-                                        <div className="text-xs text-gray-500">{user.email}</div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-medium text-gray-900">{user.name || user.email.split('@')[0]}</span>
+                                        <span className="text-xs text-gray-500">{user.email}</span>
                                     </div>
                                 </div>
-                                <div>
-                                    <select
-                                        className="text-xs text-gray-600 bg-transparent border-none focus:ring-0 cursor-pointer hover:bg-gray-100 rounded px-2 py-1 transition-colors text-right disabled:opacity-50"
-                                        value={user.role}
-                                        onChange={(e) => handleUpdateUserRole(user.email, e.target.value)}
-                                        disabled={!canManage}
-                                    >
-                                        <option value="viewer">Leitor</option>
-                                        <option value="editor">Editor</option>
-                                        <option value="admin">Admin</option>
-                                    </select>
-                                </div>
+
+                                {canManage ? (
+                                    <div className="relative">
+                                        <select
+                                            className="appearance-none bg-transparent text-sm font-medium text-gray-600 hover:text-black cursor-pointer pr-6 text-right focus:outline-none focus:ring-0 border-none"
+                                            value={user.role}
+                                            onChange={(e) => handleUpdateUserRole(user.email, e.target.value)}
+                                        >
+                                            <option value="viewer">Leitor</option>
+                                            <option value="editor">Editor</option>
+                                            <option value="admin">Administrador</option>
+                                            <option value="remove">Remover acesso</option>
+                                        </select>
+                                        {/* Chevron overlay hack if needed, native select usually enough */}
+                                    </div>
+                                ) : (
+                                    <span className="text-sm text-gray-500 capitalize">{user.role}</span>
+                                )}
                             </div>
                         ))}
+                    </div>
+                </div>
 
-                        {sharedUsers.length === 0 && (
-                            <p className="text-sm text-gray-400 italic text-center py-2">Nenhum usuário convidado.</p>
+                {/* General Access */}
+                <div className="space-y-4 pt-2">
+                    <h3 className="text-base font-medium text-gray-900">Acesso geral</h3>
+                    <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${publicAccess === 'none' ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-600'}`}>
+                            {publicAccess === 'none' ? <Lock size={20} /> : <Globe size={20} />}
+                        </div>
+                        <div className="flex flex-col flex-1">
+                            <div className="relative inline-block w-fit">
+                                <select
+                                    className="appearance-none bg-transparent text-sm font-medium text-gray-900 pr-8 cursor-pointer focus:outline-none border-none p-0"
+                                    value={publicAccess}
+                                    onChange={(e) => handleUpdatePublicAccess(e.target.value as any)}
+                                    disabled={!canManage}
+                                >
+                                    <option value="none">Restrito</option>
+                                    <option value="view">Qualquer pessoa com o link</option>
+                                </select>
+                                <ChevronDown size={14} className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                            </div>
+                            <span className="text-xs text-gray-500 mt-0.5">
+                                {publicAccess === 'none'
+                                    ? 'Somente pessoas adicionadas podem acessar com este link.'
+                                    : 'Qualquer pessoa na internet com este link pode ver.'}
+                            </span>
+                        </div>
+                        {publicAccess === 'view' && (
+                            <div className="text-sm text-gray-600 font-medium">
+                                Leitor
+                            </div>
                         )}
                     </div>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="flex items-center justify-between pt-6 mt-2">
+                    <button
+                        onClick={handleCopyLink}
+                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-gray-300 text-blue-600 font-medium hover:bg-blue-50 hover:border-blue-400 transition-colors text-sm"
+                    >
+                        <Link size={18} />
+                        Copiar link
+                    </button>
+
+                    <button
+                        onClick={onClose}
+                        className="px-8 py-2.5 bg-blue-700 text-white rounded-full font-medium hover:bg-blue-800 transition-colors text-sm"
+                    >
+                        Concluído
+                    </button>
                 </div>
             </div>
         </Modal>

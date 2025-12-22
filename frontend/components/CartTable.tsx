@@ -1420,11 +1420,10 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
 
                     <Button
                         onClick={() => {
-                            handleShareUpdate(); // Ensure fresh data on open? Or just open.
-                            // Better to just open, and let modal init. But we might want refresh if needed.
+                            handleShareUpdate();
                             setIsShareModalOpen(true);
                         }}
-                        variant="secondary" // Distinct style
+                        variant="secondary"
                         size="sm"
                         className="gap-2 bg-green-50 text-green-700 hover:bg-green-100 border-green-200 shadow-sm"
                         title="Compartilhar Proposta"

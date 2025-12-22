@@ -136,26 +136,15 @@ export default function HomePage() {
                 )}
               </div>
 
-              {selectedProposta ? (
+              {userRole !== 'client' && (
                 <Button
-                  onClick={() => setIsShareModalOpen(true)}
+                  onClick={() => setModalOpen(true)}
                   variant="accent"
-                  className="shadow-accent border-0 bg-green-600 hover:bg-green-700 text-white"
-                  leftIcon={<Share2 size={20} />}
+                  className="shadow-accent"
+                  leftIcon={<Plus size={20} strokeWidth={2.5} />}
                 >
-                  <span className="hidden sm:inline">Compartilhar</span>
+                  <span className="hidden sm:inline">Novo Ponto</span>
                 </Button>
-              ) : (
-                userRole !== 'client' && (
-                  <Button
-                    onClick={() => setModalOpen(true)}
-                    variant="accent"
-                    className="shadow-accent"
-                    leftIcon={<Plus size={20} strokeWidth={2.5} />}
-                  >
-                    <span className="hidden sm:inline">Novo Ponto</span>
-                  </Button>
-                )
               )}
             </>
           )}
