@@ -70,7 +70,7 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
 
     const handleCopyLink = () => {
         if (!proposta) return;
-        let url = `${window.location.origin}/propostas/${proposta.id}`;
+        let url = `${window.location.origin}/propostas?id=${proposta.id}`;
         navigator.clipboard.writeText(url);
         toast.success('Link copiado');
     };

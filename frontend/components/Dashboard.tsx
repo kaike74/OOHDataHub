@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import GoogleMap from '@/components/map/GoogleMap';
 import Sidebar from '@/components/Sidebar';
 import ExibidoraSidebar from '@/components/ExibidoraSidebar';
@@ -60,9 +60,14 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
     ].filter(Boolean).length;
 
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     // Carregar dados iniciais e proposta se initialProposalId existir
     useEffect(() => {
+        // Read both prop and query param
+        const queryProposalId = searchParams?.get('id');
+        const effectProposalId = initialProposalId || queryProposalId;
+
         // Check for "New Proposal" action
         const params = new URLSearchParams(window.location.search);
         const action = params.get('action');
@@ -72,7 +77,7 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
         const userRole = JSON.parse(localStorage.getItem('ooh-auth-storage') || '{}')?.state?.user?.role;
         setUserRole(userRole);
 
-        if (isAuthenticated && userRole === 'client' && action !== 'new' && !initialProposalId) {
+        if (isAuthenticated && userRole === 'client' && action !== 'new' && !effectProposalId) {
             router.replace('/admin/proposals');
             return;
         }
@@ -89,9 +94,9 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                 setExibidoras(exibidorasData);
 
                 // If initialProposalId is provided (Public/Shared View)
-                if (initialProposalId) {
+                if (effectProposalId) {
                     try {
-                        const proposalId = parseInt(initialProposalId, 10);
+                        const proposalId = parseInt(effectProposalId, 10);
                         if (isNaN(proposalId)) {
                             throw new Error('ID da proposta inválido');
                         }
