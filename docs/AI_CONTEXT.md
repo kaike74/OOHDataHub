@@ -62,3 +62,72 @@ When an external user creates a proposal, they are on "autopilot".
 1. **Never Break Production**: Use GitHub Desktop "Revert" if you fail.
 2. **Atomic Context**: Don't change logic in `propostas.ts` without understanding WHO (Internal vs External) is calling it.
 3. **Database Changes**: Never run raw SQL commands. Always create a numbered migration file.
+
+---
+
+# 📚 ANEXO TÉCNICO E OPERACIONAL
+
+## 1. Workflow de Banco de Dados (D1)
+
+> **REGRA DE OURO**: O banco de dados de produção (Remote) é a verdade absoluta. Nunca assuma que o local está sincronizado sem verificar.
+
+### Como criar Migrations (Autônomo)
+1.  **Edite o Schema**: Adicione a tabela/coluna desejada no arquivo SQL mais recente ou num novo.
+2.  **Gere a Migration**:
+    ```bash
+    cd workers
+    npx wrangler d1 migrations create ooh-db nome_da_mudanca
+    ```
+3.  **Implemente o SQL**: Copie o SQL gerado para o arquivo criado em `migrations/`.
+4.  **Aplique (Local & Remoto)**:
+    ```bash
+    # Local
+    npx wrangler d1 migrations apply ooh-db --local
+    # Remoto (Produção)
+    npx wrangler d1 migrations apply ooh-db --remote
+    ```
+
+### Comandos Úteis
+- **Listar Migrations**: `npx wrangler d1 migrations list ooh-db --remote`
+- **Resetar Local**: `rm -rf .wrangler/state/v3/d1` (Seguro, apenas cache local)
+
+---
+
+## 2. Setup Cloudflare (KV & Queues)
+
+### Workers KV (`ooh-system-KV`)
+Usado para cache de alta performance (Estatísticas, Listas de Pontos).
+- **ID de Produção**: Ver `wrangler.toml` (section `[[kv_namespaces]]`).
+- **Cache Rules**:
+    - `stats`: 1 hora.
+    - `pontos:list`: 5 minutos (Invalidação automática no Create/Update/Delete).
+
+### Filas/Queues (`ooh-jobs-queue`)
+Processamento assíncrono (Emails, Logs).
+- **Consumer**: `workers/src/worker.ts` (função `queue`).
+- **Trigger**: Envio de email de reset de senha, auditoria.
+
+### Deploy
+```bash
+cd workers
+npm run deploy # Script alias para wrangler deploy
+```
+
+---
+
+## 3. Sistema de Autenticação
+
+### Níveis de Acesso
+1.  **Master** (`role: 'master'`): Acesso total. Pode deletar pontos e gerenciar usuários.
+2.  **Viewer** (`role: 'viewer'`): Apenas visualização (somente leitura).
+3.  **Client** (`role: 'client'`): Usuário externo (Portal do Cliente). Acesso restrito aos seus dados.
+
+### Setup Inicial (Mestre)
+Se o banco estiver vazio, use a rota de setup para criar o primeiro usuário:
+`POST /api/auth/setup` -> Cria `kaike@hubradios.com` / `Teste123`.
+
+### Segurança
+- **JWT**: Persistente, validade 7 dias.
+- **Domínio**: Emails internos DEVEM ser `@hubradios.com`.
+- **Rota Protegida**: Middleware global valida token em `/api/*` exceto rotas públicas.
+
