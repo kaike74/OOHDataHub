@@ -15,9 +15,10 @@ const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
 interface GoogleMapProps {
     searchLocation?: { lat: number; lng: number; address: string } | null;
+    readOnly?: boolean;
 }
 
-export default function GoogleMap({ searchLocation }: GoogleMapProps) {
+export default function GoogleMap({ searchLocation, readOnly = false }: GoogleMapProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const googleMapRef = useRef<google.maps.Map | null>(null);
     const streetViewRef = useRef<google.maps.StreetViewPanorama | null>(null);
@@ -41,6 +42,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
     const streetViewRequest = useStore((state) => state.streetViewRequest);
     const setStreetViewRequest = useStore((state) => state.setStreetViewRequest);
     const selectedProposta = useStore((state) => state.selectedProposta);
+    const isAuthenticated = useStore((state) => state.isAuthenticated);
     const [isLoaded, setIsLoaded] = useState(false);
     const [isStreetViewMode, setIsStreetViewMode] = useState(false);
     const [streetViewPosition, setStreetViewPosition] = useState<{ lat: number; lng: number } | null>(null);
@@ -135,6 +137,12 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
         if (!isLoaded) return [];
 
         return pontos.filter((ponto: Ponto) => {
+            // Guest/Public View Mode: Show ONLY points in the proposal
+            if (!isAuthenticated && selectedProposta) {
+                const isInProposal = selectedProposta.itens?.some((item: any) => item.id_ooh === ponto.id);
+                if (!isInProposal) return false;
+            }
+
             // Filtro por país
             if (filterPais.length > 0 && !filterPais.includes(ponto.pais || '')) return false;
             // Filtro por UF
@@ -160,7 +168,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
             }
             return true;
         });
-    }, [pontos, filterExibidora, filterPais, filterUF, filterCidade, filterTipos, filterValorMin, filterValorMax, isLoaded]);
+    }, [pontos, filterExibidora, filterPais, filterUF, filterCidade, filterTipos, filterValorMin, filterValorMax, isLoaded, isAuthenticated, selectedProposta]);
 
     // 2. Effect for Fitting Bounds (Run ONLY when filtered points change)
     useEffect(() => {
@@ -410,6 +418,7 @@ export default function GoogleMap({ searchLocation }: GoogleMapProps) {
                 <MapTooltip
                     ponto={hoveredPonto}
                     position={tooltipPosition}
+                    readOnly={!isAuthenticated}
                     onStreetViewClick={() => handleStreetViewClick(hoveredPonto)}
                     onMouseEnter={() => {
                         if (hoverTimeoutRef.current) {

@@ -1052,7 +1052,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 )
             )
         }
-    ], [updateItem, removeItem, pontos, setSelectedPonto, itens, focusedCell, showStatusColumn, isClientView]);
+    ], [updateItem, removeItem, pontos, setSelectedPonto, itens, focusedCell, showStatusColumn, isClientView, readOnly]);
 
     // Export Handlers
     const handleExportExcel = () => {

@@ -86,6 +86,7 @@ export default function Sidebar() {
     const setPontos = useStore((state) => state.setPontos);
     const selectedProposta = useStore((state) => state.selectedProposta);
     const user = useStore((state) => state.user);
+    const isAuthenticated = useStore((state) => state.isAuthenticated);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -572,7 +573,7 @@ export default function Sidebar() {
 
                         {/* Right Group / Main Action */}
                         <div className="flex gap-2 flex-1 justify-end">
-                            {selectedProposta && (() => {
+                            {selectedProposta && isAuthenticated && (() => {
                                 const isInCart = selectedProposta.itens?.some((i: any) => i.id_ooh === selectedPonto.id) || false;
                                 return (
                                     <Button
