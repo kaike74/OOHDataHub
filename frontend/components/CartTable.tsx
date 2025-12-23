@@ -101,9 +101,10 @@ interface CartTableProps {
     isOpen: boolean;
     onToggle: () => void;
     isClientView?: boolean;
+    readOnly?: boolean;
 }
 
-export default function CartTable({ isOpen, onToggle, isClientView = false, proposta }: CartTableProps) {
+export default function CartTable({ isOpen, onToggle, isClientView = false, readOnly = false, proposta }: CartTableProps) {
     const storeSelectedProposta = useStore((state) => state.selectedProposta);
     const selectedProposta = proposta || storeSelectedProposta;
 
@@ -696,7 +697,9 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                                     updateItem(row.original.id, 'periodo_inicio', e.target.value);
                                 }
                             }}
-                            onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_inicio', itens)}
+                            }}
+                        onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_inicio', itens)}
+                        disabled={readOnly}
                         />
                         <span className="text-gray-300 text-[10px] mx-0.5">→</span>
                         <input
@@ -711,7 +714,9 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                                     updateItem(row.original.id, 'periodo_fim', e.target.value);
                                 }
                             }}
-                            onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_fim', itens)}
+                            }}
+                        onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_fim', itens)}
+                        disabled={readOnly}
                         />
                     </div>
                 );
@@ -750,6 +755,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                                     qtd_bi_mes: qtd
                                 });
                             }}
+                            disabled={readOnly}
                         >
                             <option value="bissemanal">Bissemanal</option>
                             <option value="mensal">Mensal</option>
@@ -772,7 +778,10 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                 <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors flex items-center justify-end">
                     <input
                         type="text"
-                        readOnly={isClientView}
+                    <input
+                        type="text"
+                        readOnly={isClientView || readOnly}
+                        disabled={readOnly}
                         className={`w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700 font-normal ${isClientView ? 'cursor-default' : ''}`}
                         defaultValue={formatCurrency(row.original.valor_locacao || 0)}
                         data-row-id={row.original.id}
@@ -793,7 +802,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                             // On focus show raw number if needed or just select all
                             if (!isClientView) e.target.select();
                         }}
-                        onKeyDown={(e) => !isClientView && handleKeyDown(e, row.original.id, 'valor_locacao', itens)}
+                        onKeyDown={(e) => !isClientView && !readOnly && handleKeyDown(e, row.original.id, 'valor_locacao', itens)}
                     />
                 </div>
             )
@@ -826,7 +835,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                             else e.target.value = formatCurrency(row.original.valor_papel || 0);
                         }}
                         onFocus={(e) => e.target.select()}
-                        onKeyDown={(e) => handleKeyDown(e, row.original.id, 'valor_papel', itens)}
+                        onKeyDown={(e) => !readOnly && handleKeyDown(e, row.original.id, 'valor_papel', itens)}
                     />
                 </div>
             )
@@ -845,6 +854,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                 <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors flex items-center justify-end">
                     <input
                         type="text"
+                        readOnly={readOnly}
+                        disabled={readOnly}
                         className="w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700"
                         defaultValue={formatCurrency(row.original.valor_lona || 0)}
                         data-row-id={row.original.id}
@@ -984,6 +995,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                 <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors">
                     <input
                         type="text"
+                        readOnly={readOnly}
+                        disabled={readOnly}
                         className="w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] text-gray-700 placeholder-gray-300"
                         defaultValue={row.original.ponto_referencia || ''}
                         placeholder="Vazio"
@@ -1010,6 +1023,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                 <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors">
                     <input
                         type="text"
+                        readOnly={readOnly}
+                        disabled={readOnly}
                         className="w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] text-gray-700 placeholder-gray-300"
                         defaultValue={row.original.observacoes || ''}
                         placeholder="Vazio"
@@ -1028,13 +1043,15 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
             size: 40,
             enableResizing: false,
             cell: ({ row }) => (
-                <button
-                    onClick={() => removeItem(row.original.id)}
-                    className="flex justify-center w-full opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
-                    title="Remover"
-                >
-                    <Trash2 size={14} />
-                </button>
+                !readOnly && (
+                    <button
+                        onClick={() => removeItem(row.original.id)}
+                        className="flex justify-center w-full opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
+                        title="Remover"
+                    >
+                        <Trash2 size={14} />
+                    </button>
+                )
             )
         }
     ], [updateItem, removeItem, pontos, setSelectedPonto, itens, focusedCell, showStatusColumn, isClientView]);
@@ -1156,7 +1173,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
             columnSizing,
         },
         columnResizeMode: 'onChange',
-        enableRowSelection: true,
+        enableRowSelection: !readOnly,
         getRowId: row => String(row.id),
         onSortingChange: setSorting,
         onColumnVisibilityChange: setColumnVisibility,
@@ -1246,7 +1263,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                     )}
 
                     {/* Bulk Actions */}
-                    {Object.keys(rowSelection).length > 0 && (
+                    {!readOnly && Object.keys(rowSelection).length > 0 && (
                         <div
                             className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md animate-in fade-in slide-in-from-left-2 shadow-sm border border-blue-100 relative"
                             onClick={e => e.stopPropagation()}
@@ -1410,19 +1427,21 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, prop
                         <Eye size={16} />
                     </Button>
 
-                    <Button
-                        onClick={() => {
-                            handleShareUpdate();
-                            setIsShareModalOpen(true);
-                        }}
-                        variant="secondary"
-                        size="sm"
-                        className="gap-2 bg-green-50 text-green-700 hover:bg-green-100 border-green-200 shadow-sm"
-                        title="Compartilhar Proposta"
-                        leftIcon={<Share2 size={16} />}
-                    >
-                        Compartilhar
-                    </Button>
+                    {!readOnly && (
+                        <Button
+                            onClick={() => {
+                                handleShareUpdate();
+                                setIsShareModalOpen(true);
+                            }}
+                            variant="secondary"
+                            size="sm"
+                            className="gap-2 bg-green-50 text-green-700 hover:bg-green-100 border-green-200 shadow-sm"
+                            title="Compartilhar Proposta"
+                            leftIcon={<Share2 size={16} />}
+                        >
+                            Compartilhar
+                        </Button>
+                    )}
 
                     {isSettingsOpen && (
                         <>

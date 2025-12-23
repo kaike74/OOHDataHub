@@ -299,6 +299,7 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                                 proposta={selectedProposta}
                                 isOpen={isCartOpen}
                                 onToggle={() => setIsCartOpen(!isCartOpen)}
+                                readOnly={isGuest}
                             />
                         )}
                     </div>
