@@ -697,9 +697,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                     updateItem(row.original.id, 'periodo_inicio', e.target.value);
                                 }
                             }}
-                            }}
-                        onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_inicio', itens)}
-                        disabled={readOnly}
+                            onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_inicio', itens)}
+                            disabled={readOnly}
                         />
                         <span className="text-gray-300 text-[10px] mx-0.5">→</span>
                         <input
@@ -714,9 +713,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                     updateItem(row.original.id, 'periodo_fim', e.target.value);
                                 }
                             }}
-                            }}
-                        onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_fim', itens)}
-                        disabled={readOnly}
+                            onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_fim', itens)}
+                            disabled={readOnly}
                         />
                     </div>
                 );
@@ -778,8 +776,6 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors flex items-center justify-end">
                     <input
                         type="text"
-                    <input
-                        type="text"
                         readOnly={isClientView || readOnly}
                         disabled={readOnly}
                         className={`w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700 font-normal ${isClientView ? 'cursor-default' : ''}`}
@@ -821,6 +817,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors flex items-center justify-end">
                     <input
                         type="text"
+                        readOnly={readOnly}
+                        disabled={readOnly}
                         className="w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700"
                         defaultValue={formatCurrency(row.original.valor_papel || 0)}
                         data-row-id={row.original.id}
