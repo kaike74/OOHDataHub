@@ -33,6 +33,7 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
     const [searchLocation, setSearchLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
     const [isCartOpen, setIsCartOpen] = useState(true);
     const [showAccessRequest, setShowAccessRequest] = useState(false);
+    const [requestSent, setRequestSent] = useState(false);
     const [userRole, setUserRole] = useState<string | null>(null);
     const isAuthenticated = useStore((state) => state.isAuthenticated);
 
@@ -96,7 +97,7 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
 
                 // If initialProposalId is provided (Public/Shared View)
                 if (effectProposalId) {
-                    const [showAccessRequest, setShowAccessRequest] = useState(false);
+
 
                     // ... (keep existing)
 
@@ -146,6 +147,17 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
 
     // Determine if it's a guest view
     const isGuest = !isAuthenticated;
+
+    const handleRequestAccess = async () => {
+        const proposalId = searchParams?.get('id');
+        if (!proposalId) return;
+        try {
+            await api.requestProposalAccess(parseInt(proposalId));
+            setRequestSent(true);
+        } catch (e) {
+            alert('Erro ao solicitar acesso');
+        }
+    };
 
     return (
         <div className="h-screen w-screen flex flex-col overflow-hidden bg-emidias-gray-50">
