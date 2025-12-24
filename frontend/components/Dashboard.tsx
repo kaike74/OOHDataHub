@@ -323,8 +323,15 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                         {/* Assuming sidebar is only for admin/authenticated features unless public users need to see point details. */}
                         {/* Usually public link is just map + proposal cart table. Sidebar for selecting points might confusing if they can't add to proposal. */}
                         {/* But if they select a pin on map, Sidebar might show details. Let's keep it but ensure 'add to proposal' logic is guarded. */}
-                        <Sidebar />
-                        <ExibidoraSidebar />
+
+                        {/* Sidebars - Hidden for Guests (Public View) */}
+                        {!isGuest && (
+                            <>
+                                <Sidebar />
+                                <ExibidoraSidebar />
+                            </>
+                        )}
+
 
                         {/* Cart Table Overlay */}
                         {selectedProposta && (
@@ -332,7 +339,7 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                                 proposta={selectedProposta}
                                 isOpen={isCartOpen}
                                 onToggle={() => setIsCartOpen(!isCartOpen)}
-                                readOnly={isGuest}
+                                readOnly={isGuest || selectedProposta.currentUserRole === 'viewer' || selectedProposta.currentUserRole === 'none'}
                             />
                         )}
                     </div>

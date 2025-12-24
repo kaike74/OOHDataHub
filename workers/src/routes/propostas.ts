@@ -170,9 +170,41 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             }
 
             const batch = [];
+
+            // SECURITY: If External User (Client), we MUST preserve original values (prices/status).
+            const { results: existingRows } = await env.DB.prepare('SELECT * FROM proposta_itens WHERE id_proposta = ?').bind(id).all();
+            const existingItemsMap = new Map((existingRows as any[]).map(r => [r.id_ooh, r]));
+
+            const isClient = payload!.role === 'client';
+
             batch.push(env.DB.prepare('DELETE FROM proposta_itens WHERE id_proposta = ?').bind(id));
 
             for (const item of data.itens) {
+                // Default values from payload or defaults
+                let finalValores = {
+                    valor_locacao: item.valor_locacao,
+                    valor_papel: item.valor_papel,
+                    valor_lona: item.valor_lona,
+                    status: item.status || 'pendente_validacao',
+                    status_validacao: item.status_validacao || 'PENDING',
+                    approved_until: item.approved_until || null
+                };
+
+                if (isClient) {
+                    const existing: any = existingItemsMap.get(item.id_ooh);
+
+                    if (existing) {
+                        // PRESERVE EXISTING CRITICAL VALUES for clients
+                        finalValores.valor_locacao = existing.valor_locacao;
+                        finalValores.valor_papel = existing.valor_papel;
+                        finalValores.valor_lona = existing.valor_lona;
+                        finalValores.status = existing.status;
+                        finalValores.status_validacao = existing.status_validacao;
+                        finalValores.approved_until = existing.approved_until;
+                    }
+                    // If New Item: Client accepts value sent (frontend calc) but status forced to 'pendente_validacao' via default above.
+                }
+
                 batch.push(env.DB.prepare(`
                 INSERT INTO proposta_itens (
                     id_proposta, id_ooh, periodo_inicio, periodo_fim, 
@@ -181,9 +213,9 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
                     id, item.id_ooh, item.periodo_inicio, item.periodo_fim,
-                    item.valor_locacao, item.valor_papel, item.valor_lona,
+                    finalValores.valor_locacao, finalValores.valor_papel, finalValores.valor_lona,
                     item.periodo_comercializado, item.observacoes, item.fluxo_diario || null,
-                    item.status || 'pendente_validacao', item.approved_until || null, item.status_validacao || 'PENDING'
+                    finalValores.status, finalValores.approved_until, finalValores.status_validacao
                 ));
             }
 

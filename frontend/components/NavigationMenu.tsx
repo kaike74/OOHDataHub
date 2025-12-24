@@ -17,6 +17,7 @@ export default function NavigationMenu() {
     const setSelectedProposta = useStore((state) => state.setSelectedProposta);
 
     if (!isMenuOpen) return null;
+    if (!user) return null; // Safety: Anonymous users should never see the menu
 
     const menuItems = [
         {
