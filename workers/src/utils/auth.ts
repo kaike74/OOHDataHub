@@ -922,7 +922,7 @@ export async function sendUserInviteEmail(
         const access_token = tokenData.access_token;
 
         // NEW LINK: Direct to Proposal. Backend handles pending invite via email match on signup.
-        const inviteUrl = `${frontendUrl}/admin/proposals?id=${proposalId}&email=${encodeURIComponent(email)}`;
+        const inviteUrl = `${frontendUrl}/propostas?id=${proposalId}&email=${encodeURIComponent(email)}`;
         const subject = 'Convite para visualizar proposta - OOH Data Hub';
         const htmlBody = `
 <!DOCTYPE html>
