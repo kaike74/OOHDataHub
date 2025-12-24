@@ -71,13 +71,30 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         // 4. Fetch Shared Users (for UI)
         let sharedUsers: any[] = [];
         if (currentRole === 'admin' || currentRole === 'editor') {
-            const { results } = await env.DB.prepare(`
-                SELECT u.email, u.name, ps.role 
-                FROM proposta_shares ps
-                JOIN usuarios_externos u ON ps.client_user_id = u.id
-                WHERE ps.proposal_id = ?
-            `).bind(id).all();
-            sharedUsers = results;
+            const [sharesResult, invitesResult] = await Promise.all([
+                env.DB.prepare(`
+                    SELECT u.email, u.name, ps.role 
+                    FROM proposta_shares ps
+                    JOIN usuarios_externos u ON ps.client_user_id = u.id
+                    WHERE ps.proposal_id = ?
+                `).bind(id).all(),
+                env.DB.prepare(`
+                    SELECT email
+                    FROM proposta_invites
+                    WHERE proposal_id = ? AND status = 'pending'
+                `).bind(id).all()
+            ]);
+
+            const shares = sharesResult.results.map((s: any) => ({ ...s, isPending: false }));
+            // Pending invites don't have a stored role, defaulting to viewer as per invite logic
+            const invites = invitesResult.results.map((i: any) => ({
+                email: i.email,
+                name: '', // Empty name for pending invites
+                role: 'viewer',
+                isPending: true
+            }));
+
+            sharedUsers = [...shares, ...invites];
         }
 
         return new Response(JSON.stringify({
