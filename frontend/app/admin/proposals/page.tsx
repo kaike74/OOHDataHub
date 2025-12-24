@@ -9,7 +9,7 @@ import {
     MapPin, Menu, ChevronDown, Trash2, Coins
 } from 'lucide-react';
 import NavigationMenu from '@/components/NavigationMenu';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import CreateProposalModal from '@/components/CreateProposalModal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -33,6 +33,7 @@ interface AdminProposal {
 }
 
 export default function AdminProposalsPage() {
+    const searchParams = useSearchParams();
     const router = useRouter();
     const [proposals, setProposals] = useState<AdminProposal[]>([]);
     const [loading, setLoading] = useState(true);
@@ -49,8 +50,19 @@ export default function AdminProposalsPage() {
     const user = useStore((state) => state.user);
 
     useEffect(() => {
-        if (user) loadProposals();
-    }, [user]);
+        if (!user) {
+            // Read email from params to pass to login for auto-fill
+            // The invite link format is /admin/proposals?id=X&email=Y
+            const emailParam = searchParams.get('email');
+            let loginUrl = '/login';
+            if (emailParam) {
+                loginUrl += `?email=${encodeURIComponent(emailParam)}`;
+            }
+            router.push(loginUrl);
+            return;
+        }
+        loadProposals();
+    }, [user, router, searchParams]);
 
     const loadProposals = async () => {
         try {

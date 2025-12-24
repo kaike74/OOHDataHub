@@ -37,6 +37,15 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
         try {
             await api.shareProposal(proposta.id, { email, role });
             toast.success('Convite enviado');
+
+            // Optimistic update
+            setSharedUsers(prev => [...prev, {
+                email,
+                role,
+                name: '', // Will be updated on refresh
+                id: 0
+            } as SharedUser]);
+
             setEmail('');
             if (onUpdate) onUpdate();
         } catch (e: any) {
