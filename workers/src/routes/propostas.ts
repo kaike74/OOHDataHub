@@ -82,7 +82,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     WHERE ps.proposal_id = ?
                 `).bind(id).all(),
                 env.DB.prepare(`
-                    SELECT email
+                    SELECT email, role
                     FROM proposta_invites
                     WHERE proposal_id = ? AND status = 'pending'
                 `).bind(id).all()
@@ -93,7 +93,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const invites = invitesResult.results.map((i: any) => ({
                 email: i.email,
                 name: '', // Empty name for pending invites
-                role: 'viewer',
+                role: i.role || 'viewer',
                 isPending: true
             }));
 
@@ -284,17 +284,23 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     // Cleanup access request if exists
                     await env.DB.prepare('DELETE FROM proposta_access_requests WHERE proposal_id = ? AND user_id = ?').bind(id, clientUser.id).run();
                 } else {
-                    // Send Invite (Simplified: Just skip or error for now, as asked implementation 'Google Sheets' implies sending emails, assuming functionality exists)
-                    // We can reuse existing invite logic or just store pending invite.
-                    // For brevity/robustness, let's just error if user not found for now, or assume we create a placeholder?
-                    // Proposal_invites table usage:
-                    const token = crypto.randomUUID();
-                    await env.DB.prepare(`
-                        INSERT OR IGNORE INTO proposta_invites (proposal_id, email, created_by, created_by_type, token, status)
-                        VALUES (?, ?, ?, ?, ?, 'pending')
-                    `).bind(id, email, payload!.userId, payload!.role === 'client' ? 'client' : 'internal', token).run();
+                    // Check if there is already a pending invite
+                    const existingInvite = await env.DB.prepare('SELECT id, token FROM proposta_invites WHERE proposal_id = ? AND email = ? AND status = \'pending\'').bind(id, email).first();
 
-                    await sendUserInviteEmail(env, email, token, Number(id));
+                    if (existingInvite) {
+                        // UPDATE ROLE ONLY - DO NOT RESEND EMAIL
+                        await env.DB.prepare('UPDATE proposta_invites SET role = ? WHERE id = ?').bind(data.role, existingInvite.id).run();
+                    } else {
+                        // NEW INVITE
+                        const token = crypto.randomUUID();
+                        // Insert WITH role
+                        await env.DB.prepare(`
+                            INSERT INTO proposta_invites (proposal_id, email, created_by, created_by_type, token, status, role)
+                            VALUES (?, ?, ?, ?, ?, 'pending', ?)
+                        `).bind(id, email, payload!.userId, payload!.role === 'client' ? 'client' : 'internal', token, data.role).run();
+
+                        await sendUserInviteEmail(env, email, token, Number(id));
+                    }
                 }
             }
 

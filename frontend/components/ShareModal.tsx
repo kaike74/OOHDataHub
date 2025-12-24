@@ -88,6 +88,12 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
         try {
             await api.shareProposal(proposta.id, { email: userEmail, role: newRole as any });
             toast.success('Permissão atualizada');
+
+            // Optimistic update
+            setSharedUsers(prev => prev.map(u =>
+                u.email === userEmail ? { ...u, role: newRole as any } : u
+            ));
+
             if (onUpdate) onUpdate();
         } catch (e: any) {
             toast.error('Erro ao atualizar permissão');
