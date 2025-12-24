@@ -17,7 +17,7 @@ import CartTable from '@/components/CartTable';
 import TrashView from '@/components/TrashView';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { Plus, Filter, Menu, MapPin, Building2, Share2, LogIn } from 'lucide-react';
+import { Plus, Filter, Menu, MapPin, Building2, Share2, LogIn, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import ShareModal from '@/components/ShareModal';
 import Link from 'next/link';
@@ -32,6 +32,7 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
     const [isFiltersOpen, setIsFiltersOpen] = useState(false);
     const [searchLocation, setSearchLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
     const [isCartOpen, setIsCartOpen] = useState(true);
+    const [showAccessRequest, setShowAccessRequest] = useState(false);
     const [userRole, setUserRole] = useState<string | null>(null);
     const isAuthenticated = useStore((state) => state.isAuthenticated);
 
@@ -95,6 +96,11 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
 
                 // If initialProposalId is provided (Public/Shared View)
                 if (effectProposalId) {
+                    const [showAccessRequest, setShowAccessRequest] = useState(false);
+
+                    // ... (keep existing)
+
+                    // Inside useEffect loadData
                     try {
                         const proposalId = parseInt(effectProposalId, 10);
                         if (isNaN(proposalId)) {
@@ -102,12 +108,27 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                         }
                         const proposta = await api.getProposta(proposalId);
                         setSelectedProposta(proposta);
-                        // Ensure we are in map view to see the proposal
                         useStore.setState({ currentView: 'map' });
                     } catch (e: any) {
                         console.error('Erro ao carregar proposta inicial:', e);
+
+                        if (e.message === 'Authentication required') {
+                            const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                            const emailParam = searchParams?.get('email') ? `&email=${encodeURIComponent(searchParams.get('email')!)}` : '';
+                            router.push(`/login?redirect=${returnUrl}${emailParam}`);
+                            return;
+                        }
+
+                        // Check for Access Denied / Request Access
+                        // If backend returns 403 'Access Denied'
+                        if (e.message === 'Access Denied') {
+                            setShowAccessRequest(true);
+                            setIsLoading(false);
+                            return;
+                        }
+
                         setError(`Proposta não encontrada ou acesso negado. (${e.message || 'Erro desconhecido'})`);
-                        return; // Stop here if proposal fails
+                        return;
                     }
                 }
 
@@ -316,6 +337,50 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                 <MapFilters isOpen={isFiltersOpen} onClose={() => setIsFiltersOpen(false)} />
                 {/* Removed duplicate MapFilters */}
                 <NavigationMenu />
+
+                {/* Access Request UI */}
+                {showAccessRequest && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-20">
+                        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md mx-4 text-center animate-in fade-in zoom-in duration-300 border border-gray-200">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Lock size={32} className="text-gray-500" />
+                            </div>
+                            <h3 className="text-gray-900 font-bold text-xl mb-2">Acesso Restrito</h3>
+                            <p className="text-gray-600 mb-6">
+                                {requestSent
+                                    ? 'Sua solicitação foi enviada ao proprietário. Você receberá um e-mail quando for aprovado.'
+                                    : 'Você não tem permissão para visualizar esta proposta. Solicite acesso para continuar.'}
+                            </p>
+
+                            {!requestSent ? (
+                                <div className="flex flex-col gap-3">
+                                    <Button
+                                        onClick={handleRequestAccess}
+                                        variant="primary"
+                                        className="w-full justify-center"
+                                    >
+                                        Solicitar Acesso
+                                    </Button>
+                                    <Button
+                                        onClick={() => router.push('/admin/proposals')}
+                                        variant="ghost"
+                                        className="w-full justify-center"
+                                    >
+                                        Voltar
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button
+                                    onClick={() => window.location.reload()}
+                                    variant="ghost"
+                                    className="w-full justify-center"
+                                >
+                                    Verificar novamente
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Share Modal - Only for authenticated users usually, but guests might view? No, guests can't share. */}
                 <ShareModal

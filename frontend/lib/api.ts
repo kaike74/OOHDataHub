@@ -34,8 +34,11 @@ async function fetchAPI(endpoint: string, options?: RequestInit) {
     });
 
     if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Request failed' }));
-        throw new Error(error.error || `HTTP ${response.status}`);
+        const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
+        const error: any = new Error(errorData.error || `HTTP ${response.status}`);
+        error.status = response.status;
+        error.canRequestAccess = errorData.canRequestAccess;
+        throw error;
     }
 
     return response.json();

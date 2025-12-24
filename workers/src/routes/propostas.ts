@@ -47,7 +47,10 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         const currentRole = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level);
 
         if (currentRole === 'none') {
-            return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers });
+            if (!payload) {
+                return new Response(JSON.stringify({ error: 'Authentication required' }), { status: 401, headers });
+            }
+            return new Response(JSON.stringify({ error: 'Access Denied', canRequestAccess: true }), { status: 403, headers });
         }
 
         // 3. Fetch Items
@@ -246,6 +249,8 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     } else {
                         await env.DB.prepare('INSERT INTO proposta_shares (proposal_id, client_user_id, role) VALUES (?, ?, ?)').bind(id, clientUser.id, data.role).run();
                     }
+                    // Cleanup access request if exists
+                    await env.DB.prepare('DELETE FROM proposta_access_requests WHERE proposal_id = ? AND user_id = ?').bind(id, clientUser.id).run();
                 } else {
                     // Send Invite (Simplified: Just skip or error for now, as asked implementation 'Google Sheets' implies sending emails, assuming functionality exists)
                     // We can reuse existing invite logic or just store pending invite.

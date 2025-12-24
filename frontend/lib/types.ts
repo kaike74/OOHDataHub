@@ -109,6 +109,7 @@ export interface Proposta {
     public_access_level?: 'none' | 'view'; // New
     currentUserRole?: 'none' | 'viewer' | 'editor' | 'admin'; // New
     sharedUsers?: SharedUser[]; // New
+    accessRequests?: { request_id: number; user_id: number; email: string; name: string }[]; // New
     itens?: PropostaItem[];
 }
 

@@ -31,6 +31,22 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
         }
     }, [proposta]);
 
+    const requests = proposta?.accessRequests || [];
+
+    const handleApproveRequest = async (req: any) => {
+        if (!proposta) return;
+        setLoading(true);
+        try {
+            await api.shareProposal(proposta.id, { email: req.email, role: 'viewer' });
+            toast.success('Acesso aprovado');
+            if (onUpdate) onUpdate();
+        } catch (e: any) {
+            toast.error('Erro ao aprovar');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleInvite = async () => {
         if (!proposta || !email) return;
         setLoading(true);
@@ -99,6 +115,34 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
         // Custom header actions if Modal supports it, otherwise generic title
         >
             <div className="flex flex-col gap-6">
+                {/* Access Requests Section */}
+                {requests.length > 0 && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <h3 className="text-sm font-semibold text-yellow-800 mb-3 flex items-center gap-2">
+                            <Lock size={16} /> Solicitações de Acesso ({requests.length})
+                        </h3>
+                        <div className="space-y-3">
+                            {requests.map((req) => (
+                                <div key={req.request_id} className="flex items-center justify-between bg-white p-2 rounded shadow-sm border border-yellow-100">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-medium text-gray-900">{req.name || req.email}</span>
+                                        <span className="text-xs text-gray-500">{req.email}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleApproveRequest(req)}
+                                            disabled={loading}
+                                            className="px-3 py-1.5 bg-yellow-600 text-white text-xs font-semibold rounded hover:bg-yellow-700 transition-colors"
+                                        >
+                                            Aprovar
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* Input Section */}
                 <div className="relative">
                     <div className="flex rounded-md border border-gray-300 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 overflow-hidden">
