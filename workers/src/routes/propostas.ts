@@ -236,11 +236,11 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     // Proposal_invites table usage:
                     const token = crypto.randomUUID();
                     await env.DB.prepare(`
-                        INSERT OR IGNORE INTO proposta_invites (proposal_id, email, created_by, created_by_type, token)
-                        VALUES (?, ?, ?, ?, ?)
+                        INSERT OR IGNORE INTO proposta_invites (proposal_id, email, created_by, created_by_type, token, status)
+                        VALUES (?, ?, ?, ?, ?, 'pending')
                     `).bind(id, email, payload!.userId, payload!.role === 'client' ? 'client' : 'internal', token).run();
 
-                    await sendUserInviteEmail(env, email, token);
+                    await sendUserInviteEmail(env, email, token, Number(id));
                 }
             }
 

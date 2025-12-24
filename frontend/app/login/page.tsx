@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useStore } from '@/lib/store';
@@ -12,8 +12,16 @@ import { Input } from '@/components/ui/Input';
 
 export default function LoginPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const setAuth = useStore((state) => state.setAuth);
     const [email, setEmail] = useState('');
+
+    useEffect(() => {
+        const emailParam = searchParams.get('email');
+        if (emailParam) {
+            setEmail(emailParam);
+        }
+    }, [searchParams]);
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
@@ -284,7 +292,7 @@ export default function LoginPage() {
                             <p className="text-center text-sm text-emidias-gray-500">
                                 Não tem uma conta?{' '}
                                 <Link
-                                    href="/signup"
+                                    href={email ? `/signup?email=${encodeURIComponent(email)}` : '/signup'}
                                     className="text-emidias-accent hover:text-emidias-accent-dark font-medium transition-colors hover:underline underline-offset-4"
                                 >
                                     Criar conta

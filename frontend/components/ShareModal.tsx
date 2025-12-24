@@ -18,7 +18,8 @@ interface ShareModalProps {
 
 export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: ShareModalProps) {
     const [email, setEmail] = useState('');
-    const [role, setRole] = useState<'viewer' | 'editor' | 'admin'>('editor'); // Default to editor like Sheets
+    const [role, setRole] = useState<'viewer' | 'editor' | 'admin'>('viewer'); // Default to viewer
+
     const [loading, setLoading] = useState(false);
     const [publicAccess, setPublicAccess] = useState<'none' | 'view'>('none');
     const [sharedUsers, setSharedUsers] = useState<SharedUser[]>([]);
@@ -101,19 +102,6 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
                             onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
                             disabled={!canManage}
                         />
-                        {email && (
-                            <div className="pr-2 flex items-center bg-gray-50 border-l border-gray-200">
-                                <select
-                                    className="h-full bg-transparent border-none text-sm text-gray-600 font-medium focus:ring-0 cursor-pointer py-0 pl-3 pr-8"
-                                    value={role}
-                                    onChange={(e) => setRole(e.target.value as any)}
-                                >
-                                    <option value="viewer">Leitor</option>
-                                    <option value="editor">Editor</option>
-                                    <option value="admin">Administrador</option>
-                                </select>
-                            </div>
-                        )}
                         {email && (
                             <button
                                 onClick={handleInvite}

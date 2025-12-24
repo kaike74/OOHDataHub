@@ -863,7 +863,8 @@ export async function sendVerificationEmail(
 export async function sendUserInviteEmail(
     env: Env,
     email: string,
-    token: string
+    token: string,
+    proposalId: number
 ): Promise<void> {
     const gmailClientEmail = (env as any).GMAIL_CLIENT_EMAIL;
     const gmailPrivateKey = (env as any).GMAIL_PRIVATE_KEY;
@@ -920,8 +921,9 @@ export async function sendUserInviteEmail(
         const tokenData = await tokenResponse.json() as any;
         const access_token = tokenData.access_token;
 
-        const inviteUrl = `${frontendUrl}/signup?invite=${token}&email=${encodeURIComponent(email)}`;
-        const subject = 'Convite para colaborar - OOH Data Hub';
+        // NEW LINK: Direct to Proposal. Backend handles pending invite via email match on signup.
+        const inviteUrl = `${frontendUrl}/admin/proposals?id=${proposalId}&email=${encodeURIComponent(email)}`;
+        const subject = 'Convite para visualizar proposta - OOH Data Hub';
         const htmlBody = `
 <!DOCTYPE html>
 <html>
@@ -938,18 +940,20 @@ export async function sendUserInviteEmail(
 <body>
     <div class="container">
         <div class="header">
-            <h1>Você foi convidado!</h1>
+            <h1>Você recebeu um convite!</h1>
         </div>
         <div class="content">
             <p>Olá,</p>
-            <p>Você foi convidado para colaborar em uma proposta no <strong>OOH Data Hub</strong>.</p>
-            <p>Para aceitar o convite e criar sua conta, clique no botão abaixo:</p>
+            <p>Você foi convidado para visualizar uma proposta no <strong>OOH Data Hub</strong>.</p>
+            <p>Para acessar a proposta, clique no botão abaixo:</p>
             
             <p style="text-align: center;">
-                <a href="${inviteUrl}" class="button">Aceitar Convite</a>
+                <a href="${inviteUrl}" class="button">Visualizar Proposta</a>
             </p>
 
-            <p>Se você já tem uma conta, basta fazer login.</p>
+            <p style="font-size: 14px; color: #666; margin-top: 20px;">
+                <strong>Nota:</strong> Se você ainda não tem uma conta, será necessário criar uma (use este mesmo email) para acessar o documento.
+            </p>
         </div>
         <div class="footer">
             <p>OOH Data Hub - Sistema de Gestão E-MÍDIAS</p>
