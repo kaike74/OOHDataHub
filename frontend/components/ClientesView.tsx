@@ -16,49 +16,56 @@ export default function ClientesView() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isClientModalOpen, setIsClientModalOpen] = useState(false);
 
-    const setSelectedCliente = useStore((state) => state.setSelectedCliente);
-    const setCurrentView = useStore((state) => state.setCurrentView);
+    // ...
+    const setMenuOpen = useStore((state) => state.setMenuOpen);
 
     useEffect(() => {
         loadClientes();
     }, []);
 
-    const loadClientes = async () => {
-        try {
-            setIsLoading(true);
-            const data = await api.getClientes();
-            setClientes(data);
-        } catch (error) {
-            console.error('Erro ao carregar clientes:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleClienteClick = (cliente: Cliente) => {
-        setSelectedCliente(cliente);
-        setCurrentView('propostas');
-    };
-
-    const filteredClientes = clientes.filter(c =>
-        c.nome.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // ...
 
     return (
-        <div className="h-full flex flex-col bg-emidias-gray-50 overflow-hidden">
+        <div className="h-full flex flex-col bg-emidias-gray-50 overflow-hidden relative">
             {/* Header */}
-            <div className="flex-shrink-0 bg-white border-b border-emidias-gray-200 px-6 py-4 flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-emidias-gray-900">Clientes</h1>
-                    <p className="text-emidias-gray-500 text-sm">Gerencie seus clientes e propostas</p>
+            <div className="flex-shrink-0 bg-white border-b border-emidias-gray-200 px-6 py-4 flex items-center justify-between z-20 relative">
+                <div className="flex items-center gap-4">
+                    {/* Menu Toggle - Visible on mobile/tablet or if sidebar is hidden */}
+                    <button
+                        onClick={() => setMenuOpen(true)}
+                        className="p-2 -ml-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all lg:hidden"
+                    >
+                        <div className="space-y-1.5">
+                            <span className="block w-6 h-0.5 bg-current rounded-full"></span>
+                            <span className="block w-6 h-0.5 bg-current rounded-full"></span>
+                            <span className="block w-6 h-0.5 bg-current rounded-full"></span>
+                        </div>
+                    </button>
+
+                    <div>
+                        <h1 className="text-2xl font-bold text-emidias-gray-900 tracking-tight">Clientes</h1>
+                        <p className="text-emidias-gray-500 text-sm flex items-center gap-2">
+                            Gerenciamento de Carteira
+                        </p>
+                    </div>
                 </div>
-                <Button
-                    onClick={() => setIsClientModalOpen(true)}
-                    className="flex items-center gap-2"
-                    leftIcon={<Plus size={20} />}
-                >
-                    Novo Cliente
-                </Button>
+
+                <div className="flex items-center gap-3">
+                    <Button
+                        onClick={() => setMenuOpen(true)}
+                        variant="ghost"
+                        className="hidden lg:flex text-gray-500 hover:text-gray-900"
+                    >
+                        Menu
+                    </Button>
+                    <Button
+                        onClick={() => setIsClientModalOpen(true)}
+                        className="flex items-center gap-2 shadow-lg shadow-emidias-accent/20"
+                        leftIcon={<Plus size={20} />}
+                    >
+                        Novo Cliente
+                    </Button>
+                </div>
             </div>
 
             {/* Filters */}

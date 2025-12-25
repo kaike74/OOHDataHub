@@ -12,6 +12,7 @@ interface ModalProps {
     footer?: React.ReactNode;
     maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl';
     className?: string;
+    zIndex?: number;
 }
 
 export function Modal({
@@ -22,7 +23,8 @@ export function Modal({
     children,
     footer,
     maxWidth = 'md',
-    className
+    className,
+    zIndex = 60
 }: ModalProps) {
     const [mounted, setMounted] = useState(false);
     const [visible, setVisible] = useState(false);
@@ -56,10 +58,13 @@ export function Modal({
     };
 
     return createPortal(
-        <div className={cn(
-            "fixed inset-0 z-[60] flex items-center justify-center p-4 transition-all duration-300",
-            isOpen ? "bg-black/40 backdrop-blur-sm opacity-100" : "bg-black/0 backdrop-blur-none opacity-0 pointer-events-none"
-        )}>
+        <div
+            className={cn(
+                "fixed inset-0 flex items-center justify-center p-4 transition-all duration-300",
+                isOpen ? "bg-black/40 backdrop-blur-sm opacity-100" : "bg-black/0 backdrop-blur-none opacity-0 pointer-events-none"
+            )}
+            style={{ zIndex }}
+        >
             <div
                 className={cn(
                     "w-full bg-white rounded-2xl shadow-emidias-2xl overflow-hidden relative transition-all duration-300 flex flex-col max-h-[90vh]",

@@ -1,2 +1,2 @@
-ALTER TABLE proposta_invites
-ADD COLUMN role TEXT DEFAULT 'viewer';
+-- Migration 0004 skipped (already applied)
+-- ALTER TABLE proposta_invites ADD COLUMN role TEXT DEFAULT 'viewer';
