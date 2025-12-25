@@ -2,15 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { Proposta, User } from '@/lib/types';
+import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import {
     Search, Plus, Building2, FileText, Users, Loader2,
-    MapPin, Menu, ChevronDown, Trash2, Coins
+    MapPin, Menu, ChevronDown, Trash2, Coins, TrendingUp
 } from 'lucide-react';
 import NavigationMenu from '@/components/NavigationMenu';
 import { useRouter, useSearchParams } from 'next/navigation';
 import CreateProposalModal from '@/components/CreateProposalModal';
+import ClientModal from '@/components/ClientModal';
 import ProposalsTable from '@/components/ProposalsTable';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
