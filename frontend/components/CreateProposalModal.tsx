@@ -118,23 +118,18 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedClientId || !name) return;
-
-        // Prevent sending "pessoal" string if it didn't resolve to an ID
-        let finalClientId = selectedClientId;
-        if (finalClientId === 'pessoal') {
-            if (clients.length > 0) finalClientId = clients[0].id;
-            else {
-                setError("Selecione um cliente válido.");
-                return;
-            }
-        }
+        // Validation: Name is required. Client can be 'pessoal' (null) or a number.
+        if (!selectedClientId && selectedClientId !== 'pessoal') return;
+        if (!name) return;
 
         try {
             setIsLoading(true);
 
+            // "Pessoal" means null id_cliente (No Client Linked)
+            const finalClientId = selectedClientId === 'pessoal' ? null : Number(selectedClientId);
+
             const payload = {
-                id_cliente: Number(finalClientId),
+                id_cliente: finalClientId,
                 nome: name,
                 comissao: user?.role === 'client' ? 'V0' : commission
             };
@@ -142,19 +137,8 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             if (isEditing && initialData) {
                 // UPDATE
                 await api.updateProposta(initialData.id, payload);
-                // Refresh local state if calling from a view that relies on it, 
-                // but usually we might need to reload the list.
-                // The parent component should handle reload on close/success.
                 onClose();
-                // Optionally refresh if we have a callback for that? 
-                // The modal has `onSuccess`? No, it's not in props explicitly but `PropostaModal` usually has one. 
-                // This `CreateProposalModal` didn't have onSuccess in the original properly used.
-                // We'll rely on router refresh or window reload if needed, OR add onSuccess prop usage.
-
-                // Since we don't have onSuccess prop in types yet, we check usage. 
-                // Current usage: onClose does navigation.
-                window.location.reload(); // Simple brute force update for now to ensure table reflects changes
-
+                window.location.reload();
             } else {
                 // CREATE
                 const response = await api.createProposta(payload);
@@ -169,7 +153,6 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                     onClose();
                 }
             }
-
         } catch (error) {
             console.error('Error saving proposal:', error);
             setError('Erro ao salvar proposta. Tente novamente.');
@@ -234,7 +217,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
 
                             {/* Show Pessoal only if we have clients to map it to, or just hide it to avoid confusion? 
                                 User asked for it. We keep it but map it logic-wise. */}
-                            <option value="pessoal">📂 Pessoal (Usar meu cliente padrão)</option>
+                            <option value="pessoal">📂 Pessoal (Sem Cliente Vinculado)</option>
 
                             {clients.length > 0 && <optgroup label="Meus Clientes">
                                 {clients.map(client => (

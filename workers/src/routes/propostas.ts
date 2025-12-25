@@ -117,8 +117,8 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             if (!payload) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers });
 
             const data = await request.json() as any;
-            if (!data.id_cliente || !data.nome) {
-                return new Response(JSON.stringify({ error: 'Campos id_cliente e nome são obrigatórios' }), { status: 400, headers });
+            if (!data.nome) {
+                return new Response(JSON.stringify({ error: 'Campo nome é obrigatório' }), { status: 400, headers });
             }
 
             const comissao = payload.role === 'client' ? 'V0' : (data.comissao || 'V4');
@@ -489,7 +489,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                 SELECT 
                     p.id, p.nome, p.created_at, p.status, p.comissao,
                     p.created_by, creator.email as creator_email, creator.name as creator_name,
-                    c.id as client_id, c.nome as client_name, c.logo_url as client_logo,
+                    c.id as client_id, COALESCE(c.nome, 'Pessoal') as client_name, c.logo_url as client_logo,
                     -- Aggregated counts
                     COUNT(DISTINCT pi.id) as total_itens,
                     SUM(pi.valor_locacao + pi.valor_papel + pi.valor_lona) as total_valor,
@@ -501,7 +501,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                         WHERE ps.proposal_id = p.id
                     ) as shared_with
                 FROM propostas p
-                JOIN clientes c ON p.id_cliente = c.id
+                LEFT JOIN clientes c ON p.id_cliente = c.id
                 LEFT JOIN usuarios_externos creator ON p.created_by = creator.id
                 LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
                 WHERE p.deleted_at IS NULL

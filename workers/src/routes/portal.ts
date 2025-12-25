@@ -41,7 +41,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                     p.id, p.nome, p.created_at, p.status,
                     p.comissao, -- Included but null/empty for consistency
                     c.id as client_id,
-                    c.nome as client_name,
+                    COALESCE(c.nome, 'Pessoal') as client_name,
                     c.logo_url as client_logo,
                     creator.name as creator_name,
                     creator.email as creator_email,
@@ -59,7 +59,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                     ) as shared_with
                 FROM propostas p
                 JOIN proposta_shares ps ON p.id = ps.proposal_id
-                JOIN clientes c ON p.id_cliente = c.id
+                LEFT JOIN clientes c ON p.id_cliente = c.id
                 LEFT JOIN usuarios_externos creator ON p.created_by = creator.id
                 LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
                 LEFT JOIN pontos_ooh po ON pi.id_ooh = po.id
