@@ -130,6 +130,13 @@ export async function handlePropostas(request: Request, env: Env, path: string):
 
             const proposalId = res.meta.last_row_id;
 
+            // If created by CLIENT, auto-share as ADMIN so they can see it in Portal list
+            if (payload.role === 'client') {
+                await env.DB.prepare(
+                    'INSERT INTO proposta_shares (proposal_id, client_user_id, role) VALUES (?, ?, ?)'
+                ).bind(proposalId, payload.userId, 'admin').run();
+            }
+
             // Log Audit
             await logAudit(env, {
                 tableName: 'propostas',
