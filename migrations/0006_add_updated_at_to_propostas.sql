@@ -1,0 +1,2 @@
+ALTER TABLE propostas
+ADD COLUMN updated_at DATETIME;

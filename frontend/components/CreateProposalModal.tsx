@@ -35,6 +35,8 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
     const [name, setName] = useState('');
     const [commission, setCommission] = useState('V4'); // Default for Internal
 
+    const [isPersonal, setIsPersonal] = useState(false); // Toggle for "Pessoal" vs "Linked Client"
+
     const isEditing = !!initialData;
 
     const loadClients = async () => {
@@ -61,19 +63,34 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             if (initialData) {
                 // Edit Mode
                 setName(initialData.nome);
-                setSelectedClientId(initialData.id_cliente);
+
+                if (initialData.id_cliente) {
+                    setIsPersonal(false);
+                    setSelectedClientId(initialData.id_cliente);
+                } else {
+                    setIsPersonal(true);
+                    setSelectedClientId(''); // Or keep it empty
+                }
+
                 setCommission((initialData.comissao as any) || 'V4');
             } else {
                 // Create Mode
                 setName('');
 
                 if (initialClientId) {
+                    setIsPersonal(false);
                     setSelectedClientId(Number(initialClientId));
                 } else if (user?.role === 'client') {
-                    // Try to auto-select first client if available, otherwise just leave empty to force selection
-                    // We don't default to 'pessoal' blindly anymore because it causes ID null error
+                    // Default to Personal for clients? User said "Pessoal ... quando pessoa não quer definir"
+                    // Maybe default to Linked if they have clients, else Personal?
+                    // Let's default to Personal to be safe/simple, or stick to previous logic?
+                    // User said "não consigo selecionar a opção pessoal".
+                    // Let's default to Personal = false (Linked) if they have clients, so they see list.
+                    // But if they want Personal, they toggle.
+                    setIsPersonal(false);
                     setSelectedClientId('');
                 } else {
+                    setIsPersonal(false);
                     setSelectedClientId('');
                 }
 
@@ -88,11 +105,11 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
 
     // Auto-select client if user is client and only has one (or if distinct 'pessoal' handling needed)
     useEffect(() => {
-        if (isOpen && !isEditing && user?.role === 'client' && clients.length > 0 && !selectedClientId) {
+        if (isOpen && !isEditing && user?.role === 'client' && clients.length > 0 && !selectedClientId && !isPersonal) {
             // If client user has clients, default to the first one instead of 'pessoal'
             setSelectedClientId(clients[0].id);
         }
-    }, [isOpen, isEditing, user, clients, selectedClientId]);
+    }, [isOpen, isEditing, user, clients, selectedClientId, isPersonal]);
 
 
     const handleClientChange = (value: string) => {
@@ -100,33 +117,22 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             setIsClientModalOpen(true);
             return;
         }
-        if (value === 'pessoal') {
-            // "Pessoal" logic: 
-            // If user is client, map to their first client? Or valid "Personal" ID?
-            // Since backend requires ID, we can't send 'pessoal' string or null.
-            // For now, if they pick Pessoal, we try to use the first available client.
-            if (clients.length > 0) {
-                setSelectedClientId(clients[0].id);
-            } else {
-                // No clients available?
-                setSelectedClientId('pessoal');
-            }
-            return;
-        }
         setSelectedClientId(Number(value));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Validation: Name is required. Client can be 'pessoal' (null) or a number.
-        if (!selectedClientId) return;
+
+        // Validation: 
+        // If NOT Personal, Client ID is required.
+        if (!isPersonal && !selectedClientId) return;
         if (!name) return;
 
         try {
             setIsLoading(true);
 
-            // "Pessoal" means null id_cliente (No Client Linked)
-            const finalClientId = selectedClientId === 'pessoal' ? null : Number(selectedClientId);
+            // If Personal, id_cliente is null. Else use selected ID.
+            const finalClientId = isPersonal ? null : Number(selectedClientId);
 
             const payload = {
                 id_cliente: finalClientId,
@@ -171,6 +177,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             if (updatedClients && updatedClients.length > 0) {
                 const newestClient = updatedClients[updatedClients.length - 1];
                 setSelectedClientId(newestClient.id);
+                setIsPersonal(false); // Ensure we are in linked mode
             }
         }, 300);
     };
@@ -180,7 +187,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             type="submit"
             form="create-proposal-form"
             isLoading={isLoading}
-            disabled={!selectedClientId || !name || selectedClientId === 'pessoal'}
+            disabled={(!isPersonal && !selectedClientId) || !name}
             className="w-full"
         >
             {isEditing ? 'Salvar Alterações' : 'Iniciar Proposta'}
@@ -205,34 +212,6 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                         </div>
                     )}
 
-                    <div className="space-y-1">
-                        <Select
-                            label="Cliente"
-                            value={String(selectedClientId)}
-                            onChange={(e) => handleClientChange(e.target.value)}
-                            required
-                            icon={<Building2 size={16} />}
-                        >
-                            <option value="" disabled>Selecione um cliente...</option>
-
-                            {/* Show Pessoal only if we have clients to map it to, or just hide it to avoid confusion? 
-                                User asked for it. We keep it but map it logic-wise. */}
-                            <option value="pessoal">📂 Pessoal (Sem Cliente Vinculado)</option>
-
-                            {clients.length > 0 && <optgroup label="Meus Clientes">
-                                {clients.map(client => (
-                                    <option key={client.id} value={client.id}>
-                                        {client.nome}
-                                    </option>
-                                ))}
-                            </optgroup>}
-
-                            <option value="create_new" className="text-emidias-accent font-semibold">
-                                + Criar Novo Cliente
-                            </option>
-                        </Select>
-                    </div>
-
                     <Input
                         label="Nome da Proposta"
                         value={name}
@@ -241,6 +220,56 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                         required
                         icon={<FileText size={16} />}
                     />
+
+                    {/* Client Selection Logic */}
+                    <div className="space-y-3">
+                        <label className="text-sm font-semibold text-gray-700 flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                                <Building2 size={16} className="text-emidias-accent" />
+                                Cliente
+                            </span>
+
+                            {/* Toggle Switch UI */}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsPersonal(!isPersonal);
+                                    if (!isPersonal) setSelectedClientId(''); // Clear if switching to personal
+                                }}
+                                className={`text-xs px-2 py-1 rounded-lg border transition-colors ${isPersonal
+                                    ? 'bg-emidias-accent text-white border-emidias-accent'
+                                    : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}
+                            >
+                                {isPersonal ? 'Sem Vínculo (Pessoal)' : 'Vincular Cliente'}
+                            </button>
+                        </label>
+
+                        {!isPersonal ? (
+                            <Select
+                                value={String(selectedClientId)}
+                                onChange={(e) => handleClientChange(e.target.value)}
+                                required
+                            >
+                                <option value="" disabled>Selecione um cliente...</option>
+
+                                {clients.length > 0 && <optgroup label="Meus Clientes">
+                                    {clients.map(client => (
+                                        <option key={client.id} value={client.id}>
+                                            {client.nome}
+                                        </option>
+                                    ))}
+                                </optgroup>}
+
+                                <option value="create_new" className="text-emidias-accent font-semibold">
+                                    + Criar Novo Cliente
+                                </option>
+                            </Select>
+                        ) : (
+                            <div className="p-3 bg-gray-50 border border-gray-100 rounded-xl text-gray-500 text-sm italic text-center">
+                                Esta proposta será criada como "Pessoal" e não estará vinculada a nenhum cliente específico.
+                            </div>
+                        )}
+                    </div>
 
                     {/* Commission Field - HIDE for Clients, SHOW for Internal */}
                     {user?.role !== 'client' && (
