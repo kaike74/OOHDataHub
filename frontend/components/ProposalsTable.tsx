@@ -1,6 +1,6 @@
 import { useStore } from '@/lib/store';
 import { formatDate, formatCurrency } from '@/lib/utils';
-import { FileText, MapPin, Coins, History, Trash2, Building2 } from 'lucide-react';
+import { FileText, MapPin, Coins, History, Trash2, Building2, Pencil } from 'lucide-react';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { api } from '@/lib/api';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -196,9 +196,9 @@ export default function ProposalsTable({
                                                 onEdit(item);
                                             }}
                                             className="p-2 text-gray-500 hover:text-emidias-accent hover:bg-gray-100 rounded-lg transition-colors border border-transparent hover:border-gray-200"
-                                            title={isClient ? "Ver detalhes" : "Editar proposta"}
+                                            title="Editar proposta"
                                         >
-                                            <FileText size={16} />
+                                            <Pencil size={16} />
                                         </button>
 
                                         {onHistory && (
@@ -211,15 +211,13 @@ export default function ProposalsTable({
                                             </button>
                                         )}
 
-                                        {!isClient && (
-                                            <button
-                                                onClick={(e) => onDelete(item.id, e)}
-                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
-                                                title="Mover para lixeira"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={(e) => onDelete(item.id, e)}
+                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                                            title="Mover para lixeira"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
                                 </td>
                             </tr>

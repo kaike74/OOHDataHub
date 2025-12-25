@@ -174,17 +174,15 @@ export default function AdminProposalsPage() {
 
                 {/* Actions - Right */}
                 <div className="flex items-center gap-2 sm:gap-3">
-                    {/* New Proposal Button - INTERNAL ONLY */}
-                    {user?.role !== 'client' && (
-                        <Button
-                            onClick={() => setIsCreateModalOpen(true)}
-                            variant="primary"
-                            className="hidden sm:flex bg-white/10 hover:bg-white/20 text-white border-0"
-                            leftIcon={<Plus size={18} />}
-                        >
-                            <span>Nova Proposta</span>
-                        </Button>
-                    )}
+                    {/* New Proposal Button */}
+                    <Button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        variant="primary"
+                        className="hidden sm:flex bg-white/10 hover:bg-white/20 text-white border-0"
+                        leftIcon={<Plus size={18} />}
+                    >
+                        <span>Nova Proposta</span>
+                    </Button>
 
                     {/* Menu Button */}
                     <button
@@ -215,16 +213,14 @@ export default function AdminProposalsPage() {
                     </div>
 
                     {/* Mobile Create Button */}
-                    {user?.role !== 'client' && (
-                        <Button
-                            onClick={() => setIsCreateModalOpen(true)}
-                            variant="primary"
-                            className="w-full md:w-auto sm:hidden"
-                            leftIcon={<Plus size={18} />}
-                        >
-                            <span>Nova Proposta</span>
-                        </Button>
-                    )}
+                    <Button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        variant="primary"
+                        className="w-full md:w-auto sm:hidden"
+                        leftIcon={<Plus size={18} />}
+                    >
+                        <span>Nova Proposta</span>
+                    </Button>
                 </div>
 
                 {/* Content */}
