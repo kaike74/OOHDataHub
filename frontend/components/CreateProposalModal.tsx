@@ -119,7 +119,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         // Validation: Name is required. Client can be 'pessoal' (null) or a number.
-        if (!selectedClientId && selectedClientId !== 'pessoal') return;
+        if (!selectedClientId) return;
         if (!name) return;
 
         try {
