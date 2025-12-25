@@ -146,6 +146,64 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         }
     }
 
+    // PUT /api/propostas/:id - Atualizar metadados da proposta (nome, cliente, comissao)
+    if (request.method === 'PUT' && path.match(/^\/api\/propostas\/\d+$/)) {
+        try {
+            const id = path.split('/').pop()!;
+            const token = extractToken(request);
+            if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+            const payload = await verifyToken(token);
+
+            const proposal = await env.DB.prepare('SELECT public_access_level FROM propostas WHERE id = ?').bind(id).first();
+            if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
+
+            const role = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
+
+            if (role !== 'admin' && role !== 'editor') {
+                return new Response(JSON.stringify({ error: 'Unauthorized: Only editors or admins can modify proposals' }), { status: 403, headers });
+            }
+
+            const data = await request.json() as any;
+
+            // Build Update Query dynamically
+            const updates = [];
+            const values = [];
+
+            if (data.nome) {
+                updates.push('nome = ?');
+                values.push(data.nome);
+            }
+            if (data.id_cliente) {
+                updates.push('id_cliente = ?');
+                values.push(data.id_cliente);
+            }
+            if (data.comissao && payload?.role !== 'client') { // Clients cannot change commission
+                updates.push('comissao = ?');
+                values.push(data.comissao);
+            }
+
+            if (updates.length > 0) {
+                updates.push('updated_at = CURRENT_TIMESTAMP');
+                values.push(id);
+                await env.DB.prepare(`UPDATE propostas SET ${updates.join(', ')} WHERE id = ?`).bind(...values).run();
+
+                await logAudit(env, {
+                    tableName: 'propostas',
+                    recordId: Number(id),
+                    action: 'UPDATE',
+                    changedBy: payload!.userId,
+                    userType: payload!.role as any,
+                    changes: data
+                });
+            }
+
+            return new Response(JSON.stringify({ success: true }), { headers });
+
+        } catch (e: any) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
     // PUT /api/propostas/:id/itens - Atualizar carrinho
     if (request.method === 'PUT' && path.match(/^\/api\/propostas\/\d+\/itens$/)) {
         try {

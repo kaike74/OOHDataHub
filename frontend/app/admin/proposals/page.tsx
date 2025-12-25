@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { Proposta, User } from '@/lib/types';
 import { useStore } from '@/lib/store';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import {
@@ -40,6 +40,10 @@ export default function AdminProposalsPage() {
     const [proposals, setProposals] = useState<AdminProposal[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [editingClient, setEditingClient] = useState<any | null>(null);
+    const [editingProposal, setEditingProposal] = useState<Proposta | null>(null);
+
+    // Filters
     const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>({});
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [creatingForClientId, setCreatingForClientId] = useState<number | undefined>(undefined);
@@ -122,6 +126,16 @@ export default function AdminProposalsPage() {
         }
     };
 
+    const handleEditProposal = (proposal: any) => {
+        // Map table item back to Proposta if needed, or fetch full?
+        // ProposalTableItem has most fields, but we should probably fetch full or just cast if simple edit
+        // For name/client edit, table item is enough usually if types match
+        // But CreateProposalModal expects Proposta type.
+        // We'll cast item to Proposta for now as it has base fields
+        setEditingProposal(proposal as Proposta); // Cast to Proposta
+        setIsCreateModalOpen(true);
+    };
+
     // Unified Table View Logic
     const filteredProposals = proposals
         .filter(p => {
@@ -141,11 +155,9 @@ export default function AdminProposalsPage() {
                 isOpen={isCreateModalOpen}
                 onClose={() => {
                     setIsCreateModalOpen(false);
-                    setCreatingForClientId(undefined);
-                    setCreatingForClientName(undefined);
+                    setEditingProposal(null);
                 }}
-                initialClientId={creatingForClientId}
-                initialClientName={creatingForClientName}
+                initialData={editingProposal}
             />
 
             {/* Header */}
@@ -176,7 +188,10 @@ export default function AdminProposalsPage() {
                 <div className="flex items-center gap-2 sm:gap-3">
                     {/* New Proposal Button */}
                     <Button
-                        onClick={() => setIsCreateModalOpen(true)}
+                        onClick={() => {
+                            setEditingProposal(null); // Ensure no editing data when creating new
+                            setIsCreateModalOpen(true);
+                        }}
                         variant="primary"
                         className="hidden sm:flex bg-white/10 hover:bg-white/20 text-white border-0"
                         leftIcon={<Plus size={18} />}
@@ -214,7 +229,10 @@ export default function AdminProposalsPage() {
 
                     {/* Mobile Create Button */}
                     <Button
-                        onClick={() => setIsCreateModalOpen(true)}
+                        onClick={() => {
+                            setEditingProposal(null); // Ensure no editing data when creating new
+                            setIsCreateModalOpen(true);
+                        }}
                         variant="primary"
                         className="w-full md:w-auto sm:hidden"
                         leftIcon={<Plus size={18} />}
@@ -228,19 +246,15 @@ export default function AdminProposalsPage() {
                     data={filteredProposals}
                     isLoading={loading}
                     showClientColumn={true}
-                    onEdit={(p) => handleOpenProposal(p.id)}
+                    onEdit={handleEditProposal}
                     onRowClick={(p) => handleOpenProposal(p.id)}
                     onDelete={handleDeleteProposta}
-                    emptyMessage="Nenhuma proposta encontrada"
-                    emptyActionLabel={user?.role === 'client' ? "Criar Nova Proposta" : undefined}
-                    onEmptyAction={
-                        user?.role === 'client'
-                            ? () => {
-                                setCreatingForClientId(undefined);
-                                setIsCreateModalOpen(true);
-                            }
-                            : undefined
-                    }
+                    emptyMessage="Nenhuma proposta encontrada com os filtros selecionados."
+                    emptyActionLabel="Criar Nova Proposta"
+                    onEmptyAction={() => {
+                        setEditingProposal(null); // Ensure no editing data when creating new
+                        setIsCreateModalOpen(true);
+                    }}
                 />
             </div>
         </div>

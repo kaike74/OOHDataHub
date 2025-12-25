@@ -92,7 +92,7 @@ export default function ProposalsTable({
                             <th className="px-6 py-4">Última Edição</th>
                             <th className="px-6 py-4 text-center">Pontos</th>
                             <th className="px-6 py-4 text-right">Valor</th>
-                            <th className="px-6 py-4 text-right">Ações</th>
+                            <th className="px-6 py-4 text-right"></th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">

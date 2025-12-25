@@ -227,6 +227,10 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
     }),
+    updateProposta: (id: number, data: any) => fetchAPI(`/api/propostas/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    }),
     updateCart: (idProposta: number, itens: any[]) => fetchAPI(`/api/propostas/${idProposta}/itens`, {
         method: 'PUT',
         body: JSON.stringify({ itens }),

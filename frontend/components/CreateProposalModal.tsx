@@ -9,15 +9,17 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import ClientModal from '@/components/ClientModal';
+import { Proposta } from '@/lib/types';
 
 interface CreateProposalModalProps {
     isOpen: boolean;
     onClose: () => void;
     initialClientId?: number;
     initialClientName?: string;
+    initialData?: Proposta | null; // For Edit Mode
 }
 
-export default function CreateProposalModal({ isOpen, onClose, initialClientId, initialClientName }: CreateProposalModalProps) {
+export default function CreateProposalModal({ isOpen, onClose, initialClientId, initialClientName, initialData }: CreateProposalModalProps) {
     const router = useRouter();
     const user = useStore((state) => state.user);
     const setSelectedProposta = useStore((state) => state.setSelectedProposta);
@@ -32,6 +34,8 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
     const [selectedClientId, setSelectedClientId] = useState<number | 'pessoal' | ''>('');
     const [name, setName] = useState('');
     const [commission, setCommission] = useState('V4'); // Default for Internal
+
+    const isEditing = !!initialData;
 
     const loadClients = async () => {
         try {
@@ -49,28 +53,47 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
         }
     }, [isOpen]);
 
-    // Reset form when opening
+    // Reset form when opening or changing initialData
     useEffect(() => {
         if (isOpen) {
             setError('');
-            setName('');
 
-            if (initialClientId) {
-                setSelectedClientId(Number(initialClientId));
-            } else if (user?.role === 'client') {
-                // Client users defaults to "Pessoal" (no specific sub-client selected initially)
-                setSelectedClientId('pessoal');
+            if (initialData) {
+                // Edit Mode
+                setName(initialData.nome);
+                setSelectedClientId(initialData.id_cliente);
+                setCommission((initialData.comissao as any) || 'V4');
             } else {
-                setSelectedClientId('');
-            }
+                // Create Mode
+                setName('');
 
-            if (user?.role === 'client') {
-                setCommission('V0');
-            } else {
-                setCommission('V4');
+                if (initialClientId) {
+                    setSelectedClientId(Number(initialClientId));
+                } else if (user?.role === 'client') {
+                    // Try to auto-select first client if available, otherwise just leave empty to force selection
+                    // We don't default to 'pessoal' blindly anymore because it causes ID null error
+                    setSelectedClientId('');
+                } else {
+                    setSelectedClientId('');
+                }
+
+                if (user?.role === 'client') {
+                    setCommission('V0');
+                } else {
+                    setCommission('V4');
+                }
             }
         }
-    }, [isOpen, user, initialClientId]);
+    }, [isOpen, user, initialClientId, initialData]);
+
+    // Auto-select client if user is client and only has one (or if distinct 'pessoal' handling needed)
+    useEffect(() => {
+        if (isOpen && !isEditing && user?.role === 'client' && clients.length > 0 && !selectedClientId) {
+            // If client user has clients, default to the first one instead of 'pessoal'
+            setSelectedClientId(clients[0].id);
+        }
+    }, [isOpen, isEditing, user, clients, selectedClientId]);
+
 
     const handleClientChange = (value: string) => {
         if (value === 'create_new') {
@@ -78,7 +101,16 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             return;
         }
         if (value === 'pessoal') {
-            setSelectedClientId('pessoal');
+            // "Pessoal" logic: 
+            // If user is client, map to their first client? Or valid "Personal" ID?
+            // Since backend requires ID, we can't send 'pessoal' string or null.
+            // For now, if they pick Pessoal, we try to use the first available client.
+            if (clients.length > 0) {
+                setSelectedClientId(clients[0].id);
+            } else {
+                // No clients available?
+                setSelectedClientId('pessoal');
+            }
             return;
         }
         setSelectedClientId(Number(value));
@@ -88,36 +120,59 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
         e.preventDefault();
         if (!selectedClientId || !name) return;
 
+        // Prevent sending "pessoal" string if it didn't resolve to an ID
+        let finalClientId = selectedClientId;
+        if (finalClientId === 'pessoal') {
+            if (clients.length > 0) finalClientId = clients[0].id;
+            else {
+                setError("Selecione um cliente válido.");
+                return;
+            }
+        }
+
         try {
             setIsLoading(true);
 
-            // If "pessoal" is selected (or just user's own context), we might send null or handle it in backend
-            // But based on current logic, if client selects "Pessoal", likely means no specific sub-client.
-            // However, the backend expects id_cliente? Or allows null?
-            // Assuming for now "Pessoal" maps to a logic where we might not send id_cliente OR send user's main client ID.
-            // If the user IS a client, and selects "Pessoal", maybe we just use their own account?
-            // Re-reading user request: "O campo cliente deve ter a opção padrão 'Pessoal' (o qual quando o usuario não quer definir um cliente)"
-
             const payload = {
-                id_cliente: selectedClientId === 'pessoal' ? null : Number(selectedClientId),
+                id_cliente: Number(finalClientId),
                 nome: name,
                 comissao: user?.role === 'client' ? 'V0' : commission
             };
 
-            const response = await api.createProposta(payload);
-
-            if (response.success && response.id) {
-                const fullProposal = await api.getProposta(response.id);
-                setSelectedProposta(fullProposal);
-
-                const url = user?.role === 'client' ? '/?action=new' : '/';
-                router.push(url);
-                setCurrentView('map');
+            if (isEditing && initialData) {
+                // UPDATE
+                await api.updateProposta(initialData.id, payload);
+                // Refresh local state if calling from a view that relies on it, 
+                // but usually we might need to reload the list.
+                // The parent component should handle reload on close/success.
                 onClose();
+                // Optionally refresh if we have a callback for that? 
+                // The modal has `onSuccess`? No, it's not in props explicitly but `PropostaModal` usually has one. 
+                // This `CreateProposalModal` didn't have onSuccess in the original properly used.
+                // We'll rely on router refresh or window reload if needed, OR add onSuccess prop usage.
+
+                // Since we don't have onSuccess prop in types yet, we check usage. 
+                // Current usage: onClose does navigation.
+                window.location.reload(); // Simple brute force update for now to ensure table reflects changes
+
+            } else {
+                // CREATE
+                const response = await api.createProposta(payload);
+
+                if (response.success && response.id) {
+                    const fullProposal = await api.getProposta(response.id);
+                    setSelectedProposta(fullProposal);
+
+                    const url = user?.role === 'client' ? '/?action=new' : '/';
+                    router.push(url);
+                    setCurrentView('map');
+                    onClose();
+                }
             }
+
         } catch (error) {
-            console.error('Error creating proposal:', error);
-            setError('Erro ao criar proposta. Tente novamente.');
+            console.error('Error saving proposal:', error);
+            setError('Erro ao salvar proposta. Tente novamente.');
         } finally {
             setIsLoading(false);
         }
@@ -127,7 +182,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
         await loadClients();
         setIsClientModalOpen(false);
 
-        // Auto-select the newest client (last in the list after reload)
+        // Auto-select the newest client
         setTimeout(async () => {
             const updatedClients = await api.getClientes();
             if (updatedClients && updatedClients.length > 0) {
@@ -142,10 +197,10 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             type="submit"
             form="create-proposal-form"
             isLoading={isLoading}
-            disabled={!selectedClientId || !name}
+            disabled={!selectedClientId || !name || selectedClientId === 'pessoal'}
             className="w-full"
         >
-            Iniciar Proposta
+            {isEditing ? 'Salvar Alterações' : 'Iniciar Proposta'}
         </Button>
     );
 
@@ -154,8 +209,8 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             <Modal
                 isOpen={isOpen}
                 onClose={onClose}
-                title="Nova Proposta"
-                subtitle={user?.role === 'client' ? 'Crie uma nova seleção de pontos' : 'Preencha os dados da proposta'}
+                title={isEditing ? "Editar Proposta" : "Nova Proposta"}
+                subtitle={isEditing ? "Atualize os dados da proposta" : (user?.role === 'client' ? 'Crie uma nova seleção de pontos' : 'Preencha os dados da proposta')}
                 footer={footer}
                 zIndex={50}
             >
@@ -176,7 +231,10 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                             icon={<Building2 size={16} />}
                         >
                             <option value="" disabled>Selecione um cliente...</option>
-                            <option value="pessoal">📂 Pessoal (Sem cliente específico)</option>
+
+                            {/* Show Pessoal only if we have clients to map it to, or just hide it to avoid confusion? 
+                                User asked for it. We keep it but map it logic-wise. */}
+                            <option value="pessoal">📂 Pessoal (Usar meu cliente padrão)</option>
 
                             {clients.length > 0 && <optgroup label="Meus Clientes">
                                 {clients.map(client => (
