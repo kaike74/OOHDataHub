@@ -27,6 +27,7 @@ interface ProposalsTableProps {
     data: ProposalTableItem[];
     isLoading: boolean;
     showClientColumn?: boolean;
+    onEdit: (item: ProposalTableItem) => void;
     onRowClick: (item: ProposalTableItem) => void;
     onDelete: (id: number, e: React.MouseEvent) => void;
     onHistory?: (id: number, e: React.MouseEvent) => void;
@@ -87,6 +88,7 @@ export default function ProposalsTable({
                             <th className="px-6 py-4">Proposta</th>
                             {!isClient && <th className="px-6 py-4">Comissão</th>}
                             <th className="px-6 py-4">Criado em</th>
+                            <th className="px-6 py-4">Última Edição</th>
                             <th className="px-6 py-4 text-center">Pontos</th>
                             <th className="px-6 py-4 text-right">Valor</th>
                             <th className="px-6 py-4 text-right">Ações</th>
@@ -163,6 +165,11 @@ export default function ProposalsTable({
                                     {formatDate(item.created_at)}
                                 </td>
 
+                                {/* Updated At */}
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {item.updated_at ? formatDate(item.updated_at) : '-'}
+                                </td>
+
                                 {/* Pontos */}
                                 <td className="px-6 py-4 whitespace-nowrap text-center">
                                     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 border border-gray-200 text-sm font-medium text-gray-700">
@@ -180,11 +187,23 @@ export default function ProposalsTable({
 
                                 {/* Actions */}
                                 <td className="px-6 py-4 whitespace-nowrap text-right">
-                                    <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center justify-end gap-1 opacity-100 group-hover:opacity-100 transition-opacity">
+                                        {/* Edit Action - Primary */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onEdit(item);
+                                            }}
+                                            className="p-2 text-gray-500 hover:text-emidias-accent hover:bg-gray-100 rounded-lg transition-colors border border-transparent hover:border-gray-200"
+                                            title={isClient ? "Ver detalhes" : "Editar proposta"}
+                                        >
+                                            <FileText size={16} />
+                                        </button>
+
                                         {onHistory && (
                                             <button
                                                 onClick={(e) => onHistory(item.id, e)}
-                                                className="p-2 text-gray-400 hover:text-emidias-accent hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200"
+                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
                                                 title="Histórico de alterações"
                                             >
                                                 <History size={16} />
@@ -194,14 +213,11 @@ export default function ProposalsTable({
                                         {!isClient && (
                                             <button
                                                 onClick={(e) => onDelete(item.id, e)}
-                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200"
+                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
                                                 title="Mover para lixeira"
                                             >
                                                 <Trash2 size={16} />
                                             </button>
-                                        )}
-                                        {isClient && (
-                                            <span className="text-xs text-gray-300 font-medium px-2">Ver</span>
                                         )}
                                     </div>
                                 </td>

@@ -180,11 +180,12 @@ export default function PropostasView() {
 
             {/* Content Area - Table */}
             <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-                <div className="max-w-7xl mx-auto">
+                <div className="w-full max-w-[1920px] mx-auto">
                     <ProposalsTable
                         data={filteredPropostas}
                         isLoading={isLoading}
                         showClientColumn={false}
+                        onEdit={(item) => handlePropostaClick(item as unknown as Proposta)}
                         onRowClick={(item) => handlePropostaClick(item as unknown as Proposta)}
                         onDelete={handleDeleteProposta}
                         onHistory={(id, e) => {
