@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { SafeImage } from '@/components/ui/SafeImage';
+import ProposalsTable from '@/components/ProposalsTable';
 
 // Extended type for frontend usage with stats
 interface ExtendedProposta extends Proposta {
@@ -180,121 +181,20 @@ export default function PropostasView() {
             {/* Content Area - Table */}
             <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
                 <div className="max-w-7xl mx-auto">
-                    {isLoading ? (
-                        <div className="space-y-4">
-                            {[...Array(5)].map((_, i) => (
-                                <Skeleton key={i} className="h-16 w-full rounded-xl" />
-                            ))}
-                        </div>
-                    ) : filteredPropostas.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-300 animate-in fade-in zoom-in duration-500">
-                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                                <FileText size={32} className="text-gray-300" />
-                            </div>
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">Nenhuma proposta encontrada</h3>
-                            <p className="text-gray-500 max-w-sm text-center mb-6">Comece criando uma nova campanha para este cliente.</p>
-                            <button
-                                onClick={() => setIsPropostaModalOpen(true)}
-                                className="text-emidias-accent font-medium hover:underline"
-                            >
-                                Criar primeira proposta
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                            <th className="px-6 py-4">Status</th>
-                                            <th className="px-6 py-4">Proposta</th>
-                                            {/* Hide Commission for External Users */}
-                                            {user?.role !== 'client' && (
-                                                <th className="px-6 py-4">Comissão</th>
-                                            )}
-                                            <th className="px-6 py-4">Criado em</th>
-                                            <th className="px-6 py-4 text-center">Pontos</th>
-                                            <th className="px-6 py-4 text-right">Valor Est.</th>
-                                            <th className="px-6 py-4 text-right">Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100">
-                                        {filteredPropostas.map((proposta) => (
-                                            <tr
-                                                key={proposta.id}
-                                                onClick={() => handlePropostaClick(proposta)}
-                                                className="group hover:bg-emidias-accent/5 transition-colors cursor-pointer"
-                                            >
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide inline-flex items-center gap-1.5 ${proposta.status === 'aprovada'
-                                                            ? 'bg-green-100 text-green-700'
-                                                            : proposta.status === 'em_negociacao'
-                                                                ? 'bg-blue-100 text-blue-700'
-                                                                : 'bg-yellow-100 text-yellow-700'
-                                                        }`}>
-                                                        <span className={`w-1.5 h-1.5 rounded-full ${proposta.status === 'aprovada' ? 'bg-green-500' :
-                                                                proposta.status === 'em_negociacao' ? 'bg-blue-500' : 'bg-yellow-500'
-                                                            }`} />
-                                                        {proposta.status.replace('_', ' ')}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="font-semibold text-gray-900 group-hover:text-emidias-accent transition-colors">
-                                                        {proposta.nome}
-                                                    </div>
-                                                </td>
-
-                                                {/* Hide Commission for External Users */}
-                                                {user?.role !== 'client' && (
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <span className="font-mono text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                                                            {proposta.comissao}
-                                                        </span>
-                                                    </td>
-                                                )}
-
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {new Date(proposta.created_at).toLocaleDateString()}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 border border-gray-200 text-sm font-medium text-gray-700">
-                                                        <MapPin size={14} className="text-gray-400" />
-                                                        {proposta.total_itens || 0}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                    <span className="font-semibold text-gray-900">
-                                                        {(proposta.total_valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setSelectedHistoryId(proposta.id);
-                                                            }}
-                                                            className="p-2 text-gray-400 hover:text-emidias-accent hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200"
-                                                            title="Histórico de alterações"
-                                                        >
-                                                            <History size={16} />
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => handleDeleteProposta(proposta.id, e)}
-                                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200"
-                                                            title="Mover para lixeira"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
+                    <ProposalsTable
+                        data={filteredPropostas}
+                        isLoading={isLoading}
+                        showClientColumn={false}
+                        onRowClick={handlePropostaClick}
+                        onDelete={handleDeleteProposta}
+                        onHistory={(id, e) => {
+                            e.stopPropagation();
+                            setSelectedHistoryId(id);
+                        }}
+                        emptyMessage="Nenhuma proposta encontrada para este cliente"
+                        emptyActionLabel="Criar primeira proposta"
+                        onEmptyAction={() => setIsPropostaModalOpen(true)}
+                    />
                 </div>
             </div>
 

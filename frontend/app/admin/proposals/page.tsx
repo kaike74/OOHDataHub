@@ -11,6 +11,7 @@ import {
 import NavigationMenu from '@/components/NavigationMenu';
 import { useRouter, useSearchParams } from 'next/navigation';
 import CreateProposalModal from '@/components/CreateProposalModal';
+import ProposalsTable from '@/components/ProposalsTable';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { SafeImage } from '@/components/ui/SafeImage';
@@ -219,142 +220,25 @@ export default function AdminProposalsPage() {
                 </div>
 
                 {/* Content */}
-                {loading ? (
-                    <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-                        {[1, 2, 3, 4, 5].map(i => (
-                            <Skeleton key={i} className="h-16 w-full rounded-xl" />
-                        ))}
-                    </div>
-                ) : filteredProposals.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200 animate-in fade-in zoom-in duration-500">
-                        <FileText className="mx-auto text-gray-300 mb-3" size={48} />
-                        <p className="text-gray-500 font-medium mb-4">Nenhuma proposta encontrada</p>
-                        {user?.role === 'client' && (
-                            <div className="text-center">
-                                <p className="text-sm text-gray-400 max-w-md mx-auto mb-6">
-                                    Comece criando sua primeira campanha.
-                                </p>
-                                <Button
-                                    onClick={() => {
-                                        setCreatingForClientId(undefined); // Will default to 'pessoal' in modal logic
-                                        setIsCreateModalOpen(true);
-                                    }}
-                                    leftIcon={<Plus size={18} />}
-                                >
-                                    Criar Nova Proposta
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden animate-in fade-in-up duration-500">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead>
-                                    <tr className="bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        <th className="px-6 py-4">Status</th>
-                                        <th className="px-6 py-4">Cliente</th>
-                                        <th className="px-6 py-4">Proposta</th>
-                                        {/* Internal Only: Commission */}
-                                        {user?.role !== 'client' && (
-                                            <th className="px-6 py-4">Comissão</th>
-                                        )}
-                                        <th className="px-6 py-4">Criado em</th>
-                                        <th className="px-6 py-4 text-center">Pontos</th>
-                                        <th className="px-6 py-4 text-right">Valor</th>
-                                        <th className="px-6 py-4 text-right">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {filteredProposals.map((proposal) => (
-                                        <tr
-                                            key={proposal.id}
-                                            onClick={() => handleOpenProposal(proposal.id)}
-                                            className="group hover:bg-emidias-accent/5 transition-colors cursor-pointer"
-                                        >
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide inline-flex items-center gap-1.5 ${proposal.status === 'aprovada'
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : proposal.status === 'em_negociacao'
-                                                            ? 'bg-blue-100 text-blue-700'
-                                                            : 'bg-yellow-100 text-yellow-700'
-                                                    }`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${proposal.status === 'aprovada' ? 'bg-green-500' :
-                                                            proposal.status === 'em_negociacao' ? 'bg-blue-500' : 'bg-yellow-500'
-                                                        }`} />
-                                                    {proposal.status.replace('_', ' ')}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-200 p-1 flex items-center justify-center">
-                                                        {proposal.client_logo ? (
-                                                            <SafeImage
-                                                                src={api.getImageUrl(proposal.client_logo)}
-                                                                alt={proposal.client_name}
-                                                                className="w-full h-full object-contain"
-                                                            />
-                                                        ) : (
-                                                            <Building2 size={14} className="text-gray-400" />
-                                                        )}
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-medium text-gray-900 line-clamp-1">{proposal.client_name}</span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="font-semibold text-gray-900 group-hover:text-emidias-accent transition-colors line-clamp-1">
-                                                    {proposal.nome}
-                                                </div>
-                                            </td>
-
-                                            {/* Commission */}
-                                            {user?.role !== 'client' && (
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className="font-mono text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                                                        {proposal.comissao}
-                                                    </span>
-                                                </td>
-                                            )}
-
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {new Date(proposal.created_at).toLocaleDateString()}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 border border-gray-200 text-sm font-medium text-gray-700">
-                                                    <MapPin size={14} className="text-gray-400" />
-                                                    {proposal.total_itens}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <span className="font-semibold text-gray-900">
-                                                    {formatCurrency(proposal.total_valor || 0)}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                {user?.role !== 'client' ? (
-                                                    <button
-                                                        onClick={(e) => handleDeleteProposta(proposal.id, e)}
-                                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200 opacity-0 group-hover:opacity-100"
-                                                        title="Mover para lixeira"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                ) : (
-                                                    // For clients, we might want fewer actions or different ones.
-                                                    // Maybe View details arrow?
-                                                    <span className="text-gray-300 text-sm">Ver</span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                )}
+                <ProposalsTable
+                    data={filteredProposals}
+                    isLoading={loading}
+                    showClientColumn={true}
+                    onRowClick={(p) => handleOpenProposal(p.id)}
+                    onDelete={handleDeleteProposta}
+                    emptyMessage="Nenhuma proposta encontrada"
+                    emptyActionLabel={user?.role === 'client' ? "Criar Nova Proposta" : undefined}
+                    onEmptyAction={
+                        user?.role === 'client'
+                            ? () => {
+                                setCreatingForClientId(undefined);
+                                setIsCreateModalOpen(true);
+                            }
+                            : undefined
+                    }
+                />
             </div>
         </div>
     );
 }
+```
