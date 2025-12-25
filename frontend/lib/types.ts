@@ -113,6 +113,7 @@ export interface Proposta {
     comissao: 'V2' | 'V3' | 'V4';
     status: string;
     created_at: string;
+    updated_at?: string;
     created_by?: number | null;
     public_token?: string;
     public_access_level?: 'none' | 'view'; // New
