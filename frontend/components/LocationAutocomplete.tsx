@@ -25,7 +25,7 @@ export default function LocationAutocomplete({ value = [], onChange, placeholder
             libraries: ['places']
         });
 
-        loader.importLibrary('places').then(() => {
+        loader.load().then(() => {
             setIsScriptLoaded(true);
             autocompleteService.current = new google.maps.places.AutocompleteService();
             sessionToken.current = new google.maps.places.AutocompleteSessionToken();
