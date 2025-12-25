@@ -122,6 +122,11 @@ export default function ClientesView() {
                                         <h3 className="font-bold text-emidias-gray-900 truncate group-hover:text-emidias-accent transition-colors">
                                             {cliente.nome}
                                         </h3>
+                                        {cliente.cnpj && (
+                                            <p className="text-xs text-gray-400 font-mono mt-0.5 truncate">
+                                                {cliente.cnpj}
+                                            </p>
+                                        )}
                                         <div className="flex items-center gap-1 text-emidias-gray-500 text-sm mt-1">
                                             <span>Ver propostas</span>
                                             <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />

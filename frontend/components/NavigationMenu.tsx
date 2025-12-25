@@ -2,7 +2,7 @@
 
 import { useStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
-import { X, Map, Building2, Settings, LogOut, ChevronRight, Shield, Users, Trash2 } from 'lucide-react';
+import { X, Map, Building2, Settings, LogOut, ChevronRight, Shield, Users, Trash2, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function NavigationMenu() {
@@ -35,8 +35,15 @@ export default function NavigationMenu() {
             type: 'view' as const
         },
         {
+            id: 'clientes' as const,
+            icon: Users, // Or Briefcase/Building
+            label: 'Clientes',
+            description: 'Gerenciar carteira de clientes',
+            type: 'view' as const
+        },
+        {
             id: 'propostas' as const,
-            icon: Users,
+            icon: FileText, // Changed from Users to FileText to allow Users for Clientes
             label: 'Propostas',
             description: 'Gerenciar propostas por cliente',
             type: 'view' as const
@@ -59,7 +66,7 @@ export default function NavigationMenu() {
 
     // Filter menu items for clients
     const filteredMenuItems = user?.role === 'client'
-        ? menuItems.filter(item => item.id === 'propostas')
+        ? menuItems.filter(item => item.id === 'propostas' || item.id === 'clientes')
         : menuItems;
 
     const handleLogout = () => {
@@ -84,6 +91,8 @@ export default function NavigationMenu() {
 
         if (viewId === 'propostas') {
             router.push('/admin/proposals');
+        } else if (viewId === 'clientes') {
+            router.push('/admin/clients');
         } else if (viewId === 'contas') {
             router.push('/admin/accounts');
         } else if (viewId === 'lixeira') {

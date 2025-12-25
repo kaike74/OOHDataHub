@@ -89,6 +89,13 @@ export interface Cliente {
     nome: string;
     logo_url: string | null;
     created_at: string;
+    cnpj?: string;
+    origin?: 'internal' | 'external';
+    created_by?: number;
+    segmento?: string;
+    publico_alvo?: string;
+    regiao?: string;
+    pacote_id?: number;
 }
 
 export interface SharedUser {

@@ -1,7 +1,9 @@
 
 import { useState, useRef } from 'react';
-import { X, Upload, Loader2, Building2 } from 'lucide-react';
+import { X, Upload, Loader2, Building2, Search } from 'lucide-react';
 import { api } from '@/lib/api';
+import { formatCNPJ, cn } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
 
 interface ClientModalProps {
     isOpen: boolean;
@@ -10,10 +12,20 @@ interface ClientModalProps {
 }
 
 export default function ClientModal({ isOpen, onClose, onSuccess }: ClientModalProps) {
-    const [nome, setNome] = useState('');
+    const [formData, setFormData] = useState({
+        nome: '',
+        cnpj: '',
+        segmento: '',
+        publico_alvo: '',
+        regiao: '',
+        pacote_id: ''
+    });
+
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoadingCNPJ, setIsLoadingCNPJ] = useState(false);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     if (!isOpen) return null;
@@ -27,85 +39,223 @@ export default function ClientModal({ isOpen, onClose, onSuccess }: ClientModalP
         }
     };
 
+    const handleCNPJChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setFormData(prev => ({ ...prev, cnpj: formatCNPJ(value) }));
+    };
+
+    const fetchCNPJ = async () => {
+        const cleanCNPJ = formData.cnpj.replace(/\D/g, '');
+        if (cleanCNPJ.length !== 14) {
+            alert('CNPJ inválido. Digite os 14 dígitos.');
+            return;
+        }
+
+        setIsLoadingCNPJ(true);
+        try {
+            const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCNPJ}`);
+            if (!response.ok) throw new Error('CNPJ não encontrado');
+
+            const data = await response.json();
+
+            // Auto-fill available data
+            setFormData(prev => ({
+                ...prev,
+                nome: data.razao_social || data.nome_fantasia || prev.nome,
+                // Try to map cnae to segmento if possible, or just leave blank
+                segmento: data.cnae_fiscal_descricao || prev.segmento,
+                regiao: data.uf || prev.regiao // Simple regiao guess
+            }));
+
+        } catch (error) {
+            console.error('Erro ao buscar CNPJ:', error);
+            alert('Erro ao buscar dados do CNPJ. Verifique se está correto.');
+        } finally {
+            setIsLoadingCNPJ(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!formData.cnpj || formData.cnpj.length < 14) {
+            alert('CNPJ é obrigatório');
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
             // 1. Create Client
-            const newClient = await api.createCliente({ nome });
+            const payload = {
+                nome: formData.nome,
+                cnpj: formData.cnpj,
+                segmento: formData.segmento,
+                publico_alvo: formData.publico_alvo,
+                regiao: formData.regiao,
+                pacote_id: formData.pacote_id ? Number(formData.pacote_id) : null
+            };
+
+            const newClient = await api.createCliente(payload);
 
             // 2. Upload Logo if selected
             if (selectedFile && newClient.id) {
-                const uploadResult = await api.uploadClientLogo(selectedFile, String(newClient.id));
-                // Update local object if needed, but we reload list anyway
+                await api.uploadClientLogo(selectedFile, String(newClient.id));
             }
 
             onSuccess();
-            onClose();
-            setNome('');
-            setLogoPreview(null);
-            setSelectedFile(null);
+            handleClose();
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erro:', error);
-            alert('Erro ao criar cliente');
+            alert(error.message || 'Erro ao criar cliente');
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    const handleClose = () => {
+        setFormData({
+            nome: '',
+            cnpj: '',
+            segmento: '',
+            publico_alvo: '',
+            regiao: '',
+            pacote_id: ''
+        });
+        setLogoPreview(null);
+        setSelectedFile(null);
+        onClose();
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-scale-in">
+            <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-scale-in max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50 sticky top-0 z-10">
                     <h2 className="text-xl font-bold text-gray-900">Novo Cliente</h2>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
+                    <button onClick={handleClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
                         <X size={20} />
                     </button>
                 </div>
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    {/* Logo Upload Placeholder */}
-                    <div className="flex flex-col items-center justify-center gap-3">
-                        <div
-                            className="w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center relative overflow-hidden group hover:border-emidias-accent hover:bg-emidias-accent/5 transition-all cursor-pointer"
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            {logoPreview ? (
-                                <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
-                            ) : (
-                                <Building2 className="text-gray-400 group-hover:text-emidias-accent" size={32} />
-                            )}
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleFileChange}
-                                accept="image/*"
-                                className="hidden"
-                            />
+                    <div className="grid grid-cols-1 md:grid-cols-[120px_1fr] gap-6">
+                        {/* Logo Upload */}
+                        <div className="flex flex-col items-center gap-2">
+                            <div
+                                className="w-28 h-28 rounded-xl bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center relative overflow-hidden group hover:border-emidias-accent hover:bg-emidias-accent/5 transition-all cursor-pointer"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                {logoPreview ? (
+                                    <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="flex flex-col items-center text-gray-400 group-hover:text-emidias-accent">
+                                        <Upload size={24} className="mb-1" />
+                                        <span className="text-[10px] uppercase font-bold">Logo</span>
+                                    </div>
+                                )}
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    accept="image/*"
+                                    className="hidden"
+                                />
+                            </div>
                         </div>
-                        <span className="text-sm text-gray-500">Logo do Cliente</span>
+
+                        {/* Main Fields */}
+                        <div className="space-y-4">
+                            {/* CNPJ Row */}
+                            <div className="flex items-end gap-2">
+                                <div className="flex-1 space-y-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">CNPJ *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formData.cnpj}
+                                        onChange={handleCNPJChange}
+                                        maxLength={18}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10 transition-all outline-none font-mono text-sm"
+                                        placeholder="00.000.000/0000-00"
+                                    />
+                                </div>
+                                <Button
+                                    type="button"
+                                    onClick={fetchCNPJ}
+                                    disabled={isLoadingCNPJ || formData.cnpj.length < 14}
+                                    className="mb-[1px] h-[42px]"
+                                    variant="outline"
+                                >
+                                    {isLoadingCNPJ ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} />}
+                                    <span className="ml-2 hidden sm:inline">Buscar</span>
+                                </Button>
+                            </div>
+
+                            {/* Nome */}
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Nome da Empresa *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.nome}
+                                    onChange={(e) => setFormData(p => ({ ...p, nome: e.target.value }))}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10 transition-all outline-none"
+                                    placeholder="Razão Social ou Nome Fantasia"
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-semibold text-gray-700">Nome da Empresa</label>
-                        <input
-                            type="text"
-                            required
-                            value={nome}
-                            onChange={(e) => setNome(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10 transition-all outline-none"
-                            placeholder="Ex: McDonald's"
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Segmento</label>
+                            <select
+                                value={formData.segmento}
+                                onChange={(e) => setFormData(p => ({ ...p, segmento: e.target.value }))}
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10 transition-all outline-none bg-white"
+                            >
+                                <option value="">Selecione...</option>
+                                <option value="Varejo">Varejo</option>
+                                <option value="Serviços">Serviços</option>
+                                <option value="Indústria">Indústria</option>
+                                <option value="Tecnologia">Tecnologia</option>
+                                <option value="Educação">Educação</option>
+                                <option value="Saúde">Saúde</option>
+                                <option value="Imobiliário">Imobiliário</option>
+                                <option value="Automotivo">Automotivo</option>
+                                <option value="Alimentação">Alimentação</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Região de Atuação</label>
+                            <input
+                                type="text"
+                                value={formData.regiao}
+                                onChange={(e) => setFormData(p => ({ ...p, regiao: e.target.value }))}
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10 transition-all outline-none"
+                                placeholder="Ex: São Paulo, Nacional..."
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Público-Alvo</label>
+                        <textarea
+                            value={formData.publico_alvo}
+                            onChange={(e) => setFormData(p => ({ ...p, publico_alvo: e.target.value }))}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10 transition-all outline-none resize-none h-20"
+                            placeholder="Descreva o público-alvo principal..."
                         />
                     </div>
 
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex gap-3 pt-4 border-t border-gray-100">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="flex-1 py-3 px-4 rounded-xl font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
                         >
                             Cancelar
@@ -115,7 +265,7 @@ export default function ClientModal({ isOpen, onClose, onSuccess }: ClientModalP
                             disabled={isSubmitting}
                             className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-emidias-accent hover:bg-emidias-accent-dark shadow-lg shadow-emidias-accent/20 transition-all flex items-center justify-center gap-2"
                         >
-                            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Criar Cliente'}
+                            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Salvar Cliente'}
                         </button>
                     </div>
                 </form>
