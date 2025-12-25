@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Building2, DollarSign, FileText, Plus } from 'lucide-react';
+import { Building2, DollarSign, FileText, Plus, User as UserIcon } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
@@ -29,7 +29,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
     const [isClientModalOpen, setIsClientModalOpen] = useState(false);
 
     // Form States
-    const [selectedClientId, setSelectedClientId] = useState<number | ''>('');
+    const [selectedClientId, setSelectedClientId] = useState<number | 'pessoal' | ''>('');
     const [name, setName] = useState('');
     const [commission, setCommission] = useState('V4'); // Default for Internal
 
@@ -58,10 +58,8 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             if (initialClientId) {
                 setSelectedClientId(Number(initialClientId));
             } else if (user?.role === 'client') {
-                // If client has only one business, auto-select it? 
-                // We'll wait for clients to load, or user can select.
-                // For now, let's not auto-select unless we know which one (or maybe first one after load).
-                setSelectedClientId('');
+                // Client users defaults to "Pessoal" (no specific sub-client selected initially)
+                setSelectedClientId('pessoal');
             } else {
                 setSelectedClientId('');
             }
@@ -74,12 +72,17 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
         }
     }, [isOpen, user, initialClientId]);
 
-    // Auto-select if only one client (optional, but nice UX)
-    useEffect(() => {
-        if (isOpen && clients.length === 1 && !selectedClientId) {
-            setSelectedClientId(clients[0].id);
+    const handleClientChange = (value: string) => {
+        if (value === 'create_new') {
+            setIsClientModalOpen(true);
+            return;
         }
-    }, [clients, isOpen, selectedClientId]);
+        if (value === 'pessoal') {
+            setSelectedClientId('pessoal');
+            return;
+        }
+        setSelectedClientId(Number(value));
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,10 +90,18 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
 
         try {
             setIsLoading(true);
+
+            // If "pessoal" is selected (or just user's own context), we might send null or handle it in backend
+            // But based on current logic, if client selects "Pessoal", likely means no specific sub-client.
+            // However, the backend expects id_cliente? Or allows null?
+            // Assuming for now "Pessoal" maps to a logic where we might not send id_cliente OR send user's main client ID.
+            // If the user IS a client, and selects "Pessoal", maybe we just use their own account?
+            // Re-reading user request: "O campo cliente deve ter a opção padrão 'Pessoal' (o qual quando o usuario não quer definir um cliente)"
+
             const payload = {
-                id_cliente: Number(selectedClientId),
+                id_cliente: selectedClientId === 'pessoal' ? null : Number(selectedClientId),
                 nome: name,
-                comissao: commission
+                comissao: user?.role === 'client' ? 'V0' : commission
             };
 
             const response = await api.createProposta(payload);
@@ -157,33 +168,28 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                     )}
 
                     <div className="space-y-1">
-                        <div className="flex items-end gap-2">
-                            <div className="flex-1">
-                                <Select
-                                    label="Cliente"
-                                    value={selectedClientId}
-                                    onChange={(e) => setSelectedClientId(Number(e.target.value))}
-                                    required
-                                    icon={<Building2 size={16} />}
-                                >
-                                    <option value="" disabled>Selecione um cliente...</option>
-                                    {clients.map(client => (
-                                        <option key={client.id} value={client.id}>
-                                            {client.nome}
-                                        </option>
-                                    ))}
-                                </Select>
-                            </div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="mb-[1px] h-[46px] w-[46px] p-0 flex items-center justify-center shrink-0"
-                                onClick={() => setIsClientModalOpen(true)}
-                                title="Criar Novo Cliente"
-                            >
-                                <Plus size={20} />
-                            </Button>
-                        </div>
+                        <Select
+                            label="Cliente"
+                            value={String(selectedClientId)}
+                            onChange={(e) => handleClientChange(e.target.value)}
+                            required
+                            icon={<Building2 size={16} />}
+                        >
+                            <option value="" disabled>Selecione um cliente...</option>
+                            <option value="pessoal">📂 Pessoal (Sem cliente específico)</option>
+
+                            {clients.length > 0 && <optgroup label="Meus Clientes">
+                                {clients.map(client => (
+                                    <option key={client.id} value={client.id}>
+                                        {client.nome}
+                                    </option>
+                                ))}
+                            </optgroup>}
+
+                            <option value="create_new" className="text-emidias-accent font-semibold">
+                                + Criar Novo Cliente
+                            </option>
+                        </Select>
                     </div>
 
                     <Input
@@ -195,17 +201,13 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                         icon={<FileText size={16} />}
                     />
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-semibold text-emidias-gray-700 flex items-center gap-2">
-                            <DollarSign size={16} className="text-emidias-accent" />
-                            Tabela de Comissão
-                        </label>
-                        {user?.role === 'client' ? (
-                            <div className="w-full p-3 bg-emidias-gray-100 border border-emidias-gray-200 rounded-xl font-medium text-emidias-gray-600 cursor-not-allowed flex items-center justify-between">
-                                <span>Tabela Cliente (V0)</span>
-                                <span className="text-xs bg-emidias-gray-200 px-2 py-1 rounded text-emidias-gray-500">Padrão</span>
-                            </div>
-                        ) : (
+                    {/* Commission Field - HIDE for Clients, SHOW for Internal */}
+                    {user?.role !== 'client' && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                <DollarSign size={16} className="text-emidias-accent" />
+                                Tabela de Comissão
+                            </label>
                             <div className="grid grid-cols-3 gap-3">
                                 {['V2', 'V3', 'V4'].map((opt) => (
                                     <Button
@@ -219,8 +221,8 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                                     </Button>
                                 ))}
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </form>
             </Modal>
 
