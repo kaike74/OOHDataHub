@@ -31,11 +31,10 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
     const [isClientModalOpen, setIsClientModalOpen] = useState(false);
 
     // Form States
-    const [selectedClientId, setSelectedClientId] = useState<number | 'pessoal' | ''>('');
+    // Use string type to handle 'pessoal' (no client) and numeric IDs as strings
+    const [selectedClientId, setSelectedClientId] = useState<string>('');
     const [name, setName] = useState('');
     const [commission, setCommission] = useState('V4'); // Default for Internal
-
-    const [isPersonal, setIsPersonal] = useState(false); // Toggle for "Pessoal" vs "Linked Client"
 
     const isEditing = !!initialData;
 
@@ -65,11 +64,9 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                 setName(initialData.nome);
 
                 if (initialData.id_cliente) {
-                    setIsPersonal(false);
-                    setSelectedClientId(initialData.id_cliente);
+                    setSelectedClientId(String(initialData.id_cliente));
                 } else {
-                    setIsPersonal(true);
-                    setSelectedClientId(''); // Or keep it empty
+                    setSelectedClientId('pessoal'); // Null client = Pessoal
                 }
 
                 setCommission((initialData.comissao as any) || 'V4');
@@ -78,19 +75,14 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                 setName('');
 
                 if (initialClientId) {
-                    setIsPersonal(false);
-                    setSelectedClientId(Number(initialClientId));
+                    setSelectedClientId(String(initialClientId));
                 } else if (user?.role === 'client') {
-                    // Default to Personal for clients? User said "Pessoal ... quando pessoa não quer definir"
-                    // Maybe default to Linked if they have clients, else Personal?
-                    // Let's default to Personal to be safe/simple, or stick to previous logic?
-                    // User said "não consigo selecionar a opção pessoal".
-                    // Let's default to Personal = false (Linked) if they have clients, so they see list.
-                    // But if they want Personal, they toggle.
-                    setIsPersonal(false);
+                    // Default to first client if available?
+                    // Or force user to choose?
+                    // Let's force choice or default to 'pessoal' if requested, implies intentional selection.
+                    // Making empty initially forces user to pick.
                     setSelectedClientId('');
                 } else {
-                    setIsPersonal(false);
                     setSelectedClientId('');
                 }
 
@@ -105,11 +97,11 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
 
     // Auto-select client if user is client and only has one (or if distinct 'pessoal' handling needed)
     useEffect(() => {
-        if (isOpen && !isEditing && user?.role === 'client' && clients.length > 0 && !selectedClientId && !isPersonal) {
+        if (isOpen && !isEditing && user?.role === 'client' && clients.length > 0 && !selectedClientId) {
             // If client user has clients, default to the first one instead of 'pessoal'
-            setSelectedClientId(clients[0].id);
+            setSelectedClientId(String(clients[0].id));
         }
-    }, [isOpen, isEditing, user, clients, selectedClientId, isPersonal]);
+    }, [isOpen, isEditing, user, clients, selectedClientId]);
 
 
     const handleClientChange = (value: string) => {
@@ -117,22 +109,21 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             setIsClientModalOpen(true);
             return;
         }
-        setSelectedClientId(Number(value));
+        setSelectedClientId(value);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validation: 
-        // If NOT Personal, Client ID is required.
-        if (!isPersonal && !selectedClientId) return;
+        // Validation: Required selection
+        if (!selectedClientId) return;
         if (!name) return;
 
         try {
             setIsLoading(true);
 
-            // If Personal, id_cliente is null. Else use selected ID.
-            const finalClientId = isPersonal ? null : Number(selectedClientId);
+            // "Pessoal" means null id_cliente. Else use selected ID.
+            const finalClientId = selectedClientId === 'pessoal' ? null : Number(selectedClientId);
 
             const payload = {
                 id_cliente: finalClientId,
@@ -176,8 +167,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             const updatedClients = await api.getClientes();
             if (updatedClients && updatedClients.length > 0) {
                 const newestClient = updatedClients[updatedClients.length - 1];
-                setSelectedClientId(newestClient.id);
-                setIsPersonal(false); // Ensure we are in linked mode
+                setSelectedClientId(String(newestClient.id));
             }
         }, 300);
     };
@@ -187,7 +177,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             type="submit"
             form="create-proposal-form"
             isLoading={isLoading}
-            disabled={(!isPersonal && !selectedClientId) || !name}
+            disabled={!selectedClientId || !name}
             className="w-full"
         >
             {isEditing ? 'Salvar Alterações' : 'Iniciar Proposta'}
@@ -222,54 +212,30 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                     />
 
                     {/* Client Selection Logic */}
-                    <div className="space-y-3">
-                        <label className="text-sm font-semibold text-gray-700 flex items-center justify-between">
-                            <span className="flex items-center gap-2">
-                                <Building2 size={16} className="text-emidias-accent" />
-                                Cliente
-                            </span>
+                    <Select
+                        label="Cliente"
+                        value={selectedClientId}
+                        onChange={(e) => handleClientChange(e.target.value)}
+                        required
+                        icon={<Building2 size={16} />}
+                    >
+                        <option value="" disabled>Selecione um cliente...</option>
 
-                            {/* Toggle Switch UI */}
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsPersonal(!isPersonal);
-                                    if (!isPersonal) setSelectedClientId(''); // Clear if switching to personal
-                                }}
-                                className={`text-xs px-2 py-1 rounded-lg border transition-colors ${isPersonal
-                                    ? 'bg-emidias-accent text-white border-emidias-accent'
-                                    : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}
-                            >
-                                {isPersonal ? 'Sem Vínculo (Pessoal)' : 'Vincular Cliente'}
-                            </button>
-                        </label>
+                        {/* Always show Pessoal option */}
+                        <option value="pessoal">📂 Pessoal (Sem Cliente Vinculado)</option>
 
-                        {!isPersonal ? (
-                            <Select
-                                value={String(selectedClientId)}
-                                onChange={(e) => handleClientChange(e.target.value)}
-                                required
-                            >
-                                <option value="" disabled>Selecione um cliente...</option>
-
-                                {clients.length > 0 && <optgroup label="Meus Clientes">
-                                    {clients.map(client => (
-                                        <option key={client.id} value={client.id}>
-                                            {client.nome}
-                                        </option>
-                                    ))}
-                                </optgroup>}
-
-                                <option value="create_new" className="text-emidias-accent font-semibold">
-                                    + Criar Novo Cliente
+                        {clients.length > 0 && <optgroup label="Meus Clientes">
+                            {clients.map(client => (
+                                <option key={client.id} value={client.id}>
+                                    {client.nome}
                                 </option>
-                            </Select>
-                        ) : (
-                            <div className="p-3 bg-gray-50 border border-gray-100 rounded-xl text-gray-500 text-sm italic text-center">
-                                Esta proposta será criada como "Pessoal" e não estará vinculada a nenhum cliente específico.
-                            </div>
-                        )}
-                    </div>
+                            ))}
+                        </optgroup>}
+
+                        <option value="create_new" className="text-emidias-accent font-semibold">
+                            + Criar Novo Cliente
+                        </option>
+                    </Select>
 
                     {/* Commission Field - HIDE for Clients, SHOW for Internal */}
                     {user?.role !== 'client' && (
