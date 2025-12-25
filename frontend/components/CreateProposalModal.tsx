@@ -114,8 +114,16 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
 
     const handleClientSuccess = async () => {
         await loadClients();
-        // Optionally auto-select the newest client
         setIsClientModalOpen(false);
+
+        // Auto-select the newest client (last in the list after reload)
+        setTimeout(async () => {
+            const updatedClients = await api.getClientes();
+            if (updatedClients && updatedClients.length > 0) {
+                const newestClient = updatedClients[updatedClients.length - 1];
+                setSelectedClientId(newestClient.id);
+            }
+        }, 300);
     };
 
     const footer = (
@@ -138,6 +146,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                 title="Nova Proposta"
                 subtitle={user?.role === 'client' ? 'Crie uma nova seleção de pontos' : 'Preencha os dados da proposta'}
                 footer={footer}
+                zIndex={50}
             >
                 <form id="create-proposal-form" onSubmit={handleSubmit} className="space-y-6">
 

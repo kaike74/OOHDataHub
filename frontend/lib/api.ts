@@ -212,6 +212,13 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
     }),
+    updateCliente: (id: number, data: any) => fetchAPI(`/api/clientes/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    }),
+    deleteCliente: (id: number) => fetchAPI(`/api/clientes/${id}`, {
+        method: 'DELETE',
+    }),
     getClientProposals: (id: number) => fetchAPI(`/api/clientes/${id}/propostas`),
 
     // Propostas
