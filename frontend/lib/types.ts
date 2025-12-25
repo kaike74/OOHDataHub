@@ -94,7 +94,9 @@ export interface Cliente {
     created_by?: number;
     segmento?: string;
     publico_alvo?: string;
-    regiao?: string;
+    regioes_atuacao?: string; // JSON string of selected regions
+    cidade?: string;
+    uf?: string;
     pacote_id?: number;
 }
 

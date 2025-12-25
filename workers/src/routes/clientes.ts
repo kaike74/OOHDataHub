@@ -91,8 +91,9 @@ export async function handleClientes(request: Request, env: Env, path: string): 
             const result = await env.DB.prepare(`
                 INSERT INTO clientes (
                     nome, logo_url, cnpj, origin, created_by, 
-                    segmento, publico_alvo, regiao, pacote_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    segmento, publico_alvo, regioes_atuacao, pacote_id,
+                    cidade, uf
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
                 data.nome,
                 data.logo_url || null,
@@ -101,8 +102,10 @@ export async function handleClientes(request: Request, env: Env, path: string): 
                 createdBy,
                 data.segmento || null,
                 data.publico_alvo || null,
-                data.regiao || null,
-                data.pacote_id || null
+                data.regioes_atuacao || null,
+                data.pacote_id || null,
+                data.cidade || null,
+                data.uf || null
             ).run();
 
             return new Response(JSON.stringify({ id: result.meta.last_row_id, success: true }), { status: 201, headers });
@@ -184,7 +187,9 @@ export async function handleClientes(request: Request, env: Env, path: string): 
             if (data.logo_url !== undefined) { updates.push('logo_url = ?'); values.push(data.logo_url); } // Allow clearing
             if (data.segmento !== undefined) { updates.push('segmento = ?'); values.push(data.segmento); }
             if (data.publico_alvo !== undefined) { updates.push('publico_alvo = ?'); values.push(data.publico_alvo); }
-            if (data.regiao !== undefined) { updates.push('regiao = ?'); values.push(data.regiao); }
+            if (data.regioes_atuacao !== undefined) { updates.push('regioes_atuacao = ?'); values.push(data.regioes_atuacao); }
+            if (data.cidade !== undefined) { updates.push('cidade = ?'); values.push(data.cidade); }
+            if (data.uf !== undefined) { updates.push('uf = ?'); values.push(data.uf); }
             // CNPJ update logic need check uniqueness... skip for now to simplify or assume user knows.
 
             if (updates.length > 0) {

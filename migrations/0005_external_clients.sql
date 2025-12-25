@@ -13,7 +13,11 @@ ADD COLUMN segmento TEXT;
 ALTER TABLE clientes
 ADD COLUMN publico_alvo TEXT;
 ALTER TABLE clientes
-ADD COLUMN regiao TEXT;
+ADD COLUMN regioes_atuacao TEXT;
+ALTER TABLE clientes
+ADD COLUMN cidade TEXT;
+ALTER TABLE clientes
+ADD COLUMN uf TEXT;
 ALTER TABLE clientes
 ADD COLUMN pacote_id INTEGER;
 -- 2. Create Indexes for performance and uniqueness constraints
