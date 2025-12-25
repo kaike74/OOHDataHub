@@ -40,6 +40,7 @@ export default function ProposalsTable({
     data,
     isLoading,
     showClientColumn = false,
+    onEdit,
     onRowClick,
     onDelete,
     onHistory,
