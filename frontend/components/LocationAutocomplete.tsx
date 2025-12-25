@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Loader2, X, MapPin } from 'lucide-react';
-import { Loader } from '@googlemaps/js-api-loader';
+// Loader import removed as we use dynamic import
+import { X, MapPin, Loader2 } from 'lucide-react';
 
 interface LocationAutocompleteProps {
     value: string[]; // Array of selected location strings
@@ -19,19 +19,28 @@ export default function LocationAutocomplete({ value = [], onChange, placeholder
 
     // Initialize Google Maps Script
     useEffect(() => {
-        const loader = new Loader({
-            apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-            version: 'weekly',
-            libraries: ['places']
-        });
+        const initGoogleMaps = async () => {
+            try {
+                // Dynamic import to avoid SSR issues and use the functional API
+                const { setOptions, importLibrary } = await import('@googlemaps/js-api-loader');
 
-        (loader as any).importLibrary('places').then(() => {
-            setIsScriptLoaded(true);
-            autocompleteService.current = new google.maps.places.AutocompleteService();
-            sessionToken.current = new google.maps.places.AutocompleteSessionToken();
-        }).catch((err: unknown) => {
-            console.error('Error loading Google Maps API:', err);
-        });
+                setOptions({
+                    key: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+                    v: "weekly",
+                });
+
+                await importLibrary("places");
+
+                setIsScriptLoaded(true);
+                autocompleteService.current = new google.maps.places.AutocompleteService();
+                sessionToken.current = new google.maps.places.AutocompleteSessionToken();
+
+            } catch (error) {
+                console.error('Error loading Google Maps API:', error);
+            }
+        };
+
+        initGoogleMaps();
     }, []);
 
     const fetchPredictions = (input: string) => {
