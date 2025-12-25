@@ -16,14 +16,34 @@ export default function ClientesView() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isClientModalOpen, setIsClientModalOpen] = useState(false);
 
-    // ...
+    const setSelectedCliente = useStore((state) => state.setSelectedCliente);
+    const setCurrentView = useStore((state) => state.setCurrentView);
     const setMenuOpen = useStore((state) => state.setMenuOpen);
 
     useEffect(() => {
         loadClientes();
     }, []);
 
-    // ...
+    const loadClientes = async () => {
+        try {
+            setIsLoading(true);
+            const data = await api.getClientes();
+            setClientes(data);
+        } catch (error) {
+            console.error('Erro ao carregar clientes:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleClienteClick = (cliente: Cliente) => {
+        setSelectedCliente(cliente);
+        setCurrentView('propostas');
+    };
+
+    const filteredClientes = clientes.filter(c =>
+        c.nome.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
         <div className="h-full flex flex-col bg-emidias-gray-50 overflow-hidden relative">
