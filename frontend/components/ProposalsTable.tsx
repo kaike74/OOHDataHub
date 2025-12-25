@@ -87,6 +87,7 @@ export default function ProposalsTable({
                             <th className="px-6 py-4">Status</th>
                             {showClientColumn && <th className="px-6 py-4">Cliente</th>}
                             <th className="px-6 py-4">Proposta</th>
+                            <th className="px-6 py-4">Criado por</th>
                             {!isClient && <th className="px-6 py-4">Comissão</th>}
                             <th className="px-6 py-4">Criado em</th>
                             <th className="px-6 py-4">Última Edição</th>
@@ -115,6 +116,11 @@ export default function ProposalsTable({
                                             }`} />
                                         {item.status?.replace('_', ' ') || 'Rascunho'}
                                     </span>
+                                </td>
+
+                                {/* Creator Email */}
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-gray-900">{item.creator_email || '-'}</div>
                                 </td>
 
                                 {/* Client (Optional) */}

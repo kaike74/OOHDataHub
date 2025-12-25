@@ -124,9 +124,11 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const comissao = payload.role === 'client' ? 'V0' : (data.comissao || 'V4');
             const createdBy = payload.userId;
 
+            const createdByType = payload.role === 'client' ? 'client' : 'agency';
+
             const res = await env.DB.prepare(
-                'INSERT INTO propostas (id_cliente, nome, comissao, created_by, public_access_level) VALUES (?, ?, ?, ?, ?)'
-            ).bind(data.id_cliente, data.nome, comissao, createdBy, 'none').run();
+                'INSERT INTO propostas (id_cliente, nome, comissao, created_by, public_access_level, created_by_type) VALUES (?, ?, ?, ?, ?, ?)'
+            ).bind(data.id_cliente, data.nome, comissao, createdBy, 'none', createdByType).run();
 
             const proposalId = res.meta.last_row_id;
 
@@ -161,13 +163,39 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
             const payload = await verifyToken(token);
 
-            const proposal = await env.DB.prepare('SELECT public_access_level FROM propostas WHERE id = ?').bind(id).first();
+            const proposal = await env.DB.prepare('SELECT public_access_level, created_by, created_by_type FROM propostas WHERE id = ?').bind(id).first();
             if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
 
             const role = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
 
+            // Access Control Logic
             if (role !== 'admin' && role !== 'editor') {
-                return new Response(JSON.stringify({ error: 'Unauthorized: Only editors or admins can modify proposals' }), { status: 403, headers });
+                return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers });
+            }
+
+            // Internal User Restriction on Client Proposals
+            if (payload?.role !== 'client' && proposal.created_by_type === 'client') {
+                // If proposal was created by a client, Internal user needs specific permission
+                // Check if internal user is "invited" (has share) or is Admin (Global)?
+                // User said: "Internal cannot change name/client unless invited by admin"
+                // For now, checks if there is an entry in proposal_internal_shares or if user is Global Admin?
+                // We don't have Global Admin flag on user, 'role' usually 'admin' or 'viewer'.
+
+                // Let's assume 'role' in payload is internal role.
+                // We check if this internal user has explicit rights via proposta_internal_shares
+                // OR if they are the one who created it (impossible if type is client).
+
+                // Check Internal Share
+                const internalShare = await env.DB.prepare(
+                    'SELECT role FROM proposta_internal_shares WHERE proposal_id = ? AND internal_user_id = ?'
+                ).bind(id, payload.userId).first();
+
+                // If explicitly shared as admin/editor, allow.
+                const hasExplicitAccess = internalShare && (internalShare.role === 'admin' || internalShare.role === 'editor');
+
+                if (!hasExplicitAccess) {
+                    return new Response(JSON.stringify({ error: 'Acesso restrito: Você não tem permissão para editar esta proposta de cliente.' }), { status: 403, headers });
+                }
             }
 
             const data = await request.json() as any;
@@ -488,7 +516,9 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             let query = `
                 SELECT 
                     p.id, p.nome, p.created_at, p.status, p.comissao,
-                    p.created_by, creator.email as creator_email, creator.name as creator_name,
+                    p.created_by, p.created_by_type,
+                    COALESCE(u_internal.email, u_external.email) as creator_email,
+                    COALESCE(u_internal.name, u_external.name) as creator_name,
                     c.id as client_id, COALESCE(c.nome, 'Pessoal') as client_name, c.logo_url as client_logo,
                     -- Aggregated counts
                     COUNT(DISTINCT pi.id) as total_itens,
@@ -502,7 +532,8 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     ) as shared_with
                 FROM propostas p
                 LEFT JOIN clientes c ON p.id_cliente = c.id
-                LEFT JOIN usuarios_externos creator ON p.created_by = creator.id
+                LEFT JOIN usuarios_internos u_internal ON p.created_by_type = 'agency' AND p.created_by = u_internal.id
+                LEFT JOIN usuarios_externos u_external ON p.created_by_type = 'client' AND p.created_by = u_external.id
                 LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
                 WHERE p.deleted_at IS NULL
             `;
