@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/Button'; // Assuming Button is available
 
 export interface ProposalTableItem {
     id: number;
+    id_cliente: number;
     nome: string;
     status: string;
     created_at: string;
     updated_at?: string;
-    comissao: string;
+    comissao: string | 'V2' | 'V3' | 'V4';
     total_itens?: number;
     total_valor?: number;
     client_name?: string; // Optional, for admin view
@@ -101,13 +102,13 @@ export default function ProposalsTable({
                                 {/* Status */}
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide inline-flex items-center gap-1.5 ${item.status === 'aprovada'
-                                            ? 'bg-green-100 text-green-700'
-                                            : item.status === 'em_negociacao'
-                                                ? 'bg-blue-100 text-blue-700'
-                                                : 'bg-yellow-100 text-yellow-700'
+                                        ? 'bg-green-100 text-green-700'
+                                        : item.status === 'em_negociacao'
+                                            ? 'bg-blue-100 text-blue-700'
+                                            : 'bg-yellow-100 text-yellow-700'
                                         }`}>
                                         <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'aprovada' ? 'bg-green-500' :
-                                                item.status === 'em_negociacao' ? 'bg-blue-500' : 'bg-yellow-500'
+                                            item.status === 'em_negociacao' ? 'bg-blue-500' : 'bg-yellow-500'
                                             }`} />
                                         {item.status?.replace('_', ' ') || 'Rascunho'}
                                     </span>

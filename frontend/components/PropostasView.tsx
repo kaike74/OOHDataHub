@@ -185,7 +185,7 @@ export default function PropostasView() {
                         data={filteredPropostas}
                         isLoading={isLoading}
                         showClientColumn={false}
-                        onRowClick={handlePropostaClick}
+                        onRowClick={(item) => handlePropostaClick(item as unknown as Proposta)}
                         onDelete={handleDeleteProposta}
                         onHistory={(id, e) => {
                             e.stopPropagation();

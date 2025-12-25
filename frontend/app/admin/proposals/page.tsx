@@ -24,6 +24,7 @@ interface AdminProposal {
     status: string;
     comissao: string;
     client_id: number;
+    id_cliente: number; // Mapped from client_id
     client_name: string;
     client_logo: string | null;
     total_itens: number;
@@ -74,11 +75,18 @@ export default function AdminProposalsPage() {
             } else {
                 data = await api.getAdminProposals();
             }
-            setProposals(data);
+
+            // Map client_id to id_cliente for compatibility with ProposalsTable
+            const mappedData = data.map((p: any) => ({
+                ...p,
+                id_cliente: p.client_id || p.id_cliente
+            }));
+
+            setProposals(mappedData);
             // Default all expanded
             const initialExpanded: Record<number, boolean> = {};
-            data.forEach((p: AdminProposal) => {
-                initialExpanded[p.client_id] = true;
+            mappedData.forEach((p: AdminProposal) => {
+                initialExpanded[p.client_id] = true; // Still use client_id for grouping logic if needed, though we removed grouping logic
             });
             setExpandedGroups(initialExpanded);
         } catch (error) {
@@ -241,4 +249,3 @@ export default function AdminProposalsPage() {
         </div>
     );
 }
-```
