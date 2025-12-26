@@ -60,7 +60,7 @@ export interface ProposalTableItem {
     id: number;
     nome: string;
     client_name: string;
-    client_logo?: string; // Optional URL
+    client_logo?: string | null; // Allow null to match DB/API types
     id_cliente: number; // Add this
     created_at: string;
     updated_at?: string;
