@@ -74,23 +74,36 @@ export interface ProposalTableItem {
 }
 
 export interface ProposalsTableProps {
-    proposals: ProposalTableItem[];
+    data: ProposalTableItem[]; // User 'data' to match consumers
     isLoading: boolean;
     showClientColumn?: boolean;
-    onView: (id: number) => void;
-    onDelete: (id: number) => void;
-    onEdit: (item: ProposalTableItem) => void; // New prop
+    onView?: (id: number) => void; // Optional
+    onDelete: (id: number, e?: any) => void;
+    onEdit: (item: ProposalTableItem) => void;
+    onRowClick?: (item: ProposalTableItem) => void; // Compat
+    onHistory?: (id: number, e: React.MouseEvent) => void; // Compat
+    emptyMessage?: string; // Compat
+    emptyActionLabel?: string; // Compat
+    onEmptyAction?: () => void; // Compat
 }
 
-export function ProposalsTable({
-    proposals,
+export default function ProposalsTable({
+    data,
     isLoading,
     showClientColumn = true,
     onView,
     onDelete,
-    onEdit
+    onEdit,
+    onRowClick,
+    onHistory,
+    emptyMessage,
+    emptyActionLabel,
+    onEmptyAction
 }: ProposalsTableProps) {
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+
+    // Map data to local var for sorting
+    const proposals = data || [];
 
     const handleSort = (key: string) => {
         let direction: 'asc' | 'desc' = 'asc';
@@ -283,7 +296,10 @@ export function ProposalsTable({
                                         <div className="flex items-center justify-end gap-2">
                                             {/* View Button - Always Visible */}
                                             <button
-                                                onClick={() => onView(item.id)}
+                                                onClick={() => {
+                                                    if (onView) onView(item.id);
+                                                    else if (onRowClick) onRowClick(item);
+                                                }}
                                                 className="p-2 text-gray-400 hover:text-emidias-accent hover:bg-emidias-accent/5 rounded-lg transition-colors"
                                                 title="Ver no Mapa"
                                             >
@@ -303,8 +319,19 @@ export function ProposalsTable({
                                                 </button>
                                             )}
 
+                                            {/* History Button (Legacy Support) */}
+                                            {onHistory && (
+                                                <button
+                                                    onClick={(e) => onHistory(item.id, e)}
+                                                    className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                                                    title="Histórico"
+                                                >
+                                                    <History size={18} />
+                                                </button>
+                                            )}
+
                                             <button
-                                                onClick={() => onDelete(item.id)}
+                                                onClick={(e) => onDelete(item.id, e)}
                                                 className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                 title="Excluir Proposta"
                                             >
