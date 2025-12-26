@@ -7,7 +7,6 @@ export async function handlePropostas(request: Request, env: Env, path: string):
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
 
     // Helper to determine role
-    // Helper to determine role
     const getProposalRole = async (proposalId: string, userId: number | null, userRole: string | null, publicAccess: string = 'none'): Promise<string> => {
         if (!userId) {
             return publicAccess === 'view' ? 'viewer' : 'none';
@@ -127,18 +126,20 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const comissao = payload.role === 'client' ? 'V0' : (data.comissao || 'V4');
             const createdBy = payload.userId;
 
-            const createdByType = payload.role === 'client' ? 'client' : 'agency';
+            // Removed created_by_type as it is dropped from schema.
+            // Using created_by (User ID) is checking user type via join in list view.
 
             const res = await env.DB.prepare(
-                'INSERT INTO propostas (id_cliente, nome, comissao, created_by, public_access_level, created_by_type) VALUES (?, ?, ?, ?, ?, ?)'
-            ).bind(data.id_cliente, data.nome, comissao, createdBy, 'none', createdByType).run();
+                'INSERT INTO propostas (id_cliente, nome, comissao, created_by, public_access_level) VALUES (?, ?, ?, ?, ?)'
+            ).bind(data.id_cliente, data.nome, comissao, createdBy, 'none').run();
 
             const proposalId = res.meta.last_row_id;
 
-            // If created by CLIENT, auto-share as ADMIN so they can see it in Portal list
+            // If created by CLIENT, auto-share as ADMIN so they can see it in Portal list (though created_by should be enough)
+            // But strict permissions might look for share. Let's add share to be safe/consistent.
             if (payload.role === 'client') {
                 await env.DB.prepare(
-                    'INSERT INTO proposta_shares (proposal_id, client_user_id, role) VALUES (?, ?, ?)'
+                    'INSERT INTO proposta_shares (proposal_id, user_id, role) VALUES (?, ?, ?)'
                 ).bind(proposalId, payload.userId, 'admin').run();
             }
 
@@ -166,8 +167,13 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
             const payload = await verifyToken(token);
 
-            const proposal = await env.DB.prepare('SELECT public_access_level, created_by, created_by_type FROM propostas WHERE id = ?').bind(id).first();
+            const proposal = await env.DB.prepare('SELECT public_access_level, created_by FROM propostas WHERE id = ?').bind(id).first();
             if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
+
+            // Need the creator type to check permissions? 
+            // We can fetch the creator user type
+            const creator = await env.DB.prepare('SELECT type FROM users WHERE id = ?').bind(proposal.created_by).first() as any;
+            const creatorType = creator ? creator.type : 'internal'; // Fallback
 
             const role = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
 
@@ -177,20 +183,12 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             }
 
             // Internal User Restriction on Client Proposals
-            if (payload?.role !== 'client' && proposal.created_by_type === 'client') {
-                // If proposal was created by a client, Internal user needs specific permission
-                // Check if internal user is "invited" (has share) or is Admin (Global)?
-                // User said: "Internal cannot change name/client unless invited by admin"
-                // For now, checks if there is an entry in proposal_internal_shares or if user is Global Admin?
-                // We don't have Global Admin flag on user, 'role' usually 'admin' or 'viewer'.
+            if (payload?.role !== 'client' && creatorType === 'external') {
+                // If proposal was created by a client (external), Internal user needs specific permission
+                // Check if this internal user has explicit rights via proposta_shares
 
-                // Let's assume 'role' in payload is internal role.
-                // We check if this internal user has explicit rights via proposta_internal_shares
-                // OR if they are the one who created it (impossible if type is client).
-
-                // Check Internal Share
                 const internalShare = await env.DB.prepare(
-                    'SELECT role FROM proposta_internal_shares WHERE proposal_id = ? AND internal_user_id = ?'
+                    'SELECT role FROM proposta_shares WHERE proposal_id = ? AND user_id = ?'
                 ).bind(id, payload.userId).first();
 
                 // If explicitly shared as admin/editor, allow.
@@ -334,8 +332,6 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         }
     }
 
-    // ... (Skipping some parts for brevity of this tool call, assume they match) ...
-
     // POST /api/propostas/:id/share - Manage Sharing (Upsert user role, update public settings)
     if (request.method === 'POST' && path.match(/^\/api\/propostas\/\d+\/share$/)) {
         try {
@@ -365,20 +361,20 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             if (data.email && data.role) {
                 const email = data.email.toLowerCase().trim();
 
-                // Check if user exists (CLIENT DB)
-                const clientUser = await env.DB.prepare('SELECT id FROM usuarios_externos WHERE email = ?').bind(email).first();
+                // Check if user exists (UNIFIED DB)
+                const user = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
 
-                if (clientUser) {
+                if (user) {
                     // Update or Insert Share
                     // Check if exists
-                    const existing = await env.DB.prepare('SELECT id FROM proposta_shares WHERE proposal_id = ? AND client_user_id = ?').bind(id, clientUser.id).first();
+                    const existing = await env.DB.prepare('SELECT id FROM proposta_shares WHERE proposal_id = ? AND user_id = ?').bind(id, user.id).first();
                     if (existing) {
                         await env.DB.prepare('UPDATE proposta_shares SET role = ? WHERE id = ?').bind(data.role, existing.id).run();
                     } else {
-                        await env.DB.prepare('INSERT INTO proposta_shares (proposal_id, client_user_id, role) VALUES (?, ?, ?)').bind(id, clientUser.id, data.role).run();
+                        await env.DB.prepare('INSERT INTO proposta_shares (proposal_id, user_id, role) VALUES (?, ?, ?)').bind(id, user.id, data.role).run();
                     }
                     // Cleanup access request if exists
-                    await env.DB.prepare('DELETE FROM proposta_access_requests WHERE proposal_id = ? AND user_id = ?').bind(id, clientUser.id).run();
+                    await env.DB.prepare('DELETE FROM proposta_access_requests WHERE proposal_id = ? AND user_id = ?').bind(id, user.id).run();
                 } else {
                     // Check if there is already a pending invite
                     const existingInvite = await env.DB.prepare('SELECT id, token FROM proposta_invites WHERE proposal_id = ? AND email = ? AND status = \'pending\'').bind(id, email).first();
@@ -390,10 +386,14 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                         // NEW INVITE
                         const token = crypto.randomUUID();
                         // Insert WITH role
+                        // Note: created_by_type column might still exist in invites or we just ignore it if it's default?
+                        // Assuming it exists as we haven't dropped it. 
+                        const creatorType = payload!.role === 'client' ? 'client' : 'internal';
+
                         await env.DB.prepare(`
                             INSERT INTO proposta_invites (proposal_id, email, created_by, created_by_type, token, status, role)
                             VALUES (?, ?, ?, ?, ?, 'pending', ?)
-                        `).bind(id, email, payload!.userId, payload!.role === 'client' ? 'client' : 'internal', token, data.role).run();
+                        `).bind(id, email, payload!.userId, creatorType, token, data.role).run();
 
                         await sendUserInviteEmail(env, email, token, Number(id));
                     }
@@ -519,20 +519,21 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             let query = `
                 SELECT 
                     p.id, p.nome, p.created_at, p.status, p.comissao,
-                    p.created_by, p.created_by_type,
-                    COALESCE(u_internal.email, u_external.email) as creator_email,
-                    COALESCE(u_internal.name, u_external.name) as creator_name,
+                    p.created_by,
+                    u.type as created_by_type,
+                    u.email as creator_email,
+                    u.name as creator_name,
                     c.id as client_id, COALESCE(c.nome, 'Pessoal') as client_name, c.logo_url as client_logo,
                     
                     -- Permission Check
                     CASE 
-                        WHEN p.created_by_type = 'agency' THEN 1 
-                        WHEN p.created_by_type = 'client' AND (
+                        WHEN u.type = 'internal' THEN 1 
+                        WHEN u.type = 'external' AND (
                             EXISTS (
-                                SELECT 1 FROM proposta_internal_shares pis 
-                                WHERE pis.proposal_id = p.id 
-                                AND pis.internal_user_id = ${user.userId} 
-                                AND pis.role IN ('admin', 'editor')
+                                SELECT 1 FROM proposta_shares ps 
+                                WHERE ps.proposal_id = p.id 
+                                AND ps.user_id = ${user.userId} 
+                                AND ps.role IN ('admin', 'editor')
                             )
                         ) THEN 1
                         ELSE 0 
@@ -543,15 +544,14 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     SUM(pi.valor_locacao + pi.valor_papel + pi.valor_lona) as total_valor,
                     -- Shared info
                     (
-                        SELECT json_group_array(json_object('email', cu.email, 'name', cu.name))
+                        SELECT json_group_array(json_object('email', share_user.email, 'name', share_user.name))
                         FROM proposta_shares ps
-                        JOIN usuarios_externos cu ON ps.client_user_id = cu.id
+                        JOIN users share_user ON ps.user_id = share_user.id
                         WHERE ps.proposal_id = p.id
                     ) as shared_with
                 FROM propostas p
+                LEFT JOIN users u ON p.created_by = u.id
                 LEFT JOIN clientes c ON p.id_cliente = c.id
-                LEFT JOIN usuarios_internos u_internal ON p.created_by_type = 'agency' AND p.created_by = u_internal.id
-                LEFT JOIN usuarios_externos u_external ON p.created_by_type = 'client' AND p.created_by = u_external.id
                 LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
                 WHERE p.deleted_at IS NULL
             `;
@@ -559,7 +559,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const params: any[] = [];
 
             if (isClient) {
-                query += ` AND (p.created_by = ? OR EXISTS (SELECT 1 FROM proposta_shares ps WHERE ps.proposal_id = p.id AND ps.client_user_id = ?))`;
+                query += ` AND (p.created_by = ? OR EXISTS (SELECT 1 FROM proposta_shares ps WHERE ps.proposal_id = p.id AND ps.user_id = ?))`;
                 params.push(user.id, user.id);
             }
 
@@ -619,12 +619,10 @@ export async function handlePropostas(request: Request, env: Env, path: string):
 
             // Check if already has access
             if (payload.role !== 'client') {
-                // Internal usually has access, but if we implement strict internal shares later... 
-                // For now, internal has access.
                 return new Response(JSON.stringify({ success: true, message: 'Internal users have access' }), { headers });
             }
 
-            const hasAccess = await env.DB.prepare('SELECT id FROM proposta_shares WHERE proposal_id = ? AND client_user_id = ?').bind(id, payload.userId).first();
+            const hasAccess = await env.DB.prepare('SELECT id FROM proposta_shares WHERE proposal_id = ? AND user_id = ?').bind(id, payload.userId).first();
             if (hasAccess) return new Response(JSON.stringify({ success: true, message: 'Already has access' }), { headers });
 
             // Create Request
@@ -701,7 +699,6 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         }
     }
 
-    // LIST ROUTES (Admin list, Layers, etc) - Keep as is or lightly adapt...
     // Fallback for others
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 }

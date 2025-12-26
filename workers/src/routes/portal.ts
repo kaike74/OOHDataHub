@@ -13,9 +13,9 @@ async function requireClientAuth(request: Request, env: Env) {
 
     if (payload.role !== 'client') throw new Error('Unauthorized');
 
-    // Verify user exists in usuarios_externos
+    // Verify user exists in unified users table with type external
     const user = await env.DB.prepare(
-        'SELECT id, name, email FROM usuarios_externos WHERE id = ?'
+        'SELECT id, name, email FROM users WHERE id = ? AND type = "external"'
     ).bind(payload.userId).first();
 
     if (!user) throw new Error('User not found');
@@ -54,24 +54,19 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
                     (
                         SELECT json_group_array(json_object('email', cu.email, 'name', cu.name))
                         FROM proposta_shares ps2
-                        JOIN usuarios_externos cu ON ps2.client_user_id = cu.id
+                        JOIN users cu ON ps2.user_id = cu.id
                         WHERE ps2.proposal_id = p.id
                     ) as shared_with
                 FROM propostas p
                 JOIN proposta_shares ps ON p.id = ps.proposal_id
                 LEFT JOIN clientes c ON p.id_cliente = c.id
-                LEFT JOIN usuarios_externos creator ON p.created_by = creator.id
+                LEFT JOIN users creator ON p.created_by = creator.id
                 LEFT JOIN proposta_itens pi ON p.id = pi.id_proposta
                 LEFT JOIN pontos_ooh po ON pi.id_ooh = po.id
-                WHERE ps.client_user_id = ? AND p.deleted_at IS NULL
+                WHERE ps.user_id = ? AND p.deleted_at IS NULL
                 GROUP BY p.id
                 ORDER BY p.created_at DESC
             `).bind(user.id).all();
-
-            // Transform results to match AdminProposal interface exact expectations if needed
-            // The query aliases should handle most of it:
-            // id, nome, created_at, status, comissao, client_id, client_name, client_logo, total_itens, total_valor
-            // Missing: shared_with (can be empty array for clients)
 
             // Transform results to match AdminProposal interface exact expectations if needed
             const proposals = results.map((r: any) => ({
@@ -80,8 +75,6 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
             }));
 
             return new Response(JSON.stringify(proposals), { headers });
-
-            return new Response(JSON.stringify(results), { headers });
         }
 
         // GET /api/portal/proposals/:id - View details (RESTRICTED)
@@ -91,7 +84,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
 
             // Verify access
             const share = await env.DB.prepare(
-                'SELECT id FROM proposta_shares WHERE proposal_id = ? AND client_user_id = ?'
+                'SELECT id FROM proposta_shares WHERE proposal_id = ? AND user_id = ?'
             ).bind(proposalId, user.id).first();
 
             if (!share) {
@@ -207,9 +200,10 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
             }
 
             // Upsert (ignore if already exists)
+            // Note: client_user_id is now just user_id in the unified table
             await env.DB.prepare(
-                'INSERT OR IGNORE INTO proposta_shares (proposal_id, client_user_id) VALUES (?, ?)'
-            ).bind(proposal_id, client_user_id).run();
+                'INSERT OR IGNORE INTO proposta_shares (proposal_id, user_id, role) VALUES (?, ?, ?)'
+            ).bind(proposal_id, client_user_id, 'viewer').run();
 
             return new Response(JSON.stringify({ success: true }), { headers });
         }
@@ -221,7 +215,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
 
             // Verify access
             const share = await env.DB.prepare(
-                'SELECT id FROM proposta_shares WHERE proposal_id = ? AND client_user_id = ?'
+                'SELECT id FROM proposta_shares WHERE proposal_id = ? AND user_id = ?'
             ).bind(proposalId, user.id).first();
 
             if (!share) {
@@ -336,7 +330,7 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
             if (itemType === 'proposals' && userType === 'client') {
                 // Verify client share access
                 const share = await env.DB.prepare(
-                    'SELECT id FROM proposta_shares WHERE proposal_id = ? AND client_user_id = ?'
+                    'SELECT id FROM proposta_shares WHERE proposal_id = ? AND user_id = ?'
                 ).bind(id, user.id).first();
                 if (!share) return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
             }
@@ -344,14 +338,12 @@ export const handlePortal = async (request: Request, env: Env, path: string) => 
             // Map frontend types to DB table names
             const tableName = itemType === 'proposals' ? 'propostas' : 'pontos_ooh';
 
+            // Unified User Join (removed internal/external split)
             const { results } = await env.DB.prepare(`
                 SELECT al.*, 
-                       CASE WHEN al.user_type = 'client' THEN cu.name 
-                            WHEN al.user_type = 'agency' THEN ui.name 
-                            ELSE 'Sistema' END as user_name
+                       u.name as user_name
                 FROM audit_logs al
-                LEFT JOIN usuarios_externos cu ON al.user_type = 'client' AND al.changed_by = cu.id
-                LEFT JOIN usuarios_internos ui ON al.user_type = 'agency' AND al.changed_by = ui.id
+                LEFT JOIN users u ON al.changed_by = u.id
                 WHERE al.table_name = ? AND al.record_id = ?
                 ORDER BY al.created_at DESC
             `).bind(tableName, id).all();

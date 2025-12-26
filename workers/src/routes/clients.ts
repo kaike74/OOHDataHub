@@ -32,7 +32,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
                 if (token) {
                     const payload = await verifyToken(token);
                     if (payload && payload.role === 'client') {
-                        currentClientUser = await env.DB.prepare('SELECT * FROM usuarios_externos WHERE id = ?').bind(payload.userId).first();
+                        currentClientUser = await env.DB.prepare('SELECT * FROM users WHERE id = ? AND type = "external"').bind(payload.userId).first();
                         if (!currentClientUser) throw new Error('User not found');
                     } else {
                         throw new Error('Unauthorized');
@@ -45,23 +45,20 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             if (isAgency) {
                 // Agency gets everything
                 const { results } = await env.DB.prepare(`
-                    SELECT cu.id, cu.name, cu.email, cu.created_at, cu.last_login
-                    FROM usuarios_externos cu
+                    SELECT cu.id, cu.name, cu.email, cu.created_at
+                    FROM users cu
+                    WHERE cu.type = 'external'
                     ORDER BY cu.created_at DESC
                 `).all();
                 return new Response(JSON.stringify(results), { headers });
             } else {
-                // Client User gets only themselves (and potentially others from same company if we had that link explicit)
-                // For now, to allow "sharing", we might want to return users they have already shared with?
-                // Or simply return just themselves so the UI works and they can add new people by email.
-                // Returning empty list or just themselves avoids leaking other clients' data.
-
+                // Client User gets only themselves
                 const results = [{
                     id: currentClientUser.id,
                     name: currentClientUser.name,
                     email: currentClientUser.email,
                     created_at: currentClientUser.created_at,
-                    last_login: currentClientUser.last_login
+                    // last_login removed from users table in migration 0008, ignore for now or add back if critical
                 }];
                 return new Response(JSON.stringify(results), { headers });
             }
@@ -81,9 +78,10 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             return new Response(JSON.stringify({ error: 'Email and password required' }), { status: 400, headers });
         }
 
-        const stmt = env.DB.prepare('SELECT * FROM usuarios_externos WHERE email = ?').bind(email);
+        const stmt = env.DB.prepare('SELECT * FROM users WHERE email = ? AND type = "external"').bind(email);
         const user = await stmt.first();
 
+        // Note: verifyPassword now expects the hash from users table
         if (!user || !await verifyPassword(password, user.password_hash as string)) {
             return new Response(JSON.stringify({ error: 'Credenciais inválidas' }), { status: 401, headers });
         }
@@ -93,7 +91,6 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             return new Response(JSON.stringify({ error: 'Email não verificado. Verifique sua caixa de entrada.' }), { status: 403, headers });
         }
 
-        // Generate Token using consistent auth helper
         const clientUser: ClientUser = {
             id: user.id as number,
             name: user.name as string,
@@ -103,8 +100,8 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
 
         const token = await generateClientToken(clientUser);
 
-        // Update last login
-        await env.DB.prepare('UPDATE usuarios_externos SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(user.id).run();
+        // Update last login - removed column in unified users
+        // await env.DB.prepare('UPDATE usuarios_externos SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(user.id).run();
 
         return new Response(JSON.stringify({
             token,
@@ -132,21 +129,21 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             }
 
             // Check if email exists
-            const existing = await env.DB.prepare('SELECT id FROM usuarios_externos WHERE email = ?').bind(email).first();
+            const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
             if (existing) {
                 return new Response(JSON.stringify({ error: 'Email já cadastrado' }), { status: 409, headers });
             }
 
             // Generate password: Name + 4 digits
-            // Remove spaces from name for the password part
-            const cleanName = name.replace(/\s+/g, '').slice(0, 10); // First 10 chars of name
+            const cleanName = name.replace(/\s+/g, '').slice(0, 10);
             const randomDigits = Math.floor(1000 + Math.random() * 9000);
             const generatedPassword = `${cleanName}${randomDigits}`;
 
             const passwordHash = await hashPassword(generatedPassword);
 
+            // Insert into unified USERS table
             const result = await env.DB.prepare(
-                'INSERT INTO usuarios_externos (email, password_hash, name) VALUES (?, ?, ?)'
+                'INSERT INTO users (email, password_hash, name, type, role, verified) VALUES (?, ?, ?, "external", "viewer", 1)'
             ).bind(email, passwordHash, name).run();
 
             const userId = result.meta.last_row_id;
@@ -156,7 +153,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             if (invites.results.length > 0) {
                 const batch = [];
                 for (const invite of invites.results) {
-                    batch.push(env.DB.prepare('INSERT OR IGNORE INTO proposta_shares (proposal_id, client_user_id) VALUES (?, ?)').bind(invite.proposal_id, userId));
+                    batch.push(env.DB.prepare('INSERT OR IGNORE INTO proposta_shares (proposal_id, user_id, role) VALUES (?, ?, ?)').bind(invite.proposal_id, userId, invite.role || 'viewer'));
                     batch.push(env.DB.prepare('UPDATE proposta_invites SET status = "accepted" WHERE id = ?').bind(invite.id));
                 }
                 await env.DB.batch(batch);
@@ -164,7 +161,6 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
 
             // Send Email
             await sendClientWelcomeEmail(env, email, generatedPassword);
-
 
             return new Response(JSON.stringify({
                 success: true,
@@ -195,7 +191,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             }
 
             // Check if email exists
-            const existing = await env.DB.prepare('SELECT id FROM usuarios_externos WHERE email = ?').bind(email).first();
+            const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
             if (existing) {
                 return new Response(JSON.stringify({ error: 'Email já cadastrado' }), { status: 409, headers });
             }
@@ -208,20 +204,19 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             const verificationToken = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 
             const result = await env.DB.prepare(
-                'INSERT INTO usuarios_externos (email, password_hash, name, verified, verification_token) VALUES (?, ?, ?, 0, ?)'
+                'INSERT INTO users (email, password_hash, name, type, role, verified, verification_token) VALUES (?, ?, ?, "external", "viewer", 0, ?)'
             ).bind(email, passwordHash, name, verificationToken).run();
 
             const userId = result.meta.last_row_id;
 
             // Check for pending invites and accept them automatically
-            // Use LOWER(email) to be safe, although we lowercased input.
             const invites = await env.DB.prepare('SELECT * FROM proposta_invites WHERE LOWER(email) = ? AND status = "pending"').bind(email).all();
 
             if (invites.results.length > 0) {
                 const batch = [];
                 for (const invite of invites.results) {
                     // Create share
-                    batch.push(env.DB.prepare('INSERT OR IGNORE INTO proposta_shares (proposal_id, client_user_id) VALUES (?, ?)').bind(invite.proposal_id, userId));
+                    batch.push(env.DB.prepare('INSERT OR IGNORE INTO proposta_shares (proposal_id, user_id, role) VALUES (?, ?, ?)').bind(invite.proposal_id, userId, invite.role || 'viewer'));
                     // Update invite status
                     batch.push(env.DB.prepare('UPDATE proposta_invites SET status = "accepted" WHERE id = ?').bind(invite.id));
                 }
@@ -230,7 +225,6 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
                     await env.DB.batch(batch);
                 } catch (batchError) {
                     console.error('Error processing invites batch:', batchError);
-                    // Don't fail the registration if invites fail, but maybe log it well.
                 }
             }
 
@@ -258,14 +252,14 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             }
 
             // Find user with token
-            const user = await env.DB.prepare('SELECT * FROM usuarios_externos WHERE verification_token = ?').bind(token).first();
+            const user = await env.DB.prepare('SELECT * FROM users WHERE verification_token = ?').bind(token).first();
 
             if (!user) {
                 return new Response(JSON.stringify({ error: 'Token inválido ou expirado' }), { status: 400, headers });
             }
 
             // Update user
-            await env.DB.prepare('UPDATE usuarios_externos SET verified = 1, verification_token = NULL WHERE id = ?').bind(user.id).run();
+            await env.DB.prepare('UPDATE users SET verified = 1, verification_token = NULL WHERE id = ?').bind(user.id).run();
 
             // Generate token for auto-login
             const clientUser: ClientUser = {
@@ -297,13 +291,13 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             const clientId = path.split('/').pop();
 
             // List users who have access to proposals from this client
-            // via proposta_shares (not directly linked to client)
+            // via proposta_shares
             const { results } = await env.DB.prepare(`
-                SELECT DISTINCT cu.id, cu.name, cu.email, cu.created_at, cu.last_login
-                FROM usuarios_externos cu
-                JOIN proposta_shares ps ON cu.id = ps.client_user_id
+                SELECT DISTINCT cu.id, cu.name, cu.email, cu.created_at
+                FROM users cu
+                JOIN proposta_shares ps ON cu.id = ps.user_id
                 JOIN propostas p ON ps.proposal_id = p.id
-                WHERE p.id_cliente = ?
+                WHERE p.id_cliente = ? AND cu.type = 'external'
                 ORDER BY cu.created_at DESC
             `).bind(clientId).all();
 
@@ -319,9 +313,10 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
         try {
             await requireAuth(request, env);
             const { results } = await env.DB.prepare(`
-                SELECT cu.id, cu.name, cu.email, cu.created_at, cu.last_login,
-                (SELECT COUNT(*) FROM proposta_shares ps WHERE ps.client_user_id = cu.id) as shared_count
-                FROM usuarios_externos cu
+                SELECT cu.id, cu.name, cu.email, cu.created_at,
+                (SELECT COUNT(*) FROM proposta_shares ps WHERE ps.user_id = cu.id) as shared_count
+                FROM users cu
+                WHERE cu.type = 'external'
                 ORDER BY cu.created_at DESC
             `).all();
             return new Response(JSON.stringify(results), { headers });
@@ -340,7 +335,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
                 SELECT ps.id as share_id, p.id as proposal_id, p.nome as proposal_name, p.created_at, p.status
                 FROM proposta_shares ps
                 JOIN propostas p ON ps.proposal_id = p.id
-                WHERE ps.client_user_id = ?
+                WHERE ps.user_id = ?
                 ORDER BY p.created_at DESC
             `).bind(userId).all();
             return new Response(JSON.stringify(results), { headers });
@@ -356,9 +351,9 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             const userId = path.split('/')[4];
 
             // Delete shares first
-            await env.DB.prepare('DELETE FROM proposta_shares WHERE client_user_id = ?').bind(userId).run();
+            await env.DB.prepare('DELETE FROM proposta_shares WHERE user_id = ?').bind(userId).run();
             // Delete user
-            const res = await env.DB.prepare('DELETE FROM usuarios_externos WHERE id = ?').bind(userId).run();
+            const res = await env.DB.prepare('DELETE FROM users WHERE id = ? AND type = "external"').bind(userId).run();
 
             if (res.meta.changes === 0) {
                 return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers });
@@ -377,7 +372,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             const userId = path.split('/')[4];
 
             // Get user info for email
-            const user = await env.DB.prepare('SELECT * FROM usuarios_externos WHERE id = ?').bind(userId).first();
+            const user = await env.DB.prepare('SELECT * FROM users WHERE id = ? AND type = "external"').bind(userId).first();
             if (!user) {
                 return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers });
             }
@@ -389,7 +384,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
 
             const passwordHash = await hashPassword(newPassword);
 
-            await env.DB.prepare('UPDATE usuarios_externos SET password_hash = ? WHERE id = ?')
+            await env.DB.prepare('UPDATE users SET password_hash = ? WHERE id = ?')
                 .bind(passwordHash, userId)
                 .run();
 
