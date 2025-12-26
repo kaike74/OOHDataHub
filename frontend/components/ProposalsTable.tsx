@@ -66,8 +66,8 @@ export interface ProposalTableItem {
     updated_at?: string;
     status: string;
     comissao: string | 'V2' | 'V3' | 'V4'; // Union, usually string from DB
-    total_itens: number;
-    total_valor: number;
+    total_itens?: number;
+    total_valor?: number;
     shared_with?: string | Array<{ email: string; name: string }>; // Optional
     creator_email?: string;
     can_edit_metadata?: number; // 0 or 1
@@ -282,13 +282,13 @@ export default function ProposalsTable({
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-1.5 text-sm text-gray-600">
                                             <MapPin size={16} className="text-gray-400" />
-                                            <span>{item.total_itens}</span>
+                                            <span>{item.total_itens || 0}</span>
                                         </div>
                                     </td>
 
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-semibold text-gray-900">
-                                            {formatAOA(item.total_valor)}
+                                            {formatAOA(item.total_valor || 0)}
                                         </div>
                                     </td>
 
