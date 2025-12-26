@@ -230,17 +230,32 @@ export async function handleClientes(request: Request, env: Env, path: string): 
                 }
             }
 
-            // Check if has proposals
-            // Note: propostas table might not have deleted_at yet if migration failed.
-            // Safe check: just check existence. If soft delete is implemented, this counts deleted ones too?
-            // If soft delete column missing, this query fails. Let's simplify to count all for now.
-            // If we want to support soft delete later, we need to ensure the column exists.
-            const propCount = await env.DB.prepare('SELECT count(*) as count FROM propostas WHERE id_cliente = ?').bind(id).first();
-            if ((propCount as any).count > 0) {
-                return new Response(JSON.stringify({ error: 'Não é possível excluir cliente com propostas associadas.' }), { status: 400, headers });
-            }
+            // Cascade Delete: Delete all proposals and related data for this client
+            // 1. Get Proposal IDs (optional, but good if we need to clean up other things not cascaded by DB)
+            // Ideally DB has ON DELETE CASCADE, but to be safe and ensure logic works even if PRAGMA foreign_keys is off:
 
-            await env.DB.prepare('DELETE FROM clientes WHERE id = ?').bind(id).run();
+            const batch = [];
+
+            // Delete Items of proposals for this client
+            batch.push(env.DB.prepare('DELETE FROM proposta_itens WHERE id_proposta IN (SELECT id FROM propostas WHERE id_cliente = ?)').bind(id));
+
+            // Delete Shares of proposals
+            batch.push(env.DB.prepare('DELETE FROM proposta_shares WHERE proposal_id IN (SELECT id FROM propostas WHERE id_cliente = ?)').bind(id));
+
+            // Delete Invites (if table exists and used)
+            // batch.push(env.DB.prepare('DELETE FROM proposta_invites WHERE proposal_id IN (SELECT id FROM propostas WHERE id_cliente = ?)').bind(id));
+            // Assuming proposta_invites exists, let's include it to be thorough. Safe if table exists. 
+            // Checking migration 0004... yes it exists.
+            batch.push(env.DB.prepare('DELETE FROM proposta_invites WHERE proposal_id IN (SELECT id FROM propostas WHERE id_cliente = ?)').bind(id));
+
+            // Delete Proposals
+            batch.push(env.DB.prepare('DELETE FROM propostas WHERE id_cliente = ?').bind(id));
+
+            // Delete Client
+            batch.push(env.DB.prepare('DELETE FROM clientes WHERE id = ?').bind(id));
+
+            await env.DB.batch(batch);
+
             return new Response(JSON.stringify({ success: true }), { headers });
 
         } catch (e: any) {
