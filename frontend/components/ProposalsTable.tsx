@@ -59,7 +59,7 @@ const formatAOA = (value: number) => {
 export interface ProposalTableItem {
     id: number;
     nome: string;
-    client_name: string;
+    client_name?: string; // Optional (not needed if showClientColumn=false)
     client_logo?: string | null; // Allow null to match DB/API types
     id_cliente: number; // Add this
     created_at: string;
@@ -68,7 +68,7 @@ export interface ProposalTableItem {
     comissao: string | 'V2' | 'V3' | 'V4'; // Union, usually string from DB
     total_itens: number;
     total_valor: number;
-    shared_with: string | Array<{ email: string; name: string }>; // Allow array too
+    shared_with?: string | Array<{ email: string; name: string }>; // Optional
     creator_email?: string;
     can_edit_metadata?: number; // 0 or 1
 }
@@ -236,12 +236,12 @@ export default function ProposalsTable({
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-xs overflow-hidden">
                                                     {item.client_logo ? (
-                                                        <img src={item.client_logo} alt={item.client_name} className="w-full h-full object-cover" />
+                                                        <img src={item.client_logo} alt={item.client_name || '-'} className="w-full h-full object-cover" />
                                                     ) : (
-                                                        item.client_name.charAt(0)
+                                                        (item.client_name || '?').charAt(0)
                                                     )}
                                                 </div>
-                                                <span className="text-sm font-medium text-gray-700">{item.client_name}</span>
+                                                <span className="text-sm font-medium text-gray-700">{item.client_name || 'Sem Nome'}</span>
                                             </div>
                                         </td>
                                     )}
