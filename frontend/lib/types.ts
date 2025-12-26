@@ -74,6 +74,7 @@ export interface User {
     id: number;
     email: string;
     name: string | null;
+    type: 'internal' | 'external';
     role: 'master' | 'editor' | 'viewer' | 'client';
     created_at?: string;
     client_name?: string | null;

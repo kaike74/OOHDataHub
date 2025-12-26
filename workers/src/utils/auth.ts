@@ -2,6 +2,7 @@ import * as jose from 'jose';
 import { Env } from '../index';
 
 // JWT Secret - In production, use environment variable
+// JWT Secret - In production, use environment variable
 const JWT_SECRET = new TextEncoder().encode('your-secret-key-change-in-production');
 const JWT_EXPIRES_IN = '7d';
 
@@ -9,20 +10,18 @@ export interface User {
     id: number;
     email: string;
     name: string | null;
-    role: 'master' | 'editor' | 'viewer' | 'client';
+    type: 'internal' | 'external';
+    role: 'master' | 'editor' | 'viewer' | 'client' | string;
 }
 
-export interface ClientUser {
-    id: number;
-    email: string;
-    name: string;
-    role: 'client';
-}
+// Deprecated but kept for compatibility during refactor if needed, mapped to User
+export type ClientUser = User;
 
 export interface CustomJWTPayload {
     userId: number;
     email: string;
     role: string;
+    type: 'internal' | 'external';
 }
 
 /**
@@ -45,13 +44,14 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 }
 
 /**
- * Generate a JWT token for a user (Agency)
+ * Generate a JWT token for a user
  */
 export async function generateToken(user: User): Promise<string> {
     const payload = {
         userId: user.id,
         email: user.email,
         role: user.role,
+        type: user.type
     };
 
     return await new jose.SignJWT(payload as any)
@@ -61,19 +61,10 @@ export async function generateToken(user: User): Promise<string> {
 }
 
 /**
- * Generate a JWT token for a Client User
+ * Generate a JWT token for a Client User (Wrapper for backward compat or specific logic)
  */
-export async function generateClientToken(user: ClientUser): Promise<string> {
-    const payload = {
-        userId: user.id,
-        email: user.email,
-        role: user.role
-    };
-
-    return await new jose.SignJWT(payload as any)
-        .setProtectedHeader({ alg: 'HS256' })
-        .setExpirationTime(JWT_EXPIRES_IN)
-        .sign(JWT_SECRET);
+export async function generateClientToken(user: User): Promise<string> {
+    return generateToken(user);
 }
 
 /**
@@ -115,27 +106,10 @@ export async function requireAuth(request: Request, env: Env): Promise<User> {
         throw new Error('Invalid token');
     }
 
-    // Try finding internal user
-    let user = await env.DB.prepare(
-        'SELECT id, email, name, role FROM usuarios_internos WHERE id = ?'
+    // Find user in unified table
+    const user = await env.DB.prepare(
+        'SELECT id, email, name, role, type FROM users WHERE id = ?'
     ).bind(payload.userId).first() as User | null;
-
-    if (!user) {
-        // Try finding client user
-        const clientUser = await env.DB.prepare(
-            'SELECT id, email, name, role FROM usuarios_externos WHERE id = ?'
-        ).bind(payload.userId).first() as any;
-
-        if (clientUser) {
-            // Map to User interface (role 'client')
-            user = {
-                id: clientUser.id,
-                email: clientUser.email,
-                name: clientUser.name,
-                role: 'client' as any // Cast because User type might be strict
-            };
-        }
-    }
 
     if (!user) {
         throw new Error('User not found');

@@ -249,12 +249,12 @@ export const api = {
         body: JSON.stringify(data)
     }),
 
-    registerClientPublic: (data: { name: string; email: string; password: string; inviteToken?: string }) => fetchAPI('/api/clients/signup', {
+    registerClientPublic: (data: { name: string; email: string; password: string; inviteToken?: string }) => fetchAPI('/api/auth/signup', {
         method: 'POST',
         body: JSON.stringify(data)
     }),
 
-    verifyEmail: (token: string) => fetchAPI('/api/clients/verify-email', {
+    verifyEmail: (token: string) => fetchAPI('/api/auth/verify-email', {
         method: 'POST',
         body: JSON.stringify({ token })
     }),

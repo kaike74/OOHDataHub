@@ -7,19 +7,20 @@ export async function handlePropostas(request: Request, env: Env, path: string):
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
 
     // Helper to determine role
+    // Helper to determine role
     const getProposalRole = async (proposalId: string, userId: number | null, userRole: string | null, publicAccess: string = 'none'): Promise<string> => {
         if (!userId) {
             return publicAccess === 'view' ? 'viewer' : 'none';
         }
-        // Agency/Internal -> Admin (Global)
-        if (userRole !== 'client') return 'admin';
+        // Master/Global Admin
+        if (userRole === 'master' || userRole === 'admin') return 'admin';
 
         // Check ownership
         const proposal = await env.DB.prepare('SELECT created_by FROM propostas WHERE id = ?').bind(proposalId).first();
         if (proposal && proposal.created_by === userId) return 'admin';
 
-        // Check Share
-        const share = await env.DB.prepare('SELECT role FROM proposta_shares WHERE proposal_id = ? AND client_user_id = ?').bind(proposalId, userId).first();
+        // Check Unified Share
+        const share = await env.DB.prepare('SELECT role FROM proposta_shares WHERE proposal_id = ? AND user_id = ?').bind(proposalId, userId).first();
         if (share) return share.role as string;
 
         // Check Public Access
@@ -67,18 +68,19 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         FROM proposta_itens pi
         JOIN pontos_ooh p ON pi.id_ooh = p.id
         LEFT JOIN exibidoras e ON p.id_exibidora = e.id
-        LEFT JOIN usuarios_internos val_user ON pi.last_validated_by = val_user.id
+        LEFT JOIN users val_user ON pi.last_validated_by = val_user.id
         WHERE pi.id_proposta = ?
     `).bind(id).all();
 
         // 4. Fetch Shared Users (for UI)
         let sharedUsers: any[] = [];
-        if (currentRole === 'admin' || currentRole === 'editor') {
+        // Allow seeing shares if admin, editor, or owner (owner covered by admin role returned from getProposalRole)
+        if (['admin', 'editor'].includes(currentRole)) {
             const [sharesResult, invitesResult] = await Promise.all([
                 env.DB.prepare(`
-                    SELECT u.email, u.name, ps.role 
+                    SELECT u.email, u.name, u.type, ps.role 
                     FROM proposta_shares ps
-                    JOIN usuarios_externos u ON ps.client_user_id = u.id
+                    JOIN users u ON ps.user_id = u.id
                     WHERE ps.proposal_id = ?
                 `).bind(id).all(),
                 env.DB.prepare(`
@@ -89,11 +91,12 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             ]);
 
             const shares = sharesResult.results.map((s: any) => ({ ...s, isPending: false }));
-            // Pending invites don't have a stored role, defaulting to viewer as per invite logic
+            // Pending invites
             const invites = invitesResult.results.map((i: any) => ({
                 email: i.email,
                 name: '', // Empty name for pending invites
                 role: i.role || 'viewer',
+                type: 'unknown', // Invite doesn't imply type yet, usually external though
                 isPending: true
             }));
 
