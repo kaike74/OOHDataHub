@@ -532,7 +532,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                             EXISTS (
                                 SELECT 1 FROM proposta_shares ps 
                                 WHERE ps.proposal_id = p.id 
-                                AND ps.user_id = ${user.userId} 
+                                AND ps.user_id = ${user.id} 
                                 AND ps.role IN ('admin', 'editor')
                             )
                         ) THEN 1
