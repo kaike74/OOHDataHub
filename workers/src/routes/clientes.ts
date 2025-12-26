@@ -220,15 +220,24 @@ export async function handleClientes(request: Request, env: Env, path: string): 
                     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers });
                 }
             } else {
-                if (client.origin !== 'internal') {
+                // Internal User
+                // Allow 'admin' or 'master' roles to delete any client (internal or external)
+                if (['admin', 'master'].includes(user.role)) {
+                    // Allowed
+                } else if (client.origin !== 'internal') {
+                    // Regular internal users can only delete internal clients
                     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers });
                 }
             }
 
             // Check if has proposals
-            const propCount = await env.DB.prepare('SELECT count(*) as count FROM propostas WHERE id_cliente = ? AND deleted_at IS NULL').bind(id).first();
+            // Note: propostas table might not have deleted_at yet if migration failed.
+            // Safe check: just check existence. If soft delete is implemented, this counts deleted ones too?
+            // If soft delete column missing, this query fails. Let's simplify to count all for now.
+            // If we want to support soft delete later, we need to ensure the column exists.
+            const propCount = await env.DB.prepare('SELECT count(*) as count FROM propostas WHERE id_cliente = ?').bind(id).first();
             if ((propCount as any).count > 0) {
-                return new Response(JSON.stringify({ error: 'Não é possível excluir cliente com propostas ativas.' }), { status: 400, headers });
+                return new Response(JSON.stringify({ error: 'Não é possível excluir cliente com propostas associadas.' }), { status: 400, headers });
             }
 
             await env.DB.prepare('DELETE FROM clientes WHERE id = ?').bind(id).run();
