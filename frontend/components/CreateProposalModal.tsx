@@ -76,7 +76,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
 
                 if (initialClientId) {
                     setSelectedClientId(String(initialClientId));
-                } else if (user?.role === 'client') {
+                } else if (user?.type === 'external') {
                     // Default to first client if available?
                     // Or force user to choose?
                     // Let's force choice or default to 'pessoal' if requested, implies intentional selection.
@@ -86,7 +86,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                     setSelectedClientId('');
                 }
 
-                if (user?.role === 'client') {
+                if (user?.type === 'external') {
                     setCommission('V0');
                 } else {
                     setCommission('V4');
@@ -97,7 +97,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
 
     // Auto-select client if user is client and only has one (or if distinct 'pessoal' handling needed)
     useEffect(() => {
-        if (isOpen && !isEditing && user?.role === 'client' && clients.length > 0 && !selectedClientId) {
+        if (isOpen && !isEditing && user?.type === 'external' && clients.length > 0 && !selectedClientId) {
             // If client user has clients, default to the first one instead of 'pessoal'
             setSelectedClientId(String(clients[0].id));
         }
@@ -128,7 +128,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
             const payload = {
                 id_cliente: finalClientId,
                 nome: name,
-                comissao: user?.role === 'client' ? 'V0' : commission
+                comissao: user?.type === 'external' ? 'V0' : commission
             };
 
             if (isEditing && initialData) {
@@ -144,7 +144,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                     const fullProposal = await api.getProposta(response.id);
                     setSelectedProposta(fullProposal);
 
-                    const url = user?.role === 'client' ? '/?action=new' : '/';
+                    const url = user?.type === 'external' ? '/?action=new' : '/';
                     router.push(url);
                     setCurrentView('map');
                     onClose();
@@ -190,7 +190,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                 isOpen={isOpen}
                 onClose={onClose}
                 title={isEditing ? "Editar Proposta" : "Nova Proposta"}
-                subtitle={isEditing ? "Atualize os dados da proposta" : (user?.role === 'client' ? 'Crie uma nova seleção de pontos' : 'Preencha os dados da proposta')}
+                subtitle={isEditing ? "Atualize os dados da proposta" : (user?.type === 'external' ? 'Crie uma nova seleção de pontos' : 'Preencha os dados da proposta')}
                 footer={footer}
                 zIndex={50}
             >
@@ -238,7 +238,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                     </Select>
 
                     {/* Commission Field - HIDE for Clients, SHOW for Internal */}
-                    {user?.role !== 'client' && (
+                    {user?.type !== 'external' && (
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                                 <DollarSign size={16} className="text-emidias-accent" />
