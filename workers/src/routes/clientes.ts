@@ -38,7 +38,7 @@ export async function handleClientes(request: Request, env: Env, path: string): 
                 return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
             }
 
-            if (user.role === 'client') {
+            if (user.type === 'external') {
                 // External User: Only their own clients
                 query += "origin = 'external' AND created_by = ?";
                 params.push(user.userId);
@@ -69,7 +69,7 @@ export async function handleClientes(request: Request, env: Env, path: string): 
             if (!data.nome) return new Response(JSON.stringify({ error: 'Nome é obrigatório' }), { status: 400, headers });
             if (!data.cnpj) return new Response(JSON.stringify({ error: 'CNPJ é obrigatório' }), { status: 400, headers });
 
-            const origin = user.role === 'client' ? 'external' : 'internal';
+            const origin = user.type === 'external' ? 'external' : 'internal';
             const createdBy = user.userId;
 
             // Check Uniqueness
@@ -124,7 +124,7 @@ export async function handleClientes(request: Request, env: Env, path: string): 
         if (user) {
             const client = await env.DB.prepare('SELECT origin, created_by FROM clientes WHERE id = ?').bind(id).first();
             if (client) {
-                if (user.role === 'client') {
+                if (user.type === 'external') {
                     if (client.origin !== 'external' || client.created_by !== user.userId) {
                         return new Response(JSON.stringify({ error: 'Access Denied' }), { status: 403, headers });
                     }
@@ -167,7 +167,7 @@ export async function handleClientes(request: Request, env: Env, path: string): 
             const client = await env.DB.prepare('SELECT origin, created_by FROM clientes WHERE id = ?').bind(id).first();
             if (!client) return new Response(JSON.stringify({ error: 'Client not found' }), { status: 404, headers });
 
-            if (user.role === 'client') {
+            if (user.type === 'external') {
                 if (client.origin !== 'external' || client.created_by !== user.userId) {
                     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers });
                 }
@@ -215,7 +215,7 @@ export async function handleClientes(request: Request, env: Env, path: string): 
             const client = await env.DB.prepare('SELECT origin, created_by FROM clientes WHERE id = ?').bind(id).first();
             if (!client) return new Response(JSON.stringify({ error: 'Client not found' }), { status: 404, headers });
 
-            if (user.role === 'client') {
+            if (user.type === 'external') {
                 if (client.origin !== 'external' || client.created_by !== user.userId) {
                     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers });
                 }
