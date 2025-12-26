@@ -154,8 +154,8 @@ export default function SignupPage() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="seuemail@exemplo.com"
                                 required
-                                readOnly={!!emailParam} // Lock email if from invite link
-                                className={emailParam ? 'bg-gray-50 cursor-not-allowed' : ''}
+                                readOnly={!!inviteToken} // Lock email ONLY if from invite link
+                                className={inviteToken ? 'bg-gray-50 cursor-not-allowed' : ''}
                                 icon={<Mail size={20} />}
                             />
 
