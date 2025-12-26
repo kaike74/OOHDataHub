@@ -65,7 +65,7 @@ export default function NavigationMenu() {
     ];
 
     // Filter menu items for clients
-    const filteredMenuItems = user?.role === 'client'
+    const filteredMenuItems = user?.type === 'external'
         ? menuItems.filter(item => item.id === 'propostas' || item.id === 'clientes')
         : menuItems;
 

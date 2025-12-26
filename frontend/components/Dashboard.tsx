@@ -74,12 +74,13 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
         const params = new URLSearchParams(window.location.search);
         const action = params.get('action');
 
-        // Redirect client users to their dashboard UNLESS they are creating a new proposal
-        // Only check role if authenticated
-        const userRole = JSON.parse(localStorage.getItem('ooh-auth-storage') || '{}')?.state?.user?.role;
-        setUserRole(userRole);
+        // Redirect EXTERNAL users (type='external') to their dashboard UNLESS they are creating a new proposal
+        // Only check if authenticated
+        const userState = JSON.parse(localStorage.getItem('ooh-auth-storage') || '{}')?.state?.user;
+        const userType = userState?.type;
+        setUserRole(userState?.role); // Keep setting role for other hook uses if needed, but logic depends on type
 
-        if (isAuthenticated && userRole === 'client' && action !== 'new' && !effectProposalId) {
+        if (isAuthenticated && userType === 'external' && action !== 'new' && !effectProposalId) {
             router.replace('/admin/proposals');
             return;
         }
