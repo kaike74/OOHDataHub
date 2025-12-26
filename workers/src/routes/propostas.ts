@@ -520,6 +520,21 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     COALESCE(u_internal.email, u_external.email) as creator_email,
                     COALESCE(u_internal.name, u_external.name) as creator_name,
                     c.id as client_id, COALESCE(c.nome, 'Pessoal') as client_name, c.logo_url as client_logo,
+                    
+                    -- Permission Check
+                    CASE 
+                        WHEN p.created_by_type = 'agency' THEN 1 
+                        WHEN p.created_by_type = 'client' AND (
+                            EXISTS (
+                                SELECT 1 FROM proposta_internal_shares pis 
+                                WHERE pis.proposal_id = p.id 
+                                AND pis.internal_user_id = ${user.userId} 
+                                AND pis.role IN ('admin', 'editor')
+                            )
+                        ) THEN 1
+                        ELSE 0 
+                    END as can_edit_metadata,
+
                     -- Aggregated counts
                     COUNT(DISTINCT pi.id) as total_itens,
                     SUM(pi.valor_locacao + pi.valor_papel + pi.valor_lona) as total_valor,
