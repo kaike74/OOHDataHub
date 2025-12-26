@@ -228,7 +228,11 @@ export default function ProposalsTable({
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-xs overflow-hidden">
                                                     {item.client_logo ? (
-                                                        <SafeImage src={item.client_logo} alt={item.client_name || '-'} className="w-full h-full object-cover" />
+                                                        <SafeImage
+                                                            src={item.client_logo.startsWith('http') ? item.client_logo : api.getImageUrl(item.client_logo)}
+                                                            alt={item.client_name || '-'}
+                                                            className="w-full h-full object-cover"
+                                                        />
                                                     ) : (
                                                         (item.client_name || '?').charAt(0)
                                                     )}
