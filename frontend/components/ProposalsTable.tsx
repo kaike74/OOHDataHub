@@ -47,14 +47,6 @@ const StatusBadge = ({ status }: { status: string }) => {
     );
 };
 
-// Dummy formatAOA function for syntactic correctness if not imported
-const formatAOA = (value: number) => {
-    return new Intl.NumberFormat('pt-AO', {
-        style: 'currency',
-        currency: 'AOA',
-    }).format(value);
-};
-
 
 export interface ProposalTableItem {
     id: number;
@@ -174,7 +166,7 @@ export default function ProposalsTable({
                             <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                 Criado por
                             </th>
-                            {!showClientColumn && (
+                            {showClientColumn && (
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                     Comissão
                                 </th>
@@ -236,7 +228,7 @@ export default function ProposalsTable({
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-xs overflow-hidden">
                                                     {item.client_logo ? (
-                                                        <img src={item.client_logo} alt={item.client_name || '-'} className="w-full h-full object-cover" />
+                                                        <SafeImage src={item.client_logo} alt={item.client_name || '-'} className="w-full h-full object-cover" />
                                                     ) : (
                                                         (item.client_name || '?').charAt(0)
                                                     )}
@@ -288,7 +280,7 @@ export default function ProposalsTable({
 
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-semibold text-gray-900">
-                                            {formatAOA(item.total_valor || 0)}
+                                            {formatCurrency(item.total_valor || 0)}
                                         </div>
                                     </td>
 
