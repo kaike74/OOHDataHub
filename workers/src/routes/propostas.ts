@@ -123,7 +123,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                 return new Response(JSON.stringify({ error: 'Campo nome é obrigatório' }), { status: 400, headers });
             }
 
-            const comissao = payload.role === 'client' ? 'V0' : (data.comissao || 'V4');
+            const comissao = payload.type === 'external' ? 'V0' : (data.comissao || 'V4');
             const createdBy = payload.userId;
 
             // Removed created_by_type as it is dropped from schema.
@@ -135,9 +135,9 @@ export async function handlePropostas(request: Request, env: Env, path: string):
 
             const proposalId = res.meta.last_row_id;
 
-            // If created by CLIENT, auto-share as ADMIN so they can see it in Portal list (though created_by should be enough)
+            // If created by CLIENT (External), auto-share as ADMIN so they can see it in Portal list (though created_by should be enough)
             // But strict permissions might look for share. Let's add share to be safe/consistent.
-            if (payload.role === 'client') {
+            if (payload.type === 'external') {
                 await env.DB.prepare(
                     'INSERT INTO proposta_shares (proposal_id, user_id, role) VALUES (?, ?, ?)'
                 ).bind(proposalId, payload.userId, 'admin').run();
@@ -183,7 +183,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             }
 
             // Internal User Restriction on Client Proposals
-            if (payload?.role !== 'client' && creatorType === 'external') {
+            if (payload && payload.type !== 'external' && creatorType === 'external') {
                 // If proposal was created by a client (external), Internal user needs specific permission
                 // Check if this internal user has explicit rights via proposta_shares
 
@@ -213,7 +213,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                 updates.push('id_cliente = ?');
                 values.push(data.id_cliente);
             }
-            if (data.comissao && payload?.role !== 'client') { // Clients cannot change commission
+            if (data.comissao && payload?.type !== 'external') { // Clients cannot change commission
                 updates.push('comissao = ?');
                 values.push(data.comissao);
             }
@@ -269,7 +269,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const { results: existingRows } = await env.DB.prepare('SELECT * FROM proposta_itens WHERE id_proposta = ?').bind(id).all();
             const existingItemsMap = new Map((existingRows as any[]).map(r => [r.id_ooh, r]));
 
-            const isClient = payload!.role === 'client';
+            const isClient = payload!.type === 'external';
 
             batch.push(env.DB.prepare('DELETE FROM proposta_itens WHERE id_proposta = ?').bind(id));
 
@@ -388,7 +388,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                         // Insert WITH role
                         // Note: created_by_type column might still exist in invites or we just ignore it if it's default?
                         // Assuming it exists as we haven't dropped it. 
-                        const creatorType = payload!.role === 'client' ? 'client' : 'internal';
+                        const creatorType = payload!.type === 'external' ? 'client' : 'internal';
 
                         await env.DB.prepare(`
                             INSERT INTO proposta_invites (proposal_id, email, created_by, created_by_type, token, status, role)
@@ -514,7 +514,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
     if (request.method === 'GET' && path === '/api/propostas/admin/list') {
         try {
             const user = await requireAuth(request, env);
-            const isClient = user.role === 'client';
+            const isClient = user.type === 'external';
 
             let query = `
                 SELECT 
@@ -618,7 +618,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             if (!payload) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers });
 
             // Check if already has access
-            if (payload.role !== 'client') {
+            if (payload.type !== 'external') {
                 return new Response(JSON.stringify({ success: true, message: 'Internal users have access' }), { headers });
             }
 

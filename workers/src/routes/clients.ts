@@ -43,7 +43,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             }
 
             if (isAgency) {
-                // Agency gets everything
+                // Agency gets all external users
                 const { results } = await env.DB.prepare(`
                     SELECT cu.id, cu.name, cu.email, cu.created_at
                     FROM users cu
@@ -57,6 +57,8 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
                     id: currentClientUser.id,
                     name: currentClientUser.name,
                     email: currentClientUser.email,
+                    role: currentClientUser.role,
+                    type: currentClientUser.type,
                     created_at: currentClientUser.created_at,
                     // last_login removed from users table in migration 0008, ignore for now or add back if critical
                 }];
@@ -95,7 +97,8 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             id: user.id as number,
             name: user.name as string,
             email: user.email as string,
-            role: 'client'
+            role: 'client',
+            type: 'external' // Add missing type
         };
 
         const token = await generateClientToken(clientUser);
@@ -262,11 +265,13 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
             await env.DB.prepare('UPDATE users SET verified = 1, verification_token = NULL WHERE id = ?').bind(user.id).run();
 
             // Generate token for auto-login
+            const origin = user.type === 'external' ? 'external' : 'internal';
             const clientUser: ClientUser = {
                 id: user.id as number,
                 name: user.name as string,
                 email: user.email as string,
-                role: 'client'
+                role: 'viewer', // Force viewer role for consistency or use user.role? But ClientUser interface requires role.
+                type: 'external' // Add type
             };
             const authToken = await generateClientToken(clientUser);
 
@@ -347,13 +352,31 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
     // DELETE /api/admin/accounts/:id - Delete user and their shares
     if (path.match(/\/api\/admin\/accounts\/\d+$/) && request.method === 'DELETE') {
         try {
-            await requireAuth(request, env);
+            const user = await requireAuth(request, env);
             const userId = path.split('/')[4];
+
+            // Ensure only external users can be deleted by agencies, or internal users by admins
+            const targetUser = await env.DB.prepare('SELECT type FROM users WHERE id = ?').bind(userId).first() as { type: string } | null;
+            if (!targetUser) {
+                return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers });
+            }
+
+            if (user.type === 'external') {
+                // External users (clients) cannot delete other users
+                return new Response(JSON.stringify({ error: 'Access Denied' }), { status: 403, headers });
+            } else { // Internal user (agency/admin)
+                if (targetUser.type === 'internal' && user.role !== 'admin') {
+                    // Only admins can delete internal users
+                    return new Response(JSON.stringify({ error: 'Access Denied' }), { status: 403, headers });
+                }
+                // Agency users can delete external users
+                // Admins can delete any user
+            }
 
             // Delete shares first
             await env.DB.prepare('DELETE FROM proposta_shares WHERE user_id = ?').bind(userId).run();
             // Delete user
-            const res = await env.DB.prepare('DELETE FROM users WHERE id = ? AND type = "external"').bind(userId).run();
+            const res = await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
 
             if (res.meta.changes === 0) {
                 return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers });
