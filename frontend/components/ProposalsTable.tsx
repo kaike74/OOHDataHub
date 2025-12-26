@@ -1,11 +1,11 @@
 import { useStore } from '@/lib/store';
 import { formatDate, formatCurrency } from '@/lib/utils';
-import { FileText, MapPin, Coins, History, Trash2, Building2, Pencil } from 'lucide-react';
+import { FileText, MapPin, Coins, History, Trash2, Building2, Pencil, ArrowUpDown, Eye } from 'lucide-react';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { api } from '@/lib/api';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button'; // Assuming Button is available if needed, though primarily using icon buttons here
-import { useState } from 'react'; // Added useState
+import { useState } from 'react';
 
 // Assuming StatusBadge and formatAOA are defined elsewhere or need to be added.
 // For now, I'll assume they are imported or defined in a way that makes the code syntactically correct.
@@ -68,7 +68,7 @@ export interface ProposalTableItem {
     comissao: string | 'V2' | 'V3' | 'V4'; // Union, usually string from DB
     total_itens: number;
     total_valor: number;
-    shared_with: string; // JSON string
+    shared_with: string | Array<{ email: string; name: string }>; // Allow array too
     creator_email?: string;
     can_edit_metadata?: number; // 0 or 1
 }
