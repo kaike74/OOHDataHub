@@ -782,14 +782,14 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors flex items-center justify-end">
                     <input
                         type="text"
-                        readOnly={!canEditValues}
-                        disabled={!canEditValues}
-                        className={`w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700 font-normal ${isClientView ? 'cursor-default' : ''}`}
+                        readOnly={!canEditValues || !isInternal}
+                        disabled={!canEditValues || !isInternal}
+                        className={`w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700 font-normal ${isClientView || !isInternal ? 'cursor-default' : ''}`}
                         defaultValue={formatCurrency(row.original.valor_locacao || 0)}
                         data-row-id={row.original.id}
                         data-column-id="valor_locacao"
                         onBlur={(e) => {
-                            if (isClientView) return;
+                            if (isClientView || !isInternal) return;
                             // Extract numbers
                             const valStr = e.target.value.replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
                             const newValue = parseFloat(valStr);
@@ -802,9 +802,9 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                         }}
                         onFocus={(e) => {
                             // On focus show raw number if needed or just select all
-                            if (!isClientView) e.target.select();
+                            if (!isClientView && isInternal) e.target.select();
                         }}
-                        onKeyDown={(e) => !isClientView && !readOnly && handleKeyDown(e, row.original.id, 'valor_locacao', itens)}
+                        onKeyDown={(e) => !isClientView && isInternal && !readOnly && handleKeyDown(e, row.original.id, 'valor_locacao', itens)}
                     />
                 </div>
             )
@@ -823,13 +823,14 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors flex items-center justify-end">
                     <input
                         type="text"
-                        readOnly={readOnly}
-                        disabled={readOnly}
-                        className="w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700"
+                        readOnly={readOnly || !isInternal}
+                        disabled={readOnly || !isInternal}
+                        className={`w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700 ${!isInternal ? 'cursor-default' : ''}`}
                         defaultValue={formatCurrency(row.original.valor_papel || 0)}
                         data-row-id={row.original.id}
                         data-column-id="valor_papel"
                         onBlur={(e) => {
+                            if (!isInternal) return;
                             const valStr = e.target.value.replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
                             const newValue = parseFloat(valStr);
                             if (!isNaN(newValue) && newValue !== row.original.valor_papel) {
@@ -838,8 +839,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             if (!isNaN(newValue)) e.target.value = formatCurrency(newValue);
                             else e.target.value = formatCurrency(row.original.valor_papel || 0);
                         }}
-                        onFocus={(e) => e.target.select()}
-                        onKeyDown={(e) => !readOnly && handleKeyDown(e, row.original.id, 'valor_papel', itens)}
+                        onFocus={(e) => !isInternal ? e.target.blur() : e.target.select()}
+                        onKeyDown={(e) => !readOnly && isInternal && handleKeyDown(e, row.original.id, 'valor_papel', itens)}
                     />
                 </div>
             )
@@ -858,13 +859,14 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors flex items-center justify-end">
                     <input
                         type="text"
-                        readOnly={readOnly}
-                        disabled={readOnly}
-                        className="w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700"
+                        readOnly={readOnly || !isInternal}
+                        disabled={readOnly || !isInternal}
+                        className={`w-full bg-transparent border-none text-right focus:ring-0 p-0 text-[13px] text-gray-700 ${!isInternal ? 'cursor-default' : ''}`}
                         defaultValue={formatCurrency(row.original.valor_lona || 0)}
                         data-row-id={row.original.id}
                         data-column-id="valor_lona"
                         onBlur={(e) => {
+                            if (!isInternal) return;
                             const valStr = e.target.value.replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
                             const newValue = parseFloat(valStr);
                             if (!isNaN(newValue) && newValue !== row.original.valor_lona) {
@@ -873,8 +875,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             if (!isNaN(newValue)) e.target.value = formatCurrency(newValue);
                             else e.target.value = formatCurrency(row.original.valor_lona || 0);
                         }}
-                        onFocus={(e) => e.target.select()}
-                        onKeyDown={(e) => handleKeyDown(e, row.original.id, 'valor_lona', itens)}
+                        onFocus={(e) => !isInternal ? e.target.blur() : e.target.select()}
+                        onKeyDown={(e) => !readOnly && isInternal && handleKeyDown(e, row.original.id, 'valor_lona', itens)}
                     />
                 </div>
             )
@@ -999,12 +1001,13 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors">
                     <input
                         type="text"
-                        readOnly={readOnly}
-                        disabled={readOnly}
-                        className="w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] text-gray-700 placeholder-gray-300"
+                        readOnly={readOnly || !isInternal}
+                        disabled={readOnly || !isInternal}
+                        className={`w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] text-gray-700 placeholder-gray-300 ${!isInternal ? 'cursor-default' : ''}`}
                         defaultValue={row.original.ponto_referencia || ''}
-                        placeholder="Vazio"
+                        placeholder={!isInternal ? (row.original.ponto_referencia || '-') : "Vazio"}
                         onBlur={(e) => {
+                            if (!isInternal) return;
                             if (e.target.value !== row.original.ponto_referencia) {
                                 updateItem(row.original.id, 'ponto_referencia', e.target.value);
                             }
