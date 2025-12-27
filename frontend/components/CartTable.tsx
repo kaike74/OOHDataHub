@@ -148,7 +148,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const startHeightRef = useRef(0);
 
     const user = useStore(state => state.user);
-    const isInternal = !!user && user.role !== 'client';
+    const isInternal = !!user && user.type === 'internal';
     // Only show status column if proposal is actually IN VALIDATION or APPROVED.
     // Draft proposals should not show this column, even for internal users.
     const showStatusColumn = selectedProposta?.status === 'em_validacao' || selectedProposta?.status === 'aprovado';
