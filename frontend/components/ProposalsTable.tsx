@@ -217,7 +217,11 @@ export default function ProposalsTable({
                             return (
                                 <tr
                                     key={item.id}
-                                    className="hover:bg-gray-50/80 transition-colors group"
+                                    className="hover:bg-gray-50/80 transition-colors group cursor-pointer"
+                                    onClick={() => {
+                                        if (onView) onView(item.id);
+                                        else if (onRowClick) onRowClick(item);
+                                    }}
                                 >
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <StatusBadge status={item.status} />
@@ -292,7 +296,9 @@ export default function ProposalsTable({
                                         <div className="flex items-center justify-end gap-2">
                                             {/* View Button - Always Visible */}
                                             <button
-                                                onClick={() => {
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
                                                     if (onView) onView(item.id);
                                                     else if (onRowClick) onRowClick(item);
                                                 }}
@@ -307,7 +313,11 @@ export default function ProposalsTable({
                                             {/* Assuming 1 = true, 0 = false. Default to true if missing? No, user wants restriction. */}
                                             {(item.can_edit_metadata === 1) && (
                                                 <button
-                                                    onClick={() => onEdit(item)}
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onEdit(item);
+                                                    }}
                                                     className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                     title="Editar Metadados"
                                                 >
@@ -318,7 +328,11 @@ export default function ProposalsTable({
                                             {/* History Button (Legacy Support) */}
                                             {onHistory && (
                                                 <button
-                                                    onClick={(e) => onHistory(item.id, e)}
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onHistory(item.id, e);
+                                                    }}
                                                     className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                                                     title="Histórico"
                                                 >
@@ -327,7 +341,11 @@ export default function ProposalsTable({
                                             )}
 
                                             <button
-                                                onClick={(e) => onDelete(item.id, e)}
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onDelete(item.id, e);
+                                                }}
                                                 className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                 title="Excluir Proposta"
                                             >

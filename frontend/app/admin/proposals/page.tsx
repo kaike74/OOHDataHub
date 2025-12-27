@@ -108,7 +108,7 @@ export default function AdminProposalsPage() {
             setSelectedProposta(proposta);
             setCurrentView('map');
             // If Client, bypass redirect
-            const url = user?.role === 'client' ? '/?action=new' : '/';
+            const url = user?.role === 'client' ? `/?id=${proposalId}` : `/?id=${proposalId}`;
             router.push(url);
         } catch (error) {
             console.error('Error opening proposal:', error);
