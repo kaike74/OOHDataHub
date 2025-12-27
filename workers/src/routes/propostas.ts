@@ -295,8 +295,37 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                         finalValores.status = existing.status;
                         finalValores.status_validacao = existing.status_validacao;
                         finalValores.approved_until = existing.approved_until;
+                    } else {
+                        // NEW ITEM FOR CLIENT: MUST CALCULATE V0 PRICES
+                        // Fetch products for this point to get Base Values
+                        const { results: produtos } = await env.DB.prepare('SELECT * FROM produtos WHERE id_ponto = ?').bind(item.id_ooh).all();
+
+                        // 1. Rental (Locação) - Logic: Base * 2
+                        const locacaoProd = (produtos as any[]).find((p: any) => p.tipo === 'Locação' && (p.periodo === item.periodo_comercializado || !p.periodo))
+                            || (produtos as any[]).find((p: any) => p.tipo === 'Locação'); // Fallback to any rental
+
+                        if (locacaoProd) {
+                            finalValores.valor_locacao = Number(locacaoProd.valor) * 2;
+                        } else {
+                            // Fallback if no rental product found? (Should not happen if data is clean)
+                            // Keep frontend value or set to 0? Let's keep frontend value but maybe flag it? 
+                            // Or maybe default to 0 to prevent abuse.
+                            // But let's trust frontend IF we can't find base (edge case).
+                            // Actually, strict V0 means we should try hard.
+                        }
+
+                        // 2. Paper (Papel) - Logic: Base * 1.25
+                        const papelProd = (produtos as any[]).find((p: any) => p.tipo === 'Papel');
+                        if (papelProd) {
+                            finalValores.valor_papel = Number(papelProd.valor) * 1.25;
+                        }
+
+                        // 3. Canvas (Lona) - Logic: Base * 1.25
+                        const lonaProd = (produtos as any[]).find((p: any) => p.tipo === 'Lona');
+                        if (lonaProd) {
+                            finalValores.valor_lona = Number(lonaProd.valor) * 1.25;
+                        }
                     }
-                    // If New Item: Client accepts value sent (frontend calc) but status forced to 'pendente_validacao' via default above.
                 }
 
                 batch.push(env.DB.prepare(`
