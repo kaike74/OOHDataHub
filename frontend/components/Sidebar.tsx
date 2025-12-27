@@ -178,7 +178,7 @@ export default function Sidebar() {
             // Helper function to calculate value with commission
             const calcularValorComissao = (valorBase: number, comissao: string): number => {
                 // Client Special Pricing: Double Base (2x) (V0 commission)
-                if (comissao === 'V0' || comissao === 'CLIENT' || user?.role === 'client') {
+                if (comissao === 'V0' || comissao === 'CLIENT' || user?.type === 'external') {
                     return parseFloat((valorBase * 2).toFixed(2));
                 }
 
@@ -295,8 +295,8 @@ export default function Sidebar() {
                 onClick={handleClose}
             />
 
-            {/* Sidebar - z-40, consistent with NavigationMenu */}
-            <div className="fixed right-0 top-16 h-[calc(100vh-64px)] w-full sm:w-80 bg-white/95 backdrop-blur-xl shadow-emidias-2xl z-40 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col border-l border-white/20 animate-in slide-in-from-right">
+            {/* Sidebar - z-60 to be above everything */}
+            <div className="fixed right-0 top-16 h-[calc(100vh-64px)] w-full sm:w-80 bg-white/95 backdrop-blur-xl shadow-emidias-2xl z-[60] transform transition-transform duration-300 ease-out overflow-hidden flex flex-col border-l border-white/20 animate-in slide-in-from-right">
 
                 {/* Header com imagens / Carrossel */}
                 <div className="relative h-44 bg-gray-100 flex-shrink-0 group">
@@ -460,7 +460,7 @@ export default function Sidebar() {
                                         <DollarSign size={14} />
                                     </div>
                                     <h3 className="font-semibold text-gray-800 text-sm">
-                                        {user?.role === 'client' ? 'Valores Estimados' : 'Tabela de Preços'}
+                                        {user?.type === 'external' ? 'Valores Estimados' : 'Tabela de Preços'}
                                     </h3>
                                 </div>
                                 <div className="space-y-2">
@@ -471,7 +471,7 @@ export default function Sidebar() {
                                             produto.tipo.toLowerCase().includes('bissemanal') ||
                                             produto.tipo.toLowerCase().includes('mensal');
 
-                                        if (user?.role === 'client') {
+                                        if (user?.type === 'external') {
                                             if (isLocacao) {
                                                 displayValue = produto.valor * 2;
                                             } else {
