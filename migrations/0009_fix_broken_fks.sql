@@ -1,18 +1,11 @@
--- Migration: Fix Broken Foreign Keys
--- Description: Recreates tables that were referencing deleted usuarios_internos/externos to reference users table.
--- PRE-MIGRATION CLEANUP: Remove orphaned records that violate FKs
-DELETE FROM proposta_itens
-WHERE id_proposta NOT IN (
-        SELECT id
-        FROM propostas
-    );
--- Note: We check id_ooh against pontos_ooh.id. 
-DELETE FROM proposta_itens
-WHERE id_ooh NOT IN (
-        SELECT id
-        FROM pontos_ooh
-    );
--- 1. Fix proposta_itens
+-- Migration: Fix Broken Foreign Keys (DATA WIPE EDITION)
+-- Description: Recreates tables with strict foreign keys.
+-- NOTE: Wipes data from proposta_itens and pontos_ooh to resolve FK violations,
+-- as authorized by user: "not important" / "just in testing".
+-- 1. Wipe old data immediately
+DELETE FROM proposta_itens;
+DELETE FROM pontos_ooh;
+-- 2. Fix proposta_itens
 CREATE TABLE proposta_itens_new (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     id_proposta INTEGER,
@@ -36,6 +29,7 @@ CREATE TABLE proposta_itens_new (
     FOREIGN KEY (id_proposta) REFERENCES propostas(id) ON DELETE CASCADE,
     FOREIGN KEY (id_ooh) REFERENCES pontos_ooh(id)
 );
+-- Copy (0 rows)
 INSERT INTO proposta_itens_new (
         id,
         id_proposta,
@@ -73,50 +67,10 @@ SELECT id,
     last_validated_by,
     last_validated_at
 FROM proposta_itens;
--- Update last_validated_by to new user IDs
-UPDATE proposta_itens_new
-SET last_validated_by = (
-        SELECT id
-        FROM users
-        WHERE legacy_id = proposta_itens_new.last_validated_by
-            AND legacy_source = 'internal'
-    )
-WHERE last_validated_by IS NOT NULL;
 DROP TABLE proposta_itens;
 ALTER TABLE proposta_itens_new
     RENAME TO proposta_itens;
--- 2. Fix pontos_ooh
--- PRE-MAPPING for pontos_ooh (Clean orphans and remap IDs first)
-UPDATE pontos_ooh
-SET created_by = (
-        SELECT id
-        FROM users
-        WHERE legacy_id = pontos_ooh.created_by
-            AND legacy_source = 'internal'
-    )
-WHERE created_by IS NOT NULL;
-UPDATE pontos_ooh
-SET created_by = NULL
-WHERE created_by IS NOT NULL
-    AND created_by NOT IN (
-        SELECT id
-        FROM users
-    );
-UPDATE pontos_ooh
-SET updated_by = (
-        SELECT id
-        FROM users
-        WHERE legacy_id = pontos_ooh.updated_by
-            AND legacy_source = 'internal'
-    )
-WHERE updated_by IS NOT NULL;
-UPDATE pontos_ooh
-SET updated_by = NULL
-WHERE updated_by IS NOT NULL
-    AND updated_by NOT IN (
-        SELECT id
-        FROM users
-    );
+-- 3. Fix pontos_ooh
 CREATE TABLE pontos_ooh_new (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     codigo_ooh TEXT UNIQUE NOT NULL,
@@ -141,6 +95,7 @@ CREATE TABLE pontos_ooh_new (
     FOREIGN KEY (id_exibidora) REFERENCES exibidoras(id) ON DELETE
     SET NULL
 );
+-- Copy (0 rows)
 INSERT INTO pontos_ooh_new (
         id,
         codigo_ooh,
@@ -180,18 +135,14 @@ SELECT id,
     updated_at,
     pais,
     created_by,
-    -- Already valid or NULL
     updated_by,
-    -- Already valid or NULL
     ponto_referencia,
     deleted_at
 FROM pontos_ooh;
--- Mapping done above.
--- UPDATE pontos_ooh_new ... (Removed)
 DROP TABLE pontos_ooh;
 ALTER TABLE pontos_ooh_new
     RENAME TO pontos_ooh;
--- Recreate indices for pontos_ooh
+-- 4. Recreate indices for pontos_ooh
 CREATE INDEX idx_pontos_codigo ON pontos_ooh(codigo_ooh);
 CREATE INDEX idx_pontos_deleted_at ON pontos_ooh(deleted_at);
 CREATE INDEX idx_pontos_exibidora ON pontos_ooh(id_exibidora);
