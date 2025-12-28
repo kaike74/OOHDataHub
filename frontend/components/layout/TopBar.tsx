@@ -45,14 +45,18 @@ export default function TopBar({ currentView, onChangeView, breadcrumbs, user, a
             <div className="flex items-center justify-between px-4 sm:px-6 h-[70px]">
                 {/* Left: Logo & Breadcrumbs */}
                 <div className="flex items-center gap-6 overflow-hidden">
-                    <div className="flex items-center gap-3 flex-shrink-0 cursor-pointer" onClick={() => onChangeView('map')}>
-                        <div className="w-9 h-9 bg-gradient-to-br from-emidias-primary to-[#0A0970] rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/10">
-                            <MapPin size={18} className="text-white" strokeWidth={2.5} />
-                        </div>
-                        <div className="hidden lg:block leading-tight">
-                            <h1 className="text-base font-bold text-gray-900 tracking-tight">OOH Hub</h1>
-                        </div>
-                    </div>
+                    <a
+                        href="https://emidiastec.com.br"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center flex-shrink-0 cursor-pointer transition-opacity hover:opacity-80"
+                    >
+                        <img
+                            src="https://emidiastec.com.br/wp-content/smush-avif/2025/03/logo-E-MIDIAS-png-fundo-escuro-HORIZONTAL.png.avif"
+                            alt="E-MÍDIAS"
+                            className="h-10 w-auto object-contain"
+                        />
+                    </a>
 
                     <div className="h-6 w-px bg-gray-200 hidden sm:block mx-2" />
 
