@@ -7,7 +7,6 @@ import {
 import { cn } from '@/lib/utils';
 import MainTabs, { ViewType } from './MainTabs';
 import Breadcrumbs, { BreadcrumbItem } from './Breadcrumbs';
-import GlobalSearch from '@/components/GlobalSearch';
 import { Button } from '@/components/ui/Button';
 import { useStore } from '@/lib/store';
 import { ReactNode, useState, useEffect } from 'react';
@@ -26,18 +25,7 @@ export default function TopBar({ currentView, onChangeView, breadcrumbs, user, a
     const logout = useStore((state) => state.logout);
     const { setMenuOpen } = useStore(); // Legacy menu for mobile or backup
 
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                setIsSearchOpen(true);
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
 
     return (
         <div className="bg-white border-b border-gray-200 sticky top-0 z-30 flex flex-col shadow-sm transition-all duration-200">
@@ -65,26 +53,8 @@ export default function TopBar({ currentView, onChangeView, breadcrumbs, user, a
                     </div>
                 </div>
 
-                {/* Right Area: Global Search + Actions + Profile */}
+                {/* Right Area: Profile */}
                 <div className="flex items-center gap-2 sm:gap-4">
-                    {/* Global Search Trigger (Icon Block) */}
-                    <button
-                        onClick={() => setIsSearchOpen(true)}
-                        className="p-2 text-gray-400 hover:text-emidias-primary hover:bg-gray-100 rounded-lg transition-all group relative"
-                        title="Buscar (⌘K)"
-                    >
-                        <Search size={20} />
-                        {/* Keyboard shortcut hint tooltip could go here */}
-                    </button>
-                    <GlobalSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-
-                    {/* Context Actions */}
-                    {actions && (
-                        <div className="flex items-center gap-2">
-                            {actions}
-                        </div>
-                    )}
-
                     {/* Notifications */}
                     <button className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors relative">
                         <Bell size={18} />
@@ -106,13 +76,18 @@ export default function TopBar({ currentView, onChangeView, breadcrumbs, user, a
                 </div>
             </div>
 
-            {/* Bottom Strip: Navigation Tabs (Desktop) */}
-            <div className="hidden md:flex px-4 sm:px-6 bg-gray-50/50 border-t border-gray-100 items-center justify-between">
+            {/* Bottom Strip: Navigation Tabs + Context Actions */}
+            <div className="hidden md:flex px-4 sm:px-6 bg-gray-50/50 border-t border-gray-100 items-center">
                 <MainTabs
                     currentView={currentView}
                     onChangeView={onChangeView}
                     counts={counts}
                 />
+
+                {/* Actions relocated to Tab Bar (Right side) */}
+                <div className="ml-auto flex items-center gap-2 py-2">
+                    {actions}
+                </div>
             </div>
         </div>
     );

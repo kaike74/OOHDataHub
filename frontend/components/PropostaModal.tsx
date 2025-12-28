@@ -1,14 +1,14 @@
 
-import { useState } from 'react';
-import { X, Loader2, Coins } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Loader2, Coins, Building2 } from 'lucide-react';
 import { useStore } from '@/lib/store';
-import { Proposta } from '@/lib/types';
+import { Proposta, Cliente } from '@/lib/types';
 import { api } from '@/lib/api';
 
 interface PropostaModalProps {
     isOpen: boolean;
     onClose: () => void;
-    clienteId: number;
+    clienteId?: number;
     onSuccess: (proposta: Proposta) => void;
 }
 
@@ -16,25 +16,63 @@ export default function PropostaModal({ isOpen, onClose, clienteId, onSuccess }:
     const [nome, setNome] = useState('');
     const [comissao, setComissao] = useState<'V2' | 'V3' | 'V4'>('V2');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const token = useStore((state) => state.token);
+
+    // Client Selection State
+    const [availableClientes, setAvailableClientes] = useState<Cliente[]>([]);
+    const [selectedClientId, setSelectedClientId] = useState<number | string>(clienteId || '');
+    const [isLoadingClients, setIsLoadingClients] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            // Reset form
+            setNome('');
+            setComissao('V2');
+
+            // If valid clienteId is passed, use it. Otherwise reset selection.
+            if (clienteId && clienteId > 0) {
+                setSelectedClientId(clienteId);
+            } else {
+                setSelectedClientId('');
+                loadClientes();
+            }
+        }
+    }, [isOpen, clienteId]);
+
+    const loadClientes = async () => {
+        try {
+            setIsLoadingClients(true);
+            const data = await api.getClientes();
+            setAvailableClientes(data);
+        } catch (error) {
+            console.error('Erro ao carregar clientes:', error);
+        } finally {
+            setIsLoadingClients(false);
+        }
+    };
 
     if (!isOpen) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const finalClientId = Number(selectedClientId);
+        if (!finalClientId) {
+            alert('Por favor, selecione um cliente.');
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
             const result = await api.createProposta({
-                id_cliente: clienteId,
+                id_cliente: finalClientId,
                 nome,
                 comissao
             });
 
-            // Create minimal proposal object to pass back
             const newProposta: Proposta = {
                 id: result.id,
-                id_cliente: clienteId,
+                id_cliente: finalClientId,
                 nome,
                 comissao,
                 status: 'rascunho',
@@ -42,14 +80,15 @@ export default function PropostaModal({ isOpen, onClose, clienteId, onSuccess }:
             };
             onSuccess(newProposta);
             onClose();
-            setNome('');
-            setComissao('V2');
         } catch (error) {
             console.error('Erro:', error);
+            alert('Erro ao criar proposta. Tente novamente.');
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    const showClientSelect = !clienteId || clienteId === 0;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
@@ -64,6 +103,36 @@ export default function PropostaModal({ isOpen, onClose, clienteId, onSuccess }:
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                    {/* Client Selection (Conditional) */}
+                    {showClientSelect && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                <Building2 size={16} className="text-gray-400" />
+                                Cliente
+                            </label>
+                            {isLoadingClients ? (
+                                <div className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-400 flex items-center gap-2">
+                                    <Loader2 size={16} className="animate-spin" />
+                                    Carregando clientes...
+                                </div>
+                            ) : (
+                                <select
+                                    required
+                                    value={selectedClientId}
+                                    onChange={(e) => setSelectedClientId(Number(e.target.value))}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10 transition-all outline-none bg-white appearance-none cursor-pointer"
+                                >
+                                    <option value="" disabled>Selecione um cliente...</option>
+                                    {availableClientes.map(cliente => (
+                                        <option key={cliente.id} value={cliente.id}>
+                                            {cliente.nome}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+                    )}
+
                     <div className="space-y-2">
                         <label className="text-sm font-semibold text-gray-700">Nome da Proposta</label>
                         <input
@@ -108,8 +177,8 @@ export default function PropostaModal({ isOpen, onClose, clienteId, onSuccess }:
                         </button>
                         <button
                             type="submit"
-                            disabled={isSubmitting}
-                            className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-emidias-accent hover:bg-emidias-accent-dark shadow-lg shadow-emidias-accent/20 transition-all flex items-center justify-center gap-2"
+                            disabled={isSubmitting || (!selectedClientId && showClientSelect)}
+                            className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-emidias-accent hover:bg-emidias-accent-dark shadow-lg shadow-emidias-accent/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSubmitting ? <Loader2 className="animate-spin" /> : 'Criar e Abrir Mapa'}
                         </button>
