@@ -117,7 +117,11 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
     // Table State
     const [sorting, setSorting] = useState<SortingState>([]);
-    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+        latitude: false,
+        longitude: false,
+        observacoes: false
+    });
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const [columnSizing, setColumnSizing] = useState({});
 

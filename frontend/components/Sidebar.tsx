@@ -102,6 +102,77 @@ export default function Sidebar() {
     const imagens = selectedPonto?.imagens || [];
     const produtos = selectedPonto?.produtos || [];
 
+    const sidebarRef = useRef<HTMLDivElement>(null);
+    const [sidebarWidth, setSidebarWidth] = useState(384); // Default 24rem (sm:w-96)
+    const [isResizing, setIsResizing] = useState(false);
+
+    // Resizing Logic
+    const startResizing = useCallback((mouseDownEvent: React.MouseEvent) => {
+        mouseDownEvent.preventDefault();
+        setIsResizing(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isResizing) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            // Calculate new width (from right edge)
+            const newWidth = window.innerWidth - e.clientX;
+            // Min width 280px, Max width 800px or 90vw
+            if (newWidth > 280 && newWidth < Math.min(800, window.innerWidth * 0.9)) {
+                setSidebarWidth(newWidth);
+            }
+        };
+
+        const handleMouseUp = () => {
+            setIsResizing(false);
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isResizing]);
+
+    // Click Outside Logic
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                isSidebarOpen &&
+                sidebarRef.current &&
+                !sidebarRef.current.contains(event.target as Node) &&
+                // Ignore clicks on map markers usually... but user wants "click outside closes".
+                // We should be careful not to close if clicking a marker that *opens* it,
+                // but usually the opening click happens after this, or stops propagation.
+                // Let's assume a basic check is fine for now.
+                // Adding a small delay or check might be needed if opening click bubbles up.
+                // But usually Open click sets state *after* this or bubbles.
+                // Actually, if I click a marker, it triggers `setSelectedPonto`.
+                // If I click map, it might close.
+                // Let's rely on standard ref check.
+                !isResizing // Don't close while resizing
+            ) {
+                // Check if the click target is NOT a marker or something that SHOULD open it.
+                // This is hard to know generically.
+                // Common pattern: The component opening it should stop propagation.
+                // We'll proceed with basic closing.
+                // However, Sidebar is fixed z-60. Map is below.
+                // If user clicks Map, it is "outside".
+                setSidebarOpen(false);
+            }
+        };
+
+        if (isSidebarOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isSidebarOpen, setSidebarOpen, isResizing]);
+
     const handleEdit = useCallback(() => {
         if (selectedPonto) {
             setEditingPonto(selectedPonto);
@@ -296,14 +367,25 @@ export default function Sidebar() {
 
     return (
         <>
-            {/* Overlay - z-30 to be under the sidebar (z-40) but above map */}
+            {/* Overlay - Mobile Only */}
             <div
                 className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 transition-opacity lg:hidden animate-in fade-in"
                 onClick={handleClose}
             />
 
-            {/* Sidebar - z-60 to be above everything */}
-            <div className="fixed right-0 top-16 h-[calc(100vh-64px)] w-full sm:w-80 bg-white/95 backdrop-blur-xl shadow-emidias-2xl z-[60] transform transition-transform duration-300 ease-out overflow-hidden flex flex-col border-l border-white/20 animate-in slide-in-from-right">
+            {/* Sidebar - Resizable Container */}
+            <div
+                ref={sidebarRef}
+                style={{ width: `${sidebarWidth}px` }}
+                className="fixed right-0 top-16 h-[calc(100vh-64px)] bg-white/95 backdrop-blur-xl shadow-emidias-2xl z-[60] transform transition-transform duration-300 ease-out flex flex-col border-l border-white/20 animate-in slide-in-from-right"
+            >
+                {/* Resize Handle */}
+                <div
+                    className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-emidias-primary/50 transition-colors z-50 group flex items-center justify-center translate-x-[-2px]"
+                    onMouseDown={startResizing}
+                >
+                    <div className="w-0.5 h-8 bg-gray-300 rounded-full group-hover:bg-emidias-primary group-active:bg-emidias-primary"></div>
+                </div>
 
                 {/* Header com imagens / Carrossel */}
                 <div className="relative h-44 bg-gray-100 flex-shrink-0 group">
@@ -454,6 +536,28 @@ export default function Sidebar() {
                                             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Fluxo</p>
                                         </div>
                                         <p className="text-gray-900 font-semibold text-sm pl-0.5">{selectedPonto.fluxo.toLocaleString()}/dia</p>
+                                    </div>
+                                )}
+
+                                {/* Latitude */}
+                                {selectedPonto.latitude && (
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-1.5 text-emidias-accent">
+                                            <MapPin size={14} />
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Latitude</p>
+                                        </div>
+                                        <p className="text-gray-900 font-semibold text-sm pl-0.5">{selectedPonto.latitude}</p>
+                                    </div>
+                                )}
+
+                                {/* Longitude */}
+                                {selectedPonto.longitude && (
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-1.5 text-emidias-accent">
+                                            <MapPin size={14} />
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Longitude</p>
+                                        </div>
+                                        <p className="text-gray-900 font-semibold text-sm pl-0.5">{selectedPonto.longitude}</p>
                                     </div>
                                 )}
                             </div>
