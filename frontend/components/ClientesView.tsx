@@ -15,12 +15,13 @@ import { Skeleton } from '@/components/ui/Skeleton';
 interface ClientesViewProps {
     isModalOpen?: boolean;
     onCloseModal?: () => void;
+    searchTerm?: string;
 }
 
-export default function ClientesView({ isModalOpen, onCloseModal }: ClientesViewProps) {
+export default function ClientesView({ isModalOpen, onCloseModal, searchTerm = '' }: ClientesViewProps) {
     const [clientes, setClientes] = useState<Cliente[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
+    // Removed local searchQuery state in favor of prop
     const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
 
     // Internal state for modal visibility
@@ -96,25 +97,14 @@ export default function ClientesView({ isModalOpen, onCloseModal }: ClientesView
     };
 
     const filteredClientes = clientes.filter(c =>
-        c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.cnpj?.includes(searchQuery)
+        c.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.cnpj?.includes(searchTerm)
     );
 
     return (
         <div className="h-full bg-gray-50 flex flex-col overflow-hidden">
-            {/* Local Sub-header or Search Bar */}
-            <div className="bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
-                <h2 className="text-lg font-bold text-gray-800">Carteira de Clientes</h2>
-                <div className="relative w-72">
-                    <Input
-                        icon={<Search size={18} />}
-                        placeholder="Buscar por nome ou CNPJ..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-gray-50 border-gray-200 focus:bg-white"
-                    />
-                </div>
-            </div>
+            {/* Local Sub-header or Search Bar (REMOVED - Lifted to TopBar) */}
+
 
             <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
                 {isLoading ? (

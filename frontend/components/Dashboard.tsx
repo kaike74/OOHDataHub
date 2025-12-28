@@ -63,6 +63,10 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
     const [isClientModalOpen, setIsClientModalOpen] = useState(false);
     const [isPropostaModalOpen, setIsPropostaModalOpen] = useState(false);
 
+    // Search States lifted from views
+    const [clientSearch, setClientSearch] = useState('');
+    const [proposalSearch, setProposalSearch] = useState('');
+
     // Count active filters
     const activeFiltersCount = [
         filterExibidora.length > 0,
@@ -175,8 +179,8 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
             <Button
                 onClick={() => setIsFiltersOpen(true)}
                 variant="outline"
-                className="shadow-sm border-gray-200 bg-white"
-                leftIcon={<Filter size={18} />}
+                className="shadow-sm border-gray-200 bg-white h-9 px-3 text-sm"
+                leftIcon={<Filter size={16} />}
             >
                 <span className="hidden sm:inline">Filtros</span>
                 {activeFiltersCount > 0 && (
@@ -190,8 +194,8 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                 <Button
                     onClick={() => setModalOpen(true)}
                     variant="accent"
-                    className="shadow-accent shadow-emidias-accent/20"
-                    leftIcon={<Plus size={18} strokeWidth={2.5} />}
+                    className="shadow-accent shadow-emidias-accent/20 h-9 px-3 text-sm"
+                    leftIcon={<Plus size={16} strokeWidth={2.5} />}
                 >
                     <span className="hidden sm:inline">Novo Ponto</span>
                 </Button>
@@ -200,25 +204,49 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
     );
 
     const renderClientesActions = () => (
-        <Button
-            onClick={() => setIsClientModalOpen(true)}
-            variant="accent"
-            className="shadow-accent shadow-emidias-accent/20"
-            leftIcon={<Plus size={18} strokeWidth={2.5} />}
-        >
-            <span className="hidden sm:inline">Novo Cliente</span>
-        </Button>
+        <div className="flex items-center gap-2">
+            <div className="relative w-48 lg:w-64">
+                <input
+                    type="text"
+                    placeholder="Buscar clientes..."
+                    value={clientSearch}
+                    onChange={(e) => setClientSearch(e.target.value)}
+                    className="w-full h-9 pl-3 pr-8 rounded-lg border border-gray-200 text-sm focus:border-emidias-accent focus:ring-1 focus:ring-emidias-accent outline-none transition-all"
+                />
+                <Search size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+            <Button
+                onClick={() => setIsClientModalOpen(true)}
+                variant="accent"
+                className="shadow-accent shadow-emidias-accent/20 h-9 px-3 text-sm shrink-0"
+                leftIcon={<Plus size={16} strokeWidth={2.5} />}
+            >
+                <span className="hidden sm:inline">Novo Cliente</span>
+            </Button>
+        </div>
     );
 
     const renderPropostasActions = () => (
-        <Button
-            onClick={() => setIsPropostaModalOpen(true)}
-            variant="accent"
-            className="shadow-accent shadow-emidias-accent/20"
-            leftIcon={<Plus size={18} strokeWidth={2.5} />}
-        >
-            <span className="hidden sm:inline">Nova Proposta</span>
-        </Button>
+        <div className="flex items-center gap-2">
+            <div className="relative w-48 lg:w-64">
+                <input
+                    type="text"
+                    placeholder="Buscar propostas..."
+                    value={proposalSearch}
+                    onChange={(e) => setProposalSearch(e.target.value)}
+                    className="w-full h-9 pl-3 pr-8 rounded-lg border border-gray-200 text-sm focus:border-emidias-accent focus:ring-1 focus:ring-emidias-accent outline-none transition-all"
+                />
+                <Search size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+            <Button
+                onClick={() => setIsPropostaModalOpen(true)}
+                variant="accent"
+                className="shadow-accent shadow-emidias-accent/20 h-9 px-3 text-sm shrink-0"
+                leftIcon={<Plus size={16} strokeWidth={2.5} />}
+            >
+                <span className="hidden sm:inline">Nova Proposta</span>
+            </Button>
+        </div>
     );
 
     const getActions = () => {
@@ -321,12 +349,14 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                 <ClientesView
                     isModalOpen={isClientModalOpen}
                     onCloseModal={() => setIsClientModalOpen(false)}
+                    searchTerm={clientSearch}
                 />
             )}
             {currentView === 'propostas' && !isLoading && !error && (
                 <PropostasView
                     isModalOpen={isPropostaModalOpen}
                     onCloseModal={() => setIsPropostaModalOpen(false)}
+                    searchTerm={proposalSearch}
                 />
             )}
             {currentView === 'contas' && !isLoading && !error && <AccountsView />}
