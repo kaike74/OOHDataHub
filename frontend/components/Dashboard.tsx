@@ -17,7 +17,7 @@ import CartTable from '@/components/CartTable';
 import TrashView from '@/components/TrashView';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { Plus, Filter, Menu, MapPin, Building2, Share2, LogIn, Lock } from 'lucide-react';
+import { Plus, Filter, Menu, MapPin, Building2, Share2, LogIn, Lock, Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import ShareModal from '@/components/ShareModal';
 import Link from 'next/link';
