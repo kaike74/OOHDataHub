@@ -137,78 +137,89 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
     // Drag-to-Fill State
-    const [dragState, setDragState] = useState<{
+    const [dragState, setDragState] = useState < {
         isDragging: boolean;
         startRowId: number | null;
         currentRowId: number | null;
         columnKey: string | null;
         startValue: any;
-    }>({ isDragging: false, startRowId: null, currentRowId: null, columnKey: null, startValue: null });
+        // Drag-to-Fill State
+        const [dragState, setDragState] = useState<{
+            isDragging: boolean;
+            startRowId: number | null;
+            currentRowId: number | null;
+            columnKey: string | null;
+            startValue: any;
+        }>({ isDragging: false, startRowId: null, currentRowId: null, columnKey: null, startValue: null });
 
-    // Height Resizing State
-    const [tableHeight, setTableHeight] = useState(500);
-    const isResizingRef = useRef(false);
-    const startYRef = useRef(0);
-    const startHeightRef = useRef(0);
+        // Column Reordering State
+        const [columnOrder, setColumnOrder] = useState<string[]>([]);
+        const [draggingColumn, setDraggingColumn] = useState<string | null>(null);
 
-    const user = useStore(state => state.user);
-    const isInternal = !!user && user.type === 'internal';
-    // Only show status column if proposal is actually IN VALIDATION or APPROVED.
-    // Draft proposals should not show this column, even for internal users.
-    const showStatusColumn = selectedProposta?.status === 'em_validacao' || selectedProposta?.status === 'aprovado';
+        // Height Resizing State
+        const [tableHeight, setTableHeight] = useState(500);
+        const isResizingRef = useRef(false);
+        const startYRef = useRef(0);
+        const startHeightRef = useRef(0);
 
-    const canEditValues = !readOnly && selectedProposta?.currentUserRole === 'admin';
-    const canEditItems = !readOnly; // Editors can add/remove and change periods
+        const user = useStore(state => state.user);
+        const isInternal = !!user && user.type === 'internal';
+        // Only show status column if proposal is actually IN VALIDATION or APPROVED.
+        // Draft proposals should not show this column, even for internal users.
+        const showStatusColumn = selectedProposta?.status === 'em_validacao' || selectedProposta?.status === 'aprovado';
 
-    const handleApproveProposal = async () => {
-        if (!selectedProposta) return;
-        if (!confirm('Deseja enviar esta proposta para validação?')) return;
+        const canEditValues = !readOnly && selectedProposta?.currentUserRole === 'admin';
+        const canEditItems = !readOnly; // Editors can add/remove and change periods
 
-        try {
-            await api.updateProposalStatus(selectedProposta.id, 'em_validacao');
-            refreshProposta({ ...selectedProposta, status: 'em_validacao' });
-        } catch (error) {
-            console.error('Failed to approve proposal', error);
-            alert('Falha ao aprovar proposta');
-        }
-    };
+        const handleApproveProposal = async () => {
+            if (!selectedProposta) return;
+            if (!confirm('Deseja enviar esta proposta para validação?')) return;
 
-    const handleConcludeValidation = async () => {
-        if (!selectedProposta) return;
-        // Validate all items are final
-        const pendingItems = itens.filter(i => !['APPROVED', 'UNAVAILABLE'].includes(i.status_validacao || 'PENDING'));
-        if (pendingItems.length > 0) {
-            alert('Todos os itens devem estar Aprovados ou Indisponíveis para concluir.');
-            return;
-        }
+            try {
+                await api.updateProposalStatus(selectedProposta.id, 'em_validacao');
+                refreshProposta({ ...selectedProposta, status: 'em_validacao' });
+            } catch (error) {
+                console.error('Failed to approve proposal', error);
+                alert('Falha ao aprovar proposta');
+            }
+        };
 
-        if (!confirm('Deseja concluir a validação desta proposta? O cliente será notificado.')) return;
+        const handleConcludeValidation = async () => {
+            if (!selectedProposta) return;
+            // Validate all items are final
+            const pendingItems = itens.filter(i => !['APPROVED', 'UNAVAILABLE'].includes(i.status_validacao || 'PENDING'));
+            if (pendingItems.length > 0) {
+                alert('Todos os itens devem estar Aprovados ou Indisponíveis para concluir.');
+                return;
+            }
 
-        try {
-            await api.updateProposalStatus(selectedProposta.id, 'aprovado');
-            refreshProposta({ ...selectedProposta, status: 'aprovado' });
-        } catch (error) {
-            console.error('Failed to conclude validation', error);
-            alert('Falha ao concluir validação');
-        }
-    };
+            if (!confirm('Deseja concluir a validação desta proposta? O cliente será notificado.')) return;
 
-    const handleShareUpdate = async () => {
-        if (!selectedProposta) return;
-        try {
-            const updated = await api.getProposta(selectedProposta.id);
-            // Verify structure matches expected Proposta type (with sharedUsers)
-            refreshProposta(updated);
-        } catch (error) {
-            console.error('Failed to refresh proposal after share update', error);
-        }
-    };
+            try {
+                await api.updateProposalStatus(selectedProposta.id, 'aprovado');
+                refreshProposta({ ...selectedProposta, status: 'aprovado' });
+            } catch (error) {
+                console.error('Failed to conclude validation', error);
+                alert('Falha ao concluir validação');
+            }
+        };
 
-    // Initial Load
-    useEffect(() => {
+        const handleShareUpdate = async () => {
+            if (!selectedProposta) return;
+            try {
+                const updated = await api.getProposta(selectedProposta.id);
+                // Verify structure matches expected Proposta type (with sharedUsers)
+                refreshProposta(updated);
+            } catch (error) {
+                console.error('Failed to refresh proposal after share update', error);
+            }
+        };
+
+        // Initial Load
+        useEffect(() => {
         if (selectedProposta) {
             setItens(selectedProposta.itens || []);
-            console.log('🛒 CartTable recebeu itens:', selectedProposta.itens);
+            // console.log('🛒 CartTable recebeu itens:', selectedProposta.itens);
         } else {
             setItens([]);
         }
@@ -222,6 +233,13 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             }));
         }
     }, [selectedProposta, isClientView]);
+
+    // Initialize Column Order
+    useEffect(() => {
+        if (columns.length > 0 && columnOrder.length === 0) {
+            setColumnOrder(columns.map(c => c.id || c.accessorKey as string).filter(Boolean));
+        }
+    }, [columns, columnOrder.length]);
 
     // Group items by selected field
     const groupedData = useMemo(() => {
@@ -477,6 +495,37 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             setItens(itens);
         }
     }, [itens, refreshProposta, selectedProposta]);
+
+
+    // Column Drag Handlers
+    const handleColumnDragStart = (e: React.DragEvent, headerId: string) => {
+        setDraggingColumn(headerId);
+        e.dataTransfer.effectAllowed = 'move';
+        // Create an invisible drag image or style it if needed
+        // e.dataTransfer.setDragImage(img, 0, 0);
+    };
+
+    const handleColumnDragOver = (e: React.DragEvent) => {
+        e.preventDefault(); // Necessary to allow dropping
+        e.dataTransfer.dropEffect = 'move';
+    };
+
+    const handleColumnDrop = (e: React.DragEvent, targetHeaderId: string) => {
+        e.preventDefault();
+
+        if (draggingColumn && draggingColumn !== targetHeaderId) {
+            const newOrder = [...columnOrder];
+            const oldIndex = newOrder.indexOf(draggingColumn);
+            const newIndex = newOrder.indexOf(targetHeaderId);
+
+            if (oldIndex !== -1 && newIndex !== -1) {
+                newOrder.splice(oldIndex, 1);
+                newOrder.splice(newIndex, 0, draggingColumn);
+                setColumnOrder(newOrder);
+            }
+        }
+        setDraggingColumn(null);
+    };
 
 
     // Columns Definition
@@ -745,7 +794,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 return (
                     <div className="h-full -m-2 p-2 hover:bg-gray-50 transition-colors">
                         <select
-                            className="w-full bg-transparent border-none text-[13px] text-gray-700 focus:ring-0 p-0 cursor-pointer"
+                            className={`w-full bg-transparent border-none text-[13px] text-gray-700 focus:ring-0 p-0 cursor-pointer ${!isInternal ? 'cursor-default appearance-none' : ''}`}
                             value={currentValue}
                             onChange={(e) => {
                                 const newValue = e.target.value;
@@ -763,7 +812,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                     qtd_bi_mes: qtd
                                 });
                             }}
-                            disabled={readOnly}
+                            disabled={readOnly || !isInternal}
                         >
                             <option value="bissemanal">Bissemanal</option>
                             <option value="mensal">Mensal</option>
@@ -1182,6 +1231,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             columnVisibility,
             rowSelection,
             columnSizing,
+            columnOrder,
         },
         columnResizeMode: 'onChange',
         enableRowSelection: !readOnly,
@@ -1190,6 +1240,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,
         onColumnSizingChange: setColumnSizing,
+        onColumnOrderChange: setColumnOrder,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
@@ -1524,8 +1575,12 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 {headerGroup.headers.map(header => (
                                     <div
                                         key={header.id}
-                                        className="relative group px-3 py-2 border-r border-gray-200 last:border-r-0 flex items-center justify-between select-none hover:bg-gray-50 transition-colors"
+                                        className={`relative group px-3 py-2 border-r border-gray-200 last:border-r-0 flex items-center justify-between select-none hover:bg-gray-50 transition-colors ${draggingColumn === header.id ? 'opacity-50 bg-gray-100' : ''}`}
                                         style={{ width: header.getSize(), flex: `0 0 ${header.getSize()}px` }}
+                                        draggable={!readOnly && header.column.getCanSort()} // Allow dragging only if not readOnly? Or generally allowed.
+                                        onDragStart={(e) => handleColumnDragStart(e, header.id)}
+                                        onDragOver={handleColumnDragOver}
+                                        onDrop={(e) => handleColumnDrop(e, header.id)}
                                     >
                                         <div
                                             className="flex items-center gap-1.5 cursor-pointer hover:text-gray-900 truncate w-full"
@@ -1543,6 +1598,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                                 onMouseDown={header.getResizeHandler()}
                                                 onTouchStart={header.getResizeHandler()}
                                                 className={`absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity z-20 ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
+                                                onClick={(e) => e.stopPropagation()} // Prevent sort/drag when resizing
+                                                draggable={false} // Prevent resizing from triggering drag
                                             />
                                         )}
                                     </div>
