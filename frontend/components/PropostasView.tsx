@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import {
     ArrowLeft, Plus, Calendar, Coins, FileText, Loader2, History, Trash2,
-    MoreVertical, Search, Filter, TrendingUp, DollarSign, MapPin, List, LayoutGrid
+    MoreVertical, Search, Filter, TrendingUp, DollarSign, MapPin
 } from 'lucide-react';
 import { Proposta } from '@/lib/types';
 import PropostaModal from './PropostaModal';
@@ -14,7 +14,6 @@ import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { SafeImage } from '@/components/ui/SafeImage';
 import ProposalsTable from '@/components/ProposalsTable';
-import ProposalsKanban from '@/components/ProposalsKanban';
 
 // Extended type for frontend usage with stats
 interface ExtendedProposta extends Proposta {
@@ -28,7 +27,6 @@ export default function PropostasView() {
     const [isPropostaModalOpen, setIsPropostaModalOpen] = useState(false);
     const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
 
     const selectedCliente = useStore((state) => state.selectedCliente);
     const setSelectedCliente = useStore((state) => state.setSelectedCliente);
@@ -166,26 +164,10 @@ export default function PropostasView() {
                             >
                                 Criar Nova Proposta
                             </Button>
-                            <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg border border-gray-200">
-                                <button
-                                    onClick={() => setViewMode('list')}
-                                    className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
-                                    title="Visualização em Lista"
-                                >
-                                    <List size={18} />
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('kanban')}
-                                    className={`p-2 rounded-md transition-all ${viewMode === 'kanban' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
-                                    title="Visualização em Kanban"
-                                >
-                                    <LayoutGrid size={18} />
-                                </button>
-                            </div>
-                            <div className="relative w-full sm:w-60">
+                            <div className="relative w-full sm:w-80">
                                 <Input
                                     icon={<Search size={18} />}
-                                    placeholder="Buscar..."
+                                    placeholder="Buscar propostas..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="bg-gray-50 focus:bg-white"
@@ -196,37 +178,24 @@ export default function PropostasView() {
                 </div>
             </div>
 
-            {/* Content Area */}
-            <div className="flex-1 overflow-y-auto p-6 scrollbar-thin bg-gray-50/50">
-                <div className="w-full max-w-[1920px] mx-auto h-full">
-                    {viewMode === 'list' ? (
-                        <ProposalsTable
-                            data={filteredPropostas}
-                            isLoading={isLoading}
-                            showClientColumn={false}
-                            onEdit={(item) => handlePropostaClick(item as unknown as Proposta)}
-                            onRowClick={(item) => handlePropostaClick(item as unknown as Proposta)}
-                            onDelete={handleDeleteProposta}
-                            onHistory={(id, e) => {
-                                e.stopPropagation();
-                                setSelectedHistoryId(id);
-                            }}
-                            emptyMessage="Nenhuma proposta encontrada para este cliente"
-                            emptyActionLabel="Criar primeira proposta"
-                            onEmptyAction={() => setIsPropostaModalOpen(true)}
-                        />
-                    ) : (
-                        <ProposalsKanban
-                            data={filteredPropostas as any} // Cast safely
-                            isLoading={isLoading}
-                            onEdit={(item) => handlePropostaClick(item as unknown as Proposta)}
-                            onDelete={handleDeleteProposta}
-                            onHistory={(id, e) => {
-                                e.stopPropagation();
-                                setSelectedHistoryId(id);
-                            }}
-                        />
-                    )}
+            {/* Content Area - Table */}
+            <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
+                <div className="w-full max-w-[1920px] mx-auto">
+                    <ProposalsTable
+                        data={filteredPropostas}
+                        isLoading={isLoading}
+                        showClientColumn={false}
+                        onEdit={(item) => handlePropostaClick(item as unknown as Proposta)}
+                        onRowClick={(item) => handlePropostaClick(item as unknown as Proposta)}
+                        onDelete={handleDeleteProposta}
+                        onHistory={(id, e) => {
+                            e.stopPropagation();
+                            setSelectedHistoryId(id);
+                        }}
+                        emptyMessage="Nenhuma proposta encontrada para este cliente"
+                        emptyActionLabel="Criar primeira proposta"
+                        onEmptyAction={() => setIsPropostaModalOpen(true)}
+                    />
                 </div>
             </div>
 

@@ -113,9 +113,6 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const pontos = useStore((state) => state.pontos);
 
     const [itens, setItens] = useState<PropostaItem[]>([]);
-    // Mini-Mode Toggle
-    const [isCollapsed, setIsCollapsed] = useState(false);
-
     const [isSyncing, setIsSyncing] = useState(false);
 
     // Table State
@@ -175,7 +172,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
     const handleApproveProposal = async () => {
         if (!selectedProposta) return;
-        if (!confirm('Deseja enviar esta proposta para validaÃ§Ã£o?')) return;
+        if (!confirm('Deseja enviar esta proposta para validação?')) return;
 
         try {
             await api.updateProposalStatus(selectedProposta.id, 'em_validacao');
@@ -191,18 +188,18 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         // Validate all items are final
         const pendingItems = itens.filter(i => !['APPROVED', 'UNAVAILABLE'].includes(i.status_validacao || 'PENDING'));
         if (pendingItems.length > 0) {
-            alert('Todos os itens devem estar Aprovados ou IndisponÃ­veis para concluir.');
+            alert('Todos os itens devem estar Aprovados ou Indisponíveis para concluir.');
             return;
         }
 
-        if (!confirm('Deseja concluir a validaÃ§Ã£o desta proposta? O cliente serÃ¡ notificado.')) return;
+        if (!confirm('Deseja concluir a validação desta proposta? O cliente será notificado.')) return;
 
         try {
             await api.updateProposalStatus(selectedProposta.id, 'aprovado');
             refreshProposta({ ...selectedProposta, status: 'aprovado' });
         } catch (error) {
             console.error('Failed to conclude validation', error);
-            alert('Falha ao concluir validaÃ§Ã£o');
+            alert('Falha ao concluir validação');
         }
     };
 
@@ -221,7 +218,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     useEffect(() => {
         if (selectedProposta) {
             setItens(selectedProposta.itens || []);
-            // console.log('ðŸ›’ CartTable recebeu itens:', selectedProposta.itens);
+            // console.log('🛒 CartTable recebeu itens:', selectedProposta.itens);
         } else {
             setItens([]);
         }
@@ -306,7 +303,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     // Optimistic Update Helper
     const updateItem = useCallback(async (id: number, fieldOrUpdates: string | Record<string, any>, value?: any) => {
         const updates = typeof fieldOrUpdates === 'string' ? { [fieldOrUpdates]: value } : fieldOrUpdates;
-        console.log(`ðŸ“ CartTable updateItem called:`, { id, updates });
+        console.log(`📝 CartTable updateItem called:`, { id, updates });
 
         const updatedItens = itens.map(item => {
             if (item.id === id) {
@@ -328,7 +325,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     }
                 }
 
-                console.log(`âœ… Updated item:`, updatedItem);
+                console.log(`✅ Updated item:`, updatedItem);
                 return updatedItem;
             }
             return item;
@@ -376,7 +373,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 const [minIdx, maxIdx] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
                 const updatedItens = [...itens];
 
-                console.log('ðŸŽ¯ Drag-fill applying:', {
+                console.log('🎯 Drag-fill applying:', {
                     columnKey: dragState.columnKey,
                     value: dragState.startValue,
                     fromRow: minIdx,
@@ -386,7 +383,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
                 // Apply the value to all rows in range
                 for (let i = minIdx; i <= maxIdx; i++) {
-                    // Handle perÃ­odo specially (it has two date fields)
+                    // Handle período specially (it has two date fields)
                     if (dragState.columnKey === 'periodo' && typeof dragState.startValue === 'object') {
                         updatedItens[i] = {
                             ...updatedItens[i],
@@ -399,7 +396,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 }
 
                 const columnKey = dragState.columnKey!;
-                console.log('âœ… Drag-fill completed. Updated items:', updatedItens.slice(minIdx, maxIdx + 1).map(item => ({
+                console.log('✅ Drag-fill completed. Updated items:', updatedItens.slice(minIdx, maxIdx + 1).map(item => ({
                     id: item.id,
                     [columnKey]: (item as any)[columnKey]
                 })));
@@ -421,7 +418,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     }, [handleDragEnd]);
 
     const startDragging = useCallback((rowId: number, columnKey: string, value: any) => {
-        console.log('ðŸŽ¯ Starting drag from row:', rowId, 'column:', columnKey, 'value:', value);
+        console.log('🎯 Starting drag from row:', rowId, 'column:', columnKey, 'value:', value);
 
         document.body.style.cursor = 'crosshair';
         document.body.style.userSelect = 'none';
@@ -576,9 +573,9 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 const status = row.original.status_validacao || 'PENDING';
                 const statusMap: Record<string, { label: string; color: string; bg: string }> = {
                     'PENDING': { label: 'Pendente', color: 'text-gray-600', bg: 'bg-gray-100' },
-                    'VALIDATION': { label: 'Em ValidaÃ§Ã£o', color: 'text-blue-600', bg: 'bg-blue-50' },
+                    'VALIDATION': { label: 'Em Validação', color: 'text-blue-600', bg: 'bg-blue-50' },
                     'APPROVED': { label: 'Aprovado', color: 'text-green-600', bg: 'bg-green-50' },
-                    'UNAVAILABLE': { label: 'IndisponÃ­vel', color: 'text-red-600', bg: 'bg-red-50' }
+                    'UNAVAILABLE': { label: 'Indisponível', color: 'text-red-600', bg: 'bg-red-50' }
                 };
                 const config = statusMap[status] || statusMap['PENDING'];
 
@@ -605,9 +602,9 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 disabled={!canEditValues}
                             >
                                 <option value="PENDING">Pendente</option>
-                                <option value="VALIDATION">Em ValidaÃ§Ã£o</option>
+                                <option value="VALIDATION">Em Validação</option>
                                 <option value="APPROVED">Aprovado</option>
-                                <option value="UNAVAILABLE">IndisponÃ­vel</option>
+                                <option value="UNAVAILABLE">Indisponível</option>
                             </select>
                         )
                         }
@@ -648,11 +645,11 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             cell: ({ row }) => <span className="text-gray-700 whitespace-nowrap text-[13px]">{row.original.uf}</span>
         },
         {
-            accessorKey: 'cidade', // "PraÃ§a" in user image seems to map to Cidade
+            accessorKey: 'cidade', // "Praça" in user image seems to map to Cidade
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal">
                     <MapPin size={13} />
-                    <span>PraÃ§a</span>
+                    <span>Praça</span>
                 </div>
             ),
             size: 140,
@@ -663,7 +660,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal">
                     <MapPin size={13} />
-                    <span>EndereÃ§o</span>
+                    <span>Endereço</span>
                 </div>
             ),
             size: 280,
@@ -700,7 +697,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal">
                     <Hash size={13} />
-                    <span>CÃ³digo OOH</span>
+                    <span>Código OOH</span>
                 </div>
             ),
             size: 110,
@@ -745,7 +742,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal">
                     <CalendarIcon size={13} />
-                    <span>PerÃ­odo de ExibiÃ§Ã£o</span>
+                    <span>Período de Exibição</span>
                 </div>
             ),
             size: 240,
@@ -767,7 +764,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_inicio', itens)}
                             disabled={readOnly}
                         />
-                        <span className="text-gray-300 text-[10px] mx-0.5">â†’</span>
+                        <span className="text-gray-300 text-[10px] mx-0.5">→</span>
                         <input
                             type="date"
                             className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none text-[12px] text-gray-700 w-[95px] transition-colors"
@@ -793,7 +790,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal">
                     <Layers size={13} />
-                    <span>PerÃ­odo comercializado</span>
+                    <span>Período comercializado</span>
                 </div>
             ),
             size: 140,
@@ -835,7 +832,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal justify-end w-full">
                     <DollarSign size={13} />
-                    <span>{isClientView ? 'Valor' : 'LocaÃ§Ã£o'}</span>
+                    <span>{isClientView ? 'Valor' : 'Locação'}</span>
                 </div>
             ),
             size: 120,
@@ -947,7 +944,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal justify-end w-full">
                     <Hash size={13} />
-                    <span>Qtd. Bi/MÃªs</span>
+                    <span>Qtd. Bi/Mês</span>
                 </div>
             ),
             size: 70,
@@ -1054,7 +1051,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal">
                     <MapPin size={13} />
-                    <span>Ponto de ReferÃªncia</span>
+                    <span>Ponto de Referência</span>
                 </div>
             ),
             size: 200,
@@ -1083,7 +1080,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             header: () => (
                 <div className="flex items-center gap-1.5 text-gray-500 font-normal">
                     <StickyNote size={13} />
-                    <span>ObservaÃ§Ãµes</span>
+                    <span>Observações</span>
                 </div>
             ),
             size: 200,
@@ -1169,25 +1166,25 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             const total = (item.valor_locacao || 0) * qtd;
 
             return {
-                'CÃ³digo OOH': item.codigo_ooh,
+                'Código OOH': item.codigo_ooh,
                 'Exibidora': item.exibidora_nome || item.exibidora,
                 'Cidade': item.cidade,
                 'UF': item.uf,
-                'EndereÃ§o': item.endereco,
+                'Endereço': item.endereco,
                 'Produto': item.tipo,
                 'Medidas': item.medidas,
-                'InÃ­cio': item.periodo_inicio,
+                'Início': item.periodo_inicio,
                 'Fim': item.periodo_fim,
-                'PerÃ­odo': item.periodo_comercializado,
+                'Período': item.periodo_comercializado,
                 'Investimento': total,
                 // Only include other costs if NOT client view
                 ...(!isClientView ? {
-                    'LocaÃ§Ã£o Unit.': item.valor_locacao,
+                    'Locação Unit.': item.valor_locacao,
                     'Papel': item.valor_papel,
                     'Lona': item.valor_lona,
                 } : {}),
                 'Impactos': item.fluxo_diario, // Approximate
-                'ObservaÃ§Ãµes': item.observacoes
+                'Observações': item.observacoes
             };
         });
 
@@ -1203,7 +1200,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         const doc = new jsPDF();
 
         doc.setFontSize(18);
-        doc.text(selectedProposta?.nome || 'Proposta de MÃ­dia OOH', 14, 22);
+        doc.text(selectedProposta?.nome || 'Proposta de Mídia OOH', 14, 22);
 
         doc.setFontSize(11);
         doc.text(`Gerado em: ${new Date().toLocaleDateString()}`, 14, 30);
@@ -1233,7 +1230,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         });
 
         autoTable(doc, {
-            head: [['CÃ³digo', 'Cidade', 'EndereÃ§o', 'PerÃ­odo', 'Medidas', 'Investimento']],
+            head: [['Código', 'Cidade', 'Endereço', 'Período', 'Medidas', 'Investimento']],
             body: tableBody,
             startY: 40,
             styles: { fontSize: 8 },
@@ -1284,279 +1281,429 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     });
 
     if (!selectedProposta) return null;
-    if (!isOpen) return null;
 
-    // --- Mini-Mode View ---
-    if (isCollapsed) {
-        const totalItems = itens.length;
-        const totalValue = itens.reduce((acc, item) => acc + (item.valor_locacao || 0), 0);
-
-        return (
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
-                <div className="bg-white/90 backdrop-blur-xl shadow-2xl shadow-black/20 border border-white/20 rounded-full px-6 py-3 flex items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100/50 flex items-center justify-center text-blue-600">
-                            <Box size={16} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Itens</span>
-                            <span className="text-sm font-bold text-gray-900">{totalItems}</span>
-                        </div>
-                    </div>
-
-                    <div className="w-px h-8 bg-gray-200" />
-
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-green-100/50 flex items-center justify-center text-green-600">
-                            <DollarSign size={16} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Total</span>
-                            <span className="text-sm font-bold text-gray-900">{formatCurrency(totalValue)}</span>
-                        </div>
-                    </div>
-
-                    <div className="w-px h-8 bg-gray-200" />
-
-                    <Button
-                        onClick={() => setIsCollapsed(false)}
-                        variant="ghost"
-                        size="sm"
-                        className="rounded-full hover:bg-gray-100"
-                    >
-                        <ChevronUp size={20} className="text-gray-600" />
-                        <span className="ml-2 font-medium">Expandir</span>
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
-    // --- Expanded View (Standard Table) ---
     return (
         <div
-            className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] border-t border-gray-200/50 transition-all duration-300 ease-out flex flex-col"
-            style={{ height: `${tableHeight}px` }}
+            className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.15)] z-40 transition-all duration-300 ease-in-out flex flex-col`}
+            style={{ height: isOpen ? `${tableHeight}px` : '50px' }}
         >
-            {/* Resize Handle / Header */}
-            <div
-                className="h-9 w-full flex items-center justify-center cursor-row-resize hover:bg-gray-100/50 transition-colors border-b border-gray-100 group relative"
-                onMouseDown={startResizing}
-            >
-                <div className="w-16 h-1 bg-gray-300 rounded-full group-hover:bg-blue-400 transition-colors" />
-
-                {/* Collapse Button */}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setIsCollapsed(true);
-                    }}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-200 rounded-lg text-gray-400 hover:text-gray-600 transition-all"
-                    title="Minimizar"
+            {/* Resizer Handle */}
+            {isOpen && (
+                <div
+                    className="absolute -top-1 left-0 right-0 h-3 bg-transparent cursor-row-resize z-50 hover:bg-blue-500/10 flex items-center justify-center group/resizer"
+                    onMouseDown={startResizing}
                 >
-                    <ChevronDown size={16} />
-                </button>
-
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-xs font-medium text-gray-400">
-                    <Box size={12} />
-                    {itens.length} itens
-                    <span className="mx-1">â€¢</span>
-                    <DollarSign size={12} />
-                    {formatCurrency(itens.reduce((acc, i) => acc + (i.valor_locacao || 0), 0))}
+                    <div className="w-16 h-1 bg-gray-300 rounded-full group-hover/resizer:bg-blue-400 opacity-0 group-hover/resizer:opacity-100 transition-all" />
                 </div>
-            </div>
+            )}
 
             {/* Toolbar */}
-            <div className="px-4 py-2 flex items-center justify-between gap-4 border-b border-gray-100 bg-gray-50/30">
-                <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
-                    {/* Group By */}
-                    <div className="flex items-center bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
-                        <span className="text-[10px] uppercase font-bold text-gray-400 px-2">Agrupar:</span>
-                        <div className="flex gap-1">
-                            {['none', 'cidade', 'uf', 'exibidora_nome'].map((field) => (
-                                <button
-                                    key={field}
-                                    onClick={() => setGroupBy(field as any)}
-                                    className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${groupBy === field ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
-                                >
-                                    {field === 'none' ? 'Nenhum' : field === 'exibidora_nome' ? 'Exibidora' : field.charAt(0).toUpperCase() + field.slice(1)}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Column Visibility */}
-                    <div className="relative">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                            className="h-8 text-xs gap-1.5 bg-white shadow-sm"
+            <div
+                className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white shadow-sm z-20 cursor-pointer flex-shrink-0"
+                onClick={onToggle}
+            >
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <div
+                            onClick={(e) => { e.stopPropagation(); onToggle(); }}
+                            className="p-1 hover:bg-gray-100 rounded text-gray-500 transition-colors cursor-pointer"
                         >
-                            <Settings size={13} />
-                            Colunas
-                        </Button>
-
-                        {isSettingsOpen && (
-                            <>
-                                <div className="fixed inset-0 z-10" onClick={() => setIsSettingsOpen(false)} />
-                                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-20 p-2 animate-in fade-in zoom-in-95">
-                                    <p className="px-2 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Exibir Colunas</p>
-                                    {Object.keys(columnVisibility).map((colId) => (
-                                        <label key={colId} className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded-lg cursor-pointer text-sm text-gray-600">
-                                            <input
-                                                type="checkbox"
-                                                checked={columnVisibility[colId]}
-                                                onChange={(e) => setColumnVisibility(prev => ({ ...prev, [colId]: e.target.checked }))}
-                                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
-                                            />
-                                            {colId === 'latitude' ? 'Latitude' : colId === 'longitude' ? 'Longitude' : colId === 'observacoes' ? 'ObservaÃ§Ãµes' : colId}
-                                        </label>
-                                    ))}
-                                </div>
-                            </>
+                            <ChevronDown size={20} className={`transform transition-transform duration-300 ${isOpen ? '' : 'rotate-180'}`} />
+                        </div>
+                        <h3 className="font-semibold text-gray-800 text-sm">Carrinho ({itens.length})</h3>
+                        {selectedProposta && selectedProposta.status === 'rascunho' && !readOnly && (
+                            <Button
+                                onClick={(e) => { e.stopPropagation(); handleApproveProposal(); }}
+                                variant="outline"
+                                size="sm"
+                                className="ml-2 h-7 px-2 text-xs border-green-200 text-green-700 hover:bg-green-50"
+                            >
+                                Aprovar Proposta
+                            </Button>
+                        )}
+                        {selectedProposta && selectedProposta.status === 'em_validacao' && isInternal && (
+                            <Button
+                                onClick={(e) => { e.stopPropagation(); handleConcludeValidation(); }}
+                                variant="primary"
+                                size="sm"
+                                className="ml-2 h-7 px-2 text-xs bg-green-600 hover:bg-green-700 border-transparent text-white"
+                            >
+                                Concluir Validação
+                            </Button>
                         )}
                     </div>
 
+
+
                     {isClientView && (
-                        <>
+                        <div className="flex items-center gap-2 ml-4 border-l border-gray-200 pl-4">
                             <Button
-                                onClick={() => handleExportExcel()}
+                                onClick={(e) => { e.stopPropagation(); handleExportExcel(); }}
                                 variant="outline"
                                 size="sm"
-                                className="h-8 text-xs gap-1.5 bg-white shadow-sm"
+                                className="text-green-600 border-green-200 hover:bg-green-50 hover:border-green-300"
+                                leftIcon={<FileSpreadsheet size={14} />}
                             >
-                                <FileSpreadsheet size={13} />
                                 Excel
                             </Button>
                             <Button
-                                onClick={() => handleExportPDF()}
+                                onClick={(e) => { e.stopPropagation(); handleExportPDF(); }}
                                 variant="outline"
                                 size="sm"
-                                className="h-8 text-xs gap-1.5 bg-white shadow-sm"
+                                className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                                leftIcon={<FilePdfIcon size={14} />}
                             >
-                                <FilePdfIcon size={13} />
                                 PDF
                             </Button>
-                        </>
+                        </div>
+                    )}
+
+                    {/* Bulk Actions */}
+                    {!readOnly && Object.keys(rowSelection).length > 0 && (
+                        <div
+                            className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md animate-in fade-in slide-in-from-left-2 shadow-sm border border-blue-100 relative"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <span className="text-xs font-bold">{Object.keys(rowSelection).length}</span>
+                            <div className="h-4 w-px bg-blue-200 mx-1" />
+
+                            <Button
+                                onClick={() => {
+                                    const selectedIds = Object.keys(rowSelection).map(Number);
+                                    const updatedItens = itens.filter(item => !selectedIds.includes(item.id));
+                                    setItens(updatedItens);
+                                    setRowSelection({});
+                                    refreshProposta({ ...selectedProposta!, itens: updatedItens });
+                                    api.updateCart(selectedProposta!.id, updatedItens).catch(console.error);
+                                }}
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:bg-red-50 hover:text-red-700 h-6 px-2 text-xs"
+                                leftIcon={<Trash2 size={14} />}
+                            >
+                                Remover Selecionados
+                            </Button>
+                        </div>
                     )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                    {user?.type === 'internal' && (
+                <div
+                    className="flex items-center gap-4 relative"
+                    onClick={e => e.stopPropagation()}
+                >
+
+                    <div className="flex items-center gap-4 text-sm animate-fade-in divide-x divide-gray-200">
+                        {/* Impactos Totais */}
+                        <div className="flex flex-col items-end px-4 first:pl-0">
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">Impactos Totais</span>
+                            <span className="font-bold text-gray-700">
+                                {formatNumber(itens.reduce((sum, item) => {
+                                    let diffDays = 0;
+                                    if (item.periodo_inicio && item.periodo_fim) {
+                                        const start = new Date(item.periodo_inicio);
+                                        const end = new Date(item.periodo_fim);
+                                        diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+                                    }
+                                    return sum + ((item.fluxo_diario || 0) * diffDays);
+                                }, 0))}
+                            </span>
+                        </div>
+
+                        {/* Investimento Total */}
+                        <div className="flex flex-col items-end px-4">
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">Investimento Total</span>
+                            <span className="font-bold text-emerald-600">
+                                {formatCurrency(itens.reduce((sum, item) => {
+                                    let qtd = 1;
+                                    if (item.periodo_inicio && item.periodo_fim) {
+                                        const start = new Date(item.periodo_inicio);
+                                        const end = new Date(item.periodo_fim);
+                                        const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                                        qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                                    }
+                                    return sum + ((item.valor_locacao || 0) * qtd);
+                                }, 0))}
+                            </span>
+                        </div>
+
+                        {/* CPM Total */}
+                        <div className="flex flex-col items-end px-4 last:pr-0">
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">CPM Total</span>
+                            <span className="font-bold text-blue-600">
+                                {(() => {
+                                    const totalInvest = itens.reduce((sum, item) => {
+                                        let qtd = 1;
+                                        if (item.periodo_inicio && item.periodo_fim) {
+                                            const start = new Date(item.periodo_inicio);
+                                            const end = new Date(item.periodo_fim);
+                                            const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                                            qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                                        }
+                                        return sum + ((item.valor_locacao || 0) * qtd);
+                                    }, 0);
+
+                                    const totalImpactos = itens.reduce((sum, item) => {
+                                        let diffDays = 0;
+                                        if (item.periodo_inicio && item.periodo_fim) {
+                                            const start = new Date(item.periodo_inicio);
+                                            const end = new Date(item.periodo_fim);
+                                            diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+                                        }
+                                        return sum + ((item.fluxo_diario || 0) * diffDays);
+                                    }, 0);
+
+                                    return formatCurrency(totalImpactos > 0 ? (totalInvest / totalImpactos) * 1000 : 0);
+                                })()}
+                            </span>
+                        </div>
+                    </div>
+
+
+                    {/* Grouping Menu */}
+                    <Button
+                        onClick={() => setIsGroupMenuOpen(!isGroupMenuOpen)}
+                        variant="ghost"
+                        size="sm"
+                        className={`gap-1 ${isGroupMenuOpen || groupBy !== 'none' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}
+                        title="Agrupar por"
+                    >
+                        <Layers size={16} />
+                        {groupBy !== 'none' && (
+                            <span className="text-[10px] font-semibold uppercase tracking-wide ml-1">
+                                {groupBy === 'pais' && 'País'}
+                                {groupBy === 'uf' && 'UF'}
+                                {groupBy === 'cidade' && 'Cidade'}
+                                {groupBy === 'exibidora_nome' && 'Exibidora'}
+                            </span>
+                        )}
+                    </Button>
+
+                    {/* Grouping Dropdown */}
+                    {isGroupMenuOpen && (
+                        <>
+                            <div className="fixed inset-0 z-40" onClick={() => setIsGroupMenuOpen(false)} />
+                            <div className="absolute right-28 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
+                                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Agrupar Por</h4>
+                                <div className="px-1">
+                                    {[
+                                        { value: 'none' as GroupByField, label: 'Sem agrupamento', icon: '—' },
+                                        { value: 'pais' as GroupByField, label: 'País', icon: '🌍' },
+                                        { value: 'uf' as GroupByField, label: 'UF', icon: '📍' },
+                                        { value: 'cidade' as GroupByField, label: 'Cidade', icon: '🏙️' },
+                                        { value: 'exibidora_nome' as GroupByField, label: 'Exibidora', icon: '🏢' },
+                                    ].map((option) => (
+                                        <div
+                                            key={option.value}
+                                            className={`px-2 py-2 flex items-center gap-3 hover:bg-gray-50 rounded cursor-pointer transition-colors ${groupBy === option.value ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}
+                                            onClick={() => {
+                                                setGroupBy(option.value);
+                                                setIsGroupMenuOpen(false);
+                                                setCollapsedGroups(new Set()); // Reset collapsed groups
+                                            }}
+                                        >
+                                            <span className="text-base">{option.icon}</span>
+                                            <span className="text-sm font-medium flex-1">{option.label}</span>
+                                            {groupBy === option.value && (
+                                                <Check size={14} className="text-blue-600" strokeWidth={3} />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    <Button
+                        onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                        variant="ghost"
+                        size="icon"
+                        className={`${isSettingsOpen ? 'bg-gray-100 text-gray-900 shadow-inner' : 'text-gray-500 hover:bg-gray-50'}`}
+                        title="Configurações da tabela"
+                    >
+                        <Eye size={16} />
+                    </Button>
+
+                    {!readOnly && (
                         <Button
-                            onClick={() => setIsShareModalOpen(true)}
-                            variant="outline"
+                            onClick={() => {
+                                handleShareUpdate();
+                                setIsShareModalOpen(true);
+                            }}
+                            variant="secondary"
                             size="sm"
-                            className="h-8 text-xs gap-1.5 border-blue-200 text-blue-600 hover:bg-blue-50"
+                            className="gap-2 bg-green-50 text-green-700 hover:bg-green-100 border-green-200 shadow-sm"
+                            title="Compartilhar Proposta"
+                            leftIcon={<Share2 size={16} />}
                         >
-                            <Share2 size={13} />
                             Compartilhar
                         </Button>
                     )}
 
-                    {showStatusColumn && isInternal && (
-                        <Button
-                            onClick={handleConcludeValidation}
-                            variant="secondary"
-                            size="sm"
-                            className="h-8 bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
-                        >
-                            <Check size={14} className="mr-1.5" />
-                            Concluir ValidaÃ§Ã£o
-                        </Button>
-                    )}
-                    {!showStatusColumn && isInternal && (
-                        <Button
-                            onClick={handleApproveProposal}
-                            className="h-8 bg-black text-white hover:bg-gray-800 shadow-lg shadow-black/20"
-                            size="sm"
-                        >
-                            <Check size={14} className="mr-1.5" />
-                            Enviar p/ AprovaÃ§Ã£o
-                        </Button>
-                    )}
+                    {isSettingsOpen && (
+                        <>
+                            <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
+                            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
+                                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Colunas Visíveis</h4>
+                                <div className="max-h-60 overflow-y-auto px-1">
+                                    {table.getAllLeafColumns()
+                                        .filter(col => col.id !== 'select' && col.id !== 'actions')
+                                        .map(column => {
+                                            if (!column.id) return null;
 
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        className="h-8 shadow-blue-500/20"
-                        onClick={() => onToggle()} // Hides the component
-                    >
-                        Fechar
-                    </Button>
+                                            // Map column IDs to readable labels
+                                            const columnLabels: Record<string, string> = {
+                                                'uf': 'UF',
+                                                'exibidora_nome': 'Exibidora',
+                                                'codigo_ooh': 'Código OOH',
+                                                'produto': 'Produto',
+                                                'medidas': 'Medidas',
+                                                'latitude': 'Latitude',
+                                                'longitude': 'Longitude',
+                                                'periodo': 'Período de Exibição',
+                                                'periodo_comercializado': 'Período comercializado',
+                                                'valor_locacao': 'Locação',
+                                                'valor_papel': 'Papel',
+                                                'valor_lona': 'Lona',
+                                                'qtd_bi_mes': 'Qtd. Bi/Mês',
+                                                'total_investimento': 'Investimento',
+                                                'cpm': 'CPM',
+                                                'impactos': 'Impactos',
+                                                'ponto_referencia': 'Ponto de Referência',
+                                                'observacoes': 'Observações'
+                                            };
+
+                                            const label = columnLabels[column.id] || column.id;
+
+                                            return (
+                                                <div
+                                                    key={column.id}
+                                                    className="px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors"
+                                                    onClick={column.getToggleVisibilityHandler()}
+                                                >
+                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${column.getIsVisible() ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
+                                                        {column.getIsVisible() && <Check size={10} strokeWidth={3} />}
+                                                    </div>
+                                                    <span className="text-sm text-gray-700 truncate select-none">
+                                                        {label}
+                                                    </span>
+                                                </div>
+                                            )
+                                        })}
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 
-            {/* Table Content */}
-            <div className="flex-1 overflow-auto bg-gray-50/30">
-                <div className="min-w-[1200px] pb-24">
-                    {/* Header Group */}
-                    <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm flex">
-                        {table.getFlatHeaders().map(header => {
-                            const isSortable = header.column.getCanSort();
-                            return (
-                                <div
-                                    key={header.id}
-                                    className={`px-3 py-2 text-left font-medium text-xs uppercase tracking-wider text-gray-500 flex items-center gap-2 group/header hover:bg-gray-50 transition-colors
-                                        ${draggingColumn === header.id ? 'opacity-50' : ''}
-                                        ${dragOverColumn === header.id ? 'border-l-2 border-blue-500 bg-blue-50' : ''}
-                                        ${isSortable ? 'cursor-pointer' : ''}
-                                    `}
-                                    style={{ width: header.getSize(), flex: `0 0 ${header.getSize()}px` }}
-                                    onClick={header.column.getToggleSortingHandler()}
-                                    draggable={true}
-                                    onDragStart={(e) => handleColumnDragStart(e, header.id)}
-                                    onDragOver={(e) => handleColumnDragOver(e, header.id)}
-                                    onDragLeave={handleColumnDragLeave}
-                                    onDrop={(e) => handleColumnDrop(e, header.id)}
-                                >
-                                    {flexRender(header.column.columnDef.header, header.getContext())}
+            {/* Table Area - Hidden when collapsed */}
+            <div className={`flex-1 overflow-auto relative bg-gray-50/50 ${!isOpen ? 'hidden' : ''}`}>
+                <div
+                    className="min-w-full inline-block align-top"
+                    style={{ width: table.getTotalSize() }}
+                >
 
-                                    {isSortable && (
-                                        <div className="ml-auto opacity-0 group-hover/header:opacity-100 transition-opacity">
-                                            {{
-                                                asc: <ChevronDown size={14} className="text-blue-500 transform rotate-180" />,
-                                                desc: <ChevronDown size={14} className="text-blue-500" />,
-                                            }[header.column.getIsSorted() as string] ?? <ArrowUpDown size={12} className="text-gray-400" />}
-                                        </div>
-                                    )}
 
-                                    {/* Resizer */}
+                    {/* Head */}
+                    <div className="sticky top-0 z-10 bg-white font-normal text-[13px] text-gray-500 text-left flex border-b border-gray-200 group/header">
+                        {table.getHeaderGroups().map(headerGroup => (
+                            <div key={headerGroup.id} className="flex flex-row w-full">
+                                {headerGroup.headers.map(header => (
                                     <div
-                                        onMouseDown={header.getResizeHandler()}
-                                        onTouchStart={header.getResizeHandler()}
-                                        className={`absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-blue-400 touch-none select-none ${header.column.getIsResizing() ? 'bg-blue-400 w-1' : 'bg-transparent'}`}
-                                    />
-                                </div>
-                            );
-                        })}
+                                        key={header.id}
+                                        className={`relative group px-3 py-2 border-r border-gray-200 last:border-r-0 flex items-center justify-between select-none hover:bg-gray-50 transition-colors 
+                                            ${draggingColumn === header.id ? 'opacity-50 bg-gray-100' : ''}
+                                            ${dragOverColumn === header.id ? 'border-l-2 border-l-blue-500 bg-blue-50' : ''}
+                                        `}
+                                        style={{ width: header.getSize(), flex: `0 0 ${header.getSize()}px` }}
+                                        // Disable drag if hovering resizer to prevent conflict
+                                        draggable={!readOnly && header.column.getCanSort() && !disableDrag}
+                                        onDragStart={(e) => handleColumnDragStart(e, header.id)}
+                                        onDragOver={(e) => handleColumnDragOver(e, header.id)}
+                                        onDragLeave={handleColumnDragLeave}
+                                        onDrop={(e) => handleColumnDrop(e, header.id)}
+                                    >
+                                        <div
+                                            className="flex items-center gap-1.5 cursor-pointer hover:text-gray-900 truncate w-full"
+                                            onClick={header.column.getToggleSortingHandler()}
+                                        >
+                                            {flexRender(header.column.columnDef.header, header.getContext())}
+                                            {{
+                                                asc: <ArrowUpDown size={12} className="text-gray-400 shrink-0" />,
+                                                desc: <ArrowUpDown size={12} className="text-gray-400 rotate-180 shrink-0" />,
+                                            }[header.column.getIsSorted() as string] ?? null}
+                                        </div>
+
+                                        {header.column.getCanResize() && (
+                                            <div
+                                                onMouseDown={(e) => {
+                                                    e.stopPropagation();
+                                                    header.getResizeHandler()(e);
+                                                }}
+                                                onTouchStart={(e) => {
+                                                    e.stopPropagation();
+                                                    header.getResizeHandler()(e);
+                                                }}
+                                                // Lock drag when hovering/interacting with resizer
+                                                onMouseEnter={() => setDisableDrag(true)}
+                                                onMouseLeave={() => setDisableDrag(false)}
+                                                // Prevent resizing from initiating a drag
+                                                onDragStart={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                }}
+                                                // Increased z-index for safety
+                                                // w-3 (12px) hit area, positioned to straddle the border
+                                                className={`absolute right-[-6px] top-0 h-full w-3 cursor-col-resize z-50 flex justify-center hover:bg-black/5 opacity-0 hover:opacity-100 transition-opacity select-none touch-none ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
+                                                onClick={(e) => e.stopPropagation()} // Prevent sort/drag when resizing
+                                                draggable={false} // Prevent resizing from triggering drag
+                                            >
+                                                {/* Visual indicator (thin line) inside the hit area */}
+                                                <div className={`w-[2px] h-full ${header.column.getIsResizing() ? 'bg-blue-500' : 'bg-gray-300'}`} />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
                     </div>
 
                     {/* Body */}
-                    <div className="divide-y divide-gray-100 bg-white">
+                    <div className="bg-white text-[13px]">
                         {/* Grouped View */}
-                        {groupBy !== 'none' && groupedData ? (
+                        {groupedData ? (
                             <>
-                                {groupedData.map(group => {
-                                    /* Logic for group totals */
+                                {groupedData.map((group) => {
+                                    const isCollapsed = collapsedGroups.has(group.name);
                                     const groupRows = table.getRowModel().rows.filter(row => {
-                                        const rowVal = (row.original as any)[groupBy];
-                                        return rowVal === group.name || (!rowVal && group.name === 'Sem categoria');
+                                        const groupKey = (row.original[groupBy as keyof PropostaItem] || 'Sem categoria') as string;
+                                        return groupKey === group.name;
                                     });
 
+                                    // Calculate group total
                                     const totals = group.items.reduce((acc, item) => {
-                                        const investimento = item.valor_locacao || 0;
-                                        const imp = item.impactos || 0;
-                                        const dias = (item.periodo_inicio && item.periodo_fim)
-                                            ? Math.ceil((new Date(item.periodo_fim).getTime() - new Date(item.periodo_inicio).getTime()) / (1000 * 60 * 60 * 24))
-                                            : 0;
-                                        const impactos = imp * (dias > 0 ? dias : 1) || 0; // Simplified calculation for display
+                                        // Investimento
+                                        let qtd = 1;
+                                        let diffDays = 0;
+
+                                        if (item.periodo_inicio && item.periodo_fim) {
+                                            const start = new Date(item.periodo_inicio);
+                                            const end = new Date(item.periodo_fim);
+                                            const diffMs = end.getTime() - start.getTime();
+                                            diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+                                            qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                                        }
+
+                                        const investimento = (item.valor_locacao || 0) * qtd;
+                                        const impactos = (item.fluxo_diario || 0) * diffDays;
+
                                         return {
                                             investimento: acc.investimento + investimento,
                                             impactos: acc.impactos + impactos
                                         };
                                     }, { investimento: 0, impactos: 0 });
+
+                                    const cpm = totals.impactos > 0 ? (totals.investimento / totals.impactos) * 1000 : 0;
 
                                     return (
                                         <div key={group.name} className="border-b border-gray-200">
@@ -1565,7 +1712,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                                 className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors sticky top-[37px] z-[5] border-b border-gray-200"
                                                 onClick={() => toggleGroupCollapse(group.name)}
                                             >
-                                                {collapsedGroups.has(group.name) ? (
+                                                {isCollapsed ? (
                                                     <ChevronRight size={14} className="text-gray-400 flex-shrink-0" />
                                                 ) : (
                                                     <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
@@ -1576,39 +1723,60 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                                 </span>
                                                 <div className="ml-auto flex items-center gap-4">
                                                     <div className="flex items-center gap-1.5 text-xs">
-                                                        <span className="text-gray-400 uppercase tracking-wider text-[10px]">Total:</span>
+                                                        <span className="text-gray-400 uppercase tracking-wider text-[10px]">Impactos:</span>
+                                                        <span className="font-medium text-gray-700">{formatNumber(totals.impactos)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                        <span className="text-gray-400 uppercase tracking-wider text-[10px]">CPM:</span>
+                                                        <span className="font-medium text-blue-600">{formatCurrency(cpm)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                        <span className="text-gray-400 uppercase tracking-wider text-[10px]">Investimento:</span>
                                                         <span className="font-medium text-emerald-700">{formatCurrency(totals.investimento)}</span>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {/* Group Rows */}
-                                            {!collapsedGroups.has(group.name) && groupRows.map(row => (
+                                            {!isCollapsed && groupRows.map(row => (
                                                 <div
                                                     key={row.id}
                                                     data-row-id={row.original.id}
-                                                    className={`flex items-center border-b border-gray-100 transition-colors group min-h-[44px] 
-                                                        ${row.getIsSelected() ? 'bg-blue-50/50' : 'bg-white hover:bg-blue-50/20'}
+                                                    className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] 
+                                                        ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}
+                                                        ${row.original.status === 'pendente_validacao' ? 'opacity-70 bg-orange-50/30' : ''}
                                                     `}
                                                 >
                                                     {row.getVisibleCells().map(cell => {
-                                                        const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao'].includes(cell.column.id || '');
+                                                        const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
                                                         return (
                                                             <div
                                                                 key={cell.id}
-                                                                className={`px-3 py-1.5 border-r border-gray-100 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                                                className={`px-3 py-1.5 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
                                                                 style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
                                                             >
                                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                                {/* Drag handle */}
-                                                                {['periodo', 'valor_locacao'].includes(cell.column.id || '') &&
+                                                                {/* Drag handle for ONLY specified editable cells */}
+                                                                {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
                                                                     focusedCell.rowId === row.original.id &&
-                                                                    (focusedCell.columnId === cell.column.id) && (
+                                                                    (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
                                                                         <div
-                                                                            className="absolute bottom-0 right-0 w-3 h-3 bg-blue-600 cursor-crosshair z-10"
+                                                                            className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
+                                                                            style={{ borderRadius: '0 0 2px 0' }}
+                                                                            title="Arrastar para preencher"
                                                                             onMouseDown={(e) => {
-                                                                                e.preventDefault(); e.stopPropagation();
-                                                                                startDragging(row.original.id, cell.column.id!, (row.original as any)[cell.column.id!]);
+                                                                                e.preventDefault();
+                                                                                e.stopPropagation();
+                                                                                const columnId = cell.column.id!;
+                                                                                const currentItem = itens.find(item => item.id === row.original.id);
+                                                                                let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
+                                                                                if (columnId === 'periodo') {
+                                                                                    value = {
+                                                                                        periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
+                                                                                        periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
+                                                                                    };
+                                                                                }
+                                                                                startDragging(row.original.id, columnId, value);
                                                                             }}
                                                                         />
                                                                     )}
@@ -1628,19 +1796,50 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                     <div
                                         key={row.id}
                                         data-row-id={row.original.id}
-                                        className={`flex items-center border-b border-gray-100 transition-colors group min-h-[44px] 
-                                            ${row.getIsSelected() ? 'bg-blue-50/50' : 'bg-white hover:bg-blue-50/20'}
+                                        className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] 
+                                            ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}
+                                            ${row.original.status === 'pendente_validacao' ? 'opacity-70 bg-orange-50/30' : ''}
                                         `}
                                     >
                                         {row.getVisibleCells().map(cell => {
-                                            const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao'].includes(cell.column.id || '');
+                                            const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
                                             return (
                                                 <div
                                                     key={cell.id}
-                                                    className={`px-3 py-1.5 border-r border-gray-100 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                                    className={`px-3 py-1.5 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
                                                     style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
                                                 >
                                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                    {/* Drag handle for ONLY specified editable cells */}
+                                                    {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
+                                                        focusedCell.rowId === row.original.id &&
+                                                        (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
+                                                            <div
+                                                                className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
+                                                                style={{ borderRadius: '0 0 2px 0' }}
+                                                                title="Arrastar para preencher"
+                                                                onMouseDown={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    const columnId = cell.column.id!;
+
+                                                                    // Get current value from itens state for real-time accuracy
+                                                                    const currentItem = itens.find(item => item.id === row.original.id);
+                                                                    let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
+
+                                                                    // For período, use both values
+                                                                    if (columnId === 'periodo') {
+                                                                        value = {
+                                                                            periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
+                                                                            periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
+                                                                        };
+                                                                    }
+
+                                                                    console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
+                                                                    startDragging(row.original.id, columnId, value);
+                                                                }}
+                                                            />
+                                                        )}
                                                 </div>
                                             );
                                         })}
@@ -1660,6 +1859,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     </div>
                 </div>
             </div>
+
+            {/* Footer Summary - Always visible if open */}
 
             <ShareModal
                 isOpen={isShareModalOpen}

@@ -10,8 +10,6 @@ import ExibidoraModal from '@/components/ExibidoraModal';
 import MapFilters from '@/components/MapFilters';
 import AddressSearch from '@/components/AddressSearch';
 import NavigationMenu from '@/components/NavigationMenu';
-import ModernNavigation from '@/components/ModernNavigation';
-// import QuickFilters from '@/components/QuickFilters';
 import ExibidorasView from '@/components/ExibidorasView';
 import ClientesView from '@/components/ClientesView';
 import PropostasView from '@/components/PropostasView';
@@ -304,7 +302,6 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                         <div className="absolute inset-0">
                             <GoogleMap searchLocation={searchLocation} />
                         </div>
-                        {/* QuickFilters Removed per user request */}
 
                         {/* Stats Badge - Bottom Left */}
                         <div className="absolute bottom-6 left-6 z-10 hidden lg:flex items-center gap-3">
@@ -322,6 +319,11 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Sidebars - Hide if isGuest or minimal view needed? */}
+                        {/* Assuming sidebar is only for admin/authenticated features unless public users need to see point details. */}
+                        {/* Usually public link is just map + proposal cart table. Sidebar for selecting points might confusing if they can't add to proposal. */}
+                        {/* But if they select a pin on map, Sidebar might show details. Let's keep it but ensure 'add to proposal' logic is guarded. */}
 
                         {/* Sidebars - Hidden for Guests (Public View) */}
                         {!isGuest && (
@@ -344,21 +346,17 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                     </div>
                 )}
 
-                {/* Wrapper for other views with Left Padding for Nav */}
-                <div className={currentView !== 'map' ? "h-full w-full md:pl-24 transition-all duration-300" : ""}>
-                    {currentView === 'exibidoras' && !isLoading && !error && <ExibidorasView />}
-                    {currentView === 'clientes' && !isLoading && !error && <ClientesView />}
-                    {currentView === 'propostas' && !isLoading && !error && <PropostasView />}
-                    {currentView === 'lixeira' && !isLoading && !error && <TrashView />}
-                </div>
+                {currentView === 'exibidoras' && !isLoading && !error && <ExibidorasView />}
+                {currentView === 'clientes' && !isLoading && !error && <ClientesView />}
+                {currentView === 'propostas' && !isLoading && !error && <PropostasView />}
+                {currentView === 'lixeira' && !isLoading && !error && <TrashView />}
 
                 {/* Global Components */}
                 <CreatePointModal />
                 <ExibidoraModal />
                 <MapFilters isOpen={isFiltersOpen} onClose={() => setIsFiltersOpen(false)} />
-
-                {/* Navigation - Always rendered */}
-                <ModernNavigation />
+                {/* Removed duplicate MapFilters */}
+                <NavigationMenu />
 
                 {/* Access Request UI */}
                 {showAccessRequest && (
@@ -404,7 +402,7 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                     </div>
                 )}
 
-                {/* Share Modal */}
+                {/* Share Modal - Only for authenticated users usually, but guests might view? No, guests can't share. */}
                 <ShareModal
                     isOpen={isShareModalOpen}
                     onClose={() => setIsShareModalOpen(false)}
