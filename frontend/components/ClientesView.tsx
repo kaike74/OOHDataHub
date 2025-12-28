@@ -1,26 +1,47 @@
 
 import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
-import { Plus, Search, Building2, ChevronRight, Loader2, Edit2, Trash2, Menu, Users } from 'lucide-react';
+import {
+    Search, Plus, Building2, Edit2, Trash2, ChevronRight, Menu, Users
+} from 'lucide-react';
 import { Cliente } from '@/lib/types';
-import { api } from '@/lib/api';
 import ClientModal from './ClientModal';
-import NavigationMenu from '@/components/NavigationMenu';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { Skeleton } from '@/components/ui/Skeleton';
 
-export default function ClientesView() {
+interface ClientesViewProps {
+    isModalOpen?: boolean;
+    onCloseModal?: () => void;
+}
+
+export default function ClientesView({ isModalOpen, onCloseModal }: ClientesViewProps) {
     const [clientes, setClientes] = useState<Cliente[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [isClientModalOpen, setIsClientModalOpen] = useState(false);
     const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
+
+    // Internal state for modal visibility
+    const [internalModalOpen, setInternalModalOpen] = useState(false);
+
+    // Sync with parent prop
+    useEffect(() => {
+        if (isModalOpen) {
+            setInternalModalOpen(true);
+        }
+    }, [isModalOpen]);
+
+    const handleCloseModal = () => {
+        setInternalModalOpen(false);
+        setEditingCliente(null);
+        if (onCloseModal) onCloseModal();
+    };
 
     const setSelectedCliente = useStore((state) => state.setSelectedCliente);
     const setCurrentView = useStore((state) => state.setCurrentView);
-    const setMenuOpen = useStore((state) => state.setMenuOpen);
+    // Removed legacy setMenuOpen usage
 
     useEffect(() => {
         loadClientes();
@@ -43,20 +64,15 @@ export default function ClientesView() {
         setCurrentView('propostas');
     };
 
-    const filteredClientes = clientes.filter(c =>
-        c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.cnpj?.includes(searchQuery)
-    );
-
-    const handleEditCliente = (cliente: Cliente, e: React.MouseEvent) => {
+    // Edit needs to open modal.
+    const onEditClick = (cliente: Cliente, e: React.MouseEvent) => {
         e.stopPropagation();
         setEditingCliente(cliente);
-        setIsClientModalOpen(true);
+        setInternalModalOpen(true);
     };
 
     const handleDeleteCliente = async (cliente: Cliente, e: React.MouseEvent) => {
         e.stopPropagation();
-
         // Check if client has proposals
         try {
             const proposals = await api.getClientProposals(cliente.id);
@@ -79,76 +95,28 @@ export default function ClientesView() {
         }
     };
 
-    const handleModalClose = () => {
-        setIsClientModalOpen(false);
-        setEditingCliente(null);
-    };
+    const filteredClientes = clientes.filter(c =>
+        c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.cnpj?.includes(searchQuery)
+    );
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-10">
-            {/* Header */}
-            <header className="px-4 sm:px-6 flex items-center justify-between flex-shrink-0 z-40 fixed top-0 left-0 right-0 h-[70px] bg-gradient-to-r from-emidias-primary to-[#0A0970] border-b-4 border-emidias-accent shadow-xl text-white">
-                {/* Logo OOH Data Hub - Left */}
-                <div className="flex items-center gap-3">
-                    <div className="hidden sm:flex w-10 h-10 bg-white/10 rounded-xl items-center justify-center backdrop-blur-sm">
-                        <Users size={22} className="text-emidias-accent" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-                            Clientes
-                        </h1>
-                        <p className="text-[10px] sm:text-xs text-white/60 hidden sm:block">
-                            Gerenciamento de Carteira
-                        </p>
-                    </div>
+        <div className="h-full bg-gray-50 flex flex-col overflow-hidden">
+            {/* Local Sub-header or Search Bar */}
+            <div className="bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+                <h2 className="text-lg font-bold text-gray-800">Carteira de Clientes</h2>
+                <div className="relative w-72">
+                    <Input
+                        icon={<Search size={18} />}
+                        placeholder="Buscar por nome ou CNPJ..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="bg-gray-50 border-gray-200 focus:bg-white"
+                    />
                 </div>
+            </div>
 
-                {/* Logo E-MÍDIAS - Center */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
-                    <div className="text-xl font-bold tracking-tight text-white/90">
-                        OOH DATA HUB
-                    </div>
-                </div>
-
-                {/* Actions - Right */}
-                <div className="flex items-center gap-2 sm:gap-3">
-                    {/* New Client Button */}
-                    <Button
-                        onClick={() => setIsClientModalOpen(true)}
-                        className="hidden sm:flex bg-white/10 hover:bg-white/20 text-white border-0"
-                        leftIcon={<Plus size={18} />}
-                    >
-                        Novo Cliente
-                    </Button>
-
-                    {/* Menu Button */}
-                    <button
-                        onClick={() => setMenuOpen(true)}
-                        className="p-2.5 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all"
-                        title="Menu"
-                    >
-                        <Menu size={24} />
-                    </button>
-                </div>
-            </header>
-
-            <NavigationMenu />
-
-            <div className="max-w-7xl mx-auto p-6 mt-[80px]">
-                {/* Filters */}
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-8 flex items-center gap-4">
-                    <div className="relative flex-1">
-                        <Input
-                            icon={<Search size={20} />}
-                            placeholder="Buscar por nome ou CNPJ..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="bg-gray-50 border-gray-200 focus:bg-white"
-                        />
-                    </div>
-                </div>
-
-                {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
                 {isLoading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {[...Array(8)].map((_, i) => (
@@ -162,6 +130,13 @@ export default function ClientesView() {
                         </div>
                         <h3 className="text-lg font-semibold text-gray-900">Nenhum cliente encontrado</h3>
                         <p className="text-gray-500 text-sm">Tente buscar por outro termo ou cadastre um novo cliente.</p>
+                        <Button
+                            className="mt-4"
+                            variant="outline"
+                            onClick={() => setInternalModalOpen(true)}
+                        >
+                            Cadastrar Cliente
+                        </Button>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in-up duration-500">
@@ -172,9 +147,9 @@ export default function ClientesView() {
                                 className="bg-white rounded-2xl p-5 border border-gray-200 hover:border-emidias-accent/50 hover:shadow-xl hover:shadow-emidias-accent/5 cursor-pointer transition-all duration-300 flex flex-col group/card relative"
                             >
                                 {/* Action Buttons */}
-                                <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
+                                <div className="absolute top-3 right-3 flex gap-1 opacity-100 sm:opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
                                     <button
-                                        onClick={(e) => handleEditCliente(cliente, e)}
+                                        onClick={(e) => onEditClick(cliente, e)}
                                         className="p-2 bg-white border border-gray-200 text-gray-600 hover:text-emidias-accent hover:border-emidias-accent rounded-lg transition-colors shadow-sm"
                                         title="Editar cliente"
                                     >
@@ -190,7 +165,7 @@ export default function ClientesView() {
                                 </div>
 
                                 {/* Logo */}
-                                <div className="w-16 h-16 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100 overflow-hidden mb-4 self-center">
+                                <div className="w-16 h-16 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100 overflow-hidden mb-4 self-center relative">
                                     {cliente.logo_url ? (
                                         <SafeImage
                                             src={api.getImageUrl(cliente.logo_url)}
@@ -233,11 +208,12 @@ export default function ClientesView() {
             </div>
 
             <ClientModal
-                isOpen={isClientModalOpen}
-                onClose={handleModalClose}
+                isOpen={internalModalOpen}
+                onClose={handleCloseModal}
                 onSuccess={() => {
                     loadClientes();
                     setEditingCliente(null);
+                    handleCloseModal();
                 }}
                 editClient={editingCliente}
             />

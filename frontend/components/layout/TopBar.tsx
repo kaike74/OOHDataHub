@@ -61,27 +61,22 @@ export default function TopBar({ currentView, onChangeView, breadcrumbs, user, a
                     </div>
                 </div>
 
-                {/* Center: Global Search Trigger */}
-                <div className="flex-1 max-w-xl mx-6 hidden md:block">
+                {/* Right Area: Global Search + Actions + Profile */}
+                <div className="flex items-center gap-2 sm:gap-4">
+                    {/* Global Search Trigger (Icon Block) */}
                     <button
                         onClick={() => setIsSearchOpen(true)}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-200 hover:border-gray-300 rounded-xl text-sm text-gray-500 hover:bg-white transition-all group"
+                        className="p-2 text-gray-400 hover:text-emidias-primary hover:bg-gray-100 rounded-lg transition-all group relative"
+                        title="Buscar (⌘K)"
                     >
-                        <Search size={16} className="text-gray-400 group-hover:text-emidias-primary transition-colors" />
-                        <span className="flex-1 text-left">Buscar (⌘K)</span>
-                        <div className="flex gap-1">
-                            <span className="text-xs bg-gray-200/50 px-1.5 py-0.5 rounded border border-gray-200 group-hover:bg-white transition-colors">⌘</span>
-                            <span className="text-xs bg-gray-200/50 px-1.5 py-0.5 rounded border border-gray-200 group-hover:bg-white transition-colors">K</span>
-                        </div>
+                        <Search size={20} />
+                        {/* Keyboard shortcut hint tooltip could go here */}
                     </button>
                     <GlobalSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-                </div>
 
-                {/* Right: Actions & Profile */}
-                <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                    {/* Context Actions (Mobile/Tablet might hide these or put in overflow? For now keep visible) */}
+                    {/* Context Actions */}
                     {actions && (
-                        <div className="flex items-center gap-2 mr-2">
+                        <div className="flex items-center gap-2">
                             {actions}
                         </div>
                     )}

@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/Button';
 import ShareModal from '@/components/ShareModal';
 import Link from 'next/link';
 import MainLayout from '@/components/layout/MainLayout';
+import AccountsView from '@/components/AccountsView';
 import { MapSkeleton } from '@/components/skeletons/MapSkeleton';
 import { SkeletonTable } from '@/components/skeletons/SkeletonTable';
 
@@ -57,6 +58,10 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
 
     // Share Modal State
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+    // View Modals State (Hoisted from children)
+    const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+    const [isPropostaModalOpen, setIsPropostaModalOpen] = useState(false);
 
     // Count active filters
     const activeFiltersCount = [
@@ -167,10 +172,6 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
     // Actions for TopBar based on current view
     const renderMapActions = () => (
         <>
-            <div className="hidden sm:flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg mr-2">
-                {/* View Toggles or other map specific toggles could go here */}
-            </div>
-
             <Button
                 onClick={() => setIsFiltersOpen(true)}
                 variant="outline"
@@ -198,6 +199,37 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
         </>
     );
 
+    const renderClientesActions = () => (
+        <Button
+            onClick={() => setIsClientModalOpen(true)}
+            variant="accent"
+            className="shadow-accent shadow-emidias-accent/20"
+            leftIcon={<Plus size={18} strokeWidth={2.5} />}
+        >
+            <span className="hidden sm:inline">Novo Cliente</span>
+        </Button>
+    );
+
+    const renderPropostasActions = () => (
+        <Button
+            onClick={() => setIsPropostaModalOpen(true)}
+            variant="accent"
+            className="shadow-accent shadow-emidias-accent/20"
+            leftIcon={<Plus size={18} strokeWidth={2.5} />}
+        >
+            <span className="hidden sm:inline">Nova Proposta</span>
+        </Button>
+    );
+
+    const getActions = () => {
+        switch (currentView) {
+            case 'map': return renderMapActions();
+            case 'clientes': return renderClientesActions();
+            case 'propostas': return renderPropostasActions();
+            default: return undefined;
+        }
+    };
+
     return (
         <MainLayout
             user={user}
@@ -205,7 +237,7 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                 map: pontos.length,
                 exibidoras: exibidoras.length
             }}
-            actions={currentView === 'map' ? renderMapActions() : undefined}
+            actions={getActions()}
         >
             {/* Search Bar - Map View Only - Now integrated in TopBar or keep as floating? 
                 User requested: "Depois: [Logo] [Breadcrumb] ... [Search] [Actions]" in TopBar. 
@@ -285,8 +317,19 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
             )}
 
             {currentView === 'exibidoras' && !isLoading && !error && <ExibidorasView />}
-            {currentView === 'clientes' && !isLoading && !error && <ClientesView />}
-            {currentView === 'propostas' && !isLoading && !error && <PropostasView />}
+            {currentView === 'clientes' && !isLoading && !error && (
+                <ClientesView
+                    isModalOpen={isClientModalOpen}
+                    onCloseModal={() => setIsClientModalOpen(false)}
+                />
+            )}
+            {currentView === 'propostas' && !isLoading && !error && (
+                <PropostasView
+                    isModalOpen={isPropostaModalOpen}
+                    onCloseModal={() => setIsPropostaModalOpen(false)}
+                />
+            )}
+            {currentView === 'contas' && !isLoading && !error && <AccountsView />}
             {currentView === 'lixeira' && !isLoading && !error && <TrashView />}
 
             {/* Global Components */}

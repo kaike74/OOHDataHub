@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import {
     ArrowLeft, Plus, Calendar, Coins, FileText, Loader2, History, Trash2,
-    MoreVertical, Search, Filter, TrendingUp, DollarSign, MapPin
+    MoreVertical, Search, Filter, TrendingUp, DollarSign, MapPin, Building2
 } from 'lucide-react';
 import { Proposta } from '@/lib/types';
 import PropostaModal from './PropostaModal';
@@ -21,10 +21,27 @@ interface ExtendedProposta extends Proposta {
     total_valor?: number;
 }
 
-export default function PropostasView() {
+
+interface PropostasViewProps {
+    isModalOpen?: boolean;
+    onCloseModal?: () => void;
+}
+
+export default function PropostasView({ isModalOpen, onCloseModal }: PropostasViewProps) {
     const [propostas, setPropostas] = useState<ExtendedProposta[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isPropostaModalOpen, setIsPropostaModalOpen] = useState(false);
+    // Use internal state synchronized with prop for modal
+    const [internalModalOpen, setInternalModalOpen] = useState(false);
+
+    useEffect(() => {
+        if (isModalOpen) setInternalModalOpen(true);
+    }, [isModalOpen]);
+
+    const handleCloseModal = () => {
+        setInternalModalOpen(false);
+        if (onCloseModal) onCloseModal();
+    };
+
     const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -34,17 +51,17 @@ export default function PropostasView() {
     const setSelectedProposta = useStore((state) => state.setSelectedProposta);
 
     useEffect(() => {
-        if (selectedCliente) {
-            loadPropostas();
-        }
+        loadPropostas();
     }, [selectedCliente]);
 
     const loadPropostas = async () => {
-        if (!selectedCliente) return;
-
         try {
             setIsLoading(true);
-            const response = await api.getClientProposals(selectedCliente.id);
+            // If selectedCliente, fetch theirs. Else fetch all (global view)
+            const response = selectedCliente
+                ? await api.getClientProposals(selectedCliente.id)
+                : await api.getAdminProposals();
+
             if (response) {
                 setPropostas(response);
             }
@@ -101,90 +118,43 @@ export default function PropostasView() {
     const totalValue = propostas.reduce((acc, curr) => acc + (curr.total_valor || 0), 0);
     const totalItems = propostas.reduce((acc, curr) => acc + (curr.total_itens || 0), 0);
 
-    if (!selectedCliente) return null;
-
     return (
         <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
-            {/* Header Section */}
-            <div className="bg-white border-b border-gray-200 shadow-sm relative z-10">
-                <div className="max-w-7xl mx-auto px-6 py-6">
-                    {/* Breadcrumb / Back */}
-                    <button
-                        onClick={handleBack}
-                        className="group flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-emidias-accent mb-6 transition-colors"
-                    >
-                        <div className="p-1 rounded-full bg-gray-100 group-hover:bg-emidias-accent/10 transition-colors">
-                            <ArrowLeft size={16} />
-                        </div>
-                        <span>Voltar para Clientes</span>
-                    </button>
+            {/* Content Area - Table */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin">
+                <div className="w-full max-w-[1920px] mx-auto">
+                    {/* If we have a client selected to show context, maybe keep a small banner? 
+                        For now, removing big header to fit MainLayout standard. */}
 
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                        <div className="flex items-start gap-5">
-                            <div className="relative group">
-                                <div className="absolute inset-0 bg-emidias-accent/20 rounded-2xl blur-lg group-hover:blur-xl transition-all opacity-0 group-hover:opacity-100" />
-                                <div className="relative w-20 h-20 rounded-2xl bg-white border border-gray-100 shadow-lg p-2 flex items-center justify-center overflow-hidden">
+                    {selectedCliente && (
+                        <div className="mb-6 flex items-center justify-between bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-100">
                                     {selectedCliente.logo_url ? (
                                         <SafeImage
                                             src={api.getImageUrl(selectedCliente.logo_url)}
-                                            alt="Logo"
+                                            alt={selectedCliente.nome}
                                             className="w-full h-full object-contain"
                                         />
                                     ) : (
-                                        <span className="text-3xl font-bold text-gray-300">{selectedCliente.nome.substring(0, 2).toUpperCase()}</span>
+                                        <Building2 className="text-gray-400" />
                                     )}
                                 </div>
-                            </div>
-
-                            <div>
-                                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{selectedCliente.nome}</h1>
-                                <p className="text-gray-500 mt-1 flex items-center gap-2">
-                                    Gerenciamento de Campanhas OOH
-                                </p>
-
-                                <div className="flex items-center gap-4 mt-4 text-sm">
-                                    <div className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-100 flex items-center gap-2">
-                                        <FileText size={14} />
-                                        {propostas.length} Propostas
-                                    </div>
-                                    <div className="px-3 py-1 rounded-full bg-green-50 text-green-700 font-medium border border-green-100 flex items-center gap-2">
-                                        <Coins size={14} />
-                                        {totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} Total (Est.)
-                                    </div>
+                                <div>
+                                    <h2 className="font-bold text-gray-900">{selectedCliente.nome}</h2>
+                                    <p className="text-xs text-gray-500">Filtrando propostas deste cliente</p>
                                 </div>
                             </div>
-                        </div>
-
-                        <div className="flex flex-col gap-3 w-full md:w-auto">
-                            <Button
-                                onClick={() => setIsPropostaModalOpen(true)}
-                                size="lg"
-                                leftIcon={<Plus size={20} className="stroke-[3px]" />}
-                                className="shadow-lg shadow-emidias-accent/20 hover:shadow-emidias-accent/40"
-                            >
-                                Criar Nova Proposta
+                            <Button onClick={handleBack} variant="ghost" size="sm" leftIcon={<ArrowLeft size={16} />}>
+                                Ver todos
                             </Button>
-                            <div className="relative w-full sm:w-80">
-                                <Input
-                                    icon={<Search size={18} />}
-                                    placeholder="Buscar propostas..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="bg-gray-50 focus:bg-white"
-                                />
-                            </div>
                         </div>
-                    </div>
-                </div>
-            </div>
+                    )}
 
-            {/* Content Area - Table */}
-            <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-                <div className="w-full max-w-[1920px] mx-auto">
                     <ProposalsTable
                         data={filteredPropostas}
                         isLoading={isLoading}
-                        showClientColumn={false}
+                        showClientColumn={!selectedCliente}
                         onEdit={(item) => handlePropostaClick(item as unknown as Proposta)}
                         onRowClick={(item) => handlePropostaClick(item as unknown as Proposta)}
                         onDelete={handleDeleteProposta}
@@ -192,20 +162,21 @@ export default function PropostasView() {
                             e.stopPropagation();
                             setSelectedHistoryId(id);
                         }}
-                        emptyMessage="Nenhuma proposta encontrada para este cliente"
-                        emptyActionLabel="Criar primeira proposta"
-                        onEmptyAction={() => setIsPropostaModalOpen(true)}
+                        emptyMessage="Nenhuma proposta encontrada."
+                        emptyActionLabel="Criar proposta"
+                        onEmptyAction={() => setInternalModalOpen(true)}
                     />
                 </div>
             </div>
 
             <PropostaModal
-                isOpen={isPropostaModalOpen}
-                onClose={() => setIsPropostaModalOpen(false)}
-                clienteId={selectedCliente.id}
+                isOpen={internalModalOpen}
+                onClose={handleCloseModal}
+                clienteId={selectedCliente?.id || 0} // 0 triggers selection inside modal if supported or handles error
                 onSuccess={(newProposta) => {
                     loadPropostas();
                     handlePropostaClick(newProposta);
+                    handleCloseModal();
                 }}
             />
 
