@@ -4,6 +4,13 @@ import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { X, MapPin, Building2, Ruler, Users, FileText, Pencil, History, Eye, ChevronLeft, ChevronRight, Phone, Mail, Trash2, DollarSign, Tag, Calendar, ExternalLink, Loader2, ShoppingCart } from 'lucide-react';
+
+const formatDecimal = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value);
+};
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Contato } from '@/lib/types';
 import HistoryModal from '@/components/HistoryModal';
