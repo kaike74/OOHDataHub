@@ -227,12 +227,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         }
     }, [selectedProposta, isClientView]);
 
-    // Initialize Column Order
-    useEffect(() => {
-        if (columns.length > 0 && columnOrder.length === 0) {
-            setColumnOrder(columns.map(c => c.id || c.accessorKey as string).filter(Boolean));
-        }
-    }, [columns, columnOrder.length]);
+
 
     // Group items by selected field
     const groupedData = useMemo(() => {
@@ -1108,6 +1103,13 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             )
         }
     ], [updateItem, removeItem, pontos, setSelectedPonto, itens, focusedCell, showStatusColumn, isClientView, readOnly]);
+
+    // Initialize Column Order
+    useEffect(() => {
+        if (columns.length > 0 && columnOrder.length === 0) {
+            setColumnOrder(columns.map(c => c.id || (c as any).accessorKey as string).filter(Boolean));
+        }
+    }, [columns, columnOrder.length]);
 
     // Export Handlers
     const handleExportExcel = () => {
