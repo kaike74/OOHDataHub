@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { Skeleton } from '@/components/ui/Skeleton';
+import MainLayout from '@/components/layout/MainLayout';
 
 interface AdminProposal {
     id: number;
@@ -150,97 +151,65 @@ export default function AdminProposalsPage() {
         })
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); // Should use updated_at if available
 
+    // Breadcrumbs
+    const breadcrumbs = [
+        { label: 'Admin', href: '/admin' },
+        { label: 'Propostas', active: true }
+    ];
+
+    // Actions
+    const renderActions = () => (
+        <Button
+            onClick={() => {
+                setEditingProposal(null);
+                setIsCreateModalOpen(true);
+            }}
+            variant="accent"
+            className="shadow-accent shadow-emidias-accent/20"
+            leftIcon={<Plus size={18} strokeWidth={2.5} />}
+        >
+            <span className="hidden sm:inline">Nova Proposta</span>
+        </Button>
+    );
+
     return (
-        <div className="min-h-screen bg-gray-50 pb-10">
-            {/* Modal */}
-            <CreateProposalModal
-                isOpen={isCreateModalOpen}
-                onClose={() => {
-                    setIsCreateModalOpen(false);
-                    setEditingProposal(null);
-                }}
-                initialData={editingProposal}
-            />
+        <MainLayout
+            user={user}
+            breadcrumbs={breadcrumbs}
+            counts={{ propostas: proposals.length }}
+            actions={renderActions()}
+        >
+            <div className="w-full max-w-[1920px] mx-auto p-4 sm:p-6 lg:p-8">
+                {/* Modal */}
+                <CreateProposalModal
+                    isOpen={isCreateModalOpen}
+                    onClose={() => {
+                        setIsCreateModalOpen(false);
+                        setEditingProposal(null);
+                    }}
+                    initialData={editingProposal}
+                />
 
-            {/* Header */}
-            <header className="bg-gradient-to-r from-emidias-primary to-[#0A0970] px-4 sm:px-6 flex items-center justify-between flex-shrink-0 z-40 fixed top-0 left-0 right-0 h-[70px] border-b-4 border-emidias-accent shadow-xl text-white">
-                {/* Logo OOH Data Hub - Left */}
-                <div className="flex items-center gap-3">
-                    <div className="hidden sm:flex w-10 h-10 bg-white/10 rounded-xl items-center justify-center backdrop-blur-sm">
-                        <MapPin size={22} className="text-emidias-accent" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-                            Admin Propostas
-                        </h1>
-                        <p className="text-[10px] sm:text-xs text-white/60 hidden sm:block">
-                            Gestão Global
-                        </p>
-                    </div>
-                </div>
-
-                {/* Logo E-MÍDIAS - Center */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
-                    <div className="text-xl font-bold tracking-tight text-white/90">
-                        OOH DATA HUB
-                    </div>
-                </div>
-
-                {/* Actions - Right */}
-                <div className="flex items-center gap-2 sm:gap-3">
-                    {/* New Proposal Button */}
-                    <Button
-                        onClick={() => {
-                            setEditingProposal(null); // Ensure no editing data when creating new
-                            setIsCreateModalOpen(true);
-                        }}
-                        variant="primary"
-                        className="hidden sm:flex bg-white/10 hover:bg-white/20 text-white border-0"
-                        leftIcon={<Plus size={18} />}
-                    >
-                        <span>Nova Proposta</span>
-                    </Button>
-
-                    {/* Menu Button */}
-                    <button
-                        onClick={() => setMenuOpen(true)}
-                        className="p-2.5 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all"
-                        title="Menu"
-                    >
-                        <Menu size={24} />
-                    </button>
-                </div>
-            </header>
-
-            <NavigationMenu />
-
-            <div className="w-full max-w-[1920px] mx-auto p-6 mt-[80px]">
                 {/* Filters and Actions Bar */}
-                <div className="flex flex-col md:flex-row gap-4 mb-8 justify-between items-center">
-                    <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4 w-full md:w-auto md:min-w-[400px]">
+                <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-4 w-full md:w-auto md:min-w-[400px]">
                         <div className="relative flex-1">
                             <Input
                                 placeholder="Buscar por cliente, proposta ou e-mail..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                icon={<Search size={20} />}
-                                className="bg-gray-50 border-gray-200 focus:bg-white"
+                                icon={<Search size={20} className="text-gray-400" />}
+                                className="bg-gray-50 border-gray-200 focus:bg-white focus:border-emidias-primary transition-colors"
                             />
                         </div>
                     </div>
 
-                    {/* Mobile Create Button */}
-                    <Button
-                        onClick={() => {
-                            setEditingProposal(null); // Ensure no editing data when creating new
-                            setIsCreateModalOpen(true);
-                        }}
-                        variant="primary"
-                        className="w-full md:w-auto sm:hidden"
-                        leftIcon={<Plus size={18} />}
-                    >
-                        <span>Nova Proposta</span>
-                    </Button>
+                    {/* Mobile Create Button - Only show if not covered by TopBar actions (TopBar actions might be hidden on mobile depending on design)
+                        My TopBar design keeps actions visible. So this might be redundant. 
+                        But let's keep it if we think TopBar space is limited. 
+                        Actually, TopBar actions are visible. Removing redundancy.
+                    */}
+                    {/* <Button ... className="sm:hidden" ... />  <- Removed */}
                 </div>
 
                 {/* Content */}
@@ -254,11 +223,11 @@ export default function AdminProposalsPage() {
                     emptyMessage="Nenhuma proposta encontrada com os filtros selecionados."
                     emptyActionLabel="Criar Nova Proposta"
                     onEmptyAction={() => {
-                        setEditingProposal(null); // Ensure no editing data when creating new
+                        setEditingProposal(null);
                         setIsCreateModalOpen(true);
                     }}
                 />
             </div>
-        </div>
+        </MainLayout>
     );
 }
