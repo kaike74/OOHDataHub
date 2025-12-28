@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useStore } from '@/lib/store';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { X, Filter as FilterIcon, ChevronDown, ChevronUp, Search, MapPin, Building2, Tag, DollarSign, Globe, Check } from 'lucide-react';
+import { X, Filter as FilterIcon, ChevronDown, Search, MapPin, Building2, Tag, DollarSign, Globe, Check, Eraser } from 'lucide-react';
 
 interface MapFiltersProps {
   isOpen: boolean;
@@ -229,28 +229,30 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
     children: React.ReactNode;
     count?: number;
   }) => (
-    <div className="card-base overflow-hidden">
+    <div className="bg-white/50 border border-white/40 rounded-xl overflow-hidden shadow-sm transition-all hover:shadow-md">
       <button
         onClick={() => toggleSection(sectionKey)}
-        className="w-full px-4 py-3.5 bg-emidias-gray-50 hover:bg-emidias-gray-100 flex items-center justify-between transition-all group"
+        className="w-full px-4 py-3 bg-white/60 hover:bg-white/80 flex items-center justify-between transition-colors group"
       >
         <div className="flex items-center gap-3">
-          <Icon size={18} className="text-emidias-accent" />
-          <span className="font-semibold text-emidias-gray-900 text-sm">{title}</span>
+          <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
+            <Icon size={16} />
+          </div>
+          <span className="font-semibold text-gray-700 text-sm">{title}</span>
           {count !== undefined && count > 0 && (
-            <span className="badge badge-accent text-[10px] px-2 py-0.5">
+            <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
               {count}
             </span>
           )}
         </div>
         <ChevronDown
-          size={18}
-          className={`text-emidias-gray-400 transition-transform duration-200 ${expandedSections[sectionKey] ? 'rotate-180' : ''}`}
+          size={16}
+          className={`text-gray-400 transition-transform duration-300 ${expandedSections[sectionKey] ? 'rotate-180' : ''}`}
         />
       </button>
 
-      <div className={`overflow-hidden transition-all duration-300 ${expandedSections[sectionKey] ? 'max-h-[400px]' : 'max-h-0'}`}>
-        <div className="p-4 space-y-3">
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedSections[sectionKey] ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className="p-3 space-y-3 bg-white/30 backdrop-blur-sm">
           {children}
         </div>
       </div>
@@ -266,12 +268,15 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
     onChange: (value: string) => void;
     placeholder: string;
   }) => (
-    <Input
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      icon={<Search size={16} />}
-    />
+    <div className="relative">
+      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full pl-9 pr-3 py-2 bg-white/70 border border-gray-200 rounded-lg text-sm text-gray-700 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:bg-white transition-all outline-none"
+      />
+    </div>
   );
 
   const CheckboxItem = ({
@@ -283,24 +288,24 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
     onChange: () => void;
     label: string;
   }) => (
-    <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-emidias-gray-50 transition-all group">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="hidden"
-      />
-      <div
-        onClick={onChange}
-        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${checked
-          ? 'bg-emidias-accent border-emidias-accent'
-          : 'border-emidias-gray-300 group-hover:border-emidias-accent/50'
-          }`}>
-        {checked && <Check size={14} className="text-white" strokeWidth={3} />}
+    <label className="flex items-center gap-2.5 cursor-pointer p-2 rounded-lg hover:bg-blue-50/50 transition-all group select-none">
+      <div className="relative">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onChange}
+          className="peer sr-only"
+        />
+        <div
+          className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${checked
+            ? 'bg-blue-600 border-blue-600 shadow-sm'
+            : 'border-gray-300 bg-white group-hover:border-blue-400'
+            }`}>
+          <Check size={10} className={`text-white transition-transform ${checked ? 'scale-100' : 'scale-0'}`} strokeWidth={4} />
+        </div>
       </div>
       <span
-        onClick={onChange}
-        className={`text-sm transition-colors ${checked ? 'text-emidias-gray-900 font-medium' : 'text-emidias-gray-600'}`}>
+        className={`text-sm transition-colors ${checked ? 'text-gray-900 font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>
         {label}
       </span>
     </label>
@@ -310,66 +315,66 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity"
+        className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-40 animate-in fade-in duration-300"
         onClick={onClose}
       />
 
       {/* Panel */}
-      <div className="fixed left-0 top-[70px] bottom-0 w-full sm:w-96 bg-emidias-gray-50 shadow-emidias-2xl z-50 overflow-hidden flex flex-col animate-slide-in-left">
+      <div className="fixed left-4 top-[80px] bottom-6 w-full max-w-[380px] bg-white/80 backdrop-blur-2xl shadow-2xl shadow-black/10 border border-white/50 rounded-2xl z-50 overflow-hidden flex flex-col animate-in slide-in-from-left-4 duration-500">
         {/* Header */}
-        <div className="flex-shrink-0 gradient-primary px-6 py-4">
+        <div className="flex-shrink-0 px-5 py-4 border-b border-gray-100/50 bg-white/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <FilterIcon className="text-white" size={20} />
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center text-white">
+                <FilterIcon size={20} />
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-white">Filtros</h2>
-                {activeFiltersCount > 0 && (
-                  <p className="text-xs text-white/70">{activeFiltersCount} filtro{activeFiltersCount > 1 ? 's' : ''} ativo{activeFiltersCount > 1 ? 's' : ''}</p>
+              <div className="flex flex-col">
+                <h2 className="text-lg font-bold text-gray-900 leading-tight">Filtros</h2>
+                {activeFiltersCount > 0 ? (
+                  <p className="text-xs font-medium text-blue-600">{activeFiltersCount} ativo{activeFiltersCount !== 1 && 's'}</p>
+                ) : (
+                  <p className="text-xs text-gray-400">Nenhum filtro ativo</p>
                 )}
               </div>
             </div>
-            <Button
+            <button
               onClick={onClose}
-              variant="ghost"
-              size="icon"
-              className="text-white/80 hover:text-white hover:bg-white/10"
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
             >
-              <X size={22} />
-            </Button>
+              <X size={20} />
+            </button>
           </div>
         </div>
 
         {/* Results Counter */}
-        <div className="flex-shrink-0 px-6 py-4 bg-white border-b border-emidias-gray-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-emidias-accent rounded-full animate-pulse" />
-              <span className="text-sm font-semibold text-emidias-gray-900">
-                {filteredCount} pontos
-              </span>
-              <span className="text-sm text-emidias-gray-500">encontrados</span>
-            </div>
-            {activeFiltersCount > 0 && (
-              <Button
-                onClick={handleClearAll}
-                variant="ghost"
-                size="sm"
-                className="text-xs font-medium text-emidias-accent hover:text-emidias-accent-dark h-auto px-2 py-1"
-              >
-                Limpar todos
-              </Button>
-            )}
+        <div className="flex-shrink-0 px-5 py-3 bg-blue-50/30 border-b border-blue-100/50 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+            </span>
+            <p className="text-sm font-medium text-blue-900">
+              <strong className="text-blue-700">{filteredCount}</strong> pontos encontrados
+            </p>
           </div>
+
+          {activeFiltersCount > 0 && (
+            <button
+              onClick={handleClearAll}
+              className="text-xs font-medium text-gray-500 hover:text-red-500 flex items-center gap-1 transition-colors group"
+            >
+              <Eraser size={12} className="group-hover:rotate-12 transition-transform" />
+              Limpar
+            </button>
+          )}
         </div>
 
-        {/* Filters */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        {/* Filters Content */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
           {/* País */}
           <FilterSection title="País" icon={Globe} sectionKey="pais" count={selectedPaises.length}>
             <SearchInput value={paisSearch} onChange={setPaisSearch} placeholder="Buscar país..." />
-            <div className="space-y-1 max-h-40 overflow-y-auto">
+            <div className="space-y-1 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
               {filteredPaises.length > 0 ? (
                 filteredPaises.map(pais => (
                   <CheckboxItem
@@ -380,7 +385,7 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
                   />
                 ))
               ) : (
-                <p className="text-sm text-emidias-gray-500 italic py-2 px-2">Nenhum país cadastrado</p>
+                <p className="text-sm text-gray-400 italic py-2 px-2 text-center">Nenhum país encontrado</p>
               )}
             </div>
           </FilterSection>
@@ -389,9 +394,9 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
           <FilterSection title="Localização" icon={MapPin} sectionKey="localizacao" count={selectedUFs.length + selectedCidades.length}>
             {/* UF */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">UF</label>
+              <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Estados (UF)</label>
               <SearchInput value={ufSearch} onChange={setUfSearch} placeholder="Buscar UF..." />
-              <div className="space-y-1 max-h-32 overflow-y-auto">
+              <div className="space-y-1 max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
                 {filteredUFs.length > 0 ? (
                   filteredUFs.map(uf => (
                     <CheckboxItem
@@ -402,24 +407,29 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
                     />
                   ))
                 ) : (
-                  <p className="text-sm text-emidias-gray-500 italic py-2 px-2">Nenhuma UF cadastrada</p>
+                  <p className="text-sm text-gray-400 italic py-2 px-2 text-center">Nenhuma UF</p>
                 )}
               </div>
             </div>
 
             {/* Cidade */}
-            <div className="space-y-2 pt-2 border-t border-emidias-gray-100">
-              <label className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">Cidade</label>
+            <div className="space-y-2 pt-3 border-t border-gray-100/50">
+              <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Cidades</label>
               <SearchInput value={cidadeSearch} onChange={setCidadeSearch} placeholder="Buscar cidade..." />
-              <div className="space-y-1 max-h-40 overflow-y-auto">
-                {filteredCidades.map(cidade => (
-                  <CheckboxItem
-                    key={cidade}
-                    checked={selectedCidades.includes(cidade)}
-                    onChange={() => toggleCidade(cidade)}
-                    label={cidade}
-                  />
-                ))}
+              <div className="space-y-1 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
+                {filteredCidades.length > 0 ? (
+                  filteredCidades.map(cidade => (
+                    <CheckboxItem
+                      key={cidade}
+                      checked={selectedCidades.includes(cidade)}
+                      onChange={() => toggleCidade(cidade)}
+                      label={cidade}
+                    />
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-400 italic py-2 px-2 text-center">Nenhuma cidade</p>
+                )}
+
               </div>
             </div>
           </FilterSection>
@@ -427,7 +437,7 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
           {/* Exibidora */}
           <FilterSection title="Exibidora" icon={Building2} sectionKey="exibidora" count={selectedExibidoras.length}>
             <SearchInput value={exibidoraSearch} onChange={setExibidoraSearch} placeholder="Buscar exibidora..." />
-            <div className="space-y-1 max-h-48 overflow-y-auto">
+            <div className="space-y-1 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
               {filteredExibidoras.map(exibidora => (
                 <CheckboxItem
                   key={exibidora.id}
@@ -440,8 +450,8 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
           </FilterSection>
 
           {/* Tipo */}
-          <FilterSection title="Tipo" icon={Tag} sectionKey="tipo" count={selectedTipos.length}>
-            <div className="space-y-1 max-h-48 overflow-y-auto">
+          <FilterSection title="Tipo de Mídia" icon={Tag} sectionKey="tipo" count={selectedTipos.length}>
+            <div className="space-y-1 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
               {tipos.map(tipo => (
                 <CheckboxItem
                   key={tipo}
@@ -457,45 +467,39 @@ export default function MapFilters({ isOpen, onClose }: MapFiltersProps) {
           {valores && (
             <FilterSection title="Faixa de Valor" icon={DollarSign} sectionKey="valor" count={valorMin || valorMax ? 1 : 0}>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">Mínimo</label>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Mínimo</label>
                   <Input
                     type="number"
                     value={valorMin}
                     onChange={(e) => setValorMin(e.target.value)}
                     placeholder={`R$ ${valores.min.toFixed(0)}`}
+                    className="h-9 bg-white/70 border-gray-200 text-sm focus:ring-blue-500/20"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">Máximo</label>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Máximo</label>
                   <Input
                     type="number"
                     value={valorMax}
                     onChange={(e) => setValorMax(e.target.value)}
                     placeholder={`R$ ${valores.max.toFixed(0)}`}
+                    className="h-9 bg-white/70 border-gray-200 text-sm focus:ring-blue-500/20"
                   />
                 </div>
               </div>
-              <p className="text-xs text-emidias-gray-400 italic">
-                Valores baseados em produtos de Locação
+              <p className="text-[10px] text-gray-400 italic text-center mt-2">
+                * Baseado em valores de locação
               </p>
             </FilterSection>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex-shrink-0 p-4 bg-white border-t border-emidias-gray-100 flex gap-3">
-          <Button
-            onClick={handleClearAll}
-            variant="secondary"
-            className="flex-1"
-          >
-            Limpar
-          </Button>
+        <div className="flex-shrink-0 p-4 bg-white/80 border-t border-gray-200/50 backdrop-blur-md flex gap-3">
           <Button
             onClick={handleApply}
-            variant="accent"
-            className="flex-1 hover-glow"
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/30 border-0 h-11"
           >
             Aplicar Filtros
           </Button>

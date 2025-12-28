@@ -10,6 +10,8 @@ import ExibidoraModal from '@/components/ExibidoraModal';
 import MapFilters from '@/components/MapFilters';
 import AddressSearch from '@/components/AddressSearch';
 import NavigationMenu from '@/components/NavigationMenu';
+import ModernNavigation from '@/components/ModernNavigation';
+import QuickFilters from '@/components/QuickFilters';
 import ExibidorasView from '@/components/ExibidorasView';
 import ClientesView from '@/components/ClientesView';
 import PropostasView from '@/components/PropostasView';
@@ -302,6 +304,7 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                         <div className="absolute inset-0">
                             <GoogleMap searchLocation={searchLocation} />
                         </div>
+                        <QuickFilters />
 
                         {/* Stats Badge - Bottom Left */}
                         <div className="absolute bottom-6 left-6 z-10 hidden lg:flex items-center gap-3">
@@ -356,7 +359,8 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                 <ExibidoraModal />
                 <MapFilters isOpen={isFiltersOpen} onClose={() => setIsFiltersOpen(false)} />
                 {/* Removed duplicate MapFilters */}
-                <NavigationMenu />
+                {/* <NavigationMenu /> */}
+                <ModernNavigation />
 
                 {/* Access Request UI */}
                 {showAccessRequest && (
