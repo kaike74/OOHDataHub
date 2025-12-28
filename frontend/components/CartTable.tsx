@@ -1104,12 +1104,34 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         }
     ], [updateItem, removeItem, pontos, setSelectedPonto, itens, focusedCell, showStatusColumn, isClientView, readOnly]);
 
-    // Initialize Column Order
+    // Initialize & Load Column Order
     useEffect(() => {
+        // Try to load from localStorage first
+        const savedOrder = localStorage.getItem('cartTable_columnOrder');
+        if (savedOrder) {
+            try {
+                const parsed = JSON.parse(savedOrder);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    setColumnOrder(parsed);
+                    return;
+                }
+            } catch (e) {
+                console.warn('Failed to parse saved column order', e);
+            }
+        }
+
+        // Default initialization if no saved order
         if (columns.length > 0 && columnOrder.length === 0) {
             setColumnOrder(columns.map(c => c.id || (c as any).accessorKey as string).filter(Boolean));
         }
-    }, [columns, columnOrder.length]);
+    }, [columns]); // Run once when columns are defined
+
+    // Persist Column Order
+    useEffect(() => {
+        if (columnOrder.length > 0) {
+            localStorage.setItem('cartTable_columnOrder', JSON.stringify(columnOrder));
+        }
+    }, [columnOrder]);
 
     // Export Handlers
     const handleExportExcel = () => {
@@ -1588,14 +1610,19 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                             }[header.column.getIsSorted() as string] ?? null}
                                         </div>
 
-                                        {header.column.getCanResize() && (
-                                            <div
-                                                onMouseDown={header.getResizeHandler()}
-                                                onTouchStart={header.getResizeHandler()}
-                                                className={`absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity z-20 ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
-                                                onClick={(e) => e.stopPropagation()} // Prevent sort/drag when resizing
-                                                draggable={false} // Prevent resizing from triggering drag
-                                            />
+                                        <div
+                                            onMouseDown={(e) => {
+                                                e.stopPropagation();
+                                                header.getResizeHandler()(e);
+                                            }}
+                                            onTouchStart={(e) => {
+                                                e.stopPropagation();
+                                                header.getResizeHandler()(e);
+                                            }}
+                                            className={`absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity z-20 ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
+                                            onClick={(e) => e.stopPropagation()} // Prevent sort/drag when resizing
+                                            draggable={false} // Prevent resizing from triggering drag
+                                        />
                                         )}
                                     </div>
                                 ))}

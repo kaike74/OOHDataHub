@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { SafeImage } from '@/components/ui/SafeImage';
 
 // Componente para exibir contatos da exibidora
-function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undefined }) {
+function ContatosExibidora({ idExibidora, isInternal }: { idExibidora: number | null | undefined, isInternal: boolean }) {
     const [contatos, setContatos] = useState<Contato[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -50,26 +50,31 @@ function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undef
                     {contato.nome && (
                         <p className="font-semibold text-gray-800 text-xs">{contato.nome}</p>
                     )}
-                    <div className="flex flex-col gap-1.5 mt-1.5">
-                        {contato.telefone && (
-                            <a
-                                href={`tel:${contato.telefone}`}
-                                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-emidias-accent transition-colors"
-                            >
-                                <Phone size={10} />
-                                {contato.telefone}
-                            </a>
-                        )}
-                        {contato.email && (
-                            <a
-                                href={`mailto:${contato.email}`}
-                                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-emidias-accent transition-colors"
-                            >
-                                <Mail size={10} />
-                                {contato.email}
-                            </a>
-                        )}
-                    </div>
+
+                    {isInternal ? (
+                        <div className="flex flex-col gap-1.5 mt-1.5">
+                            {contato.telefone && (
+                                <a
+                                    href={`tel:${contato.telefone}`}
+                                    className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-emidias-accent transition-colors"
+                                >
+                                    <Phone size={10} />
+                                    {contato.telefone}
+                                </a>
+                            )}
+                            {contato.email && (
+                                <a
+                                    href={`mailto:${contato.email}`}
+                                    className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-emidias-accent transition-colors"
+                                >
+                                    <Mail size={10} />
+                                    {contato.email}
+                                </a>
+                            )}
+                        </div>
+                    ) : (
+                        <p className="text-[10px] text-gray-400 italic mt-1">Contatos disponíveis apenas para equipe interna.</p>
+                    )}
                 </div>
             ))}
         </div>
@@ -98,6 +103,8 @@ export default function Sidebar() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    const isInternal = !!user && user.type === 'internal';
 
     const imagens = selectedPonto?.imagens || [];
     const produtos = selectedPonto?.produtos || [];
@@ -507,7 +514,7 @@ export default function Sidebar() {
                                             </p>
                                         )}
 
-                                        <ContatosExibidora idExibidora={selectedPonto.id_exibidora} />
+                                        <ContatosExibidora idExibidora={selectedPonto.id_exibidora} isInternal={isInternal} />
                                     </div>
                                 </div>
                             )}
