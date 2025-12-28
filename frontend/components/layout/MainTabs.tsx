@@ -82,10 +82,13 @@ export default function MainTabs({ currentView, onChangeView, className, counts 
                             </span>
                         )}
 
-                        {/* Active Indicator (Bottom Line) - Optional if border-t is not enough */}
-                        {/* {isActive && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emidias-primary rounded-t-full" />
-            )} */}
+                        {/* Active Indicator (Bottom Line) and Background */}
+                        {isActive && (
+                            <>
+                                <div className="absolute inset-0 bg-gradient-to-b from-emidias-primary/5 to-transparent pointer-events-none animate-in fade-in duration-300" />
+                                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emidias-primary rounded-t-full animate-in zoom-in-x duration-300" />
+                            </>
+                        )}
                     </button>
                 );
             })}

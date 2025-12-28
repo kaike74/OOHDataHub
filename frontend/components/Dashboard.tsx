@@ -22,6 +22,8 @@ import { Button } from '@/components/ui/Button';
 import ShareModal from '@/components/ShareModal';
 import Link from 'next/link';
 import MainLayout from '@/components/layout/MainLayout';
+import { MapSkeleton } from '@/components/skeletons/MapSkeleton';
+import { SkeletonTable } from '@/components/skeletons/SkeletonTable';
 
 interface DashboardProps {
     initialProposalId?: string;
@@ -223,18 +225,15 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
 
             {/* Loading State */}
             {isLoading && (
-                <div className="absolute inset-0 z-20 bg-emidias-gray-50 p-6 flex gap-6 animate-pulse">
-                    {/* Simulate Map/Content Area */}
-                    <div className="flex-1 bg-gray-200 rounded-2xl h-full shadow-inner opacity-70"></div>
-
-                    {/* Loading Indicator Overlay */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <div className="relative">
-                            <div className="w-16 h-16 rounded-full border-4 border-gray-300 border-t-emidias-accent animate-spin mb-4"></div>
-                            <MapPin size={24} className="text-emidias-accent absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[calc(50%+16px)]" />
+                <div className="absolute inset-0 z-20 bg-emidias-gray-50">
+                    {currentView === 'map' ? (
+                        <MapSkeleton />
+                    ) : (
+                        // Generic skeleton for other views if not specific
+                        <div className="p-8 flex items-center justify-center h-full">
+                            <SkeletonTable rows={8} />
                         </div>
-                        <p className="text-emidias-primary font-bold text-lg">Carregando OOH Data Hub...</p>
-                    </div>
+                    )}
                 </div>
             )}
 

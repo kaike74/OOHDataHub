@@ -7,9 +7,10 @@ import {
 import { cn } from '@/lib/utils';
 import MainTabs, { ViewType } from './MainTabs';
 import Breadcrumbs, { BreadcrumbItem } from './Breadcrumbs';
+import GlobalSearch from '@/components/GlobalSearch';
 import { Button } from '@/components/ui/Button';
 import { useStore } from '@/lib/store';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 
 interface TopBarProps {
     currentView: ViewType;
@@ -25,45 +26,55 @@ export default function TopBar({ currentView, onChangeView, breadcrumbs, user, a
     const logout = useStore((state) => state.logout);
     const { setMenuOpen } = useStore(); // Legacy menu for mobile or backup
 
-    return (
-        <div className="flex flex-col bg-white border-b border-gray-200 shadow-sm z-40 sticky top-0">
-            {/* Top Strip: Logo | Breadcrumbs/Search | Actions */}
-            <div className="h-14 px-4 sm:px-6 flex items-center justify-between gap-4">
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                setIsSearchOpen(true);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
+    return (
+        <div className="bg-white border-b border-gray-200 sticky top-0 z-30 flex flex-col shadow-sm transition-all duration-200">
+            {/* Main Header Strip */}
+            <div className="flex items-center justify-between px-4 sm:px-6 h-[70px]">
                 {/* Left: Logo & Breadcrumbs */}
-                <div className="flex items-center gap-6 min-w-0 flex-1">
-                    {/* Logo */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                        <div className="w-8 h-8 bg-emidias-primary text-white rounded-lg flex items-center justify-center shadow-md">
-                            <MapPin size={18} className="text-emidias-accent" />
+                <div className="flex items-center gap-6 overflow-hidden">
+                    <div className="flex items-center gap-3 flex-shrink-0 cursor-pointer" onClick={() => onChangeView('map')}>
+                        <div className="w-9 h-9 bg-gradient-to-br from-emidias-primary to-[#0A0970] rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/10">
+                            <MapPin size={18} className="text-white" strokeWidth={2.5} />
                         </div>
-                        <span className="hidden lg:block font-bold text-lg tracking-tight text-gray-900">
-                            OOH Hub
-                        </span>
+                        <div className="hidden lg:block leading-tight">
+                            <h1 className="text-base font-bold text-gray-900 tracking-tight">OOH Hub</h1>
+                        </div>
                     </div>
 
-                    {/* Divider */}
-                    <div className="h-6 w-px bg-gray-200 hidden md:block" />
+                    <div className="h-6 w-px bg-gray-200 hidden sm:block mx-2" />
 
-                    {/* Breadcrumbs - Hidden on small mobile */}
-                    <div className="hidden md:block min-w-0 overflow-hidden">
+                    <div className="hidden sm:block overflow-hidden">
                         <Breadcrumbs items={breadcrumbs} />
                     </div>
                 </div>
 
-                {/* Center: Global Search (Placeholder for now) */}
-                <div className="hidden max-w-md w-full mx-4 lg:block">
-                    <div className="relative group">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emidias-primary transition-colors" />
-                        <input
-                            type="text"
-                            placeholder="Buscar (Ctrl+K)"
-                            className="w-full bg-gray-100 hover:bg-gray-50 focus:bg-white border border-transparent focus:border-emidias-primary/30 rounded-lg py-1.5 pl-9 pr-3 text-sm transition-all outline-none"
-                        />
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
-                            <span className="text-[10px] bg-white border border-gray-200 rounded px-1.5 text-gray-400 font-medium">⌘K</span>
+                {/* Center: Global Search Trigger */}
+                <div className="flex-1 max-w-xl mx-6 hidden md:block">
+                    <button
+                        onClick={() => setIsSearchOpen(true)}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-200 hover:border-gray-300 rounded-xl text-sm text-gray-500 hover:bg-white transition-all group"
+                    >
+                        <Search size={16} className="text-gray-400 group-hover:text-emidias-primary transition-colors" />
+                        <span className="flex-1 text-left">Buscar (⌘K)</span>
+                        <div className="flex gap-1">
+                            <span className="text-xs bg-gray-200/50 px-1.5 py-0.5 rounded border border-gray-200 group-hover:bg-white transition-colors">⌘</span>
+                            <span className="text-xs bg-gray-200/50 px-1.5 py-0.5 rounded border border-gray-200 group-hover:bg-white transition-colors">K</span>
                         </div>
-                    </div>
+                    </button>
+                    <GlobalSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
                 </div>
 
                 {/* Right: Actions & Profile */}
