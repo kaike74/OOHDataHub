@@ -86,6 +86,37 @@ DROP TABLE proposta_itens;
 ALTER TABLE proposta_itens_new
     RENAME TO proposta_itens;
 -- 2. Fix pontos_ooh
+-- PRE-MAPPING for pontos_ooh (Clean orphans and remap IDs first)
+UPDATE pontos_ooh
+SET created_by = (
+        SELECT id
+        FROM users
+        WHERE legacy_id = pontos_ooh.created_by
+            AND legacy_source = 'internal'
+    )
+WHERE created_by IS NOT NULL;
+UPDATE pontos_ooh
+SET created_by = NULL
+WHERE created_by IS NOT NULL
+    AND created_by NOT IN (
+        SELECT id
+        FROM users
+    );
+UPDATE pontos_ooh
+SET updated_by = (
+        SELECT id
+        FROM users
+        WHERE legacy_id = pontos_ooh.updated_by
+            AND legacy_source = 'internal'
+    )
+WHERE updated_by IS NOT NULL;
+UPDATE pontos_ooh
+SET updated_by = NULL
+WHERE updated_by IS NOT NULL
+    AND updated_by NOT IN (
+        SELECT id
+        FROM users
+    );
 CREATE TABLE pontos_ooh_new (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     codigo_ooh TEXT UNIQUE NOT NULL,
@@ -149,27 +180,14 @@ SELECT id,
     updated_at,
     pais,
     created_by,
+    -- Already valid or NULL
     updated_by,
+    -- Already valid or NULL
     ponto_referencia,
     deleted_at
 FROM pontos_ooh;
--- Update created_by/updated_by to new user IDs
-UPDATE pontos_ooh_new
-SET created_by = (
-        SELECT id
-        FROM users
-        WHERE legacy_id = pontos_ooh_new.created_by
-            AND legacy_source = 'internal'
-    )
-WHERE created_by IS NOT NULL;
-UPDATE pontos_ooh_new
-SET updated_by = (
-        SELECT id
-        FROM users
-        WHERE legacy_id = pontos_ooh_new.updated_by
-            AND legacy_source = 'internal'
-    )
-WHERE updated_by IS NOT NULL;
+-- Mapping done above.
+-- UPDATE pontos_ooh_new ... (Removed)
 DROP TABLE pontos_ooh;
 ALTER TABLE pontos_ooh_new
     RENAME TO pontos_ooh;
