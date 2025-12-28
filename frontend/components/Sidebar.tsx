@@ -452,76 +452,216 @@ export default function Sidebar() {
                             </div>
                         </div>
 
-                        {/* Produtos e Valores */}
-                        {produtos.length > 0 && (
-                            <div className="bg-gray-50/80 rounded-xl p-4 border border-gray-100 space-y-3">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="p-1 rounded-md bg-white border border-gray-200 shadow-sm text-emidias-success">
-                                        <DollarSign size={14} />
-                                    </div>
-                                    <h3 className="font-semibold text-gray-800 text-sm">
-                                        {user?.type === 'external' ? 'Valores Estimados' : 'Tabela de Preços'}
-                                    </h3>
-                                </div>
-                                <div className="space-y-2">
-                                    {produtos.map((produto, idx) => {
-                                        let displayValue = produto.valor;
-                                        const isLocacao = produto.tipo.toLowerCase().includes('locação') ||
-                                            produto.tipo.toLowerCase().includes('locacao') ||
-                                            produto.tipo.toLowerCase().includes('bissemanal') ||
-                                            produto.tipo.toLowerCase().includes('mensal');
+                        {/* PROPOSAL ITEM LOGIC */}
+                        {(() => {
+                            // Helper to check if item is in proposal
+                            const proposalItem = selectedProposta?.itens?.find((i: any) => i.id_ooh === selectedPonto.id);
+                            const isInternal = user?.type === 'internal';
+                            const canEdit = !!proposalItem && isInternal; // Only internal can edit proposal details here
 
-                                        if (user?.type === 'external') {
-                                            if (isLocacao) {
-                                                displayValue = produto.valor * 2;
-                                            } else {
-                                                displayValue = produto.valor * 1.25;
-                                            }
-                                        }
+                            const updateProposalItem = async (updates: any) => {
+                                if (!selectedProposta || !proposalItem) return;
 
-                                        return (
-                                            <div key={idx} className="flex justify-between items-center text-sm py-1.5 border-b border-gray-200/50 last:border-0">
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium text-gray-700">{produto.tipo}</span>
-                                                    {produto.periodo && (
-                                                        <span className="text-[10px] text-gray-400 uppercase tracking-wider">{produto.periodo}</span>
-                                                    )}
+                                const updatedItens = selectedProposta.itens?.map((i: any) =>
+                                    i.id_ooh === selectedPonto.id ? { ...i, ...updates } : i
+                                ) || [];
+
+                                // Optimistic update
+                                useStore.getState().refreshProposta({ ...selectedProposta, itens: updatedItens });
+
+                                try {
+                                    await api.updateCart(selectedProposta.id, updatedItens);
+                                } catch (error) {
+                                    console.error('Failed to update item from sidebar', error);
+                                }
+                            };
+
+                            if (proposalItem) {
+                                return (
+                                    <>
+                                        {/* VALORES DO ITEM (EDITÁVEIS PARA INTERNOS) */}
+                                        <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100 space-y-3">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className="p-1 rounded-md bg-white border border-blue-200 shadow-sm text-blue-600">
+                                                    <DollarSign size={14} />
                                                 </div>
-                                                <span className="font-bold text-gray-900">
-                                                    {formatCurrency(displayValue)}
-                                                </span>
+                                                <h3 className="font-semibold text-blue-900 text-sm">
+                                                    Valores da Proposta
+                                                </h3>
                                             </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
 
-                        {/* Observações */}
-                        {selectedPonto.observacoes && (
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <FileText size={14} className="text-gray-400" />
-                                    <h3 className="font-bold text-xs uppercase text-gray-400 tracking-widest">Observações</h3>
-                                </div>
-                                <div className="text-gray-600 text-xs leading-relaxed whitespace-pre-wrap bg-yellow-50/50 p-3 rounded-xl border border-yellow-100/50">
-                                    {selectedPonto.observacoes}
-                                </div>
-                            </div>
-                        )}
+                                            <div className="space-y-3">
+                                                {/* Locação */}
+                                                <div>
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Locação (Bissemanal)</label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">R$</span>
+                                                        <input
+                                                            type="text"
+                                                            disabled={!canEdit}
+                                                            className={`w-full bg-white border border-gray-200 rounded-lg py-1.5 pl-7 pr-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEdit ? 'bg-gray-50 text-gray-500' : 'text-gray-900'}`}
+                                                            value={formatDecimal(proposalItem.valor_locacao)}
+                                                            onChange={(e) => {
+                                                                if (!canEdit) return;
+                                                                const val = parseFloat(e.target.value.replace(/\./g, '').replace(',', '.'));
+                                                                if (!isNaN(val)) updateProposalItem({ valor_locacao: val });
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
 
-                        {/* Ponto de Referência */}
-                        {selectedPonto.ponto_referencia && (
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <MapPin size={14} className="text-gray-400" />
-                                    <h3 className="font-bold text-xs uppercase text-gray-400 tracking-widest">Ponto de Referência</h3>
-                                </div>
-                                <div className="text-gray-600 text-xs leading-relaxed whitespace-pre-wrap bg-blue-50/50 p-3 rounded-xl border border-blue-100/50">
-                                    {selectedPonto.ponto_referencia}
-                                </div>
-                            </div>
-                        )}
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    {/* Papel */}
+                                                    <div>
+                                                        <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Papel</label>
+                                                        <div className="relative">
+                                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">R$</span>
+                                                            <input
+                                                                type="text"
+                                                                disabled={!canEdit}
+                                                                className={`w-full bg-white border border-gray-200 rounded-lg py-1.5 pl-7 pr-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEdit ? 'bg-gray-50 text-gray-500' : 'text-gray-900'}`}
+                                                                value={formatDecimal(proposalItem.valor_papel)}
+                                                                onChange={(e) => {
+                                                                    if (!canEdit) return;
+                                                                    const val = parseFloat(e.target.value.replace(/\./g, '').replace(',', '.'));
+                                                                    if (!isNaN(val)) updateProposalItem({ valor_papel: val });
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    {/* Lona */}
+                                                    <div>
+                                                        <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Lona</label>
+                                                        <div className="relative">
+                                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">R$</span>
+                                                            <input
+                                                                type="text"
+                                                                disabled={!canEdit}
+                                                                className={`w-full bg-white border border-gray-200 rounded-lg py-1.5 pl-7 pr-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEdit ? 'bg-gray-50 text-gray-500' : 'text-gray-900'}`}
+                                                                value={formatDecimal(proposalItem.valor_lona)}
+                                                                onChange={(e) => {
+                                                                    if (!canEdit) return;
+                                                                    const val = parseFloat(e.target.value.replace(/\./g, '').replace(',', '.'));
+                                                                    if (!isNaN(val)) updateProposalItem({ valor_lona: val });
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* OBSERVAÇÕES DA PROPOSTA */}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <FileText size={14} className="text-gray-400" />
+                                                <h3 className="font-bold text-xs uppercase text-gray-400 tracking-widest">Observações (Proposta)</h3>
+                                            </div>
+                                            <textarea
+                                                disabled={!canEdit}
+                                                className={`w-full text-xs leading-relaxed p-3 rounded-xl border transition-all resize-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${!canEdit ? 'bg-yellow-50/30 text-gray-600 border-yellow-100/50' : 'bg-white border-gray-200 text-gray-800 focus:bg-yellow-50/50'}`}
+                                                rows={3}
+                                                placeholder={canEdit ? "Adicione observações para esta proposta..." : "Sem observações."}
+                                                value={proposalItem.observacoes || ''}
+                                                onChange={(e) => updateProposalItem({ observacoes: e.target.value })}
+                                            />
+                                        </div>
+
+                                        {/* PONTO DE REFERÊNCIA DA PROPOSTA */}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <MapPin size={14} className="text-gray-400" />
+                                                <h3 className="font-bold text-xs uppercase text-gray-400 tracking-widest">Ponto de Referência (Proposta)</h3>
+                                            </div>
+                                            <textarea
+                                                disabled={!canEdit}
+                                                className={`w-full text-xs leading-relaxed p-3 rounded-xl border transition-all resize-none focus:ring-2 focus:ring-blue-400 focus:border-transparent ${!canEdit ? 'bg-blue-50/30 text-gray-600 border-blue-100/50' : 'bg-white border-gray-200 text-gray-800 focus:bg-blue-50/50'}`}
+                                                rows={2}
+                                                placeholder={canEdit ? "Defina um ponto de referência..." : "Sem ponto de referência."}
+                                                value={proposalItem.ponto_referencia || ''}
+                                                onChange={(e) => updateProposalItem({ ponto_referencia: e.target.value })}
+                                            />
+                                        </div>
+                                    </>
+                                );
+                            }
+
+                            // FALLBACK: SHOW DEFAULT POINT DATA (IF NOT IN PROPOSAL)
+                            return (
+                                <>
+                                    {/* Default Products/Values */}
+                                    {produtos.length > 0 && (
+                                        <div className="bg-gray-50/80 rounded-xl p-4 border border-gray-100 space-y-3">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className="p-1 rounded-md bg-white border border-gray-200 shadow-sm text-emidias-success">
+                                                    <DollarSign size={14} />
+                                                </div>
+                                                <h3 className="font-semibold text-gray-800 text-sm">
+                                                    {user?.type === 'external' ? 'Valores Estimados' : 'Tabela de Preços'}
+                                                </h3>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {produtos.map((produto, idx) => {
+                                                    let displayValue = produto.valor;
+                                                    const isLocacao = produto.tipo.toLowerCase().includes('locação') ||
+                                                        produto.tipo.toLowerCase().includes('locacao') ||
+                                                        produto.tipo.toLowerCase().includes('bissemanal') ||
+                                                        produto.tipo.toLowerCase().includes('mensal');
+
+                                                    if (user?.type === 'external') {
+                                                        if (isLocacao) {
+                                                            displayValue = produto.valor * 2;
+                                                        } else {
+                                                            displayValue = produto.valor * 1.25;
+                                                        }
+                                                    }
+
+                                                    return (
+                                                        <div key={idx} className="flex justify-between items-center text-sm py-1.5 border-b border-gray-200/50 last:border-0">
+                                                            <div className="flex flex-col">
+                                                                <span className="font-medium text-gray-700">{produto.tipo}</span>
+                                                                {produto.periodo && (
+                                                                    <span className="text-[10px] text-gray-400 uppercase tracking-wider">{produto.periodo}</span>
+                                                                )}
+                                                            </div>
+                                                            <span className="font-bold text-gray-900">
+                                                                {formatCurrency(displayValue)}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Default Observações */}
+                                    {selectedPonto.observacoes && (
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <FileText size={14} className="text-gray-400" />
+                                                <h3 className="font-bold text-xs uppercase text-gray-400 tracking-widest">Observações</h3>
+                                            </div>
+                                            <div className="text-gray-600 text-xs leading-relaxed whitespace-pre-wrap bg-yellow-50/50 p-3 rounded-xl border border-yellow-100/50">
+                                                {selectedPonto.observacoes}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Default Ponto de Referência */}
+                                    {selectedPonto.ponto_referencia && (
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <MapPin size={14} className="text-gray-400" />
+                                                <h3 className="font-bold text-xs uppercase text-gray-400 tracking-widest">Ponto de Referência</h3>
+                                            </div>
+                                            <div className="text-gray-600 text-xs leading-relaxed whitespace-pre-wrap bg-blue-50/50 p-3 rounded-xl border border-blue-100/50">
+                                                {selectedPonto.ponto_referencia}
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            );
+                        })()}
 
                         {/* Bottom Spacer */}
                         <div className="h-12"></div>
