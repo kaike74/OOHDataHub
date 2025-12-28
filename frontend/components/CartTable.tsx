@@ -485,8 +485,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         }
     }, [itens, refreshProposta, selectedProposta]);
 
-    const [draggingColumn, setDraggingColumn] = useState<string | null>(null);
-    const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+
 
     const handleColumnDragStart = (e: React.DragEvent, headerId: string) => {
         setDraggingColumn(headerId);
