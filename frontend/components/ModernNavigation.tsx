@@ -232,7 +232,7 @@ export default function ModernNavigation() {
                     })}
 
                     <button
-                        onClick={() => setMenuOpen(true)} // Keep the old menu for "More" items on mobile
+                        onClick={() => router.push('/config')}
                         className="flex flex-col items-center gap-1 text-gray-400"
                     >
                         <div className="p-2">
