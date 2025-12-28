@@ -150,6 +150,11 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const [draggingColumn, setDraggingColumn] = useState<string | null>(null);
     const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
+    // State to inhibit dragging when interacting with resizer
+    const [disableDrag, setDisableDrag] = useState(false);
+
+
+
     // Height Resizing State
     const [tableHeight, setTableHeight] = useState(500);
     const isResizingRef = useRef(false);
@@ -1597,6 +1602,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     className="min-w-full inline-block align-top"
                     style={{ width: table.getTotalSize() }}
                 >
+
+
                     {/* Head */}
                     <div className="sticky top-0 z-10 bg-white font-normal text-[13px] text-gray-500 text-left flex border-b border-gray-200 group/header">
                         {table.getHeaderGroups().map(headerGroup => (
@@ -1609,7 +1616,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                             ${dragOverColumn === header.id ? 'border-l-2 border-l-blue-500 bg-blue-50' : ''}
                                         `}
                                         style={{ width: header.getSize(), flex: `0 0 ${header.getSize()}px` }}
-                                        draggable={!readOnly && header.column.getCanSort()} // Allow dragging only if not readOnly? Or generally allowed.
+                                        // Disable drag if hovering resizer to prevent conflict
+                                        draggable={!readOnly && header.column.getCanSort() && !disableDrag}
                                         onDragStart={(e) => handleColumnDragStart(e, header.id)}
                                         onDragOver={(e) => handleColumnDragOver(e, header.id)}
                                         onDragLeave={handleColumnDragLeave}
@@ -1636,13 +1644,17 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                                     e.stopPropagation();
                                                     header.getResizeHandler()(e);
                                                 }}
+                                                // Lock drag when hovering/interacting with resizer
+                                                onMouseEnter={() => setDisableDrag(true)}
+                                                onMouseLeave={() => setDisableDrag(false)}
                                                 // Prevent resizing from initiating a drag
                                                 onDragStart={(e) => {
                                                     e.preventDefault();
                                                     e.stopPropagation();
                                                 }}
+                                                // Increased z-index for safety
                                                 // w-3 (12px) hit area, positioned to straddle the border
-                                                className={`absolute right-[-6px] top-0 h-full w-3 cursor-col-resize z-20 flex justify-center hover:bg-black/5 opacity-0 hover:opacity-100 transition-opacity select-none touch-none ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
+                                                className={`absolute right-[-6px] top-0 h-full w-3 cursor-col-resize z-50 flex justify-center hover:bg-black/5 opacity-0 hover:opacity-100 transition-opacity select-none touch-none ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
                                                 onClick={(e) => e.stopPropagation()} // Prevent sort/drag when resizing
                                                 draggable={false} // Prevent resizing from triggering drag
                                             >
