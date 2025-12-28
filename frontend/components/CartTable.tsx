@@ -1641,10 +1641,14 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                                     e.preventDefault();
                                                     e.stopPropagation();
                                                 }}
-                                                className={`absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity z-20 ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
+                                                // w-3 (12px) hit area, positioned to straddle the border
+                                                className={`absolute right-[-6px] top-0 h-full w-3 cursor-col-resize z-20 flex justify-center hover:bg-black/5 opacity-0 hover:opacity-100 transition-opacity select-none touch-none ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
                                                 onClick={(e) => e.stopPropagation()} // Prevent sort/drag when resizing
                                                 draggable={false} // Prevent resizing from triggering drag
-                                            />
+                                            >
+                                                {/* Visual indicator (thin line) inside the hit area */}
+                                                <div className={`w-[2px] h-full ${header.column.getIsResizing() ? 'bg-blue-500' : 'bg-gray-300'}`} />
+                                            </div>
                                         )}
                                     </div>
                                 ))}
