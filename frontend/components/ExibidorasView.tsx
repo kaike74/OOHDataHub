@@ -8,7 +8,11 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { SafeImage } from '@/components/ui/SafeImage';
 
-export default function ExibidorasView() {
+interface ExibidorasViewProps {
+    searchTerm?: string;
+}
+
+export default function ExibidorasView({ searchTerm = '' }: ExibidorasViewProps) {
     const exibidoras = useStore((state) => state.exibidoras);
     const pontos = useStore((state) => state.pontos);
     const setSelectedExibidora = useStore((state) => state.setSelectedExibidora);
@@ -16,7 +20,6 @@ export default function ExibidorasView() {
     const setFilterExibidora = useStore((state) => state.setFilterExibidora);
     const setExibidoraModalOpen = useStore((state) => state.setExibidoraModalOpen);
 
-    const [searchQuery, setSearchQuery] = useState('');
     const [contatosMap, setContatosMap] = useState<Record<number, any[]>>({});
 
     // Carregar contatos de todas as exibidoras
@@ -60,9 +63,9 @@ export default function ExibidorasView() {
 
     // Filtrar exibidoras com base na pesquisa
     const filteredExibidoras = useMemo(() => {
-        if (!searchQuery.trim()) return exibidorasComStats;
+        if (!searchTerm.trim()) return exibidorasComStats;
 
-        const query = searchQuery.toLowerCase();
+        const query = searchTerm.toLowerCase();
         return exibidorasComStats.filter((exibidora) => {
             // Buscar no nome da exibidora
             if (exibidora.nome.toLowerCase().includes(query)) return true;
@@ -77,7 +80,7 @@ export default function ExibidorasView() {
 
             return false;
         });
-    }, [exibidorasComStats, searchQuery]);
+    }, [exibidorasComStats, searchTerm]);
 
     const handleExibidoraClick = (exibidora: typeof exibidorasComStats[0]) => {
         // Filtrar mapa por essa exibidora
@@ -97,48 +100,13 @@ export default function ExibidorasView() {
     return (
         <div className="h-full w-full overflow-y-auto bg-gray-50 p-4 custom-scrollbar">
             <div className="max-w-[1600px] mx-auto">
-                {/* Header */}
-                <div className="mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-emidias-primary mb-2 tracking-tight">
-                            Exibidoras
-                        </h1>
-                        <p className="text-gray-600">
-                            Gerencie seus parceiros de mídia OOH. Total de {filteredExibidoras.length} cadastrada{filteredExibidoras.length !== 1 ? 's' : ''}.
-                        </p>
-                    </div>
-
-                    {/* Search and Actions */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-                        {/* Search Field */}
-                        <div className="relative w-full sm:w-80">
-                            <Input
-                                placeholder="Buscar exibidora, cidade ou contato..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="bg-white"
-                                icon={<Search size={18} />}
-                                rightElement={searchQuery && (
-                                    <button
-                                        onClick={() => setSearchQuery('')}
-                                        className="text-gray-400 hover:text-emidias-primary transition p-1"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                )}
-                            />
-                        </div>
-
-                        {/* Register Button */}
-                        <Button
-                            onClick={handleNewExibidora}
-                            className="bg-emidias-accent hover:bg-emidias-accent/90 shadow-lg"
-                            leftIcon={<Plus size={20} />}
-                        >
-                            Cadastrar
-                        </Button>
-                    </div>
+                {/* Header (Removed - Lifted to TopBar) */}
+                <div className="mb-4">
+                    <p className="text-gray-600 text-sm">
+                        Total de {filteredExibidoras.length} exibidoras cadastradas.
+                    </p>
                 </div>
+
 
                 {/* Grid de Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

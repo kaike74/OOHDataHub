@@ -63,9 +63,9 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
     const [isClientModalOpen, setIsClientModalOpen] = useState(false);
     const [isPropostaModalOpen, setIsPropostaModalOpen] = useState(false);
 
-    // Search States lifted from views
     const [clientSearch, setClientSearch] = useState('');
     const [proposalSearch, setProposalSearch] = useState('');
+    const [exibidoraSearch, setExibidoraSearch] = useState('');
 
     // Count active filters
     const activeFiltersCount = [
@@ -79,6 +79,7 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
 
     // Carregar dados iniciais e proposta se initialProposalId existir
     useEffect(() => {
+        // ... (keep existing logic)
         // Read both prop and query param
         const queryProposalId = searchParams?.get('id');
         const effectProposalId = initialProposalId || queryProposalId;
@@ -111,11 +112,6 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
 
                 // If initialProposalId is provided (Public/Shared View)
                 if (effectProposalId) {
-
-
-                    // ... (keep existing)
-
-                    // Inside useEffect loadData
                     try {
                         const proposalId = parseInt(effectProposalId, 10);
                         if (isNaN(proposalId)) {
@@ -135,7 +131,6 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                         }
 
                         // Check for Access Denied / Request Access
-                        // If backend returns 403 'Access Denied'
                         if (e.message === 'Access Denied') {
                             setShowAccessRequest(true);
                             setIsLoading(false);
@@ -175,7 +170,15 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
 
     // Actions for TopBar based on current view
     const renderMapActions = () => (
-        <>
+        <div className="flex items-center gap-2">
+            <div className="w-64 lg:w-80">
+                <AddressSearch
+                    onLocationSelect={(location) => setSearchLocation(location)}
+                />
+            </div>
+
+            <div className="h-6 w-px bg-gray-200 mx-1" />
+
             <Button
                 onClick={() => setIsFiltersOpen(true)}
                 variant="outline"
@@ -200,7 +203,7 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                     <span className="hidden sm:inline">Novo Ponto</span>
                 </Button>
             )}
-        </>
+        </div>
     );
 
     const renderClientesActions = () => (
@@ -249,11 +252,35 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
         </div>
     );
 
+    const renderExibidorasActions = () => (
+        <div className="flex items-center gap-2">
+            <div className="relative w-48 lg:w-64">
+                <input
+                    type="text"
+                    placeholder="Buscar exibidora..."
+                    value={exibidoraSearch}
+                    onChange={(e) => setExibidoraSearch(e.target.value)}
+                    className="w-full h-9 pl-3 pr-8 rounded-lg border border-gray-200 text-sm focus:border-emidias-accent focus:ring-1 focus:ring-emidias-accent outline-none transition-all"
+                />
+                <Search size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+            <Button
+                onClick={() => useStore.getState().setExibidoraModalOpen(true)}
+                variant="accent"
+                className="shadow-accent shadow-emidias-accent/20 h-9 px-3 text-sm shrink-0"
+                leftIcon={<Plus size={16} strokeWidth={2.5} />}
+            >
+                <span className="hidden sm:inline">Cadastrar</span>
+            </Button>
+        </div>
+    );
+
     const getActions = () => {
         switch (currentView) {
             case 'map': return renderMapActions();
             case 'clientes': return renderClientesActions();
             case 'propostas': return renderPropostasActions();
+            case 'exibidoras': return renderExibidorasActions();
             default: return undefined;
         }
     };
@@ -267,12 +294,7 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
             }}
             actions={getActions()}
         >
-            {/* Search Bar - Map View Only - Now integrated in TopBar or keep as floating? 
-                User requested: "Depois: [Logo] [Breadcrumb] ... [Search] [Actions]" in TopBar. 
-                For now, keeping the floating AddressSearch if needed, or rely on TopBar search. 
-                But AddressSearch provides specialized Google Places autocomplete. 
-                Let's keep it floating for Map View for now until we integrate fully into TopBar.
-            */}
+            {/* Search Bar - Map View Only - REMOVED (Moved to TopBar)
             {currentView === 'map' && !isLoading && (
                 <div className="absolute top-4 left-0 right-0 z-30 flex justify-center px-4 animate-fade-in-down pointer-events-none">
                     <div className="w-full max-w-xl pointer-events-auto">
@@ -282,6 +304,7 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                     </div>
                 </div>
             )}
+            */}
 
             {/* Loading State */}
             {isLoading && (
@@ -344,7 +367,11 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                 </div>
             )}
 
-            {currentView === 'exibidoras' && !isLoading && !error && <ExibidorasView />}
+            {currentView === 'exibidoras' && !isLoading && !error && (
+                <ExibidorasView
+                    searchTerm={exibidoraSearch}
+                />
+            )}
             {currentView === 'clientes' && !isLoading && !error && (
                 <ClientesView
                     isModalOpen={isClientModalOpen}
