@@ -1,5 +1,17 @@
 -- Migration: Fix Broken Foreign Keys
 -- Description: Recreates tables that were referencing deleted usuarios_internos/externos to reference users table.
+-- PRE-MIGRATION CLEANUP: Remove orphaned records that violate FKs
+DELETE FROM proposta_itens
+WHERE id_proposta NOT IN (
+        SELECT id
+        FROM propostas
+    );
+-- Note: We check id_ooh against pontos_ooh.id. 
+DELETE FROM proposta_itens
+WHERE id_ooh NOT IN (
+        SELECT id
+        FROM pontos_ooh
+    );
 -- 1. Fix proposta_itens
 CREATE TABLE proposta_itens_new (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
