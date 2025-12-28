@@ -120,6 +120,22 @@ export default function PropostasView({ isModalOpen, onCloseModal }: PropostasVi
 
     return (
         <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
+            {/* Sub-header with Search */}
+            <div className="bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+                <h2 className="text-lg font-bold text-gray-800">
+                    {selectedCliente ? `Propostas: ${selectedCliente.nome}` : 'Todas as Propostas'}
+                </h2>
+                <div className="relative w-72">
+                    <Input
+                        icon={<Search size={18} />}
+                        placeholder="Buscar propostas..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-gray-50 border-gray-200 focus:bg-white"
+                    />
+                </div>
+            </div>
+
             {/* Content Area - Table */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin">
                 <div className="w-full max-w-[1920px] mx-auto">

@@ -186,7 +186,7 @@ export default function Dashboard({ initialProposalId }: DashboardProps) {
                 )}
             </Button>
 
-            {!isGuest && !selectedProposta && userRole !== 'client' && (
+            {!isGuest && userRole !== 'client' && (
                 <Button
                     onClick={() => setModalOpen(true)}
                     variant="accent"
