@@ -137,86 +137,79 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
     // Drag-to-Fill State
-    const [dragState, setDragState] = useState < {
+    const [dragState, setDragState] = useState<{
         isDragging: boolean;
         startRowId: number | null;
         currentRowId: number | null;
         columnKey: string | null;
         startValue: any;
-        // Drag-to-Fill State
-        const [dragState, setDragState] = useState<{
-            isDragging: boolean;
-            startRowId: number | null;
-            currentRowId: number | null;
-            columnKey: string | null;
-            startValue: any;
-        }>({ isDragging: false, startRowId: null, currentRowId: null, columnKey: null, startValue: null });
+    }>({ isDragging: false, startRowId: null, currentRowId: null, columnKey: null, startValue: null });
 
-        // Column Reordering State
-        const [columnOrder, setColumnOrder] = useState<string[]>([]);
-        const [draggingColumn, setDraggingColumn] = useState<string | null>(null);
+    // Column Reordering State
+    const [columnOrder, setColumnOrder] = useState<string[]>([]);
+    const [draggingColumn, setDraggingColumn] = useState<string | null>(null);
 
-        // Height Resizing State
-        const [tableHeight, setTableHeight] = useState(500);
-        const isResizingRef = useRef(false);
-        const startYRef = useRef(0);
-        const startHeightRef = useRef(0);
+    // Height Resizing State
+    const [tableHeight, setTableHeight] = useState(500);
+    const isResizingRef = useRef(false);
+    const startYRef = useRef(0);
+    const startHeightRef = useRef(0);
 
-        const user = useStore(state => state.user);
-        const isInternal = !!user && user.type === 'internal';
-        // Only show status column if proposal is actually IN VALIDATION or APPROVED.
-        // Draft proposals should not show this column, even for internal users.
-        const showStatusColumn = selectedProposta?.status === 'em_validacao' || selectedProposta?.status === 'aprovado';
+    const user = useStore(state => state.user);
+    const isInternal = !!user && user.type === 'internal';
+    // Only show status column if proposal is actually IN VALIDATION or APPROVED.
+    // Draft proposals should not show this column, even for internal users.
+    const showStatusColumn = selectedProposta?.status === 'em_validacao' || selectedProposta?.status === 'aprovado';
 
-        const canEditValues = !readOnly && selectedProposta?.currentUserRole === 'admin';
-        const canEditItems = !readOnly; // Editors can add/remove and change periods
+    const canEditValues = !readOnly && selectedProposta?.currentUserRole === 'admin';
+    const canEditItems = !readOnly; // Editors can add/remove and change periods
 
-        const handleApproveProposal = async () => {
-            if (!selectedProposta) return;
-            if (!confirm('Deseja enviar esta proposta para validação?')) return;
+    const handleApproveProposal = async () => {
+        if (!selectedProposta) return;
+        if (!confirm('Deseja enviar esta proposta para validação?')) return;
 
-            try {
-                await api.updateProposalStatus(selectedProposta.id, 'em_validacao');
-                refreshProposta({ ...selectedProposta, status: 'em_validacao' });
-            } catch (error) {
-                console.error('Failed to approve proposal', error);
-                alert('Falha ao aprovar proposta');
-            }
-        };
+        try {
+            await api.updateProposalStatus(selectedProposta.id, 'em_validacao');
+            refreshProposta({ ...selectedProposta, status: 'em_validacao' });
+        } catch (error) {
+            console.error('Failed to approve proposal', error);
+            alert('Falha ao aprovar proposta');
+        }
+    };
 
-        const handleConcludeValidation = async () => {
-            if (!selectedProposta) return;
-            // Validate all items are final
-            const pendingItems = itens.filter(i => !['APPROVED', 'UNAVAILABLE'].includes(i.status_validacao || 'PENDING'));
-            if (pendingItems.length > 0) {
-                alert('Todos os itens devem estar Aprovados ou Indisponíveis para concluir.');
-                return;
-            }
+    const handleConcludeValidation = async () => {
+        if (!selectedProposta) return;
+        // Validate all items are final
+        const pendingItems = itens.filter(i => !['APPROVED', 'UNAVAILABLE'].includes(i.status_validacao || 'PENDING'));
+        if (pendingItems.length > 0) {
+            alert('Todos os itens devem estar Aprovados ou Indisponíveis para concluir.');
+            return;
+        }
 
-            if (!confirm('Deseja concluir a validação desta proposta? O cliente será notificado.')) return;
+        if (!confirm('Deseja concluir a validação desta proposta? O cliente será notificado.')) return;
 
-            try {
-                await api.updateProposalStatus(selectedProposta.id, 'aprovado');
-                refreshProposta({ ...selectedProposta, status: 'aprovado' });
-            } catch (error) {
-                console.error('Failed to conclude validation', error);
-                alert('Falha ao concluir validação');
-            }
-        };
+        try {
+            await api.updateProposalStatus(selectedProposta.id, 'aprovado');
+            refreshProposta({ ...selectedProposta, status: 'aprovado' });
+        } catch (error) {
+            console.error('Failed to conclude validation', error);
+            alert('Falha ao concluir validação');
+        }
+    };
 
-        const handleShareUpdate = async () => {
-            if (!selectedProposta) return;
-            try {
-                const updated = await api.getProposta(selectedProposta.id);
-                // Verify structure matches expected Proposta type (with sharedUsers)
-                refreshProposta(updated);
-            } catch (error) {
-                console.error('Failed to refresh proposal after share update', error);
-            }
-        };
+    const handleShareUpdate = async () => {
+        if (!selectedProposta) return;
+        try {
+            const updated = await api.getProposta(selectedProposta.id);
+            // Verify structure matches expected Proposta type (with sharedUsers)
+            refreshProposta(updated);
+        } catch (error) {
+            console.error('Failed to refresh proposal after share update', error);
+        }
+    };
 
-        // Initial Load
-        useEffect(() => {
+    // Initial Load
+    useEffect(() => {
         if (selectedProposta) {
             setItens(selectedProposta.itens || []);
             // console.log('🛒 CartTable recebeu itens:', selectedProposta.itens);
