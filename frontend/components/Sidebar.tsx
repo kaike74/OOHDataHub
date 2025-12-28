@@ -51,7 +51,7 @@ function ContatosExibidora({ idExibidora, isInternal }: { idExibidora: number | 
                         <p className="font-semibold text-gray-800 text-xs">{contato.nome}</p>
                     )}
 
-                    {isInternal ? (
+                    {isInternal && (
                         <div className="flex flex-col gap-1.5 mt-1.5">
                             {contato.telefone && (
                                 <a
@@ -72,8 +72,6 @@ function ContatosExibidora({ idExibidora, isInternal }: { idExibidora: number | 
                                 </a>
                             )}
                         </div>
-                    ) : (
-                        <p className="text-[10px] text-gray-400 italic mt-1">Contatos disponíveis apenas para equipe interna.</p>
                     )}
                 </div>
             ))}

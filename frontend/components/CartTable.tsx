@@ -148,6 +148,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     // Column Reordering State
     const [columnOrder, setColumnOrder] = useState<string[]>([]);
     const [draggingColumn, setDraggingColumn] = useState<string | null>(null);
+    const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
     // Height Resizing State
     const [tableHeight, setTableHeight] = useState(500);
@@ -484,8 +485,9 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         }
     }, [itens, refreshProposta, selectedProposta]);
 
+    const [draggingColumn, setDraggingColumn] = useState<string | null>(null);
+    const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
-    // Column Drag Handlers
     const handleColumnDragStart = (e: React.DragEvent, headerId: string) => {
         setDraggingColumn(headerId);
         e.dataTransfer.effectAllowed = 'move';
@@ -493,25 +495,36 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         // e.dataTransfer.setDragImage(img, 0, 0);
     };
 
-    const handleColumnDragOver = (e: React.DragEvent) => {
-        e.preventDefault(); // Necessary to allow dropping
-        e.dataTransfer.dropEffect = 'move';
+    const handleColumnDragOver = (e: React.DragEvent, headerId: string) => {
+        e.preventDefault(); // Allow drop
+        if (draggingColumn && draggingColumn !== headerId) {
+            setDragOverColumn(headerId);
+        }
+    };
+
+    const handleColumnDragLeave = () => {
+        setDragOverColumn(null);
     };
 
     const handleColumnDrop = (e: React.DragEvent, targetHeaderId: string) => {
         e.preventDefault();
+        setDragOverColumn(null);
 
-        if (draggingColumn && draggingColumn !== targetHeaderId) {
-            const newOrder = [...columnOrder];
-            const oldIndex = newOrder.indexOf(draggingColumn);
-            const newIndex = newOrder.indexOf(targetHeaderId);
-
-            if (oldIndex !== -1 && newIndex !== -1) {
-                newOrder.splice(oldIndex, 1);
-                newOrder.splice(newIndex, 0, draggingColumn);
-                setColumnOrder(newOrder);
-            }
+        if (!draggingColumn || draggingColumn === targetHeaderId) {
+            setDraggingColumn(null);
+            return;
         }
+
+        const newOrder = [...columnOrder];
+        const draggedIdx = newOrder.indexOf(draggingColumn);
+        const targetIdx = newOrder.indexOf(targetHeaderId);
+
+        if (draggedIdx !== -1 && targetIdx !== -1) {
+            newOrder.splice(draggedIdx, 1);
+            newOrder.splice(targetIdx, 0, draggingColumn);
+            setColumnOrder(newOrder);
+        }
+
         setDraggingColumn(null);
     };
 
@@ -1592,11 +1605,15 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 {headerGroup.headers.map(header => (
                                     <div
                                         key={header.id}
-                                        className={`relative group px-3 py-2 border-r border-gray-200 last:border-r-0 flex items-center justify-between select-none hover:bg-gray-50 transition-colors ${draggingColumn === header.id ? 'opacity-50 bg-gray-100' : ''}`}
+                                        className={`relative group px-3 py-2 border-r border-gray-200 last:border-r-0 flex items-center justify-between select-none hover:bg-gray-50 transition-colors 
+                                            ${draggingColumn === header.id ? 'opacity-50 bg-gray-100' : ''}
+                                            ${dragOverColumn === header.id ? 'border-l-2 border-l-blue-500 bg-blue-50' : ''}
+                                        `}
                                         style={{ width: header.getSize(), flex: `0 0 ${header.getSize()}px` }}
                                         draggable={!readOnly && header.column.getCanSort()} // Allow dragging only if not readOnly? Or generally allowed.
                                         onDragStart={(e) => handleColumnDragStart(e, header.id)}
-                                        onDragOver={handleColumnDragOver}
+                                        onDragOver={(e) => handleColumnDragOver(e, header.id)}
+                                        onDragLeave={handleColumnDragLeave}
                                         onDrop={(e) => handleColumnDrop(e, header.id)}
                                     >
                                         <div
@@ -1619,6 +1636,11 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                                 onTouchStart={(e) => {
                                                     e.stopPropagation();
                                                     header.getResizeHandler()(e);
+                                                }}
+                                                // Prevent resizing from initiating a drag
+                                                onDragStart={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
                                                 }}
                                                 className={`absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity z-20 ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
                                                 onClick={(e) => e.stopPropagation()} // Prevent sort/drag when resizing
