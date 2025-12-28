@@ -1610,19 +1610,20 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                             }[header.column.getIsSorted() as string] ?? null}
                                         </div>
 
-                                        <div
-                                            onMouseDown={(e) => {
-                                                e.stopPropagation();
-                                                header.getResizeHandler()(e);
-                                            }}
-                                            onTouchStart={(e) => {
-                                                e.stopPropagation();
-                                                header.getResizeHandler()(e);
-                                            }}
-                                            className={`absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity z-20 ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
-                                            onClick={(e) => e.stopPropagation()} // Prevent sort/drag when resizing
-                                            draggable={false} // Prevent resizing from triggering drag
-                                        />
+                                        {header.column.getCanResize() && (
+                                            <div
+                                                onMouseDown={(e) => {
+                                                    e.stopPropagation();
+                                                    header.getResizeHandler()(e);
+                                                }}
+                                                onTouchStart={(e) => {
+                                                    e.stopPropagation();
+                                                    header.getResizeHandler()(e);
+                                                }}
+                                                className={`absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity z-20 ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
+                                                onClick={(e) => e.stopPropagation()} // Prevent sort/drag when resizing
+                                                draggable={false} // Prevent resizing from triggering drag
+                                            />
                                         )}
                                     </div>
                                 ))}
