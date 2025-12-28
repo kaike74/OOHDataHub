@@ -1,7 +1,0 @@
-
- ⛅️ wrangler 3.114.15 (update available 4.56.0)
------------------------------------------------
-
-🌀 Executing on remote database ooh-db (79b92724-c85e-401b-a97e-4a77432b3398):
-🌀 To execute on your local development database, remove the --remote flag from your wrangler command.
-

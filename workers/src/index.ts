@@ -19,7 +19,7 @@ import { handlePropostas } from './routes/propostas';
 import { handleSearch } from './routes/search';
 import { handleAIChat } from './routes/ai';
 import { handlePublicProposal } from './routes/proposal_public';
-import { handleClients } from './routes/clients';
+import { handleClients } from './routes/client_users';
 import { handlePortal } from './routes/portal';
 import { handleTrash } from './routes/trash';
 import { corsHeaders, handleOptions } from './utils/cors';
