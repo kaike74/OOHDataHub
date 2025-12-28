@@ -1,2 +1,2 @@
-ALTER TABLE propostas
-ADD COLUMN updated_at DATETIME;
+-- ALTER TABLE propostas
+-- ADD COLUMN updated_at DATETIME;
