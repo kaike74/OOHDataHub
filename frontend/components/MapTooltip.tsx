@@ -13,9 +13,18 @@ interface MapTooltipProps {
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   readOnly?: boolean;
+  showProposalActions?: boolean;
 }
 
-export default function MapTooltip({ ponto, position, onStreetViewClick, onMouseEnter, onMouseLeave, readOnly = false }: MapTooltipProps) {
+export default function MapTooltip({
+  ponto,
+  position,
+  onStreetViewClick,
+  onMouseEnter,
+  onMouseLeave,
+  readOnly = false,
+  showProposalActions = true
+}: MapTooltipProps) {
   const exibidoras = useStore((state) => state.exibidoras);
   const setSelectedExibidora = useStore((state) => state.setSelectedExibidora);
   const setFilterExibidora = useStore((state) => state.setFilterExibidora);
@@ -279,7 +288,7 @@ export default function MapTooltip({ ponto, position, onStreetViewClick, onMouse
             )}
 
             {/* Botão Adicionar/Remover do Carrinho - Dynamic */}
-            {!readOnly && selectedProposta && (() => {
+            {showProposalActions && !readOnly && selectedProposta && (() => {
               const isInCart = selectedProposta.itens?.some((i: any) => i.id_ooh === ponto.id) || false;
               return (
                 <button

@@ -16,9 +16,10 @@ const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 interface GoogleMapProps {
     searchLocation?: { lat: number; lng: number; address: string } | null;
     readOnly?: boolean;
+    showProposalActions?: boolean;
 }
 
-export default function GoogleMap({ searchLocation, readOnly = false }: GoogleMapProps) {
+export default function GoogleMap({ searchLocation, readOnly = false, showProposalActions = true }: GoogleMapProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const googleMapRef = useRef<google.maps.Map | null>(null);
     const streetViewRef = useRef<google.maps.StreetViewPanorama | null>(null);

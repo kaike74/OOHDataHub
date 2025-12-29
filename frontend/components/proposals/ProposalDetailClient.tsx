@@ -71,7 +71,7 @@ export default function ProposalDetailClient() {
                         <div className="absolute inset-0">
                             <GoogleMap />
                         </div>
-                        <Sidebar />
+                        <Sidebar showProposalActions={true} />
                         <ExibidoraSidebar />
                         <MapFilters isOpen={false} onClose={() => { }} />
 

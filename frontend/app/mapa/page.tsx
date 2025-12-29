@@ -72,9 +72,9 @@ export default function MapaPage() {
                 {isLoading ? <MapSkeleton /> : (
                     <>
                         <div className="absolute inset-0">
-                            <GoogleMap searchLocation={searchLocation} />
+                            <GoogleMap searchLocation={searchLocation} showProposalActions={false} />
                         </div>
-                        <Sidebar />
+                        <Sidebar showProposalActions={false} />
                         <ExibidoraSidebar />
                         <MapFilters isOpen={false} onClose={() => { }} />
                         <CreatePointModal />
