@@ -12,6 +12,7 @@ import { MapSkeleton } from '@/components/skeletons/MapSkeleton';
 import { Button } from '@/components/ui/Button';
 import { Plus } from 'lucide-react';
 import AddressSearch from '@/components/AddressSearch';
+import CreatePointModal from '@/components/CreatePointModal';
 
 export default function MapaPage() {
     const { user, setPontos, setExibidoras, setModalOpen } = useStore();
@@ -76,6 +77,7 @@ export default function MapaPage() {
                         <Sidebar />
                         <ExibidoraSidebar />
                         <MapFilters isOpen={false} onClose={() => { }} />
+                        <CreatePointModal />
                     </>
                 )}
             </div>
