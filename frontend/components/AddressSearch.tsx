@@ -208,7 +208,7 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
             setShowDropdown(false);
           }, 200)}
           placeholder="Buscar endereço, código OOH, cidade, exibidora..."
-          className="flex-1 py-1 outline-none text-emidias-gray-900 placeholder-emidias-gray-400 bg-transparent text-sm font-medium h-full"
+          className="flex-1 py-1 outline-none text-emidias-gray-900 placeholder-emidias-gray-400 bg-transparent text-xs font-medium h-full"
         />
 
         {searchValue && (
