@@ -30,18 +30,20 @@ export default function TopBar({ breadcrumbs, user, actions, counts }: TopBarPro
             <div className="flex items-center justify-between px-4 sm:px-6 h-[70px]">
                 {/* Left: Logo & Breadcrumbs */}
                 <div className="flex items-center gap-6 overflow-hidden">
+                    {/* Logo Area */}
                     <Link
                         href="/"
                         className="flex items-center flex-shrink-0 cursor-pointer transition-opacity hover:opacity-80"
                     >
                         <img
-                            src="https://emidiastec.com.br/wp-content/smush-avif/2025/03/logo-E-MIDIAS-png-fundo-escuro-HORIZONTAL.png.avif"
-                            alt="E-MÍDIAS"
-                            className="h-10 w-auto object-contain"
+                            src="/assets/logoHorizontalAzul.png"
+                            alt="E-Mídias"
+                            className="h-9 w-auto object-contain transition-transform hover:scale-105"
                         />
                     </Link>
 
-                    <div className="h-6 w-px bg-gray-200 hidden sm:block mx-2" />
+                    {/* Vertical Divider */}
+                    <div className="h-6 w-px bg-gray-200 mx-2 hidden md:block" />
 
                     <div className="hidden sm:block overflow-hidden">
                         <Breadcrumbs items={breadcrumbs || []} />
