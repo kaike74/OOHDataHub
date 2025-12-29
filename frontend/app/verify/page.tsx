@@ -35,7 +35,7 @@ export default function VerifyEmailPage() {
 
                     // Redirect after delay
                     setTimeout(() => {
-                        router.push('/admin/proposals');
+                        router.push('/inicio');
                     }, 2000);
                 } else {
                     setStatus('error');
@@ -74,7 +74,7 @@ export default function VerifyEmailPage() {
                         <p className="text-gray-500 mb-6">
                             Sua conta foi ativada. Você será redirecionado para o portal...
                         </p>
-                        <Button onClick={() => router.push('/admin/proposals')} className="w-full">
+                        <Button onClick={() => router.push('/inicio')} className="w-full">
                             Ir para o Portal agora
                         </Button>
                     </div>

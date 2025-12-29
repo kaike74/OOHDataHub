@@ -4,6 +4,7 @@ import { useStore } from '@/lib/store';
 import {
     Search, Plus, Building2, Edit2, Trash2, ChevronRight, Menu, Users
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Cliente } from '@/lib/types';
 import ClientModal from './ClientModal';
 import { api } from '@/lib/api';
@@ -60,9 +61,11 @@ export default function ClientesView({ isModalOpen, onCloseModal, searchTerm = '
         }
     };
 
+    const router = useRouter();
+
     const handleClienteClick = (cliente: Cliente) => {
         setSelectedCliente(cliente);
-        setCurrentView('propostas');
+        router.push('/propostas');
     };
 
     // Edit needs to open modal.

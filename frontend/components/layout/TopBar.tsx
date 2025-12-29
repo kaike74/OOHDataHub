@@ -15,18 +15,14 @@ import { useStore } from '@/lib/store';
 import { ReactNode, useState, useEffect } from 'react';
 
 interface TopBarProps {
-    currentView: ViewType;
-    onChangeView: (view: ViewType) => void;
-    breadcrumbs: BreadcrumbItem[];
+    breadcrumbs?: BreadcrumbItem[];
     user?: any;
     actions?: ReactNode;
-    counts?: Partial<Record<ViewType, number>>;
+    counts?: Partial<Record<string, number>>;
 }
 
-export default function TopBar({ currentView, onChangeView, breadcrumbs, user, actions, counts }: TopBarProps) {
+export default function TopBar({ breadcrumbs, user, actions, counts }: TopBarProps) {
     const { setMenuOpen } = useStore(); // Legacy menu for mobile or backup
-
-
 
     return (
         <div className="bg-white border-b border-gray-200 sticky top-0 z-30 flex flex-col shadow-sm transition-all duration-200">
@@ -34,10 +30,8 @@ export default function TopBar({ currentView, onChangeView, breadcrumbs, user, a
             <div className="flex items-center justify-between px-4 sm:px-6 h-[70px]">
                 {/* Left: Logo & Breadcrumbs */}
                 <div className="flex items-center gap-6 overflow-hidden">
-                    <a
-                        href="https://emidiastec.com.br"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        href="/"
                         className="flex items-center flex-shrink-0 cursor-pointer transition-opacity hover:opacity-80"
                     >
                         <img
@@ -45,12 +39,12 @@ export default function TopBar({ currentView, onChangeView, breadcrumbs, user, a
                             alt="E-MÍDIAS"
                             className="h-10 w-auto object-contain"
                         />
-                    </a>
+                    </Link>
 
                     <div className="h-6 w-px bg-gray-200 hidden sm:block mx-2" />
 
                     <div className="hidden sm:block overflow-hidden">
-                        <Breadcrumbs items={breadcrumbs} />
+                        <Breadcrumbs items={breadcrumbs || []} />
                     </div>
                 </div>
 
@@ -70,8 +64,6 @@ export default function TopBar({ currentView, onChangeView, breadcrumbs, user, a
             {/* Bottom Strip: Navigation Tabs + Context Actions */}
             <div className="hidden md:flex px-4 sm:px-6 bg-gray-50/50 border-t border-gray-100 items-center">
                 <MainTabs
-                    currentView={currentView}
-                    onChangeView={onChangeView}
                     counts={counts}
                 />
 

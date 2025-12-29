@@ -5,6 +5,8 @@ import {
     FileText, Map, Users, Building2, Shield, Trash2,
     MoreHorizontal, ChevronDown, LayoutGrid
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/lib/store';
 
@@ -17,46 +19,49 @@ interface MainTabsProps {
     counts?: Partial<Record<ViewType, number>>;
 }
 
-export default function MainTabs({ currentView, onChangeView, className, counts }: MainTabsProps) {
+export default function MainTabs({ className, counts }: Omit<MainTabsProps, 'currentView' | 'onChangeView'>) {
     const [isMoreOpen, setIsMoreOpen] = useState(false);
     const { user } = useStore();
+    const pathname = usePathname();
 
     const isInternal = user?.type === 'internal';
     const isMaster = user?.role === 'master' || user?.role === 'admin';
     const isExternal = user?.type === 'external';
 
+    // Helper to check if tab is active
+    const isActiveTab = (path: string) => {
+        if (path === '/') return pathname === '/inicio'; // Special case for summary if needed, but tabs usually map to specific pages
+        return pathname.startsWith(path);
+    };
+
     // Tabs allowed for everyone (or specifically requested)
     const mainTabs = [
-        { id: 'propostas' as const, label: 'Propostas', icon: FileText },
-        { id: 'map' as const, label: 'Mapa', icon: Map },
-        { id: 'clientes' as const, label: 'Clientes', icon: Users },
+        { id: '/propostas', label: 'Propostas', icon: FileText },
+        { id: '/mapa', label: 'Mapa', icon: Map },
+        { id: '/clientes', label: 'Clientes', icon: Users },
     ];
 
     // Secondary: (Providers, Accounts, Trash)
-    // Internal (Viewer/Editor): Providers. NO Accounts, NO Trash.
-    // Internal (Master): Providers, Accounts, Trash.
-    // External: NONE.
-
     const secondaryTabs = [
-        { id: 'exibidoras' as const, label: 'Exibidoras', icon: Building2, show: isInternal }, // Internal Only
-        { id: 'contas' as const, label: 'Contas', icon: Shield, show: isMaster }, // Master Only
-        { id: 'lixeira' as const, label: 'Lixeira', icon: Trash2, show: isMaster }, // Master Only
+        { id: '/exibidoras', label: 'Exibidoras', icon: Building2, show: isInternal },
+        { id: '/contas', label: 'Contas', icon: Shield, show: isMaster },
+        { id: '/lixeira', label: 'Lixeira', icon: Trash2, show: isMaster },
     ].filter(t => t.show !== false);
 
-    const isSecondaryActive = secondaryTabs.some(t => t.id === currentView);
+    const isSecondaryActive = secondaryTabs.some(t => isActiveTab(t.id));
 
     return (
         <div className={cn("flex items-center gap-1", className)}>
             {/* Primary Tabs */}
             {mainTabs.map((tab) => {
-                const isActive = currentView === tab.id;
+                const isActive = isActiveTab(tab.id);
                 const Icon = tab.icon;
-                const count = counts?.[tab.id];
+                const count = counts?.[tab.id.replace('/', '') as ViewType]; // Extract key from path
 
                 return (
-                    <button
+                    <Link
                         key={tab.id}
-                        onClick={() => onChangeView(tab.id)}
+                        href={tab.id}
                         className={cn(
                             "relative px-4 py-2.5 rounded-t-lg flex items-center gap-2 transition-all duration-200 group overflow-hidden",
                             isActive
@@ -101,7 +106,7 @@ export default function MainTabs({ currentView, onChangeView, className, counts 
                                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emidias-primary rounded-t-full animate-in zoom-in-x duration-300" />
                             </>
                         )}
-                    </button>
+                    </Link>
                 );
             })}
 
@@ -140,16 +145,14 @@ export default function MainTabs({ currentView, onChangeView, className, counts 
                         </div>
 
                         {secondaryTabs.map((tab) => {
-                            const isActive = currentView === tab.id;
+                            const isActive = isActiveTab(tab.id);
                             const Icon = tab.icon;
 
                             return (
-                                <button
+                                <Link
                                     key={tab.id}
-                                    onClick={() => {
-                                        onChangeView(tab.id);
-                                        setIsMoreOpen(false);
-                                    }}
+                                    href={tab.id}
+                                    onClick={() => setIsMoreOpen(false)}
                                     className={cn(
                                         "w-full px-3 py-2 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left",
                                         isActive ? "bg-emidias-primary/5 text-emidias-primary font-medium" : "text-gray-700"
@@ -158,7 +161,7 @@ export default function MainTabs({ currentView, onChangeView, className, counts 
                                     <Icon size={16} className={isActive ? "text-emidias-primary" : "text-gray-400"} />
                                     <span className="text-sm">{tab.label}</span>
                                     {isActive && <div className="ml-auto w-1.5 h-1.5 bg-emidias-primary rounded-full" />}
-                                </button>
+                                </Link>
                             );
                         })}
                     </div>

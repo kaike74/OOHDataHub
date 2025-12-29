@@ -41,9 +41,9 @@ export default function LoginPage() {
             const response = await api.login(email, password);
             setAuth(response.user, response.token);
             if (response.user.role === 'client') {
-                router.push('/admin/proposals');
+                router.push('/inicio');
             } else {
-                router.push('/');
+                router.push('/inicio');
             }
         } catch (err: any) {
             setError(err.message || 'Erro ao fazer login');

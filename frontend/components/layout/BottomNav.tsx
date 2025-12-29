@@ -2,31 +2,37 @@
 
 import { FileText, Map, Users, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ViewType } from './MainTabs';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface BottomNavProps {
-    currentView: ViewType;
-    onChangeView: (view: ViewType) => void;
     onMenuClick: () => void;
 }
 
-export default function BottomNav({ currentView, onChangeView, onMenuClick }: BottomNavProps) {
+export default function BottomNav({ onMenuClick }: BottomNavProps) {
+    const pathname = usePathname();
+
+    const isActiveTab = (path: string) => {
+        if (path === '/') return pathname === '/inicio';
+        return pathname.startsWith(path);
+    };
+
     const tabs = [
-        { id: 'propostas' as const, label: 'Propostas', icon: FileText },
-        { id: 'map' as const, label: 'Mapa', icon: Map },
-        { id: 'clientes' as const, label: 'Clientes', icon: Users },
+        { id: '/propostas', label: 'Propostas', icon: FileText },
+        { id: '/mapa', label: 'Mapa', icon: Map },
+        { id: '/clientes', label: 'Clientes', icon: Users },
     ];
 
     return (
         <div className="md:hidden fixed bottom-0 left-0 right-0 h-[60px] bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50 px-4 flex items-center justify-around pb-safe">
             {tabs.map((tab) => {
-                const isActive = currentView === tab.id;
+                const isActive = isActiveTab(tab.id);
                 const Icon = tab.icon;
 
                 return (
-                    <button
+                    <Link
                         key={tab.id}
-                        onClick={() => onChangeView(tab.id)}
+                        href={tab.id}
                         className="flex flex-col items-center gap-1 group w-16"
                     >
                         <div className={cn(
@@ -43,7 +49,7 @@ export default function BottomNav({ currentView, onChangeView, onMenuClick }: Bo
                         )}>
                             {tab.label}
                         </span>
-                    </button>
+                    </Link>
                 );
             })}
 

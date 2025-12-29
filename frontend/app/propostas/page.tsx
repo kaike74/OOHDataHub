@@ -1,16 +1,32 @@
 'use client';
 
-import Dashboard from '@/components/Dashboard';
-import { Suspense } from 'react';
+import { useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useStore } from '@/lib/store';
+import MainLayout from '@/components/layout/MainLayout';
+import PropostasView from '@/components/PropostasView';
 
-function ProposalContent() {
-    return <Dashboard />;
-}
+export default function PropostasPage() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const user = useStore(state => state.user);
+    const isAuthenticated = useStore(state => state.isAuthenticated);
 
-export default function ProposalPage() {
+    useEffect(() => {
+        // If not logged in, check for invite params
+        if (!isAuthenticated) {
+            const emailParam = searchParams.get('email');
+            if (emailParam) {
+                router.push(`/login?email=${encodeURIComponent(emailParam)}`);
+            } else {
+                router.push('/login');
+            }
+        }
+    }, [isAuthenticated, searchParams, router]);
+
     return (
-        <Suspense fallback={<div className="h-screen w-screen bg-gray-50 flex items-center justify-center">Carregando...</div>}>
-            <ProposalContent />
-        </Suspense>
+        <MainLayout>
+            <PropostasView />
+        </MainLayout>
     );
 }

@@ -5,6 +5,7 @@ import {
     ArrowLeft, Plus, Calendar, Coins, FileText, Loader2, History, Trash2,
     MoreVertical, Search, Filter, TrendingUp, DollarSign, MapPin, Building2
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Proposta } from '@/lib/types';
 import PropostaModal from './PropostaModal';
 import HistoryModal from './HistoryModal';
@@ -73,25 +74,16 @@ export default function PropostasView({ isModalOpen, onCloseModal, searchTerm = 
         }
     };
 
+    const router = useRouter();
+
     const handleBack = () => {
         setSelectedCliente(null);
-        setCurrentView('clientes');
+        router.push('/clientes');
     };
 
-    const handlePropostaClick = async (proposta: Proposta) => {
-        try {
-            setIsLoading(true);
-            const fullProposta = await api.getProposta(proposta.id);
-            if (!fullProposta.itens) fullProposta.itens = [];
-            setSelectedProposta(fullProposta);
-            setCurrentView('map');
-        } catch (error) {
-            console.error('Erro ao carregar detalhes da proposta:', error);
-            setSelectedProposta(proposta);
-            setCurrentView('map');
-        } finally {
-            setIsLoading(false);
-        }
+    const handlePropostaClick = (proposta: Proposta) => {
+        // We navigate to the dedicated proposal page
+        router.push(`/propostas/${proposta.id}`);
     };
 
     const handleDeleteProposta = async (id: number, e: React.MouseEvent) => {

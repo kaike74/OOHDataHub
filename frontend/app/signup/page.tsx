@@ -64,7 +64,7 @@ export default function SignupPage() {
             } else if (response.success && response.token) {
                 setAuth(response.user, response.token);
                 // Redirect to Admin Proposals
-                router.push('/admin/proposals');
+                router.push('/inicio');
             } else {
                 router.push('/login?registered=true');
             }
