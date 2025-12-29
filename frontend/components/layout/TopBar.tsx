@@ -24,8 +24,6 @@ interface TopBarProps {
 }
 
 export default function TopBar({ currentView, onChangeView, breadcrumbs, user, actions, counts }: TopBarProps) {
-    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-    const logout = useStore((state) => state.logout);
     const { setMenuOpen } = useStore(); // Legacy menu for mobile or backup
 
 
@@ -64,18 +62,8 @@ export default function TopBar({ currentView, onChangeView, breadcrumbs, user, a
                         <span className="absolute top-2 right-2.5 w-2 h-2 bg-emidias-danger rounded-full border border-white" />
                     </button>
 
-                    {/* User Profile */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                            onBlur={() => setTimeout(() => setIsUserMenuOpen(false), 200)}
-                            className="flex items-center gap-2.5 pl-1 pr-1.5 py-1 hover:bg-gray-50 rounded-full border border-transparent hover:border-gray-200 transition-all"
-                        >
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 shadow-sm">
-                                {user?.email?.[0].toUpperCase() || <User size={14} />}
-                            </div>
-                        </button>
-                    </div>
+                    {/* User Profile Menu */}
+                    <UserMenu />
                 </div>
             </div>
 

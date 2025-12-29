@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api';
-import { Users, Mail, Shield, ShieldAlert, BadgeCheck, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { Users, Mail, Shield, ShieldAlert, BadgeCheck, Loader2, Sparkles, AlertTriangle, Check } from 'lucide-react';
 
 interface TeamManagementProps {
     user: any;

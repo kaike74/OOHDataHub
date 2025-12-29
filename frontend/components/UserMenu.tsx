@@ -65,7 +65,7 @@ export default function UserMenu() {
                             <h3 className="text-gray-900 font-bold truncate">{user.name}</h3>
                             <p className="text-xs text-gray-500 truncate">{user.email}</p>
                             <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-600 border border-gray-200">
-                                {user.type === 'internal' ? 'Interno' : 'Externo'} • {user.role === 'master' ? 'Master' : user.role === 'admin' ? 'Editor' : 'Visualizador'}
+                                {user.type === 'internal' ? 'Interno' : 'Externo'} • {user.role === 'master' ? 'Master' : (user.role === 'admin' || user.role === 'editor') ? 'Editor' : 'Visualizador'}
                             </span>
                         </div>
                     </div>
@@ -75,8 +75,8 @@ export default function UserMenu() {
                         <button
                             onClick={() => setActiveTab('account')}
                             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${activeTab === 'account'
-                                    ? 'bg-white text-emidias-primary shadow-sm border border-gray-100'
-                                    : 'text-gray-500 hover:bg-gray-50'
+                                ? 'bg-white text-emidias-primary shadow-sm border border-gray-100'
+                                : 'text-gray-500 hover:bg-gray-50'
                                 }`}
                         >
                             <User size={16} />
@@ -85,8 +85,8 @@ export default function UserMenu() {
                         <button
                             onClick={() => setActiveTab('team')}
                             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${activeTab === 'team'
-                                    ? 'bg-white text-emidias-primary shadow-sm border border-gray-100'
-                                    : 'text-gray-500 hover:bg-gray-50'
+                                ? 'bg-white text-emidias-primary shadow-sm border border-gray-100'
+                                : 'text-gray-500 hover:bg-gray-50'
                                 }`}
                         >
                             <Users size={16} />
