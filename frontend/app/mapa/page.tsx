@@ -15,9 +15,28 @@ import AddressSearch from '@/components/AddressSearch';
 import CreatePointModal from '@/components/CreatePointModal';
 
 export default function MapaPage() {
-    const { user, setPontos, setExibidoras, setModalOpen } = useStore();
+    const {
+        user,
+        setPontos,
+        setExibidoras,
+        setModalOpen,
+        setSelectedProposta,
+        setCustomLayers,
+        setSelectedPonto,
+        setSelectedExibidora,
+        setEditingPonto
+    } = useStore();
     const [isLoading, setIsLoading] = useState(true);
     const [searchLocation, setSearchLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
+
+    // Initial Cleanup
+    useEffect(() => {
+        setSelectedProposta(null);
+        setCustomLayers([]);
+        setSelectedPonto(null);
+        setSelectedExibidora(null);
+        setEditingPonto(null);
+    }, [setSelectedProposta, setCustomLayers, setSelectedPonto, setSelectedExibidora, setEditingPonto]);
 
     useEffect(() => {
         const loadData = async () => {
