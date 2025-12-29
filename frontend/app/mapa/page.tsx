@@ -11,10 +11,12 @@ import { api } from '@/lib/api';
 import { MapSkeleton } from '@/components/skeletons/MapSkeleton';
 import { Button } from '@/components/ui/Button';
 import { Plus } from 'lucide-react';
+import AddressSearch from '@/components/AddressSearch';
 
 export default function MapaPage() {
     const { user, setPontos, setExibidoras, setModalOpen } = useStore();
     const [isLoading, setIsLoading] = useState(true);
+    const [searchLocation, setSearchLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
 
     useEffect(() => {
         const loadData = async () => {
@@ -45,14 +47,19 @@ export default function MapaPage() {
     }
 
     const actions = (
-        <Button
-            onClick={() => setModalOpen(true)}
-            variant="accent"
-            size="sm"
-            leftIcon={<Plus size={16} />}
-        >
-            Novo Ponto
-        </Button>
+        <div className="flex items-center gap-3">
+            <div className="w-80 hidden md:block z-50">
+                <AddressSearch onLocationSelect={setSearchLocation} />
+            </div>
+            <Button
+                onClick={() => setModalOpen(true)}
+                variant="accent"
+                size="sm"
+                leftIcon={<Plus size={16} />}
+            >
+                Novo Ponto
+            </Button>
+        </div>
     );
 
     return (
@@ -64,7 +71,7 @@ export default function MapaPage() {
                 {isLoading ? <MapSkeleton /> : (
                     <>
                         <div className="absolute inset-0">
-                            <GoogleMap />
+                            <GoogleMap searchLocation={searchLocation} />
                         </div>
                         <Sidebar />
                         <ExibidoraSidebar />
