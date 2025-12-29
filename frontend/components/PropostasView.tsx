@@ -83,7 +83,7 @@ export default function PropostasView({ isModalOpen, onCloseModal, searchTerm = 
 
     const handlePropostaClick = (proposta: Proposta) => {
         // We navigate to the dedicated proposal page
-        router.push(`/propostas/${proposta.id}`);
+        router.push(`/propostas/visualizar?id=${proposta.id}`);
     };
 
     const handleDeleteProposta = async (id: number, e: React.MouseEvent) => {

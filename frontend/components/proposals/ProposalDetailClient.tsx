@@ -9,13 +9,15 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
 import { MapSkeleton } from '@/components/skeletons/MapSkeleton';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function ProposalMapPage() {
-    const params = useParams();
+export default function ProposalDetailClient() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const idParam = searchParams.get('id');
+    const id = idParam ? Number(idParam) : null;
+
     const {
-        user,
         setPontos,
         setExibidoras,
         setSelectedProposta,
@@ -23,24 +25,16 @@ export default function ProposalMapPage() {
     } = useStore();
     const [isLoading, setIsLoading] = useState(true);
 
-    const proposalId = Number(params.id);
-
     useEffect(() => {
         const loadContext = async () => {
-            if (!proposalId) return;
+            if (!id) return;
 
             try {
                 // If we don't have the proposal loaded or it's different, fetch it
-                if (!selectedProposta || selectedProposta.id !== proposalId) {
-                    const proposta = await api.getProposta(proposalId);
+                if (!selectedProposta || selectedProposta.id !== id) {
+                    const proposta = await api.getProposta(id);
                     setSelectedProposta(proposta);
                 }
-
-                // Load critical map data
-                // For a specific proposal, we might only need points related to it?
-                // Or if we are editing, we need all points to add?
-                // Assuming "Edit Mode" needs all points.
-                // Assuming "View Mode" (External) might be restricted.
 
                 const [pontosData, exibidorasData] = await Promise.all([
                     api.getPontos(),
@@ -51,7 +45,6 @@ export default function ProposalMapPage() {
                 setExibidoras(exibidorasData);
             } catch (err) {
                 console.error("Error loading proposal context:", err);
-                // If error (e.g. 404 or prohibited), redirect
                 router.push('/propostas');
             } finally {
                 setIsLoading(false);
@@ -59,12 +52,12 @@ export default function ProposalMapPage() {
         };
 
         loadContext();
-    }, [proposalId, setPontos, setExibidoras, setSelectedProposta, router]);
+    }, [id, setPontos, setExibidoras, setSelectedProposta, router]);
 
     // Breadcrumbs
     const breadcrumbs = [
         { label: 'Propostas', href: '/propostas' },
-        { label: selectedProposta?.nome || `Proposta #${proposalId}`, active: true }
+        { label: selectedProposta?.nome || `Proposta #${id}`, active: true }
     ];
 
     return (
