@@ -219,25 +219,26 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
 
         // POST /api/users/invite - Internal Invite (Master/Admin only)
         if (request.method === 'POST' && path === '/api/users/invite') {
-            await requireMaster(request, env); // Enforces master check
+            const currentUser = await requireMaster(request, env); // Strict Master check
 
             const { email, role } = await request.json() as { email: string; role?: string };
             if (!email) return new Response(JSON.stringify({ error: 'Email required' }), { status: 400, headers });
 
-            // Enforce domain check
+            // Enforce domain check for INTENRAL invites
             if (!validateEmailDomain(email)) {
                 return new Response(JSON.stringify({ error: 'Apenas emails @hubradios.com são permitidos para usuários internos.' }), { status: 403, headers });
             }
 
             const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
-            if (existing) return new Response(JSON.stringify({ error: 'User already exists' }), { status: 409, headers });
+            if (existing) return new Response(JSON.stringify({ error: 'Usuário já existe no sistema.' }), { status: 409, headers });
 
             const defaultPassword = 'HubRadios123!';
             const passwordHash = await hashPassword(defaultPassword);
 
+            // Force type=internal for these invites
             await env.DB.prepare(
-                'INSERT INTO users (email, password_hash, type, role, verified) VALUES (?, ?, ?, ?, 1)'
-            ).bind(email, passwordHash, 'internal', role || 'viewer').run();
+                'INSERT INTO users (email, password_hash, type, role, verified, name) VALUES (?, ?, ?, ?, 1, ?)'
+            ).bind(email, passwordHash, 'internal', role || 'viewer', email.split('@')[0]).run();
 
             // Send Welcome Email
             try {
@@ -246,16 +247,49 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
                 console.error('Error sending welcome email:', error);
             }
 
-            return new Response(JSON.stringify({ success: true, message: 'Usuário interno convidado!' }), { status: 201, headers });
+            return new Response(JSON.stringify({ success: true, message: 'Usuário interno convidado com sucesso!' }), { status: 201, headers });
         }
 
         // GET /api/users/me
         if (request.method === 'GET' && path === '/api/users/me') {
             const user = await requireAuth(request, env);
-            // requireAuth returns { id, role, ... } from token
-            // Fetch full details if needed
             const dbUser: any = await env.DB.prepare('SELECT id, name, email, role, type FROM users WHERE id = ?').bind(user.id).first();
             return new Response(JSON.stringify(dbUser), { headers });
+        }
+
+        // PUT /api/users/me - Update Profile
+        if (request.method === 'PUT' && path === '/api/users/me') {
+            const user = await requireAuth(request, env);
+            const { name } = await request.json() as { name: string };
+
+            if (!name || name.trim().length < 2) {
+                return new Response(JSON.stringify({ error: 'Nome inválido (mínimo 2 caracteres).' }), { status: 400, headers });
+            }
+
+            await env.DB.prepare('UPDATE users SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(name.trim(), user.id).run();
+
+            return new Response(JSON.stringify({ success: true, message: 'Perfil atualizado.' }), { headers });
+        }
+
+        // GET /api/users - List Users (Internal Only)
+        if (request.method === 'GET' && path === '/api/users') {
+            const user = await requireAuth(request, env);
+
+            // Only internal users can list other users (Team View)
+            // Or maybe only Master/Admin? User said "Internal users... I invite my colleagues".
+            // Let's restrict to internal users listing other internal users for now.
+
+            if (user.type !== 'internal') {
+                return new Response(JSON.stringify({ error: 'Acesso restrito a usuários internos.' }), { status: 403, headers });
+            }
+
+            // Fetch all INTERNAL users
+            // TODO: If we implement teams for External users later, we'd filter by team_id
+            const users = await env.DB.prepare(
+                'SELECT id, name, email, role, type, created_at FROM users WHERE type = "internal" ORDER BY created_at DESC'
+            ).all();
+
+            return new Response(JSON.stringify(users.results), { headers });
         }
 
         // POST /api/auth/change-password

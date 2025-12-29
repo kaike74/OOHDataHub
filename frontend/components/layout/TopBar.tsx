@@ -4,8 +4,11 @@ import {
     Search, Bell, Settings, User, LogOut, Menu,
     MapPin, ChevronRight
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import MainTabs, { ViewType } from './MainTabs';
+import MainTabs from './MainTabs';
+import UserMenu from '@/components/UserMenu';
 import Breadcrumbs, { BreadcrumbItem } from './Breadcrumbs';
 import { Button } from '@/components/ui/Button';
 import { useStore } from '@/lib/store';
