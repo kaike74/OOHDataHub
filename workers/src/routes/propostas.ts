@@ -131,7 +131,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
 
             const res = await env.DB.prepare(
                 'INSERT INTO propostas (id_cliente, nome, comissao, created_by, public_access_level) VALUES (?, ?, ?, ?, ?)'
-            ).bind(data.id_cliente, data.nome, comissao, createdBy, 'none').run();
+            ).bind(data.id_cliente ?? null, data.nome, comissao, createdBy, 'none').run();
 
             const proposalId = res.meta.last_row_id;
 
