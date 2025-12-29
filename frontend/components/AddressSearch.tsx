@@ -178,9 +178,9 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
   return (
     <div className="relative">
       <div
-        className={`map-search-bar flex items-center gap-3 transition-all ${isFocused
-          ? 'border-emidias-accent shadow-accent'
-          : 'border-transparent'
+        className={`map-search-bar flex items-center gap-3 transition-all h-9 rounded-lg px-2 ${isFocused
+          ? 'border-emidias-accent shadow-accent ring-1 ring-emidias-accent'
+          : 'border-transparent bg-gray-100 hover:bg-gray-200/80'
           }`}
       >
         <div className={`flex-shrink-0 transition-colors ${isFocused ? 'text-emidias-accent' : 'text-emidias-gray-400'}`}>
@@ -208,7 +208,7 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
             setShowDropdown(false);
           }, 200)}
           placeholder="Buscar endereço, código OOH, cidade, exibidora..."
-          className="flex-1 py-0.5 outline-none text-emidias-gray-900 placeholder-emidias-gray-400 bg-transparent text-sm font-medium"
+          className="flex-1 py-1 outline-none text-emidias-gray-900 placeholder-emidias-gray-400 bg-transparent text-sm font-medium h-full"
         />
 
         {searchValue && (
