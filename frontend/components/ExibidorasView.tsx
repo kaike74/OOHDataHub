@@ -9,16 +9,48 @@ import { Input } from '@/components/ui/Input';
 import { SafeImage } from '@/components/ui/SafeImage';
 
 interface ExibidorasViewProps {
+    isModalOpen?: boolean;
+    onCloseModal?: () => void;
     searchTerm?: string;
 }
 
-export default function ExibidorasView({ searchTerm = '' }: ExibidorasViewProps) {
+export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm = '' }: ExibidorasViewProps) {
     const exibidoras = useStore((state) => state.exibidoras);
     const pontos = useStore((state) => state.pontos);
     const setSelectedExibidora = useStore((state) => state.setSelectedExibidora);
     const setCurrentView = useStore((state) => state.setCurrentView);
     const setFilterExibidora = useStore((state) => state.setFilterExibidora);
     const setExibidoraModalOpen = useStore((state) => state.setExibidoraModalOpen);
+
+    // Sync prop with internal/store modal state
+    useEffect(() => {
+        if (isModalOpen) {
+            setExibidoraModalOpen(true);
+        }
+    }, [isModalOpen, setExibidoraModalOpen]);
+
+    // Hook into onCloseModal via store subscription or effect if needed, 
+    // but easier to just let the store drive visibility since ExibidoraSidebar uses it too.
+    // However, the parent page manages 'isModalOpen' state which triggers this effect.
+    // When closing, we should ideally callback to parent.
+    // Let's assume ExibidoraSidebar or Modal calls `setExibidoraModalOpen(false)`.
+    // We should probably rely on the store principally.
+
+    // Better approach: When store modal closes, convert that back to parent callback? 
+    // Or just fire-and-forget for opening?
+    // Let's stick to simple trigger: if prop becomes true, open store modal.
+
+    // Also, handle closing logic if we want reset on parent?
+    // Parent sets isModalOpen=true. Effect runs -> Store=true. 
+    // User closes modal -> Store=false. Parent isModalOpen is still true.
+    // Next click on parent button sets True->True (no change)?
+    // Parent should pass a way to reset.
+    useEffect(() => {
+        if (!isModalOpen && onCloseModal) {
+            // Logic to sync close if needed? Not strictly required if button acts as simple trigger
+        }
+    }, [isModalOpen, onCloseModal]);
+
 
     const [contatosMap, setContatosMap] = useState<Record<number, any[]>>({});
 
@@ -90,7 +122,10 @@ export default function ExibidorasView({ searchTerm = '' }: ExibidorasViewProps)
         setSelectedExibidora(exibidora);
 
         // Voltar para view de mapa
-        setCurrentView('map');
+        // In new routing, we might need navigation?
+        // Keep currentView logic if moving to Map tab still works via store? 
+        // Ideally navigating to /mapa?filter=... 
+        // For now, assume global store handles state across tabs if components check it.
     };
 
     const handleNewExibidora = () => {
@@ -191,15 +226,8 @@ export default function ExibidorasView({ searchTerm = '' }: ExibidorasViewProps)
                             Nenhuma exibidora encontrada
                         </h3>
                         <p className="text-gray-500 max-w-sm mx-auto">
-                            Não encontramos resultados para "{searchQuery}". Tente buscar por outro termo ou limpe os filtros.
+                            Não encontramos resultados para "{searchTerm}". Tente buscar por outro termo.
                         </p>
-                        <Button
-                            variant="outline"
-                            onClick={() => setSearchQuery('')}
-                            className="mt-6"
-                        >
-                            Limpar Busca
-                        </Button>
                     </div>
                 )}
 

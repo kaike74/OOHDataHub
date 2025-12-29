@@ -9,9 +9,11 @@ import MapFilters from '@/components/MapFilters';
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { MapSkeleton } from '@/components/skeletons/MapSkeleton';
+import { Button } from '@/components/ui/Button';
+import { Plus } from 'lucide-react';
 
 export default function MapaPage() {
-    const { user, setPontos, setExibidoras } = useStore();
+    const { user, setPontos, setExibidoras, setModalOpen } = useStore();
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -42,8 +44,22 @@ export default function MapaPage() {
         );
     }
 
+    const actions = (
+        <Button
+            onClick={() => setModalOpen(true)}
+            variant="accent"
+            size="sm"
+            leftIcon={<Plus size={16} />}
+        >
+            Novo Ponto
+        </Button>
+    );
+
     return (
-        <MainLayout>
+        <MainLayout
+            actions={actions}
+            breadcrumbs={[{ label: 'Mapa', href: '/mapa', active: true }]}
+        >
             <div className="h-full w-full relative">
                 {isLoading ? <MapSkeleton /> : (
                     <>
