@@ -183,11 +183,11 @@ export default function AccountsView() {
                                     <div className="flex items-center gap-4 flex-1 cursor-pointer group" onClick={() => toggleUser(user.id)}>
                                         <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform ${isInternal ? 'bg-gradient-to-br from-purple-600 to-indigo-600' : 'bg-gradient-to-br from-emidias-primary to-emidias-primary-light'
                                             }`}>
-                                            {user.name.charAt(0).toUpperCase()}
+                                            {(user.name || user.email || '?').charAt(0).toUpperCase()}
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2 group-hover:text-emidias-accent transition-colors">
-                                                {user.name}
+                                                {user.name || user.email}
                                                 {isInternal ? (
                                                     <span className="bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold flex items-center gap-1 border border-purple-200">
                                                         <Shield size={10} /> Interno ({user.role})
