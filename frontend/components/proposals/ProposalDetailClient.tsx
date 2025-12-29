@@ -71,6 +71,7 @@ export default function ProposalDetailClient() {
                         <div className="absolute inset-0">
                             <GoogleMap />
                         </div>
+                        <Sidebar />
                         <ExibidoraSidebar />
                         <MapFilters isOpen={false} onClose={() => { }} />
 
@@ -95,7 +96,7 @@ export default function ProposalDetailClient() {
                                         isOpen={isCartOpen}
                                         onToggle={() => setIsCartOpen(!isCartOpen)}
                                         proposta={selectedProposta || undefined}
-                                        readOnly={true}
+                                        readOnly={false}
                                     />
                                 </div>
                             </div>
