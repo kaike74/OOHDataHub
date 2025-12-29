@@ -122,8 +122,8 @@ export default function AccountsView() {
 
     // Filter
     const filteredAccounts = accounts.filter(user =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+        (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (

@@ -590,6 +590,26 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             if (isClient) {
                 query += ` AND (p.created_by = ? OR EXISTS (SELECT 1 FROM proposta_shares ps WHERE ps.proposal_id = p.id AND ps.user_id = ?))`;
                 params.push(user.id, user.id);
+            } else {
+                // Internal User Logic
+                // If user is NOT master/admin, they should ONLY see INTENRAL proposals (created by internal users)
+                // "Independente do nivel do usuario interno, só deve aparecer os clientes e proposta que ele ou outros usuarios internos tenham criado"
+
+                // We need to join users again or check creator type. 
+                // Currently `LEFT JOIN users u ON p.created_by = u.id` is already there. `u.type` is available.
+
+                // If I am internal, I want:
+                // 1. My own proposals (p.created_by = me) - Covered by internal check usually
+                // 2. Other internal users' proposals (u.type = 'internal')
+                // 3. DO NOT SHOW External users' proposals (u.type = 'external')
+
+                // Masters might want to see everything? User said: 
+                // "a menos que o master procure na aba de contas... Independente do nivel do usuario interno... só deve aparecer ... criado por internos"
+                // This implies even Master viewing "Propostas" tab should NOT see External proposals mixed in.
+
+                query += ` AND (u.type = 'internal' OR u.type IS NULL)`;
+                // u.type IS NULL handles cases where user might be deleted? Or system created?
+                // Safest to stick to u.type = 'internal'.
             }
 
             query += `
