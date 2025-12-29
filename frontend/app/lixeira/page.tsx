@@ -6,7 +6,7 @@ import { useStore } from '@/lib/store';
 
 export default function LixeiraPage() {
     const user = useStore(state => state.user);
-    const isMaster = user?.role === 'master' || user?.role === 'admin';
+    const isMaster = ['master', 'admin'].includes(user?.role as string);
 
     if (!isMaster) {
         return (

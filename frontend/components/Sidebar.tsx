@@ -81,23 +81,6 @@ function ContatosExibidora({ idExibidora, isInternal }: { idExibidora: number | 
 
 export default function Sidebar({ showProposalActions = true }: { showProposalActions?: boolean }) {
     const selectedPonto = useStore((state) => state.selectedPonto);
-    // ... (rest of imports/hooks)
-
-    // ... inside rendering:
-    // This is tricky because replacing the header changes just ONE line, but usage is deep inside render.
-    // I will replace the component signature line and the action button block separately if possible, or large chunk.
-    // Let's use large chunk for safety.
-
-    // Actually, I can just replace the signature line and the specific block.
-    // But `Sidebar` is a massive component.
-    // Let's try to match the signature first.
-
-    // Wait, I can't do multiple replace_file_content calls in one go if they target different parts easily without losing context or overlapping.
-    // I will replace the specific block for actions first, then the header.
-    // NO on second thought, replace_file_content does replace checking.
-    // I'll do signature first.
-
-    const selectedPonto = useStore((state) => state.selectedPonto);
     const selectedExibidora = useStore((state) => state.selectedExibidora);
     const isSidebarOpen = useStore((state) => state.isSidebarOpen);
     const setSidebarOpen = useStore((state) => state.setSidebarOpen);
