@@ -38,7 +38,7 @@ export default function TopBar({ breadcrumbs, user, actions, counts }: TopBarPro
                         <img
                             src="/assets/logoHorizontalAzul.png"
                             alt="E-Mídias"
-                            className="h-12 w-auto object-contain transition-transform hover:scale-105"
+                            className="h-9 w-auto object-contain transition-transform hover:scale-105"
                         />
                     </Link>
 
