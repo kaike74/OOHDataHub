@@ -6,7 +6,6 @@ import BottomNav from './BottomNav';
 import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import { BreadcrumbItem } from './Breadcrumbs';
-import { cn } from '@/lib/utils';
 
 interface MainLayoutProps {
     children: ReactNode;
@@ -14,10 +13,9 @@ interface MainLayoutProps {
     actions?: ReactNode;
     counts?: Partial<Record<string, number>>; // For badges
     breadcrumbs?: BreadcrumbItem[]; // Override breadcrumbs
-    fullScreen?: boolean;
 }
 
-export default function MainLayout({ children, user, actions, counts, breadcrumbs: propBreadcrumbs, fullScreen = false }: MainLayoutProps) {
+export default function MainLayout({ children, user, actions, counts, breadcrumbs: propBreadcrumbs }: MainLayoutProps) {
     const setMenuOpen = useStore((state) => state.setMenuOpen);
 
     // Default breadcrumbs could be inferred from pathname later if needed
@@ -34,10 +32,7 @@ export default function MainLayout({ children, user, actions, counts, breadcrumb
             />
 
             {/* Main Scrollable Content Area */}
-            <main className={cn(
-                "flex-1 relative overflow-hidden flex flex-col",
-                fullScreen ? "pb-0" : "pb-[60px] md:pb-0"
-            )}>
+            <main className="flex-1 relative overflow-hidden flex flex-col pb-[60px] md:pb-0">
                 {/* This container allows children to scroll properly if they are configured to do so */}
                 {/* or children can take full height */}
                 {children}
