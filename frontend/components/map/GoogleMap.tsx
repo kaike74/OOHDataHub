@@ -329,11 +329,48 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
 
         markersRef.current = markers;
 
-        // Restore Clusterer
+        // Restore Clusterer with custom pink styling
         if (markers.length > 0) {
             clustererRef.current = new MarkerClusterer({
                 map: googleMapRef.current,
                 markers: markers,
+                renderer: {
+                    render: ({ count, position }) => {
+                        // Create custom cluster marker with pink color
+                        const svg = `
+                            <svg fill="#FC1E75" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+                                <circle cx="120" cy="120" r="70" opacity="0.6" />
+                                <circle cx="120" cy="120" r="90" opacity="0.3" />
+                                <circle cx="120" cy="120" r="110" opacity="0.2" />
+                            </svg>`;
+
+                        const div = document.createElement('div');
+                        div.innerHTML = svg;
+                        div.style.width = '50px';
+                        div.style.height = '50px';
+                        div.style.position = 'relative';
+                        div.style.cursor = 'pointer';
+
+                        // Add count label
+                        const label = document.createElement('span');
+                        label.textContent = String(count);
+                        label.style.position = 'absolute';
+                        label.style.top = '50%';
+                        label.style.left = '50%';
+                        label.style.transform = 'translate(-50%, -50%)';
+                        label.style.color = 'white';
+                        label.style.fontSize = '14px';
+                        label.style.fontWeight = 'bold';
+                        label.style.textShadow = '0 1px 2px rgba(0,0,0,0.3)';
+                        div.appendChild(label);
+
+                        // @ts-ignore
+                        return new google.maps.marker.AdvancedMarkerElement({
+                            position,
+                            content: div,
+                        });
+                    }
+                }
             });
         }
 
