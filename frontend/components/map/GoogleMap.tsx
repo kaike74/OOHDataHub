@@ -27,6 +27,7 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
     const customMarkersRef = useRef<google.maps.Marker[]>([]);
     const clustererRef = useRef<MarkerClusterer | null>(null);
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isHoveringTooltipRef = useRef<boolean>(false);
 
     const pontos = useStore((state) => state.pontos);
     const customLayers = useStore((state) => state.customLayers);
@@ -273,39 +274,46 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                 const handleHover = () => {
                     pulse.style.display = 'block';
                     pinWrapper.style.transform = 'scale(1.2) translateY(-5px)';
-                    // pinWrapper.style.zIndex = '100'; // Removed to prevent tooltip conflict
 
-                    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+                    // Cancel any pending close
+                    if (hoverTimeoutRef.current) {
+                        clearTimeout(hoverTimeoutRef.current);
+                        hoverTimeoutRef.current = null;
+                    }
 
-                    hoverTimeoutRef.current = setTimeout(() => {
-                        setHoveredPonto(ponto);
+                    // Show tooltip immediately (no delay)
+                    setHoveredPonto(ponto);
 
-                        const scale = Math.pow(2, googleMapRef.current!.getZoom()!);
-                        const bounds = googleMapRef.current!.getBounds();
-                        if (bounds) {
-                            const nw = new google.maps.LatLng(bounds.getNorthEast().lat(), bounds.getSouthWest().lng());
-                            const worldCoordinateNW = googleMapRef.current!.getProjection()!.fromLatLngToPoint(nw);
-                            const worldCoordinate = googleMapRef.current!.getProjection()!.fromLatLngToPoint(new google.maps.LatLng(ponto.latitude!, ponto.longitude!));
+                    const scale = Math.pow(2, googleMapRef.current!.getZoom()!);
+                    const bounds = googleMapRef.current!.getBounds();
+                    if (bounds) {
+                        const nw = new google.maps.LatLng(bounds.getNorthEast().lat(), bounds.getSouthWest().lng());
+                        const worldCoordinateNW = googleMapRef.current!.getProjection()!.fromLatLngToPoint(nw);
+                        const worldCoordinate = googleMapRef.current!.getProjection()!.fromLatLngToPoint(new google.maps.LatLng(ponto.latitude!, ponto.longitude!));
 
-                            if (worldCoordinate && worldCoordinateNW) {
-                                setTooltipPosition({
-                                    x: Math.floor((worldCoordinate.x - worldCoordinateNW.x) * scale),
-                                    y: Math.floor((worldCoordinate.y - worldCoordinateNW.y) * scale)
-                                });
-                            }
+                        if (worldCoordinate && worldCoordinateNW) {
+                            setTooltipPosition({
+                                x: Math.floor((worldCoordinate.x - worldCoordinateNW.x) * scale),
+                                y: Math.floor((worldCoordinate.y - worldCoordinateNW.y) * scale)
+                            });
                         }
-                    }, 100);
+                    }
                 };
 
                 const handleOut = () => {
                     pulse.style.display = 'none';
                     pinWrapper.style.transform = 'scale(1) translateY(0)';
-                    // pinWrapper.style.zIndex = '1';
 
-                    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+                    if (hoverTimeoutRef.current) {
+                        clearTimeout(hoverTimeoutRef.current);
+                    }
 
-                    // Increased timeout (600ms) to allow bridging gap to tooltip
-                    hoverTimeoutRef.current = setTimeout(() => setHoveredPonto(null), 600);
+                    // Wait and check if mouse moved to tooltip before closing
+                    hoverTimeoutRef.current = setTimeout(() => {
+                        if (!isHoveringTooltipRef.current) {
+                            setHoveredPonto(null);
+                        }
+                    }, 150);
                 };
 
                 container.addEventListener('mouseenter', handleHover);
@@ -487,15 +495,18 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                         setHoveredPonto(null);
                     }}
                     onMouseEnter={() => {
+                        isHoveringTooltipRef.current = true;
                         if (hoverTimeoutRef.current) {
                             clearTimeout(hoverTimeoutRef.current);
+                            hoverTimeoutRef.current = null;
                         }
                     }}
                     onMouseLeave={() => {
-                        // Graceful exit
+                        isHoveringTooltipRef.current = false;
+                        // Graceful exit - small delay before closing
                         hoverTimeoutRef.current = setTimeout(() => {
                             setHoveredPonto(null);
-                        }, 300);
+                        }, 200);
                     }}
                 />
             )}
