@@ -322,7 +322,6 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                 container.addEventListener('click', (e) => {
                     e.stopPropagation();
                     setSelectedPonto(ponto);
-                    useStore.getState().setSidebarOpen(true);
                     pulse.style.display = 'block';
                 });
 
@@ -531,7 +530,6 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                     onStreetViewClick={() => handleStreetViewClick(hoveredPonto)}
                     onClick={() => {
                         setSelectedPonto(hoveredPonto);
-                        useStore.getState().setSidebarOpen(true);
                         setHoveredPonto(null);
                     }}
                     onMouseEnter={() => {
