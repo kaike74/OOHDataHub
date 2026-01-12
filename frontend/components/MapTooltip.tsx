@@ -190,7 +190,7 @@ export default function MapTooltip({
   return (
     <div
       ref={tooltipRef}
-      className="absolute z-50 pointer-events-auto"
+      className="absolute z-[9999] pointer-events-auto"
       style={adjustedStyle}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}

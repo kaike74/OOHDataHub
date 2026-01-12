@@ -220,19 +220,24 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
             pinWrapper.className = `pin-wrapper ${isInCart ? 'green' : 'grey'}`;
             pinWrapper.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
 
-            // FontAwesome-like SVGs
+            // Colors
+            // Pink: #FC1E75 (emidias-accent)
+            // Green: #059669 (Strong Green)
             if (isInCart) {
-                // Pin with Check (Strong Green: #059669)
+                // Pin with Simple Check (Green)
                 pinWrapper.innerHTML = `
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="34" height="34" fill="#059669">
+                    <!-- Standard Pin Shape -->
                     <path d="M384 192c0 87.4-117 243-168.3 307.2c-12.3 15.3-35.1 15.3-47.4 0C117 435 0 279.4 0 192C0 86 86 0 192 0S384 86 384 192z"/>
-                    <path d="M173.9 439.4l-116.6-116.6c-4.7-4.7-4.7-12.3 0-17l19.8-19.8c4.7-4.7 12.3-4.7 17 0L182.4 374l184.4-184.4c4.7-4.7 12.3-4.7 17 0l19.8 19.8c4.7 4.7 4.7 12.3 0 17L190.9 439.4c-4.7 4.7-12.3 4.7-17 0z" fill="white" transform="scale(0.5) translate(140, 150)"/>
-                     <path d="M173.898 340.5L96.398 263C93.0647 259.667 93.0647 254.333 96.398 251L114.798 232.6C118.131 229.267 123.465 229.267 126.798 232.6L182.398 288.2L277.198 193.4C280.531 190.067 285.865 190.067 289.198 193.4L307.598 211.8C310.931 215.133 310.931 220.467 307.598 223.8L190.898 340.5C187.565 343.833 182.231 343.833 178.898 340.5H173.898Z" fill="white"/>
+                    <!-- Simple Check (White) - Centered and scaled -->
+                    <path d="M323.8 202.5c-4.7 4.7-12.3 4.7-17 0L169.6 65.3 77.2 157.7c-4.7 4.7-12.3 4.7-17 0-4.7-4.7-4.7-12.3 0-17l100.9-100.9c4.7-4.7 12.3-4.7 17 0L323.8 185.5c4.7 4.7 4.7 12.3 0 17z" fill="white" transform="translate(192, 180) scale(0.0)"/> 
+                    <!-- Using FontAwesome Check Solid path adjusted -->
+                    <path d="M126 280l-63-63c-3-3-8-3-11 0l-14 14c-3 3-3 8 0 11l84 84c3 3 8 3 11 0l192-192c3-3 3-8 0-11l-14-14c-3-3-8-3-11 0L126 280z" fill="white" transform="translate(50, -20) scale(1.1)"/>
                 </svg>`;
             } else {
-                // Pin with Dot (Dark Grey: #374151)
+                // Pin with Dot (Pink - #FC1E75)
                 pinWrapper.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="34" height="34" fill="#374151">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="34" height="34" fill="#FC1E75">
                     <path d="M384 192c0 87.4-117 243-168.3 307.2c-12.3 15.3-35.1 15.3-47.4 0C117 435 0 279.4 0 192C0 86 86 0 192 0S384 86 384 192z M192 272c44.2 0 80-35.8 80-80s-35.8-80-80-80s-80 35.8-80 80s35.8 80 80 80z"/>
                 </svg>`;
             }
@@ -270,7 +275,7 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                 const handleHover = () => {
                     pulse.style.display = 'block';
                     pinWrapper.style.transform = 'scale(1.2) translateY(-5px)';
-                    pinWrapper.style.zIndex = '100';
+                    // pinWrapper.style.zIndex = '100'; // Removed to prevent tooltip conflict
 
                     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
 
@@ -297,7 +302,7 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                 const handleOut = () => {
                     pulse.style.display = 'none';
                     pinWrapper.style.transform = 'scale(1) translateY(0)';
-                    pinWrapper.style.zIndex = '1';
+                    // pinWrapper.style.zIndex = '1';
 
                     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
 
