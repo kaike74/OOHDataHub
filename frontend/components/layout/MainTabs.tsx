@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import {
     FileText, Map, Users, Building2, Shield, Trash2,
-    MoreHorizontal, ChevronDown, LayoutGrid
+    MoreHorizontal, ChevronDown, LayoutGrid, Home
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -36,6 +36,7 @@ export default function MainTabs({ className, counts }: Omit<MainTabsProps, 'cur
 
     // Tabs allowed for everyone (or specifically requested)
     const mainTabs = [
+        { id: '/inicio', label: 'Início', icon: Home },
         { id: '/propostas', label: 'Propostas', icon: FileText },
         { id: '/mapa', label: 'Mapa', icon: Map },
         { id: '/clientes', label: 'Clientes', icon: Users },
