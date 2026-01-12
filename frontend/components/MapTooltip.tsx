@@ -178,7 +178,7 @@ export default function MapTooltip({
     if (rect.top < 80) {
       // Flip to bottom (clear pin downwards)
       // Pin height approx 40px + padding, so shift down by 45px is likely safe
-      newTransform = newTransform.replace('-100%) translateY(-40px)', '0%) translateY(45px)');
+      newTransform = newTransform.replace('-100%) translateY(-40px)', '0%) translateY(10px)');
       flipped = true;
     }
 
