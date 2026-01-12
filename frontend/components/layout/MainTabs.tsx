@@ -30,7 +30,7 @@ export default function MainTabs({ className, counts }: Omit<MainTabsProps, 'cur
 
     // Helper to check if tab is active
     const isActiveTab = (path: string) => {
-        if (path === '/') return pathname === '/inicio'; // Special case for summary if needed, but tabs usually map to specific pages
+        if (path === '/') return pathname === '/inicio';
         return pathname.startsWith(path);
     };
 
@@ -52,67 +52,50 @@ export default function MainTabs({ className, counts }: Omit<MainTabsProps, 'cur
     const isSecondaryActive = secondaryTabs.some(t => isActiveTab(t.id));
 
     return (
-        <div className={cn("flex items-center gap-1", className)}>
+        <div className={cn("flex items-center gap-1 h-full", className)}>
             {/* Primary Tabs */}
             {mainTabs.map((tab) => {
                 const isActive = isActiveTab(tab.id);
                 const Icon = tab.icon;
-                const count = counts?.[tab.id.replace('/', '') as ViewType]; // Extract key from path
+                const count = counts?.[tab.id.replace('/', '') as ViewType];
 
                 return (
                     <Link
                         key={tab.id}
                         href={tab.id}
                         className={cn(
-                            "relative px-4 py-2.5 rounded-t-lg flex items-center gap-2 transition-all duration-200 group overflow-hidden",
+                            "relative px-3 py-2 rounded-md flex items-center gap-2 transition-all duration-200 group text-sm font-medium",
                             isActive
-                                ? "text-emidias-primary bg-white shadow-[0_-1px_2px_rgba(0,0,0,0.02)] border-t-2 border-emidias-primary"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-black/[0.02]"
+                                ? "text-emidias-primary bg-emidias-primary/5"
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                         )}
                     >
-                        {isActive && (
-                            <div className="absolute inset-0 bg-gradient-to-b from-emidias-primary/5 to-transparent pointer-events-none" />
-                        )}
-
                         <Icon
                             size={16}
                             className={cn(
                                 "transition-colors",
-                                isActive ? "text-emidias-primary fill-emidias-primary/10" : "text-gray-500 group-hover:text-gray-700"
+                                isActive ? "text-emidias-primary" : "text-gray-400 group-hover:text-gray-600"
                             )}
                         />
 
-                        <span className={cn(
-                            "text-sm font-medium",
-                            isActive ? "font-semibold" : ""
-                        )}>
-                            {tab.label}
-                        </span>
+                        <span>{tab.label}</span>
 
                         {count !== undefined && count > 0 && (
                             <span className={cn(
-                                "ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none",
+                                "ml-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold leading-none",
                                 isActive
                                     ? "bg-emidias-primary/10 text-emidias-primary"
-                                    : "bg-gray-200 text-gray-600 group-hover:bg-gray-300"
+                                    : "bg-gray-100 text-gray-500"
                             )}>
                                 {count}
                             </span>
-                        )}
-
-                        {/* Active Indicator (Bottom Line) and Background */}
-                        {isActive && (
-                            <>
-                                <div className="absolute inset-0 bg-gradient-to-b from-emidias-primary/5 to-transparent pointer-events-none animate-in fade-in duration-300" />
-                                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emidias-primary rounded-t-full animate-in zoom-in-x duration-300" />
-                            </>
                         )}
                     </Link>
                 );
             })}
 
             {/* Separator - Only if secondary tabs exist */}
-            {secondaryTabs.length > 0 && <div className="w-px h-5 bg-gray-300 mx-1" />}
+            {secondaryTabs.length > 0 && <div className="w-px h-4 bg-gray-200 mx-1" />}
 
             {/* Secondary/More Menu */}
             {secondaryTabs.length > 0 && (
@@ -121,10 +104,10 @@ export default function MainTabs({ className, counts }: Omit<MainTabsProps, 'cur
                         onClick={() => setIsMoreOpen(!isMoreOpen)}
                         onBlur={() => setTimeout(() => setIsMoreOpen(false), 200)}
                         className={cn(
-                            "px-3 py-2.5 rounded-lg flex items-center gap-1.5 transition-all text-sm font-medium",
+                            "px-3 py-2 rounded-md flex items-center gap-1.5 transition-all text-sm font-medium",
                             isSecondaryActive || isMoreOpen
-                                ? "text-gray-900 bg-gray-100" // Not white to differentiate from active tab
-                                : "text-gray-500 hover:text-gray-900 hover:bg-black/[0.02]"
+                                ? "text-gray-900 bg-gray-100"
+                                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
                         )}
                     >
                         <LayoutGrid size={16} />
@@ -135,7 +118,7 @@ export default function MainTabs({ className, counts }: Omit<MainTabsProps, 'cur
                     {/* Dropdown */}
                     <div
                         className={cn(
-                            "absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 transform transition-all origin-top-left",
+                            "absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 transform transition-all origin-top-left",
                             isMoreOpen
                                 ? "opacity-100 scale-100 translate-y-0"
                                 : "opacity-0 scale-95 -translate-y-2 pointer-events-none"

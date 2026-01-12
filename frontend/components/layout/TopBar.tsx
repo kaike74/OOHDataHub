@@ -28,8 +28,8 @@ export default function TopBar({ breadcrumbs, user, actions, counts }: TopBarPro
         <div className="bg-white border-b border-gray-200 sticky top-0 z-30 flex flex-col shadow-sm transition-all duration-200">
             {/* Main Header Strip */}
             <div className="flex items-center justify-between px-4 sm:px-6 h-[70px]">
-                {/* Left: Logo & Breadcrumbs */}
-                <div className="flex items-center gap-6 overflow-hidden">
+                {/* Left: Logo & Navigation */}
+                <div className="flex items-center gap-6 h-full">
                     {/* Logo Area */}
                     <Link
                         href="/"
@@ -38,20 +38,30 @@ export default function TopBar({ breadcrumbs, user, actions, counts }: TopBarPro
                         <img
                             src="/assets/logoHorizontalAzul.png"
                             alt="E-Mídias"
-                            className="h-16 w-auto object-contain transition-transform hover:scale-105"
+                            className="h-14 w-auto object-contain transition-transform hover:scale-105"
                         />
                     </Link>
 
                     {/* Vertical Divider */}
-                    <div className="h-6 w-px bg-gray-200 mx-2 hidden md:block" />
+                    <div className="h-8 w-px bg-gray-200 hidden md:block" />
 
-                    <div className="hidden sm:block overflow-hidden">
-                        <Breadcrumbs items={breadcrumbs || []} />
+                    {/* Main Navigation Tabs - Now integrated in Header */}
+                    <div className="hidden md:flex h-full items-center">
+                        <MainTabs counts={counts} className="h-10" />
                     </div>
                 </div>
 
-                {/* Right Area: Profile */}
+                {/* Right Area: Profile & Actions */}
                 <div className="flex items-center gap-2 sm:gap-4">
+                    {/* Page specific actions could theoretically go here if passed via props, 
+                        currently they are often redundant or page-specific logic is internal. 
+                        If 'actions' are passed, we show them. */}
+                    {actions && (
+                        <div className="flex items-center gap-2 mr-2">
+                            {actions}
+                        </div>
+                    )}
+
                     {/* Notifications */}
                     <button className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors relative">
                         <Bell size={18} />
@@ -60,18 +70,6 @@ export default function TopBar({ breadcrumbs, user, actions, counts }: TopBarPro
 
                     {/* User Profile Menu */}
                     <UserMenu />
-                </div>
-            </div>
-
-            {/* Bottom Strip: Navigation Tabs + Context Actions */}
-            <div className="hidden md:flex px-4 sm:px-6 bg-gray-50/50 border-t border-gray-100 items-center">
-                <MainTabs
-                    counts={counts}
-                />
-
-                {/* Actions relocated to Tab Bar (Right side) */}
-                <div className="ml-auto flex items-center gap-2 py-2">
-                    {actions}
                 </div>
             </div>
         </div>
