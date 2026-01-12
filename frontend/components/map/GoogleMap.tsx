@@ -224,15 +224,13 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
             // Pink: #FC1E75 (emidias-accent)
             // Green: #059669 (Strong Green)
             if (isInCart) {
-                // Pin with Simple Check (Green)
+                // Pin with Minimalist Check (Green)
                 pinWrapper.innerHTML = `
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="34" height="34" fill="#059669">
                     <!-- Standard Pin Shape -->
                     <path d="M384 192c0 87.4-117 243-168.3 307.2c-12.3 15.3-35.1 15.3-47.4 0C117 435 0 279.4 0 192C0 86 86 0 192 0S384 86 384 192z"/>
-                    <!-- Simple Check (White) - Centered and scaled -->
-                    <path d="M323.8 202.5c-4.7 4.7-12.3 4.7-17 0L169.6 65.3 77.2 157.7c-4.7 4.7-12.3 4.7-17 0-4.7-4.7-4.7-12.3 0-17l100.9-100.9c4.7-4.7 12.3-4.7 17 0L323.8 185.5c4.7 4.7 4.7 12.3 0 17z" fill="white" transform="translate(192, 180) scale(0.0)"/> 
-                    <!-- Using FontAwesome Check Solid path adjusted -->
-                    <path d="M126 280l-63-63c-3-3-8-3-11 0l-14 14c-3 3-3 8 0 11l84 84c3 3 8 3 11 0l192-192c3-3 3-8 0-11l-14-14c-3-3-8-3-11 0L126 280z" fill="white" transform="translate(50, -20) scale(1.1)"/>
+                    <!-- Minimalist Check (White) - Smaller & Thinner -->
+                    <path d="M334 146L310 122c-5-5-12-5-17 0L144 271l-50-50c-5-5-12-5-17 0L53 245c-5 5-5 12 0 17l116 116c5 5 12 5 17 0l165-165c5-5 5-12 0-17z" fill="white" transform="translate(192, 180) scale(0.65) translate(-192, -220)"/>
                 </svg>`;
             } else {
                 // Pin with Dot (Pink - #FC1E75)

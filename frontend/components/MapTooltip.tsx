@@ -228,7 +228,7 @@ export default function MapTooltip({
         )}
 
         {/* Layer 2: TextBox (Content Overlay) */}
-        <div className="absolute inset-0 z-10 flex flex-col justify-end p-4 gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out translate-y-4 group-hover:translate-y-0">
+        <div className="absolute inset-x-2 bottom-2 z-10 flex flex-col justify-end p-3 gap-2 bg-black/60 backdrop-blur-md rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out translate-y-4 group-hover:translate-y-0">
 
           {/* Header Info */}
           <div className="flex flex-col gap-0.5">
