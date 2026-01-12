@@ -67,12 +67,14 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                 await importLibrary("maps");
                 await importLibrary("geocoding");
                 await importLibrary("places");
+                const { AdvancedMarkerElement } = await importLibrary("marker") as any;
 
                 if (!mapRef.current) return;
 
                 googleMapRef.current = new google.maps.Map(mapRef.current, {
                     center: { lat: -23.5505, lng: -46.6333 }, // São Paulo
                     zoom: 12,
+                    mapId: "DEMO_MAP_ID", // Required for Advanced Markers
                     mapTypeControl: true,
                     fullscreenControl: true,
                     streetViewControl: true,
@@ -195,7 +197,7 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
         if (!googleMapRef.current) return;
 
         // Clear old markers
-        markersRef.current.forEach((marker) => marker.setMap(null));
+        markersRef.current.forEach((marker) => marker.map = null);
         markersRef.current = [];
 
         if (clustererRef.current) {
@@ -207,41 +209,57 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
             selectedProposta?.itens?.map((item: any) => item.id_ooh) || []
         );
 
+        const buildMarkerContent = (isInCart: boolean, isGhost: boolean) => {
+            const container = document.createElement('div');
+            container.className = 'pin-container';
+            container.style.cursor = 'pointer';
+
+            const pin = document.createElement('div');
+            pin.className = `pin ${isInCart ? 'green' : 'grey'}`;
+            if (isGhost) pin.style.opacity = '0.4';
+
+            const pulse = document.createElement('div');
+            pulse.className = 'pulse';
+            pulse.style.display = 'none';
+
+            container.appendChild(pin);
+            container.appendChild(pulse);
+
+            return { container, pulse };
+        };
+
         // Create new markers
         const markers = filteredPontos
             .filter((ponto: Ponto) => ponto.latitude && ponto.longitude)
             .map((ponto: Ponto) => {
                 const isInCart = cartItemIds.has(ponto.id);
-
                 const isGhost = ponto.status === 'pendente_validacao';
 
-                const marker = new google.maps.Marker({
+                const { container, pulse } = buildMarkerContent(isInCart, isGhost);
+
+                // @ts-ignore
+                const marker = new google.maps.marker.AdvancedMarkerElement({
                     position: { lat: ponto.latitude!, lng: ponto.longitude! },
                     title: ponto.codigo_ooh,
                     map: googleMapRef.current!,
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 8,
-                        fillColor: isGhost ? '#9CA3AF' : (isInCart ? '#10B981' : '#3B82F6'), // Gray for ghost, Green if in cart
-                        fillOpacity: isGhost ? 0.4 : 0.9,
-                        strokeColor: '#FFFFFF',
-                        strokeWeight: 2
-                    }
+                    content: container,
                 });
 
-                marker.addListener('click', () => setSelectedPonto(ponto));
-
-                // Hover logic
-                marker.addListener('mouseover', () => {
+                // Interaction Logic
+                const handleHover = () => {
+                    pulse.style.display = 'block';
                     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+
                     hoverTimeoutRef.current = setTimeout(() => {
                         setHoveredPonto(ponto);
+
                         const scale = Math.pow(2, googleMapRef.current!.getZoom()!);
                         const bounds = googleMapRef.current!.getBounds();
                         if (bounds) {
                             const nw = new google.maps.LatLng(bounds.getNorthEast().lat(), bounds.getSouthWest().lng());
                             const worldCoordinateNW = googleMapRef.current!.getProjection()!.fromLatLngToPoint(nw);
-                            const worldCoordinate = googleMapRef.current!.getProjection()!.fromLatLngToPoint(marker.getPosition()!);
+                            const worldCoordinate = googleMapRef.current!.getProjection()!.fromLatLngToPoint(new google.maps.LatLng(ponto.latitude!, ponto.longitude!));
+
                             if (worldCoordinate && worldCoordinateNW) {
                                 setTooltipPosition({
                                     x: Math.floor((worldCoordinate.x - worldCoordinateNW.x) * scale),
@@ -250,24 +268,27 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                             }
                         }
                     }, 200);
-                });
+                };
 
-                marker.addListener('mouseout', () => {
+                const handleOut = () => {
+                    pulse.style.display = 'none';
                     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
                     hoverTimeoutRef.current = setTimeout(() => setHoveredPonto(null), 300);
+                };
+
+                // Bind events to the CONTAINER element
+                container.addEventListener('mouseenter', handleHover);
+                container.addEventListener('mouseleave', handleOut);
+                container.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    setSelectedPonto(ponto);
+                    pulse.style.display = 'block';
                 });
 
                 return marker;
             });
 
         markersRef.current = markers;
-
-        if (markers.length > 0) {
-            clustererRef.current = new MarkerClusterer({
-                map: googleMapRef.current,
-                markers,
-            });
-        }
 
     }, [filteredPontos, selectedProposta, setSelectedPonto]);
 
@@ -421,6 +442,10 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                     position={tooltipPosition}
                     readOnly={!isAuthenticated}
                     onStreetViewClick={() => handleStreetViewClick(hoveredPonto)}
+                    onClick={() => {
+                        setSelectedPonto(hoveredPonto);
+                        setHoveredPonto(null);
+                    }}
                     onMouseEnter={() => {
                         if (hoverTimeoutRef.current) {
                             clearTimeout(hoverTimeoutRef.current);
@@ -431,6 +456,84 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                     }}
                 />
             )}
+
+            <style jsx global>{`
+                @keyframes bounce {
+                    0% { opacity: 0; transform: translateY(-2000px) rotate(-45deg); }
+                    60% { opacity: 1; transform: translateY(30px) rotate(-45deg); }
+                    80% { transform: translateY(-10px) rotate(-45deg); }
+                    100% { transform: translateY(0) rotate(-45deg); }
+                }
+                @keyframes pulsate {
+                    0% { transform: scale(0.1, 0.1); opacity: 0.0; }
+                    50% { opacity: 1.0; }
+                    100% { transform: scale(1.2, 1.2); opacity: 0; }
+                }
+                .pin {
+                    width: 30px;
+                    height: 30px;
+                    border-radius: 50% 50% 50% 0;
+                    position: absolute;
+                    transform: rotate(-45deg);
+                    left: 50%;
+                    top: 50%;
+                    margin: -20px 0 0 -20px;
+                    animation-name: bounce;
+                    animation-fill-mode: both;
+                    animation-duration: 1s;
+                    cursor: pointer;
+                    transition: transform 0.2s;
+                }
+                .pin:hover {
+                    transform: scale(1.1) rotate(-45deg);
+                    z-index: 100;
+                }
+                .pin::after {
+                    content: '';
+                    width: 14px;
+                    height: 14px;
+                    margin: 8px 0 0 8px;
+                    background: #2F2F2F;
+                    position: absolute;
+                    border-radius: 50%;
+                }
+                .pulse {
+                    background: rgba(0,0,0,0.2);
+                    border-radius: 50%;
+                    height: 14px;
+                    width: 14px;
+                    position: absolute;
+                    left: 50%;
+                    top: 50%;
+                    margin: 11px 0px 0px -12px;
+                    transform: rotateX(55deg);
+                    z-index: -2;
+                }
+                .pulse::after {
+                    content: "";
+                    border-radius: 50%;
+                    height: 40px;
+                    width: 40px;
+                    position: absolute;
+                    margin -13px 0 0 -13px;
+                    animation: pulsate 1s ease-out;
+                    animation-iteration-count: infinite;
+                    opacity: 0.0;
+                    box-shadow: 0 0 1px 2px #89849b;
+                    animation-delay: 1.1s;
+                }
+                .pin.green { background: #10B981; }
+                .pin.grey { background: #89849b; }
+                /* Fix for Advanced Marker container to allow absolute positioning of pin */
+                .pin-container { 
+                    position: relative; 
+                    width: 40px; 
+                    height: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+            `}</style>
 
             {/* Context Menu */}
             {contextMenu && !isStreetViewMode && (

@@ -12,6 +12,7 @@ interface MapTooltipProps {
   onStreetViewClick?: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  onClick?: () => void;
   readOnly?: boolean;
   showProposalActions?: boolean;
 }
@@ -23,7 +24,8 @@ export default function MapTooltip({
   onMouseEnter,
   onMouseLeave,
   readOnly = false,
-  showProposalActions = true
+  showProposalActions = true,
+  ...props
 }: MapTooltipProps) {
   const exibidoras = useStore((state) => state.exibidoras);
   const setSelectedExibidora = useStore((state) => state.setSelectedExibidora);
@@ -143,16 +145,56 @@ export default function MapTooltip({
 
   // --- Render ---
 
+  // Collision Detection
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [adjustedStyle, setAdjustedStyle] = useState<React.CSSProperties>({
+    left: `${position.x}px`,
+    top: `${position.y}px`,
+    transform: 'translate(-50%, -100%) translateY(-20px)'
+  });
+
+  useEffect(() => {
+    if (!tooltipRef.current) return;
+
+    const rect = tooltipRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let newTransform = 'translate(-50%, -100%) translateY(-20px)';
+
+    // Check Right Edge
+    if (rect.right > viewportWidth - 20) {
+      // Shift left
+      newTransform = 'translate(-100%, -100%) translateY(-20px) translateX(-10px)';
+    }
+    // Check Left Edge
+    if (rect.left < 20) {
+      // Shift right
+      newTransform = 'translate(0%, -100%) translateY(-20px) translateX(10px)';
+    }
+    // Check Top Edge (if too close to top, flip to bottom)
+    if (rect.top < 80) { // arbitrary buffer
+      // Flip to bottom
+      newTransform = newTransform.replace('-100%) translateY(-20px)', '0%) translateY(20px)');
+    }
+
+    setAdjustedStyle({
+      left: `${position.x}px`,
+      top: `${position.y}px`,
+      transform: newTransform
+    });
+
+  }, [position]);
+
+
   return (
     <div
+      ref={tooltipRef}
       className="absolute z-50 pointer-events-auto"
-      style={{
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-        transform: 'translate(-50%, -100%) translateY(-20px)',
-      }}
+      style={adjustedStyle}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onClick={props.onClick}
     >
       {/* 
         Card Container 
@@ -161,8 +203,16 @@ export default function MapTooltip({
         - Image background
         - Hover blur effect
         - TextBox overlay with transition
+        - Added onClick handler to container
       */}
-      <div className="group relative w-[220px] h-[280px] bg-[#313131] rounded-[20px] shadow-2xl overflow-hidden cursor-default transition-all duration-300 ease-in-out hover:scale-105">
+      <div
+        onClick={(e) => {
+          // If clicking buttons inside, stop propagation is handled there.
+          // If clicking the card itself:
+          if (props.onClick) props.onClick();
+        }}
+        className="group relative w-[220px] h-[280px] bg-[#313131] rounded-[20px] shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-in-out hover:scale-105"
+      >
 
         {/* Layer 1: Image (Background) */}
         {imagens.length > 0 && (
@@ -217,8 +267,8 @@ export default function MapTooltip({
                   onClick={handleAddToCart}
                   disabled={isAdding}
                   className={`flex items-center justify-center gap-2 w-full py-2 rounded-xl text-xs font-bold transition-all ${isInCart
-                      ? 'bg-red-500/80 hover:bg-red-500 text-white backdrop-blur-md'
-                      : 'bg-green-500/80 hover:bg-green-500 text-white backdrop-blur-md'
+                    ? 'bg-red-500/80 hover:bg-red-500 text-white backdrop-blur-md'
+                    : 'bg-green-500/80 hover:bg-green-500 text-white backdrop-blur-md'
                     }`}
                 >
                   {isAdding ? (
