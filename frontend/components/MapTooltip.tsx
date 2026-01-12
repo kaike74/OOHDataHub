@@ -150,7 +150,7 @@ export default function MapTooltip({
   const [adjustedStyle, setAdjustedStyle] = useState<React.CSSProperties>({
     left: `${position.x}px`,
     top: `${position.y}px`,
-    transform: 'translate(-50%, -100%) translateY(-20px)'
+    transform: 'translate(-50%, -100%) translateY(-5px)'
   });
 
   useEffect(() => {
@@ -160,22 +160,22 @@ export default function MapTooltip({
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    let newTransform = 'translate(-50%, -100%) translateY(-20px)';
+    let newTransform = 'translate(-50%, -100%) translateY(-5px)';
 
     // Check Right Edge
     if (rect.right > viewportWidth - 20) {
       // Shift left
-      newTransform = 'translate(-100%, -100%) translateY(-20px) translateX(-10px)';
+      newTransform = 'translate(-100%, -100%) translateY(-5px) translateX(-10px)';
     }
     // Check Left Edge
     if (rect.left < 20) {
       // Shift right
-      newTransform = 'translate(0%, -100%) translateY(-20px) translateX(10px)';
+      newTransform = 'translate(0%, -100%) translateY(-5px) translateX(10px)';
     }
     // Check Top Edge (if too close to top, flip to bottom)
     if (rect.top < 80) { // arbitrary buffer
       // Flip to bottom
-      newTransform = newTransform.replace('-100%) translateY(-20px)', '0%) translateY(20px)');
+      newTransform = newTransform.replace('-100%) translateY(-5px)', '0%) translateY(20px)');
     }
 
     setAdjustedStyle({

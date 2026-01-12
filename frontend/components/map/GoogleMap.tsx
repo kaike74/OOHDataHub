@@ -23,7 +23,7 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
     const mapRef = useRef<HTMLDivElement>(null);
     const googleMapRef = useRef<google.maps.Map | null>(null);
     const streetViewRef = useRef<google.maps.StreetViewPanorama | null>(null);
-    const markersRef = useRef<google.maps.Marker[]>([]);
+    const markersRef = useRef<any[]>([]);
     const customMarkersRef = useRef<google.maps.Marker[]>([]);
     const clustererRef = useRef<MarkerClusterer | null>(null);
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -213,19 +213,40 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
             const container = document.createElement('div');
             container.className = 'pin-container';
             container.style.cursor = 'pointer';
+            container.style.padding = '10px';
+            container.style.marginTop = '-10px';
 
-            const pin = document.createElement('div');
-            pin.className = `pin ${isInCart ? 'green' : 'grey'}`;
-            if (isGhost) pin.style.opacity = '0.4';
+            const pinWrapper = document.createElement('div');
+            pinWrapper.className = `pin-wrapper ${isInCart ? 'green' : 'grey'}`;
+            pinWrapper.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+
+            // FontAwesome-like SVGs
+            if (isInCart) {
+                // Pin with Check (Green)
+                pinWrapper.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="30" height="30" fill="#10B981">
+                    <path d="M384 192c0 87.4-117 243-168.3 307.2c-12.3 15.3-35.1 15.3-47.4 0C117 435 0 279.4 0 192C0 86 86 0 192 0S384 86 384 192z"/>
+                    <path d="M173.9 439.4l-116.6-116.6c-4.7-4.7-4.7-12.3 0-17l19.8-19.8c4.7-4.7 12.3-4.7 17 0L182.4 374l184.4-184.4c4.7-4.7 12.3-4.7 17 0l19.8 19.8c4.7 4.7 4.7 12.3 0 17L190.9 439.4c-4.7 4.7-12.3 4.7-17 0z" fill="white" transform="scale(0.5) translate(140, 150)"/>
+                     <path d="M173.898 340.5L96.398 263C93.0647 259.667 93.0647 254.333 96.398 251L114.798 232.6C118.131 229.267 123.465 229.267 126.798 232.6L182.398 288.2L277.198 193.4C280.531 190.067 285.865 190.067 289.198 193.4L307.598 211.8C310.931 215.133 310.931 220.467 307.598 223.8L190.898 340.5C187.565 343.833 182.231 343.833 178.898 340.5H173.898Z" fill="white"/>
+                </svg>`;
+            } else {
+                // Pin with Dot (Grey)
+                pinWrapper.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="30" height="30" fill="#89849b">
+                    <path d="M384 192c0 87.4-117 243-168.3 307.2c-12.3 15.3-35.1 15.3-47.4 0C117 435 0 279.4 0 192C0 86 86 0 192 0S384 86 384 192z M192 272c44.2 0 80-35.8 80-80s-35.8-80-80-80s-80 35.8-80 80s35.8 80 80 80z"/>
+                </svg>`;
+            }
+
+            if (isGhost) pinWrapper.style.opacity = '0.5';
 
             const pulse = document.createElement('div');
             pulse.className = 'pulse';
             pulse.style.display = 'none';
 
-            container.appendChild(pin);
+            container.appendChild(pinWrapper);
             container.appendChild(pulse);
 
-            return { container, pulse };
+            return { container, pulse, pinWrapper };
         };
 
         // Create new markers
@@ -235,7 +256,7 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                 const isInCart = cartItemIds.has(ponto.id);
                 const isGhost = ponto.status === 'pendente_validacao';
 
-                const { container, pulse } = buildMarkerContent(isInCart, isGhost);
+                const { container, pulse, pinWrapper } = buildMarkerContent(isInCart, isGhost);
 
                 // @ts-ignore
                 const marker = new google.maps.marker.AdvancedMarkerElement({
@@ -248,6 +269,9 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                 // Interaction Logic
                 const handleHover = () => {
                     pulse.style.display = 'block';
+                    pinWrapper.style.transform = 'scale(1.2) translateY(-5px)';
+                    pinWrapper.style.zIndex = '100';
+
                     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
 
                     hoverTimeoutRef.current = setTimeout(() => {
@@ -267,16 +291,20 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                                 });
                             }
                         }
-                    }, 200);
+                    }, 100);
                 };
 
                 const handleOut = () => {
                     pulse.style.display = 'none';
+                    pinWrapper.style.transform = 'scale(1) translateY(0)';
+                    pinWrapper.style.zIndex = '1';
+
                     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-                    hoverTimeoutRef.current = setTimeout(() => setHoveredPonto(null), 300);
+
+                    // Increased timeout (600ms) to allow bridging gap to tooltip
+                    hoverTimeoutRef.current = setTimeout(() => setHoveredPonto(null), 600);
                 };
 
-                // Bind events to the CONTAINER element
                 container.addEventListener('mouseenter', handleHover);
                 container.addEventListener('mouseleave', handleOut);
                 container.addEventListener('click', (e) => {
@@ -458,44 +486,10 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
             )}
 
             <style jsx global>{`
-                @keyframes bounce {
-                    0% { opacity: 0; transform: translateY(-2000px) rotate(-45deg); }
-                    60% { opacity: 1; transform: translateY(30px) rotate(-45deg); }
-                    80% { transform: translateY(-10px) rotate(-45deg); }
-                    100% { transform: translateY(0) rotate(-45deg); }
-                }
                 @keyframes pulsate {
                     0% { transform: scale(0.1, 0.1); opacity: 0.0; }
                     50% { opacity: 1.0; }
                     100% { transform: scale(1.2, 1.2); opacity: 0; }
-                }
-                .pin {
-                    width: 30px;
-                    height: 30px;
-                    border-radius: 50% 50% 50% 0;
-                    position: absolute;
-                    transform: rotate(-45deg);
-                    left: 50%;
-                    top: 50%;
-                    margin: -20px 0 0 -20px;
-                    animation-name: bounce;
-                    animation-fill-mode: both;
-                    animation-duration: 1s;
-                    cursor: pointer;
-                    transition: transform 0.2s;
-                }
-                .pin:hover {
-                    transform: scale(1.1) rotate(-45deg);
-                    z-index: 100;
-                }
-                .pin::after {
-                    content: '';
-                    width: 14px;
-                    height: 14px;
-                    margin: 8px 0 0 8px;
-                    background: #2F2F2F;
-                    position: absolute;
-                    border-radius: 50%;
                 }
                 .pulse {
                     background: rgba(0,0,0,0.2);
@@ -505,7 +499,7 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                     position: absolute;
                     left: 50%;
                     top: 50%;
-                    margin: 11px 0px 0px -12px;
+                    margin: 11px 0px 0px -7px;
                     transform: rotateX(55deg);
                     z-index: -2;
                 }
@@ -522,13 +516,9 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                     box-shadow: 0 0 1px 2px #89849b;
                     animation-delay: 1.1s;
                 }
-                .pin.green { background: #10B981; }
-                .pin.grey { background: #89849b; }
-                /* Fix for Advanced Marker container to allow absolute positioning of pin */
+                /* Container fix */
                 .pin-container { 
                     position: relative; 
-                    width: 40px; 
-                    height: 40px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
