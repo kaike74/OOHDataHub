@@ -160,22 +160,22 @@ export default function MapTooltip({
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    // Default above (closer to pin: -15px)
-    let newTransform = 'translate(-50%, -100%) translateY(-15px)';
+    // Default above (closer to pin: -40px to clear the 15px padding of pin-container)
+    let newTransform = 'translate(-50%, -100%) translateY(-40px)';
 
     // Check Right Edge
     if (rect.right > viewportWidth - 20) {
-      newTransform = 'translate(-100%, -100%) translateY(-15px) translateX(-10px)';
+      newTransform = 'translate(-100%, -100%) translateY(-40px) translateX(-10px)';
     }
     // Check Left Edge
     if (rect.left < 20) {
-      newTransform = 'translate(0%, -100%) translateY(-15px) translateX(10px)';
+      newTransform = 'translate(0%, -100%) translateY(-40px) translateX(10px)';
     }
     // Check Top Edge (if too close to top, flip to bottom)
     if (rect.top < 80) {
       // Flip to bottom (clear pin downwards)
-      // Pin height approx 40px, so shift down by 20px from point is likely safe overlap at bottom, but let's clear it: 45px
-      newTransform = newTransform.replace('-100%) translateY(-15px)', '0%) translateY(45px)');
+      // Pin height approx 40px + padding, so shift down by 45px is likely safe
+      newTransform = newTransform.replace('-100%) translateY(-40px)', '0%) translateY(45px)');
     }
 
     setAdjustedStyle({
