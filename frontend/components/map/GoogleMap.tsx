@@ -492,7 +492,10 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                         }
                     }}
                     onMouseLeave={() => {
-                        setHoveredPonto(null);
+                        // Graceful exit
+                        hoverTimeoutRef.current = setTimeout(() => {
+                            setHoveredPonto(null);
+                        }, 300);
                     }}
                 />
             )}

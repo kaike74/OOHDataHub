@@ -160,22 +160,22 @@ export default function MapTooltip({
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    // Default above
-    let newTransform = 'translate(-50%, -100%) translateY(-45px)';
+    // Default above (closer to pin: -15px)
+    let newTransform = 'translate(-50%, -100%) translateY(-15px)';
 
     // Check Right Edge
     if (rect.right > viewportWidth - 20) {
-      newTransform = 'translate(-100%, -100%) translateY(-45px) translateX(-10px)';
+      newTransform = 'translate(-100%, -100%) translateY(-15px) translateX(-10px)';
     }
     // Check Left Edge
     if (rect.left < 20) {
-      newTransform = 'translate(0%, -100%) translateY(-45px) translateX(10px)';
+      newTransform = 'translate(0%, -100%) translateY(-15px) translateX(10px)';
     }
     // Check Top Edge (if too close to top, flip to bottom)
     if (rect.top < 80) {
       // Flip to bottom (clear pin downwards)
       // Pin height approx 40px, so shift down by 20px from point is likely safe overlap at bottom, but let's clear it: 45px
-      newTransform = newTransform.replace('-100%) translateY(-45px)', '0%) translateY(45px)');
+      newTransform = newTransform.replace('-100%) translateY(-15px)', '0%) translateY(45px)');
     }
 
     setAdjustedStyle({
@@ -228,7 +228,7 @@ export default function MapTooltip({
         )}
 
         {/* Layer 2: TextBox (Content Overlay) */}
-        <div className="absolute inset-x-2 bottom-2 z-10 flex flex-col justify-end p-3 gap-2 bg-black/60 backdrop-blur-md rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out translate-y-4 group-hover:translate-y-0">
+        <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col justify-end p-4 gap-2 bg-gradient-to-t from-black/90 via-black/50 to-transparent backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out translate-y-4 group-hover:translate-y-0">
 
           {/* Header Info */}
           <div className="flex flex-col gap-0.5">
