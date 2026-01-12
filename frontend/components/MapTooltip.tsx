@@ -153,6 +153,8 @@ export default function MapTooltip({
     transform: 'translate(-50%, -100%) translateY(-45px)'
   });
 
+  const [isFlipped, setIsFlipped] = useState(false);
+
   useEffect(() => {
     if (!tooltipRef.current) return;
 
@@ -162,6 +164,7 @@ export default function MapTooltip({
 
     // Default above (closer to pin: -40px to clear the 15px padding of pin-container)
     let newTransform = 'translate(-50%, -100%) translateY(-40px)';
+    let flipped = false;
 
     // Check Right Edge
     if (rect.right > viewportWidth - 20) {
@@ -176,6 +179,7 @@ export default function MapTooltip({
       // Flip to bottom (clear pin downwards)
       // Pin height approx 40px + padding, so shift down by 45px is likely safe
       newTransform = newTransform.replace('-100%) translateY(-40px)', '0%) translateY(45px)');
+      flipped = true;
     }
 
     setAdjustedStyle({
@@ -183,6 +187,7 @@ export default function MapTooltip({
       top: `${position.y}px`,
       transform: newTransform
     });
+    setIsFlipped(flipped);
 
   }, [position]);
 
@@ -196,6 +201,18 @@ export default function MapTooltip({
       onMouseLeave={onMouseLeave}
       onClick={props.onClick}
     >
+      {/* Invisible Bridge to maintain hover state over the gap */}
+      <div
+        className="absolute w-full h-[60px] bg-transparent"
+        style={{
+          // If flipped (below), bridge goes UP from top: 0
+          // If normal (above), bridge goes DOWN from bottom: 0 (top: 100%)
+          top: isFlipped ? '-60px' : '100%',
+          left: 0,
+          // Debug: 'rgba(255, 0, 0, 0.2)' 
+        }}
+      />
+
       {/* 
         Card Container 
         Matches the "Card" UX request: 
