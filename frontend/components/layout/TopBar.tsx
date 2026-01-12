@@ -38,17 +38,35 @@ export default function TopBar({ breadcrumbs, user, actions, counts }: TopBarPro
                         <img
                             src="/assets/logoHorizontalAzul.png"
                             alt="E-Mídias"
-                            className="h-14 w-auto object-contain transition-transform hover:scale-105"
+                            className="h-10 w-auto object-contain transition-transform hover:scale-105"
                         />
                     </Link>
 
-                    {/* Vertical Divider */}
-                    <div className="h-8 w-px bg-gray-200 hidden md:block" />
-
-                    {/* Main Navigation Tabs - Now integrated in Header */}
+                    {/* Main Navigation Tabs */}
                     <div className="hidden md:flex h-full items-center">
                         <MainTabs counts={counts} className="h-10" />
                     </div>
+
+                    {/* Divider & Discrete Location Indicator */}
+                    {breadcrumbs && breadcrumbs.length > 0 && (
+                        <>
+                            <div className="h-6 w-px bg-gray-200 hidden md:block" />
+                            <div className="hidden md:flex items-center gap-2 text-sm animate-in fade-in slide-in-from-left-2">
+                                {breadcrumbs.map((item, index) => (
+                                    <div key={item.label} className="flex items-center gap-2">
+                                        {index > 0 && <span className="text-gray-300">/</span>}
+                                        <span className={cn(
+                                            index === breadcrumbs.length - 1
+                                                ? "font-medium text-gray-900"
+                                                : "text-gray-500"
+                                        )}>
+                                            {item.label}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Right Area: Profile & Actions */}

@@ -20,7 +20,6 @@ interface MainTabsProps {
 }
 
 export default function MainTabs({ className, counts }: Omit<MainTabsProps, 'currentView' | 'onChangeView'>) {
-    const [isMoreOpen, setIsMoreOpen] = useState(false);
     const { user } = useStore();
     const pathname = usePathname();
 
@@ -34,27 +33,20 @@ export default function MainTabs({ className, counts }: Omit<MainTabsProps, 'cur
         return pathname.startsWith(path);
     };
 
-    // Tabs allowed for everyone (or specifically requested)
-    const mainTabs = [
-        { id: '/inicio', label: 'Início', icon: Home },
-        { id: '/propostas', label: 'Propostas', icon: FileText },
-        { id: '/mapa', label: 'Mapa', icon: Map },
-        { id: '/clientes', label: 'Clientes', icon: Users },
-    ];
-
-    // Secondary: (Providers, Accounts, Trash)
-    const secondaryTabs = [
+    // All Tabs Combined
+    const allTabs = [
+        { id: '/inicio', label: 'Início', icon: Home, show: true },
+        { id: '/propostas', label: 'Propostas', icon: FileText, show: true },
+        { id: '/mapa', label: 'Mapa', icon: Map, show: true },
+        { id: '/clientes', label: 'Clientes', icon: Users, show: true },
         { id: '/exibidoras', label: 'Exibidoras', icon: Building2, show: isInternal },
         { id: '/contas', label: 'Contas', icon: Shield, show: isMaster },
         { id: '/lixeira', label: 'Lixeira', icon: Trash2, show: isMaster },
     ].filter(t => t.show !== false);
 
-    const isSecondaryActive = secondaryTabs.some(t => isActiveTab(t.id));
-
     return (
-        <div className={cn("flex items-center gap-1 h-full", className)}>
-            {/* Primary Tabs */}
-            {mainTabs.map((tab) => {
+        <div className={cn("flex items-center gap-2 h-full", className)}>
+            {allTabs.map((tab) => {
                 const isActive = isActiveTab(tab.id);
                 const Icon = tab.icon;
                 const count = counts?.[tab.id.replace('/', '') as ViewType];
@@ -64,28 +56,33 @@ export default function MainTabs({ className, counts }: Omit<MainTabsProps, 'cur
                         key={tab.id}
                         href={tab.id}
                         className={cn(
-                            "relative px-3 py-2 rounded-md flex items-center gap-2 transition-all duration-200 group text-sm font-medium",
+                            "group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] overflow-hidden whitespace-nowrap",
                             isActive
-                                ? "text-emidias-primary bg-emidias-primary/5"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                ? "bg-black text-white max-w-[160px]"
+                                : "bg-transparent text-gray-500 hover:bg-gray-100 max-w-[44px] hover:max-w-[160px]"
                         )}
                     >
                         <Icon
-                            size={16}
+                            size={20}
                             className={cn(
-                                "transition-colors",
-                                isActive ? "text-emidias-primary" : "text-gray-400 group-hover:text-gray-600"
+                                "min-w-[20px] transition-colors",
+                                isActive ? "text-white" : "text-gray-500 group-hover:text-gray-900"
                             )}
                         />
 
-                        <span>{tab.label}</span>
+                        <span className={cn(
+                            "text-sm font-medium transition-opacity duration-300 delay-75",
+                            isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        )}>
+                            {tab.label}
+                        </span>
 
                         {count !== undefined && count > 0 && (
                             <span className={cn(
-                                "ml-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold leading-none",
+                                "ml-auto px-1.5 py-0.5 rounded-full text-[9px] font-bold leading-none",
                                 isActive
-                                    ? "bg-emidias-primary/10 text-emidias-primary"
-                                    : "bg-gray-100 text-gray-500"
+                                    ? "bg-white/20 text-white"
+                                    : "bg-gray-200 text-gray-600 group-hover:bg-gray-300"
                             )}>
                                 {count}
                             </span>
@@ -93,64 +90,6 @@ export default function MainTabs({ className, counts }: Omit<MainTabsProps, 'cur
                     </Link>
                 );
             })}
-
-            {/* Separator - Only if secondary tabs exist */}
-            {secondaryTabs.length > 0 && <div className="w-px h-4 bg-gray-200 mx-1" />}
-
-            {/* Secondary/More Menu */}
-            {secondaryTabs.length > 0 && (
-                <div className="relative">
-                    <button
-                        onClick={() => setIsMoreOpen(!isMoreOpen)}
-                        onBlur={() => setTimeout(() => setIsMoreOpen(false), 200)}
-                        className={cn(
-                            "px-3 py-2 rounded-md flex items-center gap-1.5 transition-all text-sm font-medium",
-                            isSecondaryActive || isMoreOpen
-                                ? "text-gray-900 bg-gray-100"
-                                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
-                        )}
-                    >
-                        <LayoutGrid size={16} />
-                        <span>Mais</span>
-                        <ChevronDown size={14} className={cn("transition-transform", isMoreOpen ? "rotate-180" : "")} />
-                    </button>
-
-                    {/* Dropdown */}
-                    <div
-                        className={cn(
-                            "absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 transform transition-all origin-top-left",
-                            isMoreOpen
-                                ? "opacity-100 scale-100 translate-y-0"
-                                : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
-                        )}
-                    >
-                        <div className="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                            Outras Seções
-                        </div>
-
-                        {secondaryTabs.map((tab) => {
-                            const isActive = isActiveTab(tab.id);
-                            const Icon = tab.icon;
-
-                            return (
-                                <Link
-                                    key={tab.id}
-                                    href={tab.id}
-                                    onClick={() => setIsMoreOpen(false)}
-                                    className={cn(
-                                        "w-full px-3 py-2 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left",
-                                        isActive ? "bg-emidias-primary/5 text-emidias-primary font-medium" : "text-gray-700"
-                                    )}
-                                >
-                                    <Icon size={16} className={isActive ? "text-emidias-primary" : "text-gray-400"} />
-                                    <span className="text-sm">{tab.label}</span>
-                                    {isActive && <div className="ml-auto w-1.5 h-1.5 bg-emidias-primary rounded-full" />}
-                                </Link>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
