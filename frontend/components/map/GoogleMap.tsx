@@ -213,8 +213,8 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
             const container = document.createElement('div');
             container.className = 'pin-container';
             container.style.cursor = 'pointer';
-            container.style.padding = '10px';
-            container.style.marginTop = '-10px';
+            container.style.padding = '15px'; // Increased padding
+            container.style.marginTop = '-15px';
 
             const pinWrapper = document.createElement('div');
             pinWrapper.className = `pin-wrapper ${isInCart ? 'green' : 'grey'}`;
@@ -222,17 +222,17 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
 
             // FontAwesome-like SVGs
             if (isInCart) {
-                // Pin with Check (Green)
+                // Pin with Check (Strong Green: #059669)
                 pinWrapper.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="30" height="30" fill="#10B981">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="34" height="34" fill="#059669">
                     <path d="M384 192c0 87.4-117 243-168.3 307.2c-12.3 15.3-35.1 15.3-47.4 0C117 435 0 279.4 0 192C0 86 86 0 192 0S384 86 384 192z"/>
                     <path d="M173.9 439.4l-116.6-116.6c-4.7-4.7-4.7-12.3 0-17l19.8-19.8c4.7-4.7 12.3-4.7 17 0L182.4 374l184.4-184.4c4.7-4.7 12.3-4.7 17 0l19.8 19.8c4.7 4.7 4.7 12.3 0 17L190.9 439.4c-4.7 4.7-12.3 4.7-17 0z" fill="white" transform="scale(0.5) translate(140, 150)"/>
                      <path d="M173.898 340.5L96.398 263C93.0647 259.667 93.0647 254.333 96.398 251L114.798 232.6C118.131 229.267 123.465 229.267 126.798 232.6L182.398 288.2L277.198 193.4C280.531 190.067 285.865 190.067 289.198 193.4L307.598 211.8C310.931 215.133 310.931 220.467 307.598 223.8L190.898 340.5C187.565 343.833 182.231 343.833 178.898 340.5H173.898Z" fill="white"/>
                 </svg>`;
             } else {
-                // Pin with Dot (Grey)
+                // Pin with Dot (Dark Grey: #374151)
                 pinWrapper.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="30" height="30" fill="#89849b">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="34" height="34" fill="#374151">
                     <path d="M384 192c0 87.4-117 243-168.3 307.2c-12.3 15.3-35.1 15.3-47.4 0C117 435 0 279.4 0 192C0 86 86 0 192 0S384 86 384 192z M192 272c44.2 0 80-35.8 80-80s-35.8-80-80-80s-80 35.8-80 80s35.8 80 80 80z"/>
                 </svg>`;
             }
@@ -262,7 +262,7 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                 const marker = new google.maps.marker.AdvancedMarkerElement({
                     position: { lat: ponto.latitude!, lng: ponto.longitude! },
                     title: ponto.codigo_ooh,
-                    map: googleMapRef.current!,
+                    // map: googleMapRef.current!, // Removed for Clusterer
                     content: container,
                 });
 
@@ -317,6 +317,15 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
             });
 
         markersRef.current = markers;
+
+        // Restore Clusterer
+        if (markers.length > 0) {
+            clustererRef.current = new MarkerClusterer({
+                map: googleMapRef.current,
+                markers: markers,
+            });
+        }
+
 
     }, [filteredPontos, selectedProposta, setSelectedPonto]);
 
