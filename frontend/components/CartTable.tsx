@@ -102,9 +102,10 @@ interface CartTableProps {
     onToggle: () => void;
     isClientView?: boolean;
     readOnly?: boolean;
+    embedded?: boolean;
 }
 
-export default function CartTable({ isOpen, onToggle, isClientView = false, readOnly = false, proposta }: CartTableProps) {
+export default function CartTable({ isOpen, onToggle, isClientView = false, readOnly = false, proposta, embedded = false }: CartTableProps) {
     const storeSelectedProposta = useStore((state) => state.selectedProposta);
     const selectedProposta = proposta || storeSelectedProposta;
 
@@ -1284,11 +1285,14 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
     return (
         <div
-            className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.15)] z-40 transition-all duration-300 ease-in-out flex flex-col`}
-            style={{ height: isOpen ? `${tableHeight}px` : '50px' }}
+            className={embedded
+                ? "flex flex-col h-full w-full bg-white border-t border-gray-200"
+                : `fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.15)] z-40 transition-all duration-300 ease-in-out flex flex-col`
+            }
+            style={embedded ? {} : { height: isOpen ? `${tableHeight}px` : '50px' }}
         >
             {/* Resizer Handle */}
-            {isOpen && (
+            {!embedded && isOpen && (
                 <div
                     className="absolute -top-1 left-0 right-0 h-3 bg-transparent cursor-row-resize z-50 hover:bg-blue-500/10 flex items-center justify-center group/resizer"
                     onMouseDown={startResizing}
@@ -1304,12 +1308,14 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             >
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                        <div
-                            onClick={(e) => { e.stopPropagation(); onToggle(); }}
-                            className="p-1 hover:bg-gray-100 rounded text-gray-500 transition-colors cursor-pointer"
-                        >
-                            <ChevronDown size={20} className={`transform transition-transform duration-300 ${isOpen ? '' : 'rotate-180'}`} />
-                        </div>
+                        {!embedded && (
+                            <div
+                                onClick={(e) => { e.stopPropagation(); onToggle(); }}
+                                className="p-1 hover:bg-gray-100 rounded text-gray-500 transition-colors cursor-pointer"
+                            >
+                                <ChevronDown size={20} className={`transform transition-transform duration-300 ${isOpen ? '' : 'rotate-180'}`} />
+                            </div>
+                        )}
                         <h3 className="font-semibold text-gray-800 text-sm">Carrinho ({itens.length})</h3>
                         {selectedProposta && selectedProposta.status === 'rascunho' && !readOnly && (
                             <Button
@@ -1596,8 +1602,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 </div>
             </div>
 
-            {/* Table Area - Hidden when collapsed */}
-            <div className={`flex-1 overflow-auto relative bg-gray-50/50 ${!isOpen ? 'hidden' : ''}`}>
+            {/* Table Area - Hidden when collapsed and NOT embedded */}
+            <div className={`flex-1 overflow-auto relative bg-gray-50/50 ${!isOpen && !embedded ? 'hidden' : ''}`}>
                 <div
                     className="min-w-full inline-block align-top"
                     style={{ width: table.getTotalSize() }}

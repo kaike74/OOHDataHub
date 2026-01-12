@@ -2,9 +2,7 @@
 
 import MainLayout from '@/components/layout/MainLayout';
 import GoogleMap from '@/components/map/GoogleMap';
-import PointsListSidebar from '@/components/proposals/PointsListSidebar';
-import FixedProposalHeader from '@/components/proposals/FixedProposalHeader';
-import CompactCartSummary from '@/components/proposals/CompactCartSummary';
+import CartTable from '@/components/CartTable';
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
@@ -12,8 +10,6 @@ import { useProposalStore } from '@/stores/useProposalStore';
 import { useProposalSync } from '@/hooks/useProposalSync';
 import { MapSkeleton } from '@/components/skeletons/MapSkeleton';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Map as MapIcon, List } from 'lucide-react';
 
 export default function ProposalDetailClient() {
     const router = useRouter();
@@ -32,14 +28,14 @@ export default function ProposalDetailClient() {
     // New Store
     const {
         setProposal,
-        selectedProposal
+        selectedProposal,
+        ui,
+        toggleCart
     } = useProposalStore();
 
     // Sync Hook
     const { isSaving } = useProposalSync();
-
     const [isLoading, setIsLoading] = useState(true);
-    const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
 
     useEffect(() => {
         const loadContext = async () => {
@@ -83,56 +79,19 @@ export default function ProposalDetailClient() {
     return (
         <MainLayout breadcrumbs={breadcrumbs} fullScreen>
             <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
-                {/* Fixed Header */}
-                <FixedProposalHeader />
-
-                {/* Main Content Area */}
-                <div className="flex flex-1 pt-16 overflow-hidden relative">
-
-                    {/* Mobile Tabs (Visible only on small screens) */}
-                    <div className="md:hidden absolute top-16 left-0 right-0 z-30 bg-white border-b border-gray-200 flex">
-                        <button
-                            onClick={() => setMobileView('map')}
-                            className={cn(
-                                "flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors",
-                                mobileView === 'map' ? "border-black text-black" : "border-transparent text-gray-500"
-                            )}
-                        >
-                            <MapIcon size={16} /> Mapa
-                        </button>
-                        <button
-                            onClick={() => setMobileView('list')}
-                            className={cn(
-                                "flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors",
-                                mobileView === 'list' ? "border-black text-black" : "border-transparent text-gray-500"
-                            )}
-                        >
-                            <List size={16} /> Lista & Detalhes
-                        </button>
-                    </div>
-
-                    {/* Left: Map Section */}
-                    {/* On user mobile: Hide if view is list. On desktop: Always show. */}
-                    <div className={cn(
-                        "flex-1 relative h-full transition-opacity bg-gray-100",
-                        mobileView === 'list' ? "hidden md:block" : "block"
-                    )}>
-                        <GoogleMap />
-                    </div>
-
-                    {/* Right: Sidebar Section */}
-                    {/* On mobile: Hide if view is map. On desktop: Always show (fixed width). */}
-                    <div className={cn(
-                        "h-full bg-white z-20 shadow-lg relative border-l border-gray-200",
-                        "w-full md:w-[400px] flex-shrink-0",
-                        mobileView === 'map' ? "hidden md:block" : "block mt-12 md:mt-0" // Add margin for mobile tabs
-                    )}>
-                        <PointsListSidebar />
-                    </div>
+                {/* Map Section - Top Half (approx 60% height) */}
+                <div className="h-[60%] relative bg-gray-100 w-full shrink-0">
+                    <GoogleMap />
                 </div>
 
-                {/* Bottom: Cart Summary */}
-                <CompactCartSummary />
+                {/* Table Section - Bottom Half (Remaining space) */}
+                <div className="flex-1 overflow-hidden relative border-t border-gray-200">
+                    <CartTable
+                        isOpen={true}
+                        onToggle={() => { }}
+                        embedded={true}
+                    />
+                </div>
 
                 {/* Auto-save Indicator */}
                 {isSaving && (
