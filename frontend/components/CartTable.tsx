@@ -673,8 +673,10 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                         const ponto = pontos.find(p => p.id === row.original.id_ooh);
                         if (ponto) {
                             setSelectedPonto(ponto);
+                            useStore.getState().setSidebarOpen(true);
                         } else {
                             setSelectedPonto({ id: row.original.id_ooh } as any);
+                            useStore.getState().setSidebarOpen(true);
                         }
                     }}
                 >

@@ -3,6 +3,7 @@
 import MainLayout from '@/components/layout/MainLayout';
 import GoogleMap from '@/components/map/GoogleMap';
 import CartTable from '@/components/CartTable';
+import Sidebar from '@/components/Sidebar';
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
@@ -74,24 +75,27 @@ export default function ProposalDetailClient() {
         { label: selectedProposal?.nome || globalSelectedProposta?.nome || `Proposta #${id}`, active: true }
     ];
 
+    const [isTableOpen, setIsTableOpen] = useState(true);
+
     if (isLoading) return <MainLayout breadcrumbs={breadcrumbs}><MapSkeleton /></MainLayout>;
 
     return (
         <MainLayout breadcrumbs={breadcrumbs} fullScreen>
-            <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
-                {/* Map Section - Top Half (approx 60% height) */}
-                <div className="h-[60%] relative bg-gray-100 w-full shrink-0">
+            <div className="relative h-[calc(100vh-64px)] overflow-hidden">
+                {/* Map Section - Full Height */}
+                <div className="absolute inset-0 w-full h-full z-0">
                     <GoogleMap />
                 </div>
 
-                {/* Table Section - Bottom Half (Remaining space) */}
-                <div className="flex-1 overflow-hidden relative border-t border-gray-200">
-                    <CartTable
-                        isOpen={true}
-                        onToggle={() => { }}
-                        embedded={true}
-                    />
-                </div>
+                {/* Sidebar - Z-Index handled internally (z-[60]) */}
+                <Sidebar />
+
+                {/* Floating Cart Table */}
+                <CartTable
+                    isOpen={isTableOpen}
+                    onToggle={() => setIsTableOpen(!isTableOpen)}
+                    embedded={false}
+                />
 
                 {/* Auto-save Indicator */}
                 {isSaving && (

@@ -39,6 +39,7 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
     const filterValorMin = useStore((state) => state.filterValorMin);
     const filterValorMax = useStore((state) => state.filterValorMax);
     const setSelectedPonto = useStore((state) => state.setSelectedPonto);
+    const setSidebarOpen = useStore((state) => state.setSidebarOpen);
     const setModalOpen = useStore((state) => state.setModalOpen);
     const setStreetViewCoordinates = useStore((state) => state.setStreetViewCoordinates);
     const streetViewRequest = useStore((state) => state.streetViewRequest);
@@ -321,6 +322,7 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                 container.addEventListener('click', (e) => {
                     e.stopPropagation();
                     setSelectedPonto(ponto);
+                    useStore.getState().setSidebarOpen(true);
                     pulse.style.display = 'block';
                 });
 
@@ -529,6 +531,7 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                     onStreetViewClick={() => handleStreetViewClick(hoveredPonto)}
                     onClick={() => {
                         setSelectedPonto(hoveredPonto);
+                        useStore.getState().setSidebarOpen(true);
                         setHoveredPonto(null);
                     }}
                     onMouseEnter={() => {
