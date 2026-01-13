@@ -116,6 +116,8 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(data),
     }),
+    getExhibitorProposals: (id: number) => fetchAPI(`/api/exibidoras/${id}/propostas`),
+
 
     // Upload
     uploadImage: async (file: File, pontoId?: string, ordem?: number, ehCapa?: boolean) => {
