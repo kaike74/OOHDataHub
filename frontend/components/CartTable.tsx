@@ -138,6 +138,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const [isGroupMenuOpen, setIsGroupMenuOpen] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false); // Add Search Open State
+    const [isMenuOpen, setIsMenuOpen] = useState(false); // Track FloatingActionMenu state
     const [focusedCell, setFocusedCell] = useState<{ rowId: number | null; columnId: string | null }>({ rowId: null, columnId: null });
 
     // Grouping State
@@ -1487,8 +1488,13 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
                     {/* Search and Actions Group */}
                     <div className="flex items-center gap-3 ml-auto">
-                        {/* Animated Search Bar - Exact Replica */}
-                        <div className={cn(styles.finderBox, isSearchOpen && styles.open, "z-50")}>
+                        {/* Animated Search Bar - Slides left when menu opens */}
+                        <div
+                            className={cn(styles.finderBox, isSearchOpen && styles.open, "z-50 transition-transform duration-300")}
+                            style={{
+                                transform: isMenuOpen ? 'translateX(-80px)' : 'translateX(0)',
+                            }}
+                        >
                             <div className={styles.fieldHolder}>
                                 <div
                                     className={styles.iconButton}
@@ -1522,6 +1528,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
                         {/* Floating Action Menu */}
                         <FloatingActionMenu
+                            onOpenChange={setIsMenuOpen}
                             actions={[
                                 {
                                     label: "Agrupar",

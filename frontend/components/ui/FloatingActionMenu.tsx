@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
@@ -14,25 +14,31 @@ interface ActionItem {
 
 interface FloatingActionMenuProps {
     actions: ActionItem[];
+    onOpenChange?: (isOpen: boolean) => void; // Callback for parent
 }
 
-export default function FloatingActionMenu({ actions }: FloatingActionMenuProps) {
+export default function FloatingActionMenu({ actions, onOpenChange }: FloatingActionMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
+
+    // Notify parent when menu opens/closes
+    useEffect(() => {
+        onOpenChange?.(isOpen);
+    }, [isOpen, onOpenChange]);
 
     // Calculate positions for radial expansion
     // Distribute buttons in a semi-circle around the main button
     const getButtonPosition = (index: number, total: number) => {
         if (!isOpen) return { x: 0, y: 0 };
 
-        // Radius of the circle
-        const radius = 70;
+        // Reduced radius for tighter spacing
+        const radius = 55;
 
-        // Angle calculation: distribute evenly in a semi-circle (180 degrees)
-        // Starting from left (180°) to top-right (0°)
-        const startAngle = Math.PI; // 180 degrees (left)
-        const endAngle = 0; // 0 degrees (right)
-        const angleStep = (startAngle - endAngle) / (total - 1);
-        const angle = startAngle - (angleStep * index);
+        // Angle calculation: semi-circle expanding to the LEFT
+        // Starting from top (90°) going counter-clockwise to bottom-left (270°)
+        const startAngle = Math.PI / 2; // 90 degrees (top)
+        const endAngle = (3 * Math.PI) / 2; // 270 degrees (bottom)
+        const angleStep = (endAngle - startAngle) / (total - 1);
+        const angle = startAngle + (angleStep * index);
 
         const x = Math.cos(angle) * radius;
         const y = Math.sin(angle) * radius;
@@ -42,7 +48,13 @@ export default function FloatingActionMenu({ actions }: FloatingActionMenuProps)
 
     return (
         <div
-            className="relative w-12 h-12 flex items-center justify-center"
+            className="relative flex items-center justify-center"
+            style={{
+                // Expand hover area to cover the entire radial zone
+                width: isOpen ? '120px' : '48px',
+                height: isOpen ? '120px' : '48px',
+                transition: 'width 0.3s ease-out, height 0.3s ease-out'
+            }}
             onMouseEnter={() => setIsOpen(true)}
             onMouseLeave={() => setIsOpen(false)}
         >
