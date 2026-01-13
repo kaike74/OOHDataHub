@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, ExternalLink, Map as MapIcon, Maximize2, Phone, Mail, MapPin } from 'lucide-react';
+import { X, ExternalLink, Map as MapIcon, Phone, Mail, MapPin } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
@@ -12,13 +12,13 @@ import { formatCurrency } from '@/lib/utils';
 interface ExhibitorProposalStats {
     id: number;
     nome: string;
-    points: number; // Corrected field name based on API result
-    pontos_count: number; // API returns this
+    points: number;
+    pontos_count: number;
     status: string;
 }
 
 interface ExhibitorDetailsSidebarProps {
-    exibidoras: any | null; // Using any for flexibility or use strict Exibidora type
+    exibidoras: any | null;
     onClose: () => void;
     isOpen: boolean;
 }
@@ -26,7 +26,6 @@ interface ExhibitorDetailsSidebarProps {
 export default function ExhibitorDetailsSidebar({ exibidoras, onClose, isOpen }: ExhibitorDetailsSidebarProps) {
     const [proposals, setProposals] = useState<ExhibitorProposalStats[]>([]);
     const [isLoadingProposals, setIsLoadingProposals] = useState(false);
-    const [isMapExpanded, setIsMapExpanded] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -36,6 +35,7 @@ export default function ExhibitorDetailsSidebar({ exibidoras, onClose, isOpen }:
             setProposals([]);
         }
     }, [isOpen, exibidoras]);
+
 
     const loadProposals = async (id: number) => {
         setIsLoadingProposals(true);
@@ -67,16 +67,13 @@ export default function ExhibitorDetailsSidebar({ exibidoras, onClose, isOpen }:
         );
     };
 
-    const handleExpandMap = () => setIsMapExpanded(true);
-    const handleCloseExpandedMap = () => setIsMapExpanded(false);
-
     if (!exibidoras) return null;
 
     return (
         <>
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity"
+                    className="fixed inset-0 z-40 transition-opacity"
                     onClick={onClose}
                 />
             )}
@@ -156,16 +153,6 @@ export default function ExhibitorDetailsSidebar({ exibidoras, onClose, isOpen }:
                                     forcedFilterExibidora={[exibidoras.id]}
                                     enableStreetView={false} // Disable street view controls
                                 />
-
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center pointer-events-none">
-                                    <Button
-                                        className="pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                                        onClick={handleExpandMap} // Reuse handler
-                                        leftIcon={<Maximize2 size={16} />}
-                                    >
-                                        Expandir Mapa
-                                    </Button>
-                                </div>
                             </div>
 
                             {/* Points List - Integrated below Map */}
@@ -244,45 +231,6 @@ export default function ExhibitorDetailsSidebar({ exibidoras, onClose, isOpen }:
                     </div>
                 </div>
             </div>
-
-            {/* Expanded Map Popup */}
-            {isMapExpanded && (
-                <>
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90]" onClick={handleCloseExpandedMap} />
-                    <div className="fixed inset-4 md:inset-10 bg-white rounded-2xl shadow-2xl z-[95] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-200">
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white shadow-sm z-10">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                    <MapIcon size={20} className="text-emidias-primary" />
-                                    Mapa de Pontos: {exibidoras.nome}
-                                </h3>
-                                <p className="text-xs text-gray-500">Visualizando apenas pontos desta exibidora</p>
-                            </div>
-                            <Button
-                                variant="outline"
-                                onClick={handleCloseExpandedMap}
-                                leftIcon={<X size={18} />}
-                            >
-                                Fechar
-                            </Button>
-                        </div>
-                        <div className="flex-1 relative bg-gray-100">
-                            <GoogleMap
-                                readOnly={true}
-                                showProposalActions={false}
-                                forcedFilterExibidora={[exibidoras.id]}
-                                enableStreetView={false}
-                            />
-                            {/* Render Sidebar inside the modal context if it handles its own visibility */}
-                            <div className="absolute inset-0 pointer-events-none">
-                                <div className="pointer-events-auto">
-                                    <Sidebar showProposalActions={false} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </>
-            )}
         </>
     );
 }
