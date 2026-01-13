@@ -76,6 +76,7 @@ export default function FloatingActionMenu({ actions, onOpenChange }: FloatingAc
                                         e.stopPropagation();
                                         action.onClick();
                                     }}
+                                    onMouseEnter={() => setIsOpen(true)}
                                     style={{
                                         transform: `translate(${x}px, ${y}px) scale(${isOpen ? 1 : 0})`,
                                         transitionDelay: isOpen ? `${index * 50}ms` : `${(actions.length - index - 1) * 30}ms`,
