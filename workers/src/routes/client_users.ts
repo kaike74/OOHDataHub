@@ -375,6 +375,8 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
 
             // Delete shares first
             await env.DB.prepare('DELETE FROM proposta_shares WHERE user_id = ?').bind(userId).run();
+            // Delete invites created by this user to prevent foreign key constraint errors
+            await env.DB.prepare('DELETE FROM proposta_invites WHERE created_by = ?').bind(userId).run();
             // Delete user
             const res = await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
 

@@ -18,11 +18,17 @@ interface UserAccount {
     shared_count: number;
 }
 
-export default function AccountsView() {
+type UserTypeFilter = 'all' | 'internal' | 'external';
+
+interface AccountsViewProps {
+    searchTerm?: string;
+}
+
+export default function AccountsView({ searchTerm = '' }: AccountsViewProps) {
     const [accounts, setAccounts] = useState<UserAccount[]>([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
     const [selectedAccount, setSelectedAccount] = useState<UserAccount | null>(null);
+    const [userTypeFilter, setUserTypeFilter] = useState<UserTypeFilter>('all');
 
     useEffect(() => {
         loadAccounts();
@@ -64,8 +70,14 @@ export default function AccountsView() {
         }
     };
 
-    // Filter
-    const filteredAccounts = accounts.filter(user =>
+    // Filter by user type
+    const typeFilteredAccounts = accounts.filter(user => {
+        if (userTypeFilter === 'all') return true;
+        return user.type === userTypeFilter;
+    });
+
+    // Filter by search term
+    const filteredAccounts = typeFilteredAccounts.filter(user =>
         (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -73,22 +85,33 @@ export default function AccountsView() {
     return (
         <div className="h-full bg-gray-50 flex flex-col overflow-hidden relative">
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin">
-                <div className="max-w-7xl mx-auto">
-                    {/* Header Area */}
-                    <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-900">Contas e Permissões</h2>
-                            <p className="text-gray-500 text-sm">Gerencie usuários internos e externos.</p>
-                        </div>
-
-                        <div className="relative w-full sm:w-auto z-50">
-                            <AnimatedSearchBar
-                                value={searchTerm}
-                                onChange={setSearchTerm}
-                                placeholder="Buscar usuário..."
-                                width="300px"
-                            />
-                        </div>
+                <div className="w-full max-w-[1920px] mx-auto">
+                    {/* Filter Buttons */}
+                    <div className="mb-4 flex gap-2">
+                        <Button
+                            onClick={() => setUserTypeFilter('all')}
+                            variant={userTypeFilter === 'all' ? 'default' : 'outline'}
+                            size="sm"
+                            className={userTypeFilter === 'all' ? 'bg-emidias-primary hover:bg-emidias-primary/90' : 'hover:bg-gray-100'}
+                        >
+                            Todos
+                        </Button>
+                        <Button
+                            onClick={() => setUserTypeFilter('internal')}
+                            variant={userTypeFilter === 'internal' ? 'default' : 'outline'}
+                            size="sm"
+                            className={userTypeFilter === 'internal' ? 'bg-purple-600 hover:bg-purple-700' : 'hover:bg-gray-100'}
+                        >
+                            Interno
+                        </Button>
+                        <Button
+                            onClick={() => setUserTypeFilter('external')}
+                            variant={userTypeFilter === 'external' ? 'default' : 'outline'}
+                            size="sm"
+                            className={userTypeFilter === 'external' ? 'bg-emidias-primary hover:bg-emidias-primary/90' : 'hover:bg-gray-100'}
+                        >
+                            Externo
+                        </Button>
                     </div>
 
                     <AccountsTable
