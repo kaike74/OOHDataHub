@@ -47,17 +47,22 @@ export default function FloatingActionMenu({ actions, onOpenChange }: FloatingAc
     };
 
     return (
-        <div
-            className="relative flex items-center justify-center"
-            style={{
-                // Expand hover area to cover the entire radial zone
-                width: isOpen ? '120px' : '48px',
-                height: isOpen ? '120px' : '48px',
-                transition: 'width 0.3s ease-out, height 0.3s ease-out'
-            }}
-            onMouseEnter={() => setIsOpen(true)}
-            onMouseLeave={() => setIsOpen(false)}
-        >
+        <div className="relative w-12 h-12 flex items-center justify-center">
+            {/* Invisible expanded hover area - doesn't affect layout */}
+            <div
+                className="absolute inset-0 pointer-events-auto"
+                style={{
+                    width: isOpen ? '120px' : '48px',
+                    height: isOpen ? '120px' : '48px',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    transition: 'width 0.3s ease-out, height 0.3s ease-out',
+                    zIndex: 1
+                }}
+                onMouseEnter={() => setIsOpen(true)}
+                onMouseLeave={() => setIsOpen(false)}
+            />
             {/* Radially Expanded Action Buttons */}
             {actions.map((action, index) => {
                 const { x, y } = getButtonPosition(index, actions.length);
