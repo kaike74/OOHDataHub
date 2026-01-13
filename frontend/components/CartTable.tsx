@@ -1237,17 +1237,27 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         // Default initialization if no saved order
         if (columns.length > 0 && columnOrder.length === 0) {
             const defaultOrder = columns.map(c => c.id || (c as any).accessorKey as string).filter(Boolean);
-            // Ensure status_validacao is second (after select)
-            if (showStatusColumn) {
-                const statusIndex = defaultOrder.indexOf('status_validacao');
-                if (statusIndex > 1) {
-                    defaultOrder.splice(statusIndex, 1);
-                    defaultOrder.splice(1, 0, 'status_validacao');
-                }
-            }
             setColumnOrder(defaultOrder);
         }
-    }, [columns, showStatusColumn]); // Run when columns or showStatusColumn changes
+    }, [columns]); // Run once when columns are defined
+
+    // Force status column to be second whenever showStatusColumn changes
+    useEffect(() => {
+        if (showStatusColumn && columnOrder.length > 0) {
+            const statusIndex = columnOrder.indexOf('status_validacao');
+            if (statusIndex !== -1 && statusIndex !== 1) {
+                const newOrder = [...columnOrder];
+                newOrder.splice(statusIndex, 1);
+                newOrder.splice(1, 0, 'status_validacao');
+                setColumnOrder(newOrder);
+            } else if (statusIndex === -1) {
+                // Status column not in order yet, add it as second
+                const newOrder = [...columnOrder];
+                newOrder.splice(1, 0, 'status_validacao');
+                setColumnOrder(newOrder);
+            }
+        }
+    }, [showStatusColumn, columns.length]); // Run when showStatusColumn changes or columns are ready
 
     // Persist Column Order
     useEffect(() => {
