@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import ShareModal from './ShareModal';
 import FloatingActionMenu from './ui/FloatingActionMenu'; // Import FloatingActionMenu
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import { Button } from '@/components/ui/Button';
 import { X } from 'lucide-react'; // Import X icon
 import styles from './ui/AnimatedSearchBar.module.css'; // Import styles
@@ -143,6 +144,15 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const [isMenuOpen, setIsMenuOpen] = useState(false); // Track FloatingActionMenu state
     const [focusedCell, setFocusedCell] = useState<{ rowId: number | null; columnId: string | null }>({ rowId: null, columnId: null });
 
+    // Dialog states
+    const [confirmDialog, setConfirmDialog] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        type?: 'info' | 'warning' | 'success';
+    }>({ isOpen: false, title: '', message: '', onConfirm: () => { } });
+
     // Grouping State
     type GroupByField = 'none' | 'pais' | 'uf' | 'cidade' | 'exibidora_nome';
     const [groupBy, setGroupBy] = useState<GroupByField>('none');
@@ -176,10 +186,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
     const user = useStore(state => state.user);
     const isInternal = !!user && user.type === 'internal';
-    // Only show status column if proposal is actually IN VALIDATION or APPROVED.
-    // Draft proposals should not show this column, even for internal users.
-    const showStatusColumn = selectedProposta?.status === 'em_validacao' || selectedProposta?.status === 'aprovado';
-
+    // Status Column Visibility - Show in all stages except rascunho
+    const showStatusColumn = selectedProposta?.status !== 'rascunho';
     const canEditValues = !readOnly && selectedProposta?.currentUserRole === 'admin';
     const canEditItems = !readOnly; // Editors can add/remove and change periods
 
@@ -187,21 +195,21 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const handleRequestValidation = async () => {
         if (!selectedProposta) return;
 
-        const confirmed = confirm(
-            '🎯 Estamos perto de colocar sua marca nas ruas!\n\n' +
-            'Ao continuar, nossa equipe irá negociar e validar a disponibilidade dos pontos escolhidos.\n\n' +
-            'Gostaria de continuar ou prefere revisar o plano antes?'
-        );
-
-        if (!confirmed) return;
-
-        try {
-            await api.updateProposalStatus(selectedProposta.id, 'em_validacao');
-            refreshProposta({ ...selectedProposta, status: 'em_validacao' });
-        } catch (error) {
-            console.error('Failed to request validation', error);
-            alert('Falha ao solicitar validação');
-        }
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Solicitar Validação',
+            message: '🎯 Estamos perto de colocar sua marca nas ruas!\n\nAo continuar, nossa equipe irá negociar e validar a disponibilidade dos pontos escolhidos.\n\nGostaria de continuar ou prefere revisar o plano antes?',
+            type: 'info',
+            onConfirm: async () => {
+                try {
+                    await api.updateProposalStatus(selectedProposta.id, 'em_validacao');
+                    refreshProposta({ ...selectedProposta, status: 'em_validacao' });
+                } catch (error) {
+                    console.error('Failed to request validation', error);
+                    alert('Falha ao solicitar validação');
+                }
+            }
+        });
     };
 
     // Stage 2: Conclude Validation (Em Validação → Validado - Aguardando Aprovação)
@@ -215,44 +223,58 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             return;
         }
 
-        if (!confirm('Deseja concluir a validação desta proposta?')) return;
-
-        try {
-            await api.updateProposalStatus(selectedProposta.id, 'validado_aguardando_aprovacao');
-            refreshProposta({ ...selectedProposta, status: 'validado_aguardando_aprovacao' });
-        } catch (error) {
-            console.error('Failed to conclude validation', error);
-            alert('Falha ao concluir validação');
-        }
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Concluir Validação',
+            message: 'Deseja concluir a validação desta proposta?',
+            type: 'info',
+            onConfirm: async () => {
+                try {
+                    await api.updateProposalStatus(selectedProposta.id, 'validado_aguardando_aprovacao');
+                    refreshProposta({ ...selectedProposta, status: 'validado_aguardando_aprovacao' });
+                } catch (error) {
+                    console.error('Failed to conclude validation', error);
+                    alert('Falha ao concluir validação');
+                }
+            }
+        });
     };
 
     // Stage 3: Final Approval (Validado - Aguardando Aprovação → Aprovado)
     const handleFinalApproval = async () => {
         if (!selectedProposta) return;
 
-        try {
-            // Remove unavailable items before approval
-            const unavailableItems = itens.filter(i => i.status_validacao === 'UNAVAILABLE');
+        const unavailableItems = itens.filter(i => i.status_validacao === 'UNAVAILABLE');
 
-            if (unavailableItems.length > 0) {
-                const confirmRemoval = confirm(
-                    `⚠️ Existem ${unavailableItems.length} ponto(s) indisponível(is) que serão removidos automaticamente.\n\nDeseja continuar com a aprovação?`
-                );
-                if (!confirmRemoval) return;
+        if (unavailableItems.length > 0) {
+            setConfirmDialog({
+                isOpen: true,
+                title: 'Aprovar Proposta',
+                message: `⚠️ Existem ${unavailableItems.length} ponto(s) indisponível(is) que serão removidos automaticamente.\n\nDeseja continuar com a aprovação?`,
+                type: 'warning',
+                onConfirm: async () => {
+                    try {
+                        const availableItems = itens.filter(i => i.status_validacao !== 'UNAVAILABLE');
+                        await api.updateCart(selectedProposta.id, availableItems);
+                        setItens(availableItems);
+                        refreshProposta({ ...selectedProposta, itens: availableItems });
 
-                // Remove unavailable items
-                const availableItems = itens.filter(i => i.status_validacao !== 'UNAVAILABLE');
-                await api.updateCart(selectedProposta.id, availableItems);
-                setItens(availableItems);
-                refreshProposta({ ...selectedProposta, itens: availableItems });
+                        await api.updateProposalStatus(selectedProposta.id, 'aprovado');
+                        refreshProposta({ ...selectedProposta, status: 'aprovado' });
+                    } catch (error) {
+                        console.error('Failed to approve proposal', error);
+                        alert('Falha ao aprovar proposta');
+                    }
+                }
+            });
+        } else {
+            try {
+                await api.updateProposalStatus(selectedProposta.id, 'aprovado');
+                refreshProposta({ ...selectedProposta, status: 'aprovado' });
+            } catch (error) {
+                console.error('Failed to approve proposal', error);
+                alert('Falha ao aprovar proposta');
             }
-
-            // Update status to approved
-            await api.updateProposalStatus(selectedProposta.id, 'aprovado');
-            refreshProposta({ ...selectedProposta, status: 'aprovado' });
-        } catch (error) {
-            console.error('Failed to approve proposal', error);
-            alert('Falha ao aprovar proposta');
         }
     };
 
@@ -638,7 +660,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         {
             id: 'select',
             header: ({ table }) => (
-                <div className="w-full h-full flex items-center justify-center">
+                <div className="w-full h-full flex items-center justify-center opacity-0 group-hover/header:opacity-100 transition-opacity">
                     <input
                         type="checkbox"
                         checked={table.getIsAllPageRowsSelected()}
@@ -2028,6 +2050,15 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 onClose={() => setIsShareModalOpen(false)}
                 proposta={selectedProposta}
                 onUpdate={handleShareUpdate}
+            />
+
+            <ConfirmDialog
+                isOpen={confirmDialog.isOpen}
+                onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+                onConfirm={confirmDialog.onConfirm}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                type={confirmDialog.type}
             />
         </div >
     );

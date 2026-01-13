@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
@@ -19,11 +19,26 @@ interface FloatingActionMenuProps {
 
 export default function FloatingActionMenu({ actions, onOpenChange }: FloatingActionMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
 
     // Notify parent when menu opens/closes
     useEffect(() => {
         onOpenChange?.(isOpen);
     }, [isOpen, onOpenChange]);
+
+    // Click outside to close
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node) && isOpen) {
+                setIsOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen]);
 
     // Calculate positions for radial expansion
     // Distribute buttons in a semi-circle around the main button
@@ -47,7 +62,7 @@ export default function FloatingActionMenu({ actions, onOpenChange }: FloatingAc
     };
 
     return (
-        <div className="relative w-12 h-12 flex items-center justify-center">
+        <div ref={menuRef} className="relative w-12 h-12 flex items-center justify-center">
             {/* Invisible expanded hover area - doesn't affect layout */}
             <div
                 className="absolute pointer-events-auto"
