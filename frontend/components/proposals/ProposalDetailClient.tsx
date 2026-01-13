@@ -11,6 +11,7 @@ import { useProposalStore } from '@/stores/useProposalStore';
 import { useProposalSync } from '@/hooks/useProposalSync';
 import { MapSkeleton } from '@/components/skeletons/MapSkeleton';
 import AddressSearch from '@/components/AddressSearch';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Filter, Search } from 'lucide-react';
 import ProposalMapFilters from './ProposalMapFilters';
