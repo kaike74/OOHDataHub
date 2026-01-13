@@ -9,7 +9,7 @@ interface ActionItem {
     label: string;
     icon: React.ReactNode;
     onClick: () => void;
-    color?: string; // Hex or Tailwind class prefix
+    color?: string;
 }
 
 interface FloatingActionMenuProps {
@@ -19,18 +19,38 @@ interface FloatingActionMenuProps {
 export default function FloatingActionMenu({ actions }: FloatingActionMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
 
+    // Calculate positions for radial expansion
+    // Distribute buttons in a semi-circle around the main button
+    const getButtonPosition = (index: number, total: number) => {
+        if (!isOpen) return { x: 0, y: 0 };
+
+        // Radius of the circle
+        const radius = 70;
+
+        // Angle calculation: distribute evenly in a semi-circle (180 degrees)
+        // Starting from left (180°) to top-right (0°)
+        const startAngle = Math.PI; // 180 degrees (left)
+        const endAngle = 0; // 0 degrees (right)
+        const angleStep = (startAngle - endAngle) / (total - 1);
+        const angle = startAngle - (angleStep * index);
+
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+
+        return { x, y };
+    };
+
     return (
         <div
-            className={cn("flex items-center gap-2 relative h-10 transition-all duration-300 ease-out", isOpen ? "w-[240px]" : "w-10")}
+            className="relative w-12 h-12 flex items-center justify-center"
             onMouseEnter={() => setIsOpen(true)}
             onMouseLeave={() => setIsOpen(false)}
         >
-            {/* Expanded Actions */}
-            <div className={cn(
-                "flex items-center gap-2 absolute right-0 top-0 h-full pr-12 transition-all duration-300",
-                isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-            )}>
-                {actions.map((action, index) => (
+            {/* Radially Expanded Action Buttons */}
+            {actions.map((action, index) => {
+                const { x, y } = getButtonPosition(index, actions.length);
+
+                return (
                     <TooltipProvider key={index}>
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -39,8 +59,17 @@ export default function FloatingActionMenu({ actions }: FloatingActionMenuProps)
                                         e.stopPropagation();
                                         action.onClick();
                                     }}
-                                    style={{ transitionDelay: `${index * 50}ms` }}
-                                    className="w-10 h-10 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300 text-gray-700 hover:text-blue-600 hover:border-blue-200 animate-in zoom-in-50 fade-in slide-in-from-right-4 fill-mode-backwards"
+                                    style={{
+                                        transform: `translate(${x}px, ${y}px) scale(${isOpen ? 1 : 0})`,
+                                        transitionDelay: isOpen ? `${index * 50}ms` : `${(actions.length - index - 1) * 30}ms`,
+                                    }}
+                                    className={cn(
+                                        "absolute w-10 h-10 rounded-full bg-white shadow-lg border border-gray-200",
+                                        "flex items-center justify-center",
+                                        "transition-all duration-300 ease-out",
+                                        "text-gray-700 hover:text-blue-600 hover:border-blue-300 hover:shadow-xl hover:scale-110",
+                                        !isOpen && "pointer-events-none"
+                                    )}
                                 >
                                     {action.icon}
                                 </button>
@@ -50,21 +79,22 @@ export default function FloatingActionMenu({ actions }: FloatingActionMenuProps)
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
-                ))}
-            </div>
+                );
+            })}
 
-            {/* Trigger Button (3 Dots) */}
-            <div className="relative z-10 bg-white rounded-full">
-                <button
-                    className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
-                        isOpen ? "bg-gray-100 text-gray-900 rotate-90" : "bg-white text-gray-500 hover:bg-gray-50 shadow-sm border border-gray-200"
-                    )}
-                >
-                    <MoreVertical size={20} />
-                </button>
-            </div>
-
+            {/* Main Trigger Button (3 Dots) */}
+            <button
+                className={cn(
+                    "relative z-10 w-10 h-10 rounded-full flex items-center justify-center",
+                    "transition-all duration-300",
+                    "bg-white shadow-md border border-gray-200",
+                    isOpen
+                        ? "bg-blue-50 text-blue-600 border-blue-300 rotate-90 scale-110"
+                        : "text-gray-500 hover:bg-gray-50 hover:border-gray-300"
+                )}
+            >
+                <MoreVertical size={20} />
+            </button>
         </div>
     );
 }
