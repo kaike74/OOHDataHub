@@ -638,7 +638,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         {
             id: 'select',
             header: ({ table }) => (
-                <div className="w-full h-full flex items-center justify-center opacity-0 group-hover/header:opacity-100 transition-opacity">
+                <div className="w-full h-full flex items-center justify-center">
                     <input
                         type="checkbox"
                         checked={table.getIsAllPageRowsSelected()}
@@ -648,16 +648,16 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 </div>
             ),
             cell: ({ row }) => (
-                <div className={`px-1 flex justify-center transition-opacity ${row.getIsSelected() ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                <div className={`flex justify-center transition-opacity ${row.getIsSelected() ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                     <input
                         type="checkbox"
                         checked={row.getIsSelected()}
                         onChange={(e) => row.toggleSelected(!!e.target.checked)}
-                        className="cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                        className="cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
                     />
                 </div>
             ),
-            size: 32,
+            size: 40,
             enableResizing: false,
         },
         ...(showStatusColumn ? [{
@@ -817,8 +817,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             ),
             size: 110,
             cell: ({ row }) => (
-                <span className="text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis block text-[13px] flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
+                <span className="text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis block text-[13px]">
                     {row.original.tipo}
                 </span>
             )
@@ -1421,9 +1420,9 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             <div className="flex flex-col px-4 first:pl-0">
                                 <span className="text-[10px] text-gray-500 uppercase tracking-wider">Status</span>
                                 <span className={`font-bold uppercase text-xs ${selectedProposta?.status === 'aprovado' ? 'text-green-600' :
-                                        selectedProposta?.status === 'validado_aguardando_aprovacao' ? 'text-emerald-600' :
-                                            selectedProposta?.status === 'em_validacao' ? 'text-blue-600' :
-                                                'text-gray-500' // rascunho
+                                    selectedProposta?.status === 'validado_aguardando_aprovacao' ? 'text-emerald-600' :
+                                        selectedProposta?.status === 'em_validacao' ? 'text-blue-600' :
+                                            'text-gray-500' // rascunho
                                     }`}>
                                     {selectedProposta?.status === 'validado_aguardando_aprovacao'
                                         ? 'Aguardando Aprovação'
@@ -1525,33 +1524,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                         </div>
                     )}
 
-                    {/* Bulk Actions */}
-                    {!readOnly && Object.keys(rowSelection).length > 0 && (
-                        <div
-                            className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md animate-in fade-in slide-in-from-left-2 shadow-sm border border-blue-100 relative"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <span className="text-xs font-bold">{Object.keys(rowSelection).length}</span>
-                            <div className="h-4 w-px bg-blue-200 mx-1" />
-
-                            <Button
-                                onClick={() => {
-                                    const selectedIds = Object.keys(rowSelection).map(Number);
-                                    const updatedItens = itens.filter(item => !selectedIds.includes(item.id));
-                                    setItens(updatedItens);
-                                    setRowSelection({});
-                                    refreshProposta({ ...selectedProposta!, itens: updatedItens });
-                                    api.updateCart(selectedProposta!.id, updatedItens).catch(console.error);
-                                }}
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-600 hover:bg-red-50 hover:text-red-700 h-6 px-2 text-xs"
-                                leftIcon={<Trash2 size={14} />}
-                            >
-                                Remover Selecionados
-                            </Button>
-                        </div>
-                    )}
+                    {/* Bulk Actions - REMOVED FROM HERE, MOVED TO TABLE BODY */}
                 </div>
 
                 <div
@@ -1812,6 +1785,31 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             </div>
                         ))}
                     </div>
+
+                    {/* Bulk Actions - Moved inside table */}
+                    {!readOnly && Object.keys(rowSelection).length > 0 && (
+                        <div className="bg-blue-50 border-b border-blue-200 px-3 py-2 flex items-center gap-2">
+                            <span className="text-xs font-semibold text-blue-700">
+                                {Object.keys(rowSelection).length} {Object.keys(rowSelection).length === 1 ? 'item selecionado' : 'itens selecionados'}
+                            </span>
+                            <Button
+                                onClick={() => {
+                                    const selectedIds = Object.keys(rowSelection).map(Number);
+                                    const updatedItens = itens.filter(item => !selectedIds.includes(item.id));
+                                    setItens(updatedItens);
+                                    setRowSelection({});
+                                    refreshProposta({ ...selectedProposta!, itens: updatedItens });
+                                    api.updateCart(selectedProposta!.id, updatedItens).catch(console.error);
+                                }}
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:bg-red-50 hover:text-red-700 h-7 px-2 text-xs ml-auto"
+                                leftIcon={<Trash2 size={14} />}
+                            >
+                                Remover Selecionados
+                            </Button>
+                        </div>
+                    )}
 
                     {/* Body */}
                     <div className="bg-white text-[13px]">
