@@ -1563,7 +1563,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     {isGroupMenuOpen && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={() => setIsGroupMenuOpen(false)} />
-                            <div className="absolute right-0 top-0 mt-0 mr-12 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
+                            <div className="absolute right-0 top-0 mt-0 mr-[140px] w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
                                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Agrupar Por</h4>
                                 <div className="px-1">
                                     {[
@@ -1598,7 +1598,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                         <>
                             <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
                             {/* Settings Dropdown - Aligned with Grouping Dropdown */}
-                            <div className="absolute right-0 top-0 mt-0 mr-12 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
+                            <div className="absolute right-0 top-0 mt-0 mr-[140px] w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
                                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Colunas Visíveis</h4>
                                 <div className="max-h-60 overflow-y-auto px-1">
                                     {table.getAllLeafColumns()

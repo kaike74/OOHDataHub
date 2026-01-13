@@ -58,7 +58,7 @@ export default function FloatingActionMenu({ actions, onOpenChange }: FloatingAc
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
                     transition: 'width 0.3s ease-out, height 0.3s ease-out',
-                    zIndex: 1
+                    zIndex: 20
                 }}
                 onMouseEnter={() => setIsOpen(true)}
                 onMouseLeave={() => setIsOpen(false)}
@@ -79,13 +79,14 @@ export default function FloatingActionMenu({ actions, onOpenChange }: FloatingAc
                                     style={{
                                         transform: `translate(${x}px, ${y}px) scale(${isOpen ? 1 : 0})`,
                                         transitionDelay: isOpen ? `${index * 50}ms` : `${(actions.length - index - 1) * 30}ms`,
+                                        zIndex: 30,
+                                        pointerEvents: isOpen ? 'auto' : 'none'
                                     }}
                                     className={cn(
                                         "absolute w-10 h-10 rounded-full bg-white shadow-lg border border-gray-200",
                                         "flex items-center justify-center",
                                         "transition-all duration-300 ease-out",
-                                        "text-gray-700 hover:text-blue-600 hover:border-blue-300 hover:shadow-xl hover:scale-110",
-                                        !isOpen && "pointer-events-none"
+                                        "text-gray-700 hover:text-blue-600 hover:border-blue-300 hover:shadow-xl hover:scale-110"
                                     )}
                                 >
                                     {action.icon}
@@ -102,13 +103,15 @@ export default function FloatingActionMenu({ actions, onOpenChange }: FloatingAc
             {/* Main Trigger Button (3 Dots) */}
             <button
                 className={cn(
-                    "relative z-10 w-10 h-10 rounded-full flex items-center justify-center",
+                    "relative w-10 h-10 rounded-full flex items-center justify-center",
                     "transition-all duration-300",
                     "bg-white shadow-md border border-gray-200",
                     isOpen
                         ? "bg-blue-50 text-blue-600 border-blue-300 rotate-90 scale-110"
                         : "text-gray-500 hover:bg-gray-50 hover:border-gray-300"
                 )}
+                style={{ zIndex: 25 }}
+                onMouseEnter={() => setIsOpen(true)}
             >
                 <MoreVertical size={20} />
             </button>
