@@ -19,11 +19,20 @@ interface GoogleMapProps {
     showProposalActions?: boolean;
     forcedPontos?: Ponto[];
     forcedFilterExibidora?: number[];
+    enableStreetView?: boolean;
 }
 
-export default function GoogleMap({ searchLocation, readOnly = false, showProposalActions = true, forcedPontos, forcedFilterExibidora }: GoogleMapProps) {
+export default function GoogleMap({
+    searchLocation,
+    readOnly = false,
+    showProposalActions = true,
+    forcedPontos,
+    forcedFilterExibidora,
+    enableStreetView = true
+}: GoogleMapProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const googleMapRef = useRef<google.maps.Map | null>(null);
+
     const streetViewRef = useRef<google.maps.StreetViewPanorama | null>(null);
     const markersRef = useRef<any[]>([]);
     const customMarkersRef = useRef<google.maps.Marker[]>([]);
@@ -86,7 +95,7 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
                     mapId: "DEMO_MAP_ID", // Required for Advanced Markers
                     mapTypeControl: true,
                     fullscreenControl: true,
-                    streetViewControl: true,
+                    streetViewControl: enableStreetView,
                     zoomControl: true,
                     styles: [
                         {

@@ -19,6 +19,7 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
     const exibidoras = useStore((state) => state.exibidoras);
     const setExibidoras = useStore((state) => state.setExibidoras);
     const pontos = useStore((state) => state.pontos);
+    const setPontos = useStore((state) => state.setPontos);
     const setExibidoraModalOpen = useStore((state) => state.setExibidoraModalOpen);
     const setEditingExibidora = useStore((state) => state.setEditingExibidora);
 
@@ -46,6 +47,13 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
             loadData();
         }
     }, [exibidoras.length, setExibidoras]);
+
+    // Ensure points are loaded for stats
+    useEffect(() => {
+        if (pontos.length === 0) {
+            api.getPontos().then(setPontos).catch(err => console.error("Failed to load points", err));
+        }
+    }, [pontos.length, setPontos]);
 
     const [contatosMap, setContatosMap] = useState<Record<number, any[]>>({});
 

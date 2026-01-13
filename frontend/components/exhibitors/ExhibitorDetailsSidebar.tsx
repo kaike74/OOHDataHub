@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
 import GoogleMap from '@/components/map/GoogleMap';
+import Sidebar from '@/components/Sidebar';
 import { formatCurrency } from '@/lib/utils';
 
 interface ExhibitorProposalStats {
@@ -139,57 +140,68 @@ export default function ExhibitorDetailsSidebar({ exibidoras, onClose, isOpen }:
                         </div>
                     )}
 
-                    {/* Lista de Pontos */}
-                    {exibidoras.pontos && exibidoras.pontos.length > 0 && (
-                        <div>
-                            <h4 className="font-semibold text-gray-900 flex items-center gap-2 mb-3">
-                                <MapPin size={16} className="text-emidias-primary" />
-                                Pontos Cadastrados ({exibidoras.pontos.length})
-                            </h4>
-                            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden max-h-60 overflow-y-auto scrollbar-thin">
-                                {exibidoras.pontos.map((p: any) => {
-                                    // Find rental product value
-                                    const locacao = p.produtos?.find((prod: any) => prod.tipo === 'Locação')?.valor;
-                                    return (
-                                        <div key={p.id} className="p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 flex justify-between items-start gap-3">
-                                            <div className="text-sm text-gray-700 break-words flex-1">
-                                                {p.endereco}, {p.numero} - {p.bairro}
-                                                <div className="text-xs text-gray-400 mt-0.5">{p.cidade}/{p.uf}</div>
-                                            </div>
-                                            <div className="text-sm font-semibold text-emidias-primary whitespace-nowrap">
-                                                {locacao ? formatCurrency(locacao) : '-'}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Map Section */}
+                    {/* Locais de Atuação e Pontos (Consolidated) */}
                     <div>
                         <h4 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
                             <MapIcon size={18} className="text-emidias-primary" />
                             Locais de Atuação
                         </h4>
 
-                        <div className="relative w-full h-48 bg-gray-100 rounded-xl overflow-hidden border border-gray-200 group">
-                            {/* Mini Map Preview - non-interactive to save resources/complex events */}
-                            <GoogleMap
-                                readOnly={true}
-                                showProposalActions={false}
-                                forcedFilterExibidora={[exibidoras.id]}
-                            />
+                        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                            {/* Map Header/Preview */}
+                            <div className="relative w-full h-64 bg-gray-100 border-b border-gray-200 group">
+                                <GoogleMap
+                                    readOnly={true}
+                                    showProposalActions={false}
+                                    forcedFilterExibidora={[exibidoras.id]}
+                                    enableStreetView={false} // Disable street view controls
+                                />
 
-                            <div className="absolute inset-0 bg-black/10 transition-colors flex items-center justify-center pointer-events-none group-hover:bg-black/20">
-                                <Button
-                                    className="pointer-events-auto bg-white/90 hover:bg-white text-gray-900 shadow-xl backdrop-blur-sm transform translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
-                                    onClick={handleExpandMap}
-                                    leftIcon={<Maximize2 size={16} />}
-                                >
-                                    Expandir Mapa
-                                </Button>
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center pointer-events-none">
+                                    <Button
+                                        className="pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                        onClick={handleExpandMap} // Reuse handler
+                                        leftIcon={<Maximize2 size={16} />}
+                                    >
+                                        Expandir Mapa
+                                    </Button>
+                                </div>
                             </div>
+
+                            {/* Points List - Integrated below Map */}
+                            {exibidoras.pontos && exibidoras.pontos.length > 0 ? (
+                                <div className="max-h-60 overflow-y-auto scrollbar-thin bg-white">
+                                    {exibidoras.pontos.map((p: any) => {
+                                        const locacao = p.produtos?.find((prod: any) => prod.tipo === 'Locação');
+                                        const valor = locacao?.valor;
+                                        const periodo = locacao?.periodo || '';
+
+                                        return (
+                                            <div key={p.id} className="p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 flex justify-between items-center gap-3 transition-colors">
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-sm text-gray-700 font-medium truncate" title={`${p.endereco}, ${p.numero} - ${p.bairro}`}>
+                                                        {p.endereco}, {p.numero} - {p.bairro}
+                                                    </p>
+                                                    <div className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                                                        <MapPin size={10} />
+                                                        {p.cidade}/{p.uf}
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-sm font-semibold text-emidias-primary whitespace-nowrap">
+                                                        {valor ? formatCurrency(valor) : '-'}
+                                                    </div>
+                                                    {periodo && <div className="text-[10px] text-gray-400 uppercase">{periodo}</div>}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="p-4 text-center text-gray-400 text-sm">
+                                    Nenhum ponto cadastrado.
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -233,33 +245,43 @@ export default function ExhibitorDetailsSidebar({ exibidoras, onClose, isOpen }:
                 </div>
             </div>
 
-            {/* Expanded Map Modal */}
+            {/* Expanded Map Popup */}
             {isMapExpanded && (
-                <div className="fixed inset-0 z-[100] flex flex-col bg-white animate-in zoom-in-95 duration-200">
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white shadow-sm z-10">
-                        <div>
-                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <MapIcon size={20} className="text-emidias-primary" />
-                                Mapa de Pontos: {exibidoras.nome}
-                            </h3>
-                            <p className="text-xs text-gray-500">Visualizando apenas pontos desta exibidora</p>
+                <>
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90]" onClick={handleCloseExpandedMap} />
+                    <div className="fixed inset-4 md:inset-10 bg-white rounded-2xl shadow-2xl z-[95] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-200">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white shadow-sm z-10">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <MapIcon size={20} className="text-emidias-primary" />
+                                    Mapa de Pontos: {exibidoras.nome}
+                                </h3>
+                                <p className="text-xs text-gray-500">Visualizando apenas pontos desta exibidora</p>
+                            </div>
+                            <Button
+                                variant="outline"
+                                onClick={handleCloseExpandedMap}
+                                leftIcon={<X size={18} />}
+                            >
+                                Fechar
+                            </Button>
                         </div>
-                        <Button
-                            variant="outline"
-                            onClick={handleCloseExpandedMap}
-                            leftIcon={<X size={18} />}
-                        >
-                            Fechar
-                        </Button>
+                        <div className="flex-1 relative bg-gray-100">
+                            <GoogleMap
+                                readOnly={true}
+                                showProposalActions={false}
+                                forcedFilterExibidora={[exibidoras.id]}
+                                enableStreetView={false}
+                            />
+                            {/* Render Sidebar inside the modal context if it handles its own visibility */}
+                            <div className="absolute inset-0 pointer-events-none">
+                                <div className="pointer-events-auto">
+                                    <Sidebar showProposalActions={false} />
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex-1 relative bg-gray-100">
-                        <GoogleMap
-                            readOnly={true}
-                            showProposalActions={false}
-                            forcedFilterExibidora={[exibidoras.id]}
-                        />
-                    </div>
-                </div>
+                </>
             )}
         </>
     );
