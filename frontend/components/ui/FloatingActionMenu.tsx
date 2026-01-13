@@ -50,7 +50,7 @@ export default function FloatingActionMenu({ actions, onOpenChange }: FloatingAc
         <div className="relative w-12 h-12 flex items-center justify-center">
             {/* Invisible expanded hover area - doesn't affect layout */}
             <div
-                className="absolute inset-0 pointer-events-auto"
+                className="absolute pointer-events-auto"
                 style={{
                     width: isOpen ? '120px' : '48px',
                     height: isOpen ? '120px' : '48px',
