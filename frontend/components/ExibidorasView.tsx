@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Plus } from 'lucide-react';
 import ExhibitorsTable from '@/components/exhibitors/ExhibitorsTable';
 import ExhibitorDetailsSidebar from '@/components/exhibitors/ExhibitorDetailsSidebar';
+import ExibidoraModal from '@/components/ExibidoraModal';
 
 interface ExibidorasViewProps {
     isModalOpen?: boolean;
@@ -16,6 +17,7 @@ interface ExibidorasViewProps {
 
 export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm = '' }: ExibidorasViewProps) {
     const exibidoras = useStore((state) => state.exibidoras);
+    const setExibidoras = useStore((state) => state.setExibidoras);
     const pontos = useStore((state) => state.pontos);
     const setExibidoraModalOpen = useStore((state) => state.setExibidoraModalOpen);
     const setEditingExibidora = useStore((state) => state.setEditingExibidora);
@@ -29,6 +31,21 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
             setExibidoraModalOpen(true);
         }
     }, [isModalOpen, setExibidoraModalOpen]);
+
+    // Ensure exibidoras are loaded
+    useEffect(() => {
+        if (exibidoras.length === 0) {
+            const loadData = async () => {
+                try {
+                    const data = await api.getExibidoras();
+                    setExibidoras(data);
+                } catch (error) {
+                    console.error("Failed to load exibidoras", error);
+                }
+            };
+            loadData();
+        }
+    }, [exibidoras.length, setExibidoras]);
 
     const [contatosMap, setContatosMap] = useState<Record<number, any[]>>({});
 
@@ -135,6 +152,7 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
                 exibidoras={selectedExibidoraDetails}
                 onClose={() => setSelectedExibidoraDetails(null)}
             />
+            <ExibidoraModal />
         </div>
     );
 }

@@ -70,8 +70,38 @@ export async function handleExibidoras(request: Request, env: Env, path: string)
         return new Response(JSON.stringify({ success: true }), { headers });
     }
 
+    // GET /api/exibidoras/:id/propostas - Listar propostas com pontos desta exibidora
+    if (request.method === 'GET' && path.match(/^\/api\/exibidoras\/\d+\/propostas$/)) {
+        const id = parseInt(path.split('/')[3]);
+
+        try {
+            const { results } = await env.DB.prepare(`
+                SELECT 
+                    p.id, 
+                    p.nome, 
+                    p.status, 
+                    COUNT(i.id) as pontos_count
+                FROM propostas p
+                JOIN itens_proposta i ON i.id_proposta = p.id
+                JOIN pontos_ooh po ON i.id_ponto = po.id
+                WHERE po.id_exibidora = ?
+                GROUP BY p.id
+                ORDER BY p.created_at DESC
+            `).bind(id).all();
+
+            return new Response(JSON.stringify(results), { headers });
+        } catch (e: any) {
+            console.error('Erro ao buscar propostas da exibidora:', e);
+            return new Response(JSON.stringify({ error: e.message }), {
+                status: 500,
+                headers,
+            });
+        }
+    }
+
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
         headers,
     });
 }
+

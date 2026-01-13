@@ -17,9 +17,11 @@ interface GoogleMapProps {
     searchLocation?: { lat: number; lng: number; address: string } | null;
     readOnly?: boolean;
     showProposalActions?: boolean;
+    forcedPontos?: Ponto[];
+    forcedFilterExibidora?: number[];
 }
 
-export default function GoogleMap({ searchLocation, readOnly = false, showProposalActions = true }: GoogleMapProps) {
+export default function GoogleMap({ searchLocation, readOnly = false, showProposalActions = true, forcedPontos, forcedFilterExibidora }: GoogleMapProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const googleMapRef = useRef<google.maps.Map | null>(null);
     const streetViewRef = useRef<google.maps.StreetViewPanorama | null>(null);
@@ -29,9 +31,14 @@ export default function GoogleMap({ searchLocation, readOnly = false, showPropos
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isHoveringTooltipRef = useRef<boolean>(false);
 
-    const pontos = useStore((state) => state.pontos);
+    const storePontos = useStore((state) => state.pontos);
+    const storeFilterExibidora = useStore((state) => state.filterExibidora);
+
+    // Use forced props if provided, otherwise fallback to store
+    const pontos = forcedPontos || storePontos;
+    const filterExibidora = forcedFilterExibidora !== undefined ? forcedFilterExibidora : storeFilterExibidora;
+
     const customLayers = useStore((state) => state.customLayers);
-    const filterExibidora = useStore((state) => state.filterExibidora);
     const filterPais = useStore((state) => state.filterPais);
     const filterUF = useStore((state) => state.filterUF);
     const filterCidade = useStore((state) => state.filterCidade);
