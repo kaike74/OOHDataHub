@@ -29,7 +29,9 @@ import {
     Share2,
     FileSpreadsheet,
     FileText as FilePdfIcon,
-    Search
+    Search,
+    ShoppingCart,
+    CheckCircle
 } from 'lucide-react';
 import ShareModal from './ShareModal';
 import FloatingActionMenu from './ui/FloatingActionMenu'; // Import FloatingActionMenu
@@ -181,36 +183,76 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const canEditValues = !readOnly && selectedProposta?.currentUserRole === 'admin';
     const canEditItems = !readOnly; // Editors can add/remove and change periods
 
-    const handleApproveProposal = async () => {
+    // Stage 1: Request Validation (Rascunho → Em Validação)
+    const handleRequestValidation = async () => {
         if (!selectedProposta) return;
-        if (!confirm('Deseja enviar esta proposta para validação?')) return;
+
+        const confirmed = confirm(
+            '🎯 Estamos perto de colocar sua marca nas ruas!\n\n' +
+            'Ao continuar, nossa equipe irá negociar e validar a disponibilidade dos pontos escolhidos.\n\n' +
+            'Gostaria de continuar ou prefere revisar o plano antes?'
+        );
+
+        if (!confirmed) return;
 
         try {
             await api.updateProposalStatus(selectedProposta.id, 'em_validacao');
             refreshProposta({ ...selectedProposta, status: 'em_validacao' });
         } catch (error) {
-            console.error('Failed to approve proposal', error);
-            alert('Falha ao aprovar proposta');
+            console.error('Failed to request validation', error);
+            alert('Falha ao solicitar validação');
         }
     };
 
+    // Stage 2: Conclude Validation (Em Validação → Validado - Aguardando Aprovação)
     const handleConcludeValidation = async () => {
         if (!selectedProposta) return;
-        // Validate all items are final
+
+        // Validate all items are final (APPROVED or UNAVAILABLE)
         const pendingItems = itens.filter(i => !['APPROVED', 'UNAVAILABLE'].includes(i.status_validacao || 'PENDING'));
         if (pendingItems.length > 0) {
-            alert('Todos os itens devem estar Aprovados ou Indisponíveis para concluir.');
+            alert(`❌ Ainda existem ${pendingItems.length} item(ns) pendente(s).\n\nTodos os itens devem estar com status "Aprovado" ou "Indisponível" para concluir a validação.`);
             return;
         }
 
-        if (!confirm('Deseja concluir a validação desta proposta? O cliente será notificado.')) return;
+        if (!confirm('Deseja concluir a validação desta proposta?')) return;
 
         try {
-            await api.updateProposalStatus(selectedProposta.id, 'aprovado');
-            refreshProposta({ ...selectedProposta, status: 'aprovado' });
+            await api.updateProposalStatus(selectedProposta.id, 'validado_aguardando_aprovacao');
+            refreshProposta({ ...selectedProposta, status: 'validado_aguardando_aprovacao' });
         } catch (error) {
             console.error('Failed to conclude validation', error);
             alert('Falha ao concluir validação');
+        }
+    };
+
+    // Stage 3: Final Approval (Validado - Aguardando Aprovação → Aprovado)
+    const handleFinalApproval = async () => {
+        if (!selectedProposta) return;
+
+        try {
+            // Remove unavailable items before approval
+            const unavailableItems = itens.filter(i => i.status_validacao === 'UNAVAILABLE');
+
+            if (unavailableItems.length > 0) {
+                const confirmRemoval = confirm(
+                    `⚠️ Existem ${unavailableItems.length} ponto(s) indisponível(is) que serão removidos automaticamente.\n\nDeseja continuar com a aprovação?`
+                );
+                if (!confirmRemoval) return;
+
+                // Remove unavailable items
+                const availableItems = itens.filter(i => i.status_validacao !== 'UNAVAILABLE');
+                await api.updateCart(selectedProposta.id, availableItems);
+                setItens(availableItems);
+                refreshProposta({ ...selectedProposta, itens: availableItems });
+            }
+
+            // Update status to approved
+            await api.updateProposalStatus(selectedProposta.id, 'aprovado');
+            refreshProposta({ ...selectedProposta, status: 'aprovado' });
+        } catch (error) {
+            console.error('Failed to approve proposal', error);
+            alert('Falha ao aprovar proposta');
         }
     };
 
@@ -631,7 +673,6 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 const status = row.original.status_validacao || 'PENDING';
                 const statusMap: Record<string, { label: string; color: string; bg: string }> = {
                     'PENDING': { label: 'Pendente', color: 'text-gray-600', bg: 'bg-gray-100' },
-                    'VALIDATION': { label: 'Em Validação', color: 'text-blue-600', bg: 'bg-blue-50' },
                     'APPROVED': { label: 'Aprovado', color: 'text-green-600', bg: 'bg-green-50' },
                     'UNAVAILABLE': { label: 'Indisponível', color: 'text-red-600', bg: 'bg-red-50' }
                 };
@@ -660,7 +701,6 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 disabled={!canEditValues}
                             >
                                 <option value="PENDING">Pendente</option>
-                                <option value="VALIDATION">Em Validação</option>
                                 <option value="APPROVED">Aprovado</option>
                                 <option value="UNAVAILABLE">Indisponível</option>
                             </select>
@@ -1351,7 +1391,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             {/* Resizer Handle */}
             {!embedded && isOpen && (
                 <div
-                    className="absolute -top-1 left-0 right-0 h-3 bg-transparent cursor-row-resize z-50 hover:bg-blue-500/10 flex items-center justify-center group/resizer"
+                    className="absolute -top-1 left-1/2 -translate-x-1/2 w-[60%] h-3 bg-transparent cursor-row-resize z-50 hover:bg-blue-500/10 flex items-center justify-center group/resizer"
                     onMouseDown={startResizing}
                 >
                     <div className="w-16 h-1 bg-gray-300 rounded-full group-hover/resizer:bg-blue-400 opacity-0 group-hover/resizer:opacity-100 transition-all" />
@@ -1381,11 +1421,16 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             <div className="flex flex-col px-4 first:pl-0">
                                 <span className="text-[10px] text-gray-500 uppercase tracking-wider">Status</span>
                                 <span className={`font-bold uppercase text-xs ${selectedProposta?.status === 'aprovado' ? 'text-green-600' :
-                                    selectedProposta?.status === 'em_validacao' ? 'text-blue-600' :
-                                        selectedProposta?.status === 'em_aprovacao' ? 'text-purple-600' :
-                                            'text-gray-500' // rascunho
+                                        selectedProposta?.status === 'validado_aguardando_aprovacao' ? 'text-emerald-600' :
+                                            selectedProposta?.status === 'em_validacao' ? 'text-blue-600' :
+                                                'text-gray-500' // rascunho
                                     }`}>
-                                    {selectedProposta?.status ? selectedProposta.status.replace('_', ' ') : 'Rascunho'}
+                                    {selectedProposta?.status === 'validado_aguardando_aprovacao'
+                                        ? 'Aguardando Aprovação'
+                                        : selectedProposta?.status
+                                            ? selectedProposta.status.replace(/_/g, ' ')
+                                            : 'Rascunho'
+                                    }
                                 </span>
                             </div>
 
@@ -1581,15 +1626,23 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                     icon: <Share2 size={18} />,
                                     onClick: () => setIsShareModalOpen(true)
                                 },
-                                ...(isInternal && selectedProposta?.status !== 'aprovado' ? [{
-                                    label: "Aprovar Proposta",
-                                    icon: <Check size={18} />,
-                                    onClick: handleApproveProposal
+                                // Stage 1: Solicitar Validação (only for rascunho)
+                                ...(isInternal && selectedProposta?.status === 'rascunho' ? [{
+                                    label: "Solicitar Validação",
+                                    icon: <ShoppingCart size={18} />,
+                                    onClick: handleRequestValidation
                                 }] : []),
+                                // Stage 2: Concluir Validação (only for em_validacao)
                                 ...(isInternal && selectedProposta?.status === 'em_validacao' ? [{
                                     label: "Concluir Validação",
                                     icon: <Check size={18} />,
                                     onClick: handleConcludeValidation
+                                }] : []),
+                                // Stage 3: Aprovar (only for validado_aguardando_aprovacao)
+                                ...(isInternal && selectedProposta?.status === 'validado_aguardando_aprovacao' ? [{
+                                    label: "Aprovar",
+                                    icon: <CheckCircle size={18} />,
+                                    onClick: handleFinalApproval
                                 }] : [])
                             ]}
                         />
