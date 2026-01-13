@@ -275,6 +275,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         );
     }, [itens, searchTerm]);
 
+
+
     // Use filteredItems for the table instead of itens directly
     // NOTE: If using groupBy, we might need to apply search BEFORE grouping or just filter the groups. 
     // For simplicity, let's assume table uses `table.getRowModel().rows` which comes from `data`.
@@ -1339,26 +1341,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             </div>
                         )}
                         <h3 className="font-semibold text-gray-800 text-sm">Carrinho ({itens.length})</h3>
-                        {selectedProposta && selectedProposta.status === 'rascunho' && !readOnly && (
-                            <Button
-                                onClick={(e) => { e.stopPropagation(); handleApproveProposal(); }}
-                                variant="outline"
-                                size="sm"
-                                className="ml-2 h-7 px-2 text-xs border-green-200 text-green-700 hover:bg-green-50"
-                            >
-                                Aprovar Proposta
-                            </Button>
-                        )}
-                        {selectedProposta && selectedProposta.status === 'em_validacao' && isInternal && (
-                            <Button
-                                onClick={(e) => { e.stopPropagation(); handleConcludeValidation(); }}
-                                variant="primary"
-                                size="sm"
-                                className="ml-2 h-7 px-2 text-xs bg-green-600 hover:bg-green-700 border-transparent text-white"
-                            >
-                                Concluir Validação
-                            </Button>
-                        )}
+                        {/* Old Buttons Removed - Moved to Floating Menu */}
                     </div>
 
 
@@ -1487,30 +1470,56 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     </div>
 
 
-                    {/* Grouping Menu */}
-                    <Button
-                        onClick={() => setIsGroupMenuOpen(!isGroupMenuOpen)}
-                        variant="ghost"
-                        size="sm"
-                        className={`gap-1 ${isGroupMenuOpen || groupBy !== 'none' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}
-                        title="Agrupar por"
-                    >
-                        <Layers size={16} />
-                        {groupBy !== 'none' && (
-                            <span className="text-[10px] font-semibold uppercase tracking-wide ml-1">
-                                {groupBy === 'pais' && 'País'}
-                                {groupBy === 'uf' && 'UF'}
-                                {groupBy === 'cidade' && 'Cidade'}
-                                {groupBy === 'exibidora_nome' && 'Exibidora'}
-                            </span>
-                        )}
-                    </Button>
+                    {/* Search and Actions Group */}
+                    <div className="flex items-center gap-3 ml-4 pl-4 border-l border-gray-200">
+                        {/* Search Bar */}
+                        <div className="relative w-64">
+                            <Input
+                                placeholder="Buscar no carrinho..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="h-9 pl-9 text-sm bg-gray-50 border-gray-200 focus:bg-white transition-colors rounded-lg"
+                            />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                        </div>
 
-                    {/* Grouping Dropdown */}
+                        {/* Floating Action Menu */}
+                        <FloatingActionMenu
+                            actions={[
+                                {
+                                    label: "Agrupar",
+                                    icon: <Layers size={18} />,
+                                    onClick: () => setIsGroupMenuOpen(true)
+                                },
+                                {
+                                    label: "Configurações",
+                                    icon: <Settings size={18} />,
+                                    onClick: () => setIsSettingsOpen(true)
+                                },
+                                {
+                                    label: "Compartilhar",
+                                    icon: <Share2 size={18} />,
+                                    onClick: () => setIsShareModalOpen(true)
+                                },
+                                ...(isInternal && selectedProposta?.status !== 'aprovado' ? [{
+                                    label: "Aprovar Proposta",
+                                    icon: <Check size={18} />,
+                                    onClick: handleApproveProposal
+                                }] : []),
+                                ...(isInternal && selectedProposta?.status === 'em_validacao' ? [{
+                                    label: "Concluir Validação",
+                                    icon: <Check size={18} />,
+                                    onClick: handleConcludeValidation
+                                }] : [])
+                            ]}
+                        />
+                    </div>
+
+                    {/* Grouping Dropdown - Restored */}
                     {isGroupMenuOpen && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={() => setIsGroupMenuOpen(false)} />
-                            <div className="absolute right-28 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
+                            <div className="absolute right-32 top-12 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
                                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Agrupar Por</h4>
                                 <div className="px-1">
                                     {[
@@ -1539,32 +1548,6 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 </div>
                             </div>
                         </>
-                    )}
-
-                    <Button
-                        onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                        variant="ghost"
-                        size="icon"
-                        className={`${isSettingsOpen ? 'bg-gray-100 text-gray-900 shadow-inner' : 'text-gray-500 hover:bg-gray-50'}`}
-                        title="Configurações da tabela"
-                    >
-                        <Eye size={16} />
-                    </Button>
-
-                    {!readOnly && (
-                        <Button
-                            onClick={() => {
-                                handleShareUpdate();
-                                setIsShareModalOpen(true);
-                            }}
-                            variant="secondary"
-                            size="sm"
-                            className="gap-2 bg-green-50 text-green-700 hover:bg-green-100 border-green-200 shadow-sm"
-                            title="Compartilhar Proposta"
-                            leftIcon={<Share2 size={16} />}
-                        >
-                            Compartilhar
-                        </Button>
                     )}
 
                     {isSettingsOpen && (

@@ -40,7 +40,7 @@ export default function FloatingActionMenu({ actions }: FloatingActionMenuProps)
                                         action.onClick();
                                     }}
                                     style={{ transitionDelay: `${index * 50}ms` }}
-                                    className="w-10 h-10 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300 text-gray-700 hover:text-blue-600 hover:border-blue-200"
+                                    className="w-10 h-10 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300 text-gray-700 hover:text-blue-600 hover:border-blue-200 animate-in zoom-in-50 fade-in slide-in-from-right-4 fill-mode-backwards"
                                 >
                                     {action.icon}
                                 </button>
