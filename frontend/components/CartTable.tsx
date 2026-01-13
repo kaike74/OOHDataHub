@@ -27,10 +27,13 @@ import {
     BarChart3,
     Share2,
     FileSpreadsheet,
-    FileText as FilePdfIcon
+    FileText as FilePdfIcon,
+    Search
 } from 'lucide-react';
 import ShareModal from './ShareModal';
+import FloatingActionMenu from './ui/FloatingActionMenu'; // Import FloatingActionMenu
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input'; // Import Input
 import {
     useReactTable,
     getCoreRowModel,
@@ -114,6 +117,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const pontos = useStore((state) => state.pontos);
 
     const [itens, setItens] = useState<PropostaItem[]>([]);
+    const [searchTerm, setSearchTerm] = useState(''); // Add Search State
     const [isSyncing, setIsSyncing] = useState(false);
 
     // Table State
@@ -257,6 +261,24 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             .map(([name, items]) => ({ name, items, count: items.length }))
             .sort((a, b) => a.name.localeCompare(b.name));
     }, [itens, groupBy]);
+
+    // Search Filtering
+    const filteredItems = useMemo(() => {
+        if (!searchTerm) return itens;
+        const lowerTerm = searchTerm.toLowerCase();
+        return itens.filter(item =>
+            (item.endereco?.toLowerCase().includes(lowerTerm) || '') ||
+            (item.cidade?.toLowerCase().includes(lowerTerm) || '') ||
+            (item.codigo_ooh?.toLowerCase().includes(lowerTerm) || '') ||
+            (item.uf?.toLowerCase().includes(lowerTerm) || '') ||
+            (item.exibidora_nome?.toLowerCase().includes(lowerTerm) || '')
+        );
+    }, [itens, searchTerm]);
+
+    // Use filteredItems for the table instead of itens directly
+    // NOTE: If using groupBy, we might need to apply search BEFORE grouping or just filter the groups. 
+    // For simplicity, let's assume table uses `table.getRowModel().rows` which comes from `data`.
+    // So we need to pass `filteredItems` to `useReactTable`.
 
     // Toggle group collapse
     const toggleGroupCollapse = useCallback((groupName: string) => {
@@ -1259,7 +1281,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
 
     const table = useReactTable({
-        data: itens,
+        data: filteredItems, // Use filteredItems here
         columns,
         state: {
             sorting,

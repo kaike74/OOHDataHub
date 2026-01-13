@@ -20,6 +20,13 @@ interface GoogleMapProps {
     forcedPontos?: Ponto[];
     forcedFilterExibidora?: number[];
     enableStreetView?: boolean;
+    // New optional props for overriding global store filters
+    forcedFilterPais?: string[];
+    forcedFilterUF?: string[];
+    forcedFilterCidade?: string[];
+    forcedFilterTipos?: string[];
+    forcedFilterValorMin?: number | null;
+    forcedFilterValorMax?: number | null;
 }
 
 export default function GoogleMap({
@@ -28,7 +35,14 @@ export default function GoogleMap({
     showProposalActions = true,
     forcedPontos,
     forcedFilterExibidora,
-    enableStreetView = true
+    enableStreetView = true,
+    // Add new props for forced filters
+    forcedFilterPais,
+    forcedFilterUF,
+    forcedFilterCidade,
+    forcedFilterTipos,
+    forcedFilterValorMin,
+    forcedFilterValorMax
 }: GoogleMapProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const googleMapRef = useRef<google.maps.Map | null>(null);
@@ -43,17 +57,25 @@ export default function GoogleMap({
     const storePontos = useStore((state) => state.pontos);
     const storeFilterExibidora = useStore((state) => state.filterExibidora);
 
-    // Use forced props if provided, otherwise fallback to store
+    // Global store filters (used if no forced prop provided)
+    const storeFilterPais = useStore((state) => state.filterPais);
+    const storeFilterUF = useStore((state) => state.filterUF);
+    const storeFilterCidade = useStore((state) => state.filterCidade);
+    const storeFilterTipos = useStore((state) => state.filterTipos);
+    const storeFilterValorMin = useStore((state) => state.filterValorMin);
+    const storeFilterValorMax = useStore((state) => state.filterValorMax);
+
+    // Resolve effective filters (Prop > Store)
     const pontos = forcedPontos || storePontos;
     const filterExibidora = forcedFilterExibidora !== undefined ? forcedFilterExibidora : storeFilterExibidora;
+    const filterPais = forcedFilterPais !== undefined ? forcedFilterPais : storeFilterPais;
+    const filterUF = forcedFilterUF !== undefined ? forcedFilterUF : storeFilterUF;
+    const filterCidade = forcedFilterCidade !== undefined ? forcedFilterCidade : storeFilterCidade;
+    const filterTipos = forcedFilterTipos !== undefined ? forcedFilterTipos : storeFilterTipos;
+    const filterValorMin = forcedFilterValorMin !== undefined ? forcedFilterValorMin : storeFilterValorMin;
+    const filterValorMax = forcedFilterValorMax !== undefined ? forcedFilterValorMax : storeFilterValorMax;
 
     const customLayers = useStore((state) => state.customLayers);
-    const filterPais = useStore((state) => state.filterPais);
-    const filterUF = useStore((state) => state.filterUF);
-    const filterCidade = useStore((state) => state.filterCidade);
-    const filterTipos = useStore((state) => state.filterTipos);
-    const filterValorMin = useStore((state) => state.filterValorMin);
-    const filterValorMax = useStore((state) => state.filterValorMax);
     const setSelectedPonto = useStore((state) => state.setSelectedPonto);
     const setSidebarOpen = useStore((state) => state.setSidebarOpen);
     const setModalOpen = useStore((state) => state.setModalOpen);
