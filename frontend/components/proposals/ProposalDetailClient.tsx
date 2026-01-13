@@ -69,10 +69,11 @@ export default function ProposalDetailClient() {
 
             try {
                 // Fetch data
-                const [proposta, pontosData, exibidorasData] = await Promise.all([
+                const [proposta, pontosData, exibidorasData, clientsData] = await Promise.all([
                     api.getProposta(id),
                     api.getPontos(),
                     api.getExibidoras(),
+                    api.getClientes()
                 ]);
 
                 // Update Legacy Store
@@ -80,8 +81,12 @@ export default function ProposalDetailClient() {
                 setExibidoras(exibidorasData);
                 setSelectedProposta(proposta);
 
-                // Update New Store
-                setProposal(proposta);
+                // Update New Store (Enrich with Client)
+                const enrichedProposal = {
+                    ...proposta,
+                    cliente: clientsData.find((c: any) => c.id === proposta.id_cliente)
+                };
+                setProposal(enrichedProposal);
 
             } catch (err) {
                 console.error("Error loading proposal context:", err);
@@ -91,6 +96,7 @@ export default function ProposalDetailClient() {
             }
         };
 
+        loadContext();
         loadContext();
     }, [id, setPontos, setExibidoras, setSelectedProposta, setProposal, router]);
 

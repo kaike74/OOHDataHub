@@ -1486,7 +1486,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 >
 
                     {/* Search and Actions Group */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 ml-auto">
                         {/* Animated Search Bar - Exact Replica */}
                         <div className={cn(styles.finderBox, isSearchOpen && styles.open, "z-50")}>
                             <div className={styles.fieldHolder}>
