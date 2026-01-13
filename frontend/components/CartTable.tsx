@@ -33,7 +33,9 @@ import {
 import ShareModal from './ShareModal';
 import FloatingActionMenu from './ui/FloatingActionMenu'; // Import FloatingActionMenu
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input'; // Import Input
+import { X } from 'lucide-react'; // Import X icon
+import styles from './ui/AnimatedSearchBar.module.css'; // Import styles
+import { Input } from '@/components/ui/Input';
 import {
     useReactTable,
     getCoreRowModel,
@@ -134,6 +136,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isGroupMenuOpen, setIsGroupMenuOpen] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false); // Add Search Open State
     const [focusedCell, setFocusedCell] = useState<{ rowId: number | null; columnId: string | null }>({ rowId: null, columnId: null });
 
     // Grouping State
@@ -1403,10 +1406,23 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     onClick={e => e.stopPropagation()}
                 >
 
-                    <div className="flex items-center gap-4 text-sm animate-fade-in divide-x divide-gray-200">
+                    <div className="flex items-center gap-4 text-sm animate-fade-in divide-x divide-gray-200 ml-4 pl-4 border-l border-gray-200">
+                        {/* Status */}
+                        <div className="flex flex-col px-4 first:pl-0">
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">Status</span>
+                            <span className={`font-bold uppercase text-xs ${selectedProposta?.status === 'aprovado' ? 'text-green-600' :
+                                    selectedProposta?.status === 'em_validacao' ? 'text-blue-600' :
+                                        selectedProposta?.status === 'em_aprovacao' ? 'text-purple-600' :
+                                            'text-gray-500' // rascunho
+                                }`}>
+                                {selectedProposta?.status ? selectedProposta.status.replace('_', ' ') : 'Rascunho'}
+                            </span>
+                        </div>
+
+
                         {/* Impactos Totais */}
-                        <div className="flex flex-col items-end px-4 first:pl-0">
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">Impactos Totais</span>
+                        <div className="flex flex-col items-end px-4">
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">Impactos</span>
                             <span className="font-bold text-gray-700">
                                 {formatNumber(itens.reduce((sum, item) => {
                                     let diffDays = 0;
@@ -1422,7 +1438,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
                         {/* Investimento Total */}
                         <div className="flex flex-col items-end px-4">
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">Investimento Total</span>
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">Investimento</span>
                             <span className="font-bold text-emerald-600">
                                 {formatCurrency(itens.reduce((sum, item) => {
                                     let qtd = 1;
@@ -1439,7 +1455,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
                         {/* CPM Total */}
                         <div className="flex flex-col items-end px-4 last:pr-0">
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">CPM Total</span>
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">CPM</span>
                             <span className="font-bold text-blue-600">
                                 {(() => {
                                     const totalInvest = itens.reduce((sum, item) => {
@@ -1472,15 +1488,37 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
                     {/* Search and Actions Group */}
                     <div className="flex items-center gap-3 ml-4 pl-4 border-l border-gray-200">
-                        {/* Search Bar */}
-                        <div className="relative w-64">
-                            <Input
-                                placeholder="Buscar no carrinho..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="h-9 pl-9 text-sm bg-gray-50 border-gray-200 focus:bg-white transition-all duration-300 focus:w-80 w-64 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
-                            />
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                        {/* Animated Search Bar - Exact Replica */}
+                        <div className={cn(styles.finderBox, isSearchOpen && styles.open, "z-50")}>
+                            <div className={styles.fieldHolder}>
+                                <div
+                                    className={styles.iconButton}
+                                    onClick={() => {
+                                        setIsSearchOpen(true);
+                                        // Focus logic if needed
+                                    }}
+                                >
+                                    <Search size={22} className="text-gray-400" />
+                                </div>
+                                <input
+                                    type="text"
+                                    className={styles.input}
+                                    placeholder="Buscar no carrinho..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onClick={(e) => { e.stopPropagation(); setIsSearchOpen(true); }}
+                                />
+                                <div
+                                    className={styles.closeButton}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSearchTerm('');
+                                        setIsSearchOpen(false);
+                                    }}
+                                >
+                                    <X size={18} />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Floating Action Menu */}
@@ -1515,11 +1553,10 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                         />
                     </div>
 
-                    {/* Grouping Dropdown - Restored */}
+                    {/* Grouping Dropdown - Repositioned */}
                     {isGroupMenuOpen && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={() => setIsGroupMenuOpen(false)} />
-                            {/* Repositioned to align better with the menu trigger */}
                             <div className="absolute right-0 top-0 mt-0 mr-12 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
                                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Agrupar Por</h4>
                                 <div className="px-1">
@@ -1554,7 +1591,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     {isSettingsOpen && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
-                            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
+                            {/* Settings Dropdown - Aligned with Grouping Dropdown */}
+                            <div className="absolute right-0 top-0 mt-0 mr-12 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
                                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Colunas Visíveis</h4>
                                 <div className="max-h-60 overflow-y-auto px-1">
                                     {table.getAllLeafColumns()
