@@ -1345,7 +1345,85 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             </div>
                         )}
                         <h3 className="font-semibold text-gray-800 text-sm">Carrinho ({itens.length})</h3>
-                        {/* Old Buttons Removed - Moved to Floating Menu */}
+
+                        {/* Status & Totals - MOVED TO LEFT */}
+                        <div className="flex items-center gap-4 text-sm animate-fade-in divide-x divide-gray-200 ml-4 pl-4 border-l border-gray-200">
+                            {/* Status */}
+                            <div className="flex flex-col px-4 first:pl-0">
+                                <span className="text-[10px] text-gray-500 uppercase tracking-wider">Status</span>
+                                <span className={`font-bold uppercase text-xs ${selectedProposta?.status === 'aprovado' ? 'text-green-600' :
+                                    selectedProposta?.status === 'em_validacao' ? 'text-blue-600' :
+                                        selectedProposta?.status === 'em_aprovacao' ? 'text-purple-600' :
+                                            'text-gray-500' // rascunho
+                                    }`}>
+                                    {selectedProposta?.status ? selectedProposta.status.replace('_', ' ') : 'Rascunho'}
+                                </span>
+                            </div>
+
+                            {/* Impactos Totais */}
+                            <div className="flex flex-col items-end px-4">
+                                <span className="text-[10px] text-gray-500 uppercase tracking-wider">Impactos</span>
+                                <span className="font-bold text-gray-700">
+                                    {formatNumber(itens.reduce((sum, item) => {
+                                        let diffDays = 0;
+                                        if (item.periodo_inicio && item.periodo_fim) {
+                                            const start = new Date(item.periodo_inicio);
+                                            const end = new Date(item.periodo_fim);
+                                            diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+                                        }
+                                        return sum + ((item.fluxo_diario || 0) * diffDays);
+                                    }, 0))}
+                                </span>
+                            </div>
+
+                            {/* Investimento Total */}
+                            <div className="flex flex-col items-end px-4">
+                                <span className="text-[10px] text-gray-500 uppercase tracking-wider">Investimento</span>
+                                <span className="font-bold text-emerald-600">
+                                    {formatCurrency(itens.reduce((sum, item) => {
+                                        let qtd = 1;
+                                        if (item.periodo_inicio && item.periodo_fim) {
+                                            const start = new Date(item.periodo_inicio);
+                                            const end = new Date(item.periodo_fim);
+                                            const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                                            qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                                        }
+                                        return sum + ((item.valor_locacao || 0) * qtd);
+                                    }, 0))}
+                                </span>
+                            </div>
+
+                            {/* CPM Total */}
+                            <div className="flex flex-col items-end px-4 last:pr-0">
+                                <span className="text-[10px] text-gray-500 uppercase tracking-wider">CPM</span>
+                                <span className="font-bold text-blue-600">
+                                    {(() => {
+                                        const totalInvest = itens.reduce((sum, item) => {
+                                            let qtd = 1;
+                                            if (item.periodo_inicio && item.periodo_fim) {
+                                                const start = new Date(item.periodo_inicio);
+                                                const end = new Date(item.periodo_fim);
+                                                const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                                                qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                                            }
+                                            return sum + ((item.valor_locacao || 0) * qtd);
+                                        }, 0);
+
+                                        const totalImpactos = itens.reduce((sum, item) => {
+                                            let diffDays = 0;
+                                            if (item.periodo_inicio && item.periodo_fim) {
+                                                const start = new Date(item.periodo_inicio);
+                                                const end = new Date(item.periodo_fim);
+                                                diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+                                            }
+                                            return sum + ((item.fluxo_diario || 0) * diffDays);
+                                        }, 0);
+
+                                        return formatCurrency(totalImpactos > 0 ? (totalInvest / totalImpactos) * 1000 : 0);
+                                    })()}
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
 
@@ -1407,88 +1485,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     onClick={e => e.stopPropagation()}
                 >
 
-                    <div className="flex items-center gap-4 text-sm animate-fade-in divide-x divide-gray-200 ml-4 pl-4 border-l border-gray-200">
-                        {/* Status */}
-                        <div className="flex flex-col px-4 first:pl-0">
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">Status</span>
-                            <span className={`font-bold uppercase text-xs ${selectedProposta?.status === 'aprovado' ? 'text-green-600' :
-                                selectedProposta?.status === 'em_validacao' ? 'text-blue-600' :
-                                    selectedProposta?.status === 'em_aprovacao' ? 'text-purple-600' :
-                                        'text-gray-500' // rascunho
-                                }`}>
-                                {selectedProposta?.status ? selectedProposta.status.replace('_', ' ') : 'Rascunho'}
-                            </span>
-                        </div>
-
-
-                        {/* Impactos Totais */}
-                        <div className="flex flex-col items-end px-4">
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">Impactos</span>
-                            <span className="font-bold text-gray-700">
-                                {formatNumber(itens.reduce((sum, item) => {
-                                    let diffDays = 0;
-                                    if (item.periodo_inicio && item.periodo_fim) {
-                                        const start = new Date(item.periodo_inicio);
-                                        const end = new Date(item.periodo_fim);
-                                        diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-                                    }
-                                    return sum + ((item.fluxo_diario || 0) * diffDays);
-                                }, 0))}
-                            </span>
-                        </div>
-
-                        {/* Investimento Total */}
-                        <div className="flex flex-col items-end px-4">
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">Investimento</span>
-                            <span className="font-bold text-emerald-600">
-                                {formatCurrency(itens.reduce((sum, item) => {
-                                    let qtd = 1;
-                                    if (item.periodo_inicio && item.periodo_fim) {
-                                        const start = new Date(item.periodo_inicio);
-                                        const end = new Date(item.periodo_fim);
-                                        const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                                        qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                                    }
-                                    return sum + ((item.valor_locacao || 0) * qtd);
-                                }, 0))}
-                            </span>
-                        </div>
-
-                        {/* CPM Total */}
-                        <div className="flex flex-col items-end px-4 last:pr-0">
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wider">CPM</span>
-                            <span className="font-bold text-blue-600">
-                                {(() => {
-                                    const totalInvest = itens.reduce((sum, item) => {
-                                        let qtd = 1;
-                                        if (item.periodo_inicio && item.periodo_fim) {
-                                            const start = new Date(item.periodo_inicio);
-                                            const end = new Date(item.periodo_fim);
-                                            const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                                            qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                                        }
-                                        return sum + ((item.valor_locacao || 0) * qtd);
-                                    }, 0);
-
-                                    const totalImpactos = itens.reduce((sum, item) => {
-                                        let diffDays = 0;
-                                        if (item.periodo_inicio && item.periodo_fim) {
-                                            const start = new Date(item.periodo_inicio);
-                                            const end = new Date(item.periodo_fim);
-                                            diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-                                        }
-                                        return sum + ((item.fluxo_diario || 0) * diffDays);
-                                    }, 0);
-
-                                    return formatCurrency(totalImpactos > 0 ? (totalInvest / totalImpactos) * 1000 : 0);
-                                })()}
-                            </span>
-                        </div>
-                    </div>
-
-
                     {/* Search and Actions Group */}
-                    <div className="flex items-center gap-3 ml-4 pl-4 border-l border-gray-200">
+                    <div className="flex items-center gap-3">
                         {/* Animated Search Bar - Exact Replica */}
                         <div className={cn(styles.finderBox, isSearchOpen && styles.open, "z-50")}>
                             <div className={styles.fieldHolder}>
