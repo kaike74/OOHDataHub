@@ -7,7 +7,6 @@ import { Ponto } from '@/lib/types';
 import { api } from '@/lib/api';
 import MapTooltip from '@/components/MapTooltip';
 import MapLayers from './MapLayers';
-import AIChat from '@/components/AIChat';
 import { MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
@@ -557,7 +556,6 @@ export default function GoogleMap({
             <div ref={mapRef} className="w-full h-full" />
 
             <MapLayers />
-            {selectedProposta && <AIChat />}
 
             {/* Tooltip no Hover */}
             {hoveredPonto && isLoaded && !isStreetViewMode && (

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useStore } from '@/lib/store';
@@ -31,11 +31,13 @@ import {
     FileText as FilePdfIcon,
     Search,
     ShoppingCart,
-    CheckCircle
+    CheckCircle,
+    Bot
 } from 'lucide-react';
 import ShareModal from './ShareModal';
 import FloatingActionMenu from './ui/FloatingActionMenu'; // Import FloatingActionMenu
 import { ConfirmDialog } from './ui/ConfirmDialog';
+import AIChat from './AIChat';
 import { Button } from '@/components/ui/Button';
 import { X } from 'lucide-react'; // Import X icon
 import styles from './ui/AnimatedSearchBar.module.css'; // Import styles
@@ -143,6 +145,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const [isSearchOpen, setIsSearchOpen] = useState(false); // Add Search Open State
     const [isMenuOpen, setIsMenuOpen] = useState(false); // Track FloatingActionMenu state
     const [focusedCell, setFocusedCell] = useState<{ rowId: number | null; columnId: string | null }>({ rowId: null, columnId: null });
+    const [isAIChatOpen, setIsAIChatOpen] = useState(false); // AI Chat state
 
     // Dialog states
     const [confirmDialog, setConfirmDialog] = useState<{
@@ -219,7 +222,13 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         // Validate all items are final (APPROVED or UNAVAILABLE)
         const pendingItems = itens.filter(i => !['APPROVED', 'UNAVAILABLE'].includes(i.status_validacao || 'PENDING'));
         if (pendingItems.length > 0) {
-            alert(`❌ Ainda existem ${pendingItems.length} item(ns) pendente(s).\n\nTodos os itens devem estar com status "Aprovado" ou "Indisponível" para concluir a validação.`);
+            setConfirmDialog({
+                isOpen: true,
+                title: 'Itens Pendentes',
+                message: `❌ Ainda existem ${pendingItems.length} item(ns) pendente(s).\n\nTodos os itens devem estar com status "Aprovado" ou "Indisponível" para concluir a validação.`,
+                type: 'warning',
+                onConfirm: () => { } // Just close dialog
+            });
             return;
         }
 
@@ -1640,6 +1649,11 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                     icon: <Share2 size={18} />,
                                     onClick: () => setIsShareModalOpen(true)
                                 },
+                                {
+                                    label: "Assistente IA",
+                                    icon: <Bot size={18} />,
+                                    onClick: () => setIsAIChatOpen(true)
+                                },
                                 // Stage 1: Solicitar Validação (only for rascunho)
                                 ...(isInternal && selectedProposta?.status === 'rascunho' ? [{
                                     label: "Solicitar Validação",
@@ -1829,7 +1843,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
                     {/* Bulk Actions - Discrete Popup at top-left */}
                     {!readOnly && Object.keys(rowSelection).length > 0 && (
-                        <div className="absolute top-2 left-2 z-50 bg-white shadow-lg border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-3 animate-in fade-in slide-in-from-left-2">
+                        <div className="absolute top-3 left-12 z-50 bg-white shadow-lg border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-3 animate-in fade-in slide-in-from-left-2">
                             <span className="text-xs font-semibold text-gray-700">
                                 {Object.keys(rowSelection).length} selecionado{Object.keys(rowSelection).length > 1 ? 's' : ''}
                             </span>
@@ -2060,6 +2074,19 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 message={confirmDialog.message}
                 type={confirmDialog.type}
             />
+
+            {/* AI Chat - Conditionally rendered */}
+            {isAIChatOpen && (
+                <div className="fixed inset-0 z-[70]">
+                    <div
+                        className="absolute inset-0 bg-black/30"
+                        onClick={() => setIsAIChatOpen(false)}
+                    />
+                    <div className="relative z-[71]">
+                        <AIChat />
+                    </div>
+                </div>
+            )}
         </div >
     );
 }
