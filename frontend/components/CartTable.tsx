@@ -1478,7 +1478,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 placeholder="Buscar no carrinho..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="h-9 pl-9 text-sm bg-gray-50 border-gray-200 focus:bg-white transition-colors rounded-lg"
+                                className="h-9 pl-9 text-sm bg-gray-50 border-gray-200 focus:bg-white transition-all duration-300 focus:w-80 w-64 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
                             />
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                         </div>
@@ -1492,7 +1492,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                     onClick: () => setIsGroupMenuOpen(true)
                                 },
                                 {
-                                    label: "Configurações",
+                                    label: "Mostrar/Ocultar Colunas",
                                     icon: <Settings size={18} />,
                                     onClick: () => setIsSettingsOpen(true)
                                 },
@@ -1519,7 +1519,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     {isGroupMenuOpen && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={() => setIsGroupMenuOpen(false)} />
-                            <div className="absolute right-32 top-12 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
+                            {/* Repositioned to align better with the menu trigger */}
+                            <div className="absolute right-0 top-0 mt-0 mr-12 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
                                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Agrupar Por</h4>
                                 <div className="px-1">
                                     {[

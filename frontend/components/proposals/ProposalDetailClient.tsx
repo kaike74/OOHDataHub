@@ -179,12 +179,7 @@ export default function ProposalDetailClient() {
                 />
 
                 {/* Auto-save Indicator */}
-                {isSaving && (
-                    <div className="fixed bottom-4 right-4 z-50 bg-black/80 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-2 animate-pulse">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        Salvando...
-                    </div>
-                )}
+
             </div>
         </MainLayout>
     );
