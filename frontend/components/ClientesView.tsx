@@ -1,17 +1,12 @@
-
 import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
-import {
-    Search, Plus, Building2, Edit2, Trash2, ChevronRight, Menu, Users
-} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Cliente } from '@/lib/types';
 import ClientModal from './ClientModal';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { SafeImage } from '@/components/ui/SafeImage';
-import { Skeleton } from '@/components/ui/Skeleton';
+import ClientsTable from './clients/ClientsTable';
+import ClientDetailsSidebar from './clients/ClientDetailsSidebar';
 
 interface ClientesViewProps {
     isModalOpen?: boolean;
@@ -22,8 +17,8 @@ interface ClientesViewProps {
 export default function ClientesView({ isModalOpen, onCloseModal, searchTerm = '' }: ClientesViewProps) {
     const [clientes, setClientes] = useState<Cliente[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    // Removed local searchQuery state in favor of prop
     const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
+    const [selectedClientDetails, setSelectedClientDetails] = useState<Cliente | null>(null);
 
     // Internal state for modal visibility
     const [internalModalOpen, setInternalModalOpen] = useState(false);
@@ -42,8 +37,6 @@ export default function ClientesView({ isModalOpen, onCloseModal, searchTerm = '
     };
 
     const setSelectedCliente = useStore((state) => state.setSelectedCliente);
-    const setCurrentView = useStore((state) => state.setCurrentView);
-    // Removed legacy setMenuOpen usage
 
     useEffect(() => {
         loadClientes();
@@ -61,11 +54,9 @@ export default function ClientesView({ isModalOpen, onCloseModal, searchTerm = '
         }
     };
 
-    const router = useRouter();
-
     const handleClienteClick = (cliente: Cliente) => {
-        setSelectedCliente(cliente);
-        router.push('/propostas');
+        // Instead of navigating, open sidebar
+        setSelectedClientDetails(cliente);
     };
 
     // Edit needs to open modal.
@@ -93,6 +84,9 @@ export default function ClientesView({ isModalOpen, onCloseModal, searchTerm = '
 
             await api.deleteCliente(cliente.id);
             setClientes(prev => prev.filter(c => c.id !== cliente.id));
+            if (selectedClientDetails?.id === cliente.id) {
+                setSelectedClientDetails(null);
+            }
         } catch (error) {
             console.error('Erro ao excluir cliente:', error);
             alert('Erro ao excluir cliente. Tente novamente.');
@@ -105,99 +99,17 @@ export default function ClientesView({ isModalOpen, onCloseModal, searchTerm = '
     );
 
     return (
-        <div className="h-full bg-gray-50 flex flex-col overflow-hidden">
-            {/* Local Sub-header or Search Bar (REMOVED - Lifted to TopBar) */}
-
-
-            <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-                {isLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {[...Array(8)].map((_, i) => (
-                            <Skeleton key={i} className="h-40 w-full rounded-2xl" />
-                        ))}
-                    </div>
-                ) : filteredClientes.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-xl border-2 border-dashed border-gray-200 animate-in fade-in zoom-in duration-500">
-                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Building2 className="text-gray-300" size={32} />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900">Nenhum cliente encontrado</h3>
-                        <p className="text-gray-500 text-sm">Tente buscar por outro termo ou cadastre um novo cliente.</p>
-                        <Button
-                            className="mt-4"
-                            variant="outline"
-                            onClick={() => setInternalModalOpen(true)}
-                        >
-                            Cadastrar Cliente
-                        </Button>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in-up duration-500">
-                        {filteredClientes.map((cliente) => (
-                            <div
-                                key={cliente.id}
-                                onClick={() => handleClienteClick(cliente)}
-                                className="bg-white rounded-2xl p-5 border border-gray-200 hover:border-emidias-accent/50 hover:shadow-xl hover:shadow-emidias-accent/5 cursor-pointer transition-all duration-300 flex flex-col group/card relative"
-                            >
-                                {/* Action Buttons */}
-                                <div className="absolute top-3 right-3 flex gap-1 opacity-100 sm:opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
-                                    <button
-                                        onClick={(e) => onEditClick(cliente, e)}
-                                        className="p-2 bg-white border border-gray-200 text-gray-600 hover:text-emidias-accent hover:border-emidias-accent rounded-lg transition-colors shadow-sm"
-                                        title="Editar cliente"
-                                    >
-                                        <Edit2 size={16} />
-                                    </button>
-                                    <button
-                                        onClick={(e) => handleDeleteCliente(cliente, e)}
-                                        className="p-2 bg-white border border-gray-200 text-gray-600 hover:text-red-500 hover:border-red-500 rounded-lg transition-colors shadow-sm"
-                                        title="Excluir cliente"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-
-                                {/* Logo */}
-                                <div className="w-16 h-16 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100 overflow-hidden mb-4 self-center relative">
-                                    {cliente.logo_url ? (
-                                        <SafeImage
-                                            src={api.getImageUrl(cliente.logo_url)}
-                                            alt={cliente.nome}
-                                            className="w-full h-full object-contain"
-                                        />
-                                    ) : (
-                                        <Building2 className="text-gray-300" size={32} />
-                                    )}
-                                </div>
-
-                                {/* Info */}
-                                <div className="text-center">
-                                    <h3 className="text-lg font-bold text-gray-900 group-hover/card:text-emidias-accent transition-colors line-clamp-1 mb-1">
-                                        {cliente.nome}
-                                    </h3>
-                                    {cliente.cnpj && (
-                                        <p className="text-xs text-gray-400 font-mono mb-2">
-                                            {cliente.cnpj}
-                                        </p>
-                                    )}
-                                    {cliente.segmento && (
-                                        <p className="text-xs text-gray-500 mb-3">
-                                            {cliente.segmento}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Action */}
-                                <div className="mt-auto pt-3 border-t border-gray-100 text-center">
-                                    <span className="text-xs text-emidias-accent font-medium flex items-center justify-center gap-1">
-                                        Ver propostas
-                                        <ChevronRight size={14} className="group-hover/card:translate-x-1 transition-transform" />
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+        <div className="h-full bg-gray-50 flex flex-col overflow-hidden relative">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin">
+                <div className="w-full max-w-[1920px] mx-auto">
+                    <ClientsTable
+                        clients={filteredClientes}
+                        isLoading={isLoading}
+                        onRowClick={handleClienteClick}
+                        onEdit={onEditClick}
+                        onDelete={handleDeleteCliente}
+                    />
+                </div>
             </div>
 
             <ClientModal
@@ -209,6 +121,12 @@ export default function ClientesView({ isModalOpen, onCloseModal, searchTerm = '
                     handleCloseModal();
                 }}
                 editClient={editingCliente}
+            />
+
+            <ClientDetailsSidebar
+                isOpen={!!selectedClientDetails}
+                client={selectedClientDetails}
+                onClose={() => setSelectedClientDetails(null)}
             />
         </div>
     );

@@ -2,6 +2,9 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { Search, X, Loader2, MapPin, Target } from 'lucide-react';
+import styles from './ui/AnimatedSearchBar.module.css';
+import { cn } from '@/lib/utils';
+import { api } from '@/lib/api';
 
 interface AddressSearchProps {
   onLocationSelect: (location: { lat: number; lng: number; address: string }) => void;
@@ -20,6 +23,7 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
   const [searchValue, setSearchValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // Controls the expansion
   const [dbResults, setDbResults] = useState<SearchResult[]>([]);
   const [googleResults, setGoogleResults] = useState<SearchResult[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -123,7 +127,8 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
     return () => clearTimeout(timer);
   }, [searchValue, searchDatabase, searchGoogle]);
 
-  const handleClear = () => {
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setSearchValue('');
     setDbResults([]);
     setGoogleResults([]);
@@ -173,17 +178,37 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
     }
   };
 
+  const handleToggle = () => {
+    if (!isOpen) {
+      setIsOpen(true);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  };
+
   const allResults = [...dbResults, ...googleResults];
 
+  // Close logic for outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.finder-box-container') && !searchValue && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [searchValue, isOpen]);
+
+
   return (
-    <div className="relative">
-      <div
-        className={`map-search-bar flex items-center gap-3 transition-all h-9 rounded-lg px-2 ${isFocused
-          ? 'bg-white border-emidias-primary ring-2 ring-emidias-primary/20'
-          : 'bg-white border-gray-200 hover:border-gray-300'
-          } border`}
-      >
-        <div className={`flex-shrink-0 transition-colors ${isFocused ? 'text-emidias-accent' : 'text-emidias-gray-400'}`}>
+    <div className={cn(styles.finderBox, isOpen && styles.open, "finder-box-container z-50")}>
+      <div className={styles.fieldHolder} style={isOpen ? { width: '380px' } : undefined}>
+
+        {/* Toggle / Search Icon */}
+        <div
+          className={styles.iconButton}
+          onClick={handleToggle}
+        >
           {isLoading ? (
             <Loader2 className="animate-spin" size={20} />
           ) : (
@@ -201,29 +226,29 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
           }}
           onFocus={() => {
             setIsFocused(true);
+            setIsOpen(true);
             if (searchValue.length >= 2) setShowDropdown(true);
           }}
           onBlur={() => setTimeout(() => {
             setIsFocused(false);
             setShowDropdown(false);
           }, 200)}
-          placeholder="Buscar endereço, código OOH, cidade, exibidora..."
-          className="flex-1 py-1 outline-none text-emidias-gray-900 placeholder-emidias-gray-400 bg-transparent text-xs font-medium h-full"
+          placeholder="Buscar endereço, código, exibidora..."
+          className={styles.input}
         />
 
+        {/* Close Button or Clear Button */}
         {searchValue && (
-          <button
-            onClick={handleClear}
-            className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-emidias-gray-400 hover:text-emidias-gray-600 hover:bg-emidias-gray-100 rounded-lg transition-all"
-          >
-            <X size={18} />
-          </button>
+          <div className={styles.closeButton} onClick={handleClear}>
+            <X size={16} />
+          </div>
         )}
+
       </div>
 
       {/* Combined Results Dropdown */}
       {
-        showDropdown && allResults.length > 0 && (
+        showDropdown && allResults.length > 0 && isOpen && (
           <div className="absolute top-full mt-2 left-0 right-0 bg-white/95 backdrop-blur-md rounded-xl shadow-emidias-xl max-h-96 overflow-y-auto z-[60] animate-fade-in-up border border-emidias-gray-200">
             <div className="p-1.5">
               {dbResults.length > 0 && (
@@ -284,25 +309,6 @@ export default function AddressSearch({ onLocationSelect }: AddressSearchProps) 
                   ))}
                 </>
               )}
-            </div>
-          </div>
-        )
-      }
-
-      {/* Hint Tooltip */}
-      {
-        isFocused && !searchValue && (
-          <div className="absolute top-full mt-2 left-0 right-0 glass-light rounded-xl shadow-emidias-lg p-4 z-50 animate-fade-in-up">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-emidias-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                <MapPin size={16} className="text-emidias-accent" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-emidias-gray-900">Buscar localização</p>
-                <p className="text-xs text-emidias-gray-500 mt-0.5">
-                  Digite código OOH, endereço, cidade ou nome da exibidora
-                </p>
-              </div>
             </div>
           </div>
         )

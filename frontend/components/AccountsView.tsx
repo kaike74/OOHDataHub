@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import {
-    Search, User, Trash2, RotateCcw,
+    User, Trash2, RotateCcw,
     Mail, ChevronDown, Share2, Loader2,
     Shield, Briefcase
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { AnimatedSearchBar } from '@/components/ui/AnimatedSearchBar';
+
 
 interface UserAccount {
     id: number;
@@ -135,13 +136,12 @@ export default function AccountsView() {
                     <p className="text-gray-500 text-sm">Gerencie usuários internos e externos.</p>
                 </div>
 
-                <div className="relative w-full sm:w-72">
-                    <Input
-                        placeholder="Buscar usuário..."
+                <div className="relative w-full sm:w-auto z-50">
+                    <AnimatedSearchBar
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        icon={<Search size={18} />}
-                        className="bg-white"
+                        onChange={setSearchTerm}
+                        placeholder="Buscar usuário..."
+                        width="300px"
                     />
                 </div>
             </div>

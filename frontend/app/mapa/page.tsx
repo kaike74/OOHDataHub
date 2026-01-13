@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { MapSkeleton } from '@/components/skeletons/MapSkeleton';
 import { Button } from '@/components/ui/Button';
-import { Plus } from 'lucide-react';
+import { Plus, Filter as FilterIcon } from 'lucide-react';
 import AddressSearch from '@/components/AddressSearch';
 import CreatePointModal from '@/components/CreatePointModal';
 
@@ -28,6 +28,7 @@ export default function MapaPage() {
     } = useStore();
     const [isLoading, setIsLoading] = useState(true);
     const [searchLocation, setSearchLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     // Initial Cleanup
     useEffect(() => {
@@ -68,13 +69,25 @@ export default function MapaPage() {
 
     const actions = (
         <div className="flex items-center gap-3">
-            <div className="w-80 hidden md:block z-50">
+            <div className="relative z-50">
                 <AddressSearch onLocationSelect={setSearchLocation} />
             </div>
+
+            <Button
+                onClick={() => setIsFilterOpen(true)}
+                variant="outline"
+                size="sm" // Use generic size or "icon" if preferred
+                className="h-[40px] px-3 border-gray-200 hover:border-emidias-primary hover:text-emidias-primary"
+                leftIcon={<FilterIcon size={16} />}
+            >
+                Filtros
+            </Button>
+
             <Button
                 onClick={() => setModalOpen(true)}
                 variant="accent"
                 size="sm"
+                className="h-[40px]"
                 leftIcon={<Plus size={16} />}
             >
                 Novo Ponto
@@ -95,7 +108,7 @@ export default function MapaPage() {
                         </div>
                         <Sidebar showProposalActions={false} />
                         <ExibidoraSidebar />
-                        <MapFilters isOpen={false} onClose={() => { }} />
+                        <MapFilters isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
                         <CreatePointModal />
                     </>
                 )}
