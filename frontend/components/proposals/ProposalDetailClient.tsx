@@ -102,10 +102,38 @@ export default function ProposalDetailClient() {
 
     const [isTableOpen, setIsTableOpen] = useState(true);
 
-    if (isLoading) return <MainLayout breadcrumbs={breadcrumbs}><MapSkeleton /></MainLayout>;
+    const actions = (
+        <div className="flex items-center gap-3">
+            <div className="relative z-50 w-64 md:w-80">
+                <AddressSearch onLocationSelect={setSearchLocation} />
+            </div>
+            <Button
+                onClick={() => setIsFiltersOpen(true)}
+                variant="outline"
+                size="sm"
+                className={`h-[40px] px-3 border-gray-200 hover:border-emidias-accent hover:text-emidias-accent ${activeFiltersCount > 0 ? 'border-emidias-accent text-emidias-accent bg-emidias-accent/5' : ''}`}
+                leftIcon={<Filter size={16} />}
+            >
+                Filtros
+                {activeFiltersCount > 0 && (
+                    <span className="ml-2 bg-emidias-accent text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                        {activeFiltersCount}
+                    </span>
+                )}
+            </Button>
+        </div>
+    );
+
+    if (isLoading) {
+        return <MapSkeleton />;
+    }
 
     return (
-        <MainLayout breadcrumbs={breadcrumbs} fullScreen>
+        <MainLayout
+            breadcrumbs={breadcrumbs}
+            fullScreen
+            actions={actions}
+        >
             <div className="relative h-[calc(100vh-64px)] overflow-hidden">
                 {/* Map Section - Full Height */}
                 <div className="absolute inset-0 w-full h-full z-0">
@@ -119,31 +147,6 @@ export default function ProposalDetailClient() {
                         forcedFilterValorMin={filterValorMin ? parseFloat(filterValorMin) : null}
                         forcedFilterValorMax={filterValorMax ? parseFloat(filterValorMax) : null}
                     />
-                </div>
-
-                {/* Map Header Overlay (Search & Filters) */}
-                <div className="absolute top-4 left-4 right-4 z-[40] pointer-events-none flex justify-center">
-                    <div className="w-full max-w-4xl flex items-center gap-3 pointer-events-auto">
-                        <div className="flex-1 shadow-emidias-lg rounded-xl overflow-hidden">
-                            <AddressSearch onLocationSelect={setSearchLocation} />
-                        </div>
-                        <Button
-                            onClick={() => setIsFiltersOpen(true)}
-                            className={`h-[52px] w-[52px] rounded-xl shadow-emidias-lg transition-all ${activeFiltersCount > 0
-                                ? 'bg-emidias-accent text-white hover:bg-emidias-accent-dark'
-                                : 'bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
-                        >
-                            <div className="relative">
-                                <Filter size={20} />
-                                {activeFiltersCount > 0 && (
-                                    <span className="absolute -top-2 -right-2 w-4 h-4 bg-white text-emidias-accent text-[10px] font-bold rounded-full flex items-center justify-center border border-emidias-accent">
-                                        {activeFiltersCount}
-                                    </span>
-                                )}
-                            </div>
-                        </Button>
-                    </div>
                 </div>
 
                 <ProposalMapFilters
