@@ -21,14 +21,14 @@ export default function FloatingActionMenu({ actions }: FloatingActionMenuProps)
 
     return (
         <div
-            className="flex items-center gap-2 relative h-10"
+            className={cn("flex items-center gap-2 relative h-10 transition-all duration-300 ease-out", isOpen ? "w-[240px]" : "w-10")}
             onMouseEnter={() => setIsOpen(true)}
             onMouseLeave={() => setIsOpen(false)}
         >
             {/* Expanded Actions */}
             <div className={cn(
-                "flex items-center gap-2 transition-all duration-300 ease-out origin-right absolute right-0 top-0 h-full pr-10",
-                isOpen ? "opacity-100 scale-100 translate-x-0 pointer-events-auto" : "opacity-0 scale-90 translate-x-4 pointer-events-none"
+                "flex items-center gap-2 absolute right-0 top-0 h-full pr-12 transition-all duration-300",
+                isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
             )}>
                 {actions.map((action, index) => (
                     <TooltipProvider key={index}>

@@ -97,6 +97,10 @@ export default function ProposalDetailClient() {
     // Breadcrumbs
     const breadcrumbs = [
         { label: 'Propostas', href: '/propostas' },
+        ...(selectedProposal?.cliente ? [{
+            label: `${selectedProposal.cliente?.nome || 'Cliente'} ${selectedProposal.comissao ? `(${selectedProposal.comissao})` : ''}`,
+            href: '#' // Non-clickable or route to client?
+        }] : []),
         { label: selectedProposal?.nome || globalSelectedProposta?.nome || `Proposta #${id}`, active: true }
     ];
 

@@ -122,6 +122,7 @@ export interface Proposta {
     sharedUsers?: SharedUser[]; // New
     accessRequests?: { request_id: number; user_id: number; email: string; name: string }[]; // New
     itens?: PropostaItem[];
+    cliente?: Cliente; // Added for breadcrumbs
 }
 
 export interface PropostaItem {
