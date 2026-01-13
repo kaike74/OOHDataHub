@@ -1236,9 +1236,18 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
         // Default initialization if no saved order
         if (columns.length > 0 && columnOrder.length === 0) {
-            setColumnOrder(columns.map(c => c.id || (c as any).accessorKey as string).filter(Boolean));
+            const defaultOrder = columns.map(c => c.id || (c as any).accessorKey as string).filter(Boolean);
+            // Ensure status_validacao is second (after select)
+            if (showStatusColumn) {
+                const statusIndex = defaultOrder.indexOf('status_validacao');
+                if (statusIndex > 1) {
+                    defaultOrder.splice(statusIndex, 1);
+                    defaultOrder.splice(1, 0, 'status_validacao');
+                }
+            }
+            setColumnOrder(defaultOrder);
         }
-    }, [columns]); // Run once when columns are defined
+    }, [columns, showStatusColumn]); // Run when columns or showStatusColumn changes
 
     // Persist Column Order
     useEffect(() => {
@@ -1786,13 +1795,14 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                         ))}
                     </div>
 
-                    {/* Bulk Actions - Moved inside table */}
+                    {/* Bulk Actions - Discrete Popup at top-left */}
                     {!readOnly && Object.keys(rowSelection).length > 0 && (
-                        <div className="bg-blue-50 border-b border-blue-200 px-3 py-2 flex items-center gap-2">
-                            <span className="text-xs font-semibold text-blue-700">
-                                {Object.keys(rowSelection).length} {Object.keys(rowSelection).length === 1 ? 'item selecionado' : 'itens selecionados'}
+                        <div className="absolute top-2 left-2 z-50 bg-white shadow-lg border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-3 animate-in fade-in slide-in-from-left-2">
+                            <span className="text-xs font-semibold text-gray-700">
+                                {Object.keys(rowSelection).length} selecionado{Object.keys(rowSelection).length > 1 ? 's' : ''}
                             </span>
-                            <Button
+                            <div className="h-4 w-px bg-gray-300" />
+                            <button
                                 onClick={() => {
                                     const selectedIds = Object.keys(rowSelection).map(Number);
                                     const updatedItens = itens.filter(item => !selectedIds.includes(item.id));
@@ -1801,13 +1811,11 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                     refreshProposta({ ...selectedProposta!, itens: updatedItens });
                                     api.updateCart(selectedProposta!.id, updatedItens).catch(console.error);
                                 }}
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-600 hover:bg-red-50 hover:text-red-700 h-7 px-2 text-xs ml-auto"
-                                leftIcon={<Trash2 size={14} />}
+                                className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1.5"
                             >
-                                Remover Selecionados
-                            </Button>
+                                <Trash2 size={12} />
+                                Remover
+                            </button>
                         </div>
                     )}
 
