@@ -52,8 +52,8 @@ export default function FloatingActionMenu({ actions, onOpenChange }: FloatingAc
             <div
                 className="absolute pointer-events-auto"
                 style={{
-                    width: isOpen ? '320px' : '48px',
-                    height: isOpen ? '320px' : '48px',
+                    width: isOpen ? '160px' : '48px',
+                    height: isOpen ? '160px' : '48px',
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',

@@ -163,7 +163,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     // State to inhibit dragging when interacting with resizer
     const [disableDrag, setDisableDrag] = useState(false);
 
-
+    // Ref for search bar container
+    const searchBarRef = useRef<HTMLDivElement>(null);
 
     // Height Resizing State
     const [tableHeight, setTableHeight] = useState(500);
@@ -242,6 +243,33 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             }));
         }
     }, [selectedProposta, isClientView]);
+
+    // Click outside to close search bar if empty
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                searchBarRef.current &&
+                !searchBarRef.current.contains(event.target as Node) &&
+                !searchTerm &&
+                isSearchOpen
+            ) {
+                setIsSearchOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [searchTerm, isSearchOpen]);
+
+    // Close search bar and menu when cart table is collapsed
+    useEffect(() => {
+        if (!isOpen) {
+            setIsSearchOpen(false);
+            setSearchTerm('');
+        }
+    }, [isOpen]);
 
 
 
@@ -1487,9 +1515,17 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 >
 
                     {/* Search and Actions Group */}
-                    <div className="flex items-center gap-3 ml-auto">
+                    <div
+                        className="flex items-center gap-3 ml-auto transition-all duration-300"
+                        style={{
+                            opacity: isOpen ? 1 : 0,
+                            transform: isOpen ? 'scale(1)' : 'scale(0.95)',
+                            pointerEvents: isOpen ? 'auto' : 'none'
+                        }}
+                    >
                         {/* Animated Search Bar - Slides left when menu opens */}
                         <div
+                            ref={searchBarRef}
                             className={cn(styles.finderBox, isSearchOpen && styles.open, "z-50 transition-transform duration-300")}
                             style={{
                                 transform: isMenuOpen ? 'translateX(-80px)' : 'translateX(0)',
