@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
 import { Proposta, PropostaItem } from '@/lib/types';
 import {
     Trash2,
@@ -1411,9 +1412,9 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                         <div className="flex flex-col px-4 first:pl-0">
                             <span className="text-[10px] text-gray-500 uppercase tracking-wider">Status</span>
                             <span className={`font-bold uppercase text-xs ${selectedProposta?.status === 'aprovado' ? 'text-green-600' :
-                                    selectedProposta?.status === 'em_validacao' ? 'text-blue-600' :
-                                        selectedProposta?.status === 'em_aprovacao' ? 'text-purple-600' :
-                                            'text-gray-500' // rascunho
+                                selectedProposta?.status === 'em_validacao' ? 'text-blue-600' :
+                                    selectedProposta?.status === 'em_aprovacao' ? 'text-purple-600' :
+                                        'text-gray-500' // rascunho
                                 }`}>
                                 {selectedProposta?.status ? selectedProposta.status.replace('_', ' ') : 'Rascunho'}
                             </span>
