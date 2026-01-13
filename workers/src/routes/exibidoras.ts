@@ -82,8 +82,8 @@ export async function handleExibidoras(request: Request, env: Env, path: string)
                     p.status, 
                     COUNT(i.id) as pontos_count
                 FROM propostas p
-                JOIN itens_proposta i ON i.id_proposta = p.id
-                JOIN pontos_ooh po ON i.id_ponto = po.id
+                JOIN proposta_itens i ON i.id_proposta = p.id
+                JOIN pontos_ooh po ON i.id_ooh = po.id
                 WHERE po.id_exibidora = ?
                 GROUP BY p.id
                 ORDER BY p.created_at DESC

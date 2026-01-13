@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, ExternalLink, Map as MapIcon, Maximize2 } from 'lucide-react';
+import { X, ExternalLink, Map as MapIcon, Maximize2, Phone, Mail, MapPin } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
 import GoogleMap from '@/components/map/GoogleMap';
+import { formatCurrency } from '@/lib/utils';
 
 interface ExhibitorProposalStats {
     id: number;
@@ -117,10 +118,51 @@ export default function ExhibitorDetailsSidebar({ exibidoras, onClose, isOpen }:
                         </div>
                     </div>
 
-                    {exibidoras.endereco && (
-                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Endereço</span>
-                            <p className="text-sm text-gray-800 mt-1">{exibidoras.endereco}</p>
+                    {/* Contatos */}
+                    {exibidoras.contatos && exibidoras.contatos.length > 0 && (
+                        <div>
+                            <h4 className="font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                                <Phone size={16} className="text-emidias-primary" />
+                                Contatos
+                            </h4>
+                            <div className="grid grid-cols-1 gap-3">
+                                {exibidoras.contatos.map((c: any, i: number) => (
+                                    <div key={i} className="p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+                                        <div className="font-medium text-gray-900">{c.nome}</div>
+                                        <div className="text-sm text-gray-500 grid gap-1 mt-1">
+                                            {c.telefone && <div className="flex items-center gap-2"><Phone size={12} /> {c.telefone}</div>}
+                                            {c.email && <div className="flex items-center gap-2"><Mail size={12} /> {c.email}</div>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Lista de Pontos */}
+                    {exibidoras.pontos && exibidoras.pontos.length > 0 && (
+                        <div>
+                            <h4 className="font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                                <MapPin size={16} className="text-emidias-primary" />
+                                Pontos Cadastrados ({exibidoras.pontos.length})
+                            </h4>
+                            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden max-h-60 overflow-y-auto scrollbar-thin">
+                                {exibidoras.pontos.map((p: any) => {
+                                    // Find rental product value
+                                    const locacao = p.produtos?.find((prod: any) => prod.tipo === 'Locação')?.valor;
+                                    return (
+                                        <div key={p.id} className="p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 flex justify-between items-start gap-3">
+                                            <div className="text-sm text-gray-700 break-words flex-1">
+                                                {p.endereco}, {p.numero} - {p.bairro}
+                                                <div className="text-xs text-gray-400 mt-0.5">{p.cidade}/{p.uf}</div>
+                                            </div>
+                                            <div className="text-sm font-semibold text-emidias-primary whitespace-nowrap">
+                                                {locacao ? formatCurrency(locacao) : '-'}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
 

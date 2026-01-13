@@ -84,6 +84,7 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
                 cidades: cidades as string[],
                 ufs: ufs as string[],
                 contatos: contatosMap[exibidora.id] || [],
+                pontos: pontosExibidora, // Add full points array
             };
         });
     }, [exibidoras, pontos, contatosMap]);
