@@ -263,10 +263,9 @@ export function addMonths(date: Date, months: number): Date {
 
     result.setMonth(result.getMonth() + months);
 
-    // Special case: If original day was 01, set to last day of the month
+    // Special case: If original day was 01, set to last day of the previous month
     if (originalDay === 1) {
-        result.setMonth(result.getMonth() + 1);
-        result.setDate(0); // Sets to last day of previous month
+        result.setDate(0); // Sets to last day of previous month (which is the month we want end date to be in)
         return result;
     }
 

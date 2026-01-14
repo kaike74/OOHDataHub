@@ -1095,6 +1095,11 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
                             // If we have just a date range, let's try to infer BIs
                             if (startInfo) {
+                                // Force single BI display if count is 1 (approx 14 days)
+                                if (biWeeksCount === 1) {
+                                    return <span>BI {String(startInfo.number).padStart(2, '0')}</span>;
+                                }
+
                                 // Get the BI info for the end date (it will find which BI period it falls into)
                                 const endInfo = getBiWeekInfo(row.original.periodo_fim);
 
