@@ -1247,6 +1247,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 }}
                                 onSelectStart={undefined}
                                 onSelectEnd={undefined}
+                                selectedPeriods={row.original.selected_periods}
                             />
                         )}
 

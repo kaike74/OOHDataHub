@@ -9,7 +9,9 @@ interface BiWeeklyPickerProps {
     onSelectPeriods: (startDate: string, endDate: string, selectedPeriods: string[]) => void;
     onClose: (shouldSave: boolean) => void;
     saveOnClickOutside?: boolean;
+    initialSelectedPeriods?: string[];
 }
+
 
 // Base date for bi-weekly calendar: 29/12/2025 (BI 02 of 2026)
 // Adjust check to ensure we use local time or specific date logic if needed
@@ -75,12 +77,17 @@ export default function BiWeeklyPicker({
     endDate,
     onSelectPeriods,
     onClose,
-    saveOnClickOutside
+    saveOnClickOutside,
+    initialSelectedPeriods
 }: BiWeeklyPickerProps) {
     const currentYear = new Date().getFullYear();
     const biWeeklyPeriods = generateBiWeeklyPeriods(currentYear, currentYear + 4);
 
     const getInitialSelection = (): Set<string> => {
+        if (initialSelectedPeriods && initialSelectedPeriods.length > 0) {
+            return new Set(initialSelectedPeriods);
+        }
+
         if (!startDate || !endDate) return new Set();
 
         const selected = new Set<string>();

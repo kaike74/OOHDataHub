@@ -199,45 +199,19 @@ export function getBiWeekInfo(dateStr: string | Date): { number: number, year: n
 
     if (!isValidBiWeeklyStartDate(checkDate)) return null;
 
-    // Use the exact same logic as BiWeeklyPicker to ensure consistency
-    // totalBiWeeksFromBase = diff / 14
-    // yearOffset = floor(total / 26) ? No, depends on leap years.
-
-    // Reverse engineer from BiWeeklyPicker:
-    // It generates periods. 
-    // Let's use the End Date to find the Year as per business rule "A bissemana pertence ao ano onde termina".
-
     const endDate = new Date(checkDate);
     endDate.setDate(endDate.getDate() + 13);
     const endYear = endDate.getFullYear();
 
-    // Business Rule: "Cada ano tem 26 bissemanas (BI 02 até BI 52)... Anos bissextos podem ter até BI 54"
-    // And "BI 02-26 começa em 29/12/2025"
-
-    // Strategy: Find the first bi-week end of this year.
-    // The first bi-week of a year is the one that ends >= Jan 1st AND ends closest to Jan 1st?
-    // No, strictly: "BI 02" is the first one ending in that year.
-
-    // Find the end date of the FIRST bi-week of `endYear`.
-    // We can iterate backwards from `endDate` by 14 days until we change year?
-    // Or simpler:
-    // Calculate day of year (1-366).
-    // The first bi-week ends on Jan X. 
-    // If we take (DayOfYearOfEnd - 1) / 14?
-    // Example: Ends Jan 11 (Day 11). (11-1)/14 = 0.7 -> Floor 0. Index 0. 
-    // Example: Ends Jan 25 (Day 25). (25-1)/14 = 1.7 -> Floor 1. Index 1.
-    // Index 0 -> BI 02
-    // Index 1 -> BI 04
-    // formula: (floor((dayOfYearEnd - 1) / 14) + 1) * 2
-
+    // Use day-of-year based calculation
+    // BI 02 ends ~Jan 11, BI 04 ends ~Jan 25
     const startOfYear = new Date(endYear, 0, 1);
     const msDiff = endDate.getTime() - startOfYear.getTime();
     const dayOfYearEnd = Math.floor(msDiff / (1000 * 60 * 60 * 24)) + 1;
 
-    // Safety check for very early dates (shouldn't happen if valid start)
     if (dayOfYearEnd < 1) return null;
 
-    const biWeekNumber = (Math.floor((dayOfYearEnd - 1) / 14) + 1) * 2;
+    const biWeekNumber = Math.ceil(dayOfYearEnd / 14) * 2;
 
     return { number: biWeekNumber, year: endYear };
 }

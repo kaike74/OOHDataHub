@@ -14,6 +14,7 @@ interface PeriodDatePickerProps {
     onSelectEnd?: (date: string) => void;
     onSelectBoth?: (startDate: string, endDate: string) => void;
     onSelectionChange?: (startDate: string, endDate: string, selectedPeriods: string[]) => void;
+    selectedPeriods?: string[];
 }
 
 export default function PeriodDatePicker({
@@ -25,7 +26,8 @@ export default function PeriodDatePicker({
     onSelectStart = () => { },
     onSelectEnd = () => { },
     onSelectBoth,
-    onSelectionChange
+    onSelectionChange,
+    selectedPeriods
 }: PeriodDatePickerProps) {
     const pickerRef = useRef<HTMLDivElement>(null);
     const saveOnCloseRef = useRef(false);
@@ -76,6 +78,7 @@ export default function PeriodDatePicker({
                         onClose();
                     }}
                     saveOnClickOutside={saveOnCloseRef.current}
+                    initialSelectedPeriods={selectedPeriods}
                 />
             ) : (
                 <MonthlyPicker
