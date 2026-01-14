@@ -194,3 +194,10 @@ export interface MapLayer {
         nameCol: string;
     };
 }
+
+export interface MaterialSelection {
+    wantsMaterial: boolean;
+    papelQuantities: Record<number, number>; // itemId -> quantity
+    lonaQuantities: Record<number, number>;  // itemId -> quantity
+}
+

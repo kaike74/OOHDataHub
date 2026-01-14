@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { Proposta, PropostaItem } from '@/lib/types';
+import { Proposta, PropostaItem, MaterialSelection } from '@/lib/types';
 import {
     Trash2,
     Settings,
@@ -38,6 +38,8 @@ import ShareModal from './ShareModal';
 import FloatingActionMenu from './ui/FloatingActionMenu'; // Import FloatingActionMenu
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import AIChat from './AIChat';
+import ApprovalSummaryModal from './proposals/ApprovalSummaryModal';
+import ApprovalSuccessModal from './proposals/ApprovalSuccessModal';
 import { Button } from '@/components/ui/Button';
 import { X } from 'lucide-react'; // Import X icon
 import styles from './ui/AnimatedSearchBar.module.css'; // Import styles
@@ -147,6 +149,15 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const [focusedCell, setFocusedCell] = useState<{ rowId: number | null; columnId: string | null }>({ rowId: null, columnId: null });
     const [isAIChatOpen, setIsAIChatOpen] = useState(false); // AI Chat state
 
+    // Approval Modal States
+    const [isApprovalSummaryOpen, setIsApprovalSummaryOpen] = useState(false);
+    const [isApprovalSuccessOpen, setIsApprovalSuccessOpen] = useState(false);
+    const [materialSelection, setMaterialSelection] = useState<MaterialSelection>({
+        wantsMaterial: false,
+        papelQuantities: {},
+        lonaQuantities: {}
+    });
+
     // Dialog states
     const [confirmDialog, setConfirmDialog] = useState<{
         isOpen: boolean;
@@ -253,38 +264,47 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const handleFinalApproval = async () => {
         if (!selectedProposta) return;
 
-        const unavailableItems = itens.filter(i => i.status_validacao === 'UNAVAILABLE');
+        // Open the approval summary modal instead of directly approving
+        setIsApprovalSummaryOpen(true);
+    };
 
-        if (unavailableItems.length > 0) {
-            setConfirmDialog({
-                isOpen: true,
-                title: 'Aprovar Proposta',
-                message: `⚠️ Existem ${unavailableItems.length} ponto(s) indisponível(is) que serão removidos automaticamente.\n\nDeseja continuar com a aprovação?`,
-                type: 'warning',
-                onConfirm: async () => {
-                    try {
+    // Handle approval confirmation from the summary modal
+    const handleApprovalConfirm = async (materialSelectionData: MaterialSelection) => {
+        if (!selectedProposta) return;
+
+        setMaterialSelection(materialSelectionData);
+        setIsApprovalSummaryOpen(false);
+
+        // Show confirmation dialog
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Confirmar Aprovação',
+            message: 'Tem certeza que deseja aprovar esta proposta? Esta ação não pode ser desfeita.',
+            type: 'warning',
+            onConfirm: async () => {
+                try {
+                    const unavailableItems = itens.filter(i => i.status_validacao === 'UNAVAILABLE');
+
+                    // Remove unavailable items if any
+                    if (unavailableItems.length > 0) {
                         const availableItems = itens.filter(i => i.status_validacao !== 'UNAVAILABLE');
                         await api.updateCart(selectedProposta.id, availableItems);
                         setItens(availableItems);
                         refreshProposta({ ...selectedProposta, itens: availableItems });
-
-                        await api.updateProposalStatus(selectedProposta.id, 'aprovado');
-                        refreshProposta({ ...selectedProposta, status: 'aprovado' });
-                    } catch (error) {
-                        console.error('Failed to approve proposal', error);
-                        alert('Falha ao aprovar proposta');
                     }
+
+                    // Update proposal status to approved
+                    await api.updateProposalStatus(selectedProposta.id, 'aprovado');
+                    refreshProposta({ ...selectedProposta, status: 'aprovado' });
+
+                    // Show success modal
+                    setIsApprovalSuccessOpen(true);
+                } catch (error) {
+                    console.error('Failed to approve proposal', error);
+                    alert('Falha ao aprovar proposta');
                 }
-            });
-        } else {
-            try {
-                await api.updateProposalStatus(selectedProposta.id, 'aprovado');
-                refreshProposta({ ...selectedProposta, status: 'aprovado' });
-            } catch (error) {
-                console.error('Failed to approve proposal', error);
-                alert('Falha ao aprovar proposta');
             }
-        }
+        });
     };
 
     const handleShareUpdate = async () => {
@@ -2073,6 +2093,23 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 title={confirmDialog.title}
                 message={confirmDialog.message}
                 type={confirmDialog.type}
+            />
+
+            {/* Approval Modals */}
+            <ApprovalSummaryModal
+                isOpen={isApprovalSummaryOpen}
+                onClose={() => setIsApprovalSummaryOpen(false)}
+                proposta={selectedProposta}
+                itens={itens}
+                onApprove={handleApprovalConfirm}
+            />
+
+            <ApprovalSuccessModal
+                isOpen={isApprovalSuccessOpen}
+                onClose={() => setIsApprovalSuccessOpen(false)}
+                proposta={selectedProposta}
+                itens={itens}
+                materialSelection={materialSelection}
             />
 
             {/* AI Chat - Conditionally rendered */}
