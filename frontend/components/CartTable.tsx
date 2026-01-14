@@ -1451,12 +1451,17 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             size: 70,
             cell: ({ row }) => {
                 let qtd = 1;
-                if (row.original.periodo_inicio && row.original.periodo_fim) {
+
+                // Use selected_periods length if available, otherwise fallback to date range calculation
+                if (row.original.selected_periods && row.original.selected_periods.length > 0) {
+                    qtd = row.original.selected_periods.length;
+                } else if (row.original.periodo_inicio && row.original.periodo_fim) {
                     const dataInicio = new Date(row.original.periodo_inicio);
                     const dataFim = new Date(row.original.periodo_fim);
                     const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
                     qtd = row.original.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
                 }
+
                 return <div className="text-right text-[13px] text-gray-700">{qtd}</div>;
             }
         },
@@ -1471,7 +1476,11 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             size: 150,
             cell: ({ row }) => {
                 let qtd = 1;
-                if (row.original.periodo_inicio && row.original.periodo_fim) {
+
+                // Use selected_periods length if available, otherwise fallback to date range calculation
+                if (row.original.selected_periods && row.original.selected_periods.length > 0) {
+                    qtd = row.original.selected_periods.length;
+                } else if (row.original.periodo_inicio && row.original.periodo_fim) {
                     const dataInicio = new Date(row.original.periodo_inicio);
                     const dataFim = new Date(row.original.periodo_fim);
                     const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));

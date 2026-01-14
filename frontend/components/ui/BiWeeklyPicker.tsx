@@ -132,13 +132,20 @@ export default function BiWeeklyPicker({
             const newSelected = new Set(prevSelected);
 
             if (event.shiftKey && lastClickedIndex !== null) {
-                // Shift-select: ALWAYS SELECT the range between last clicked and current
+                // Shift-select: Check if current clicked item is selected
+                // If selected: SELECT the range
+                // If not selected: DESELECT the range
+                const shouldSelect = !newSelected.has(period.id);
                 const start = Math.min(lastClickedIndex, index);
                 const end = Math.max(lastClickedIndex, index);
 
-                // Select all periods in the range
+                // Apply selection/deselection to range
                 for (let i = start; i <= end; i++) {
-                    newSelected.add(biWeeklyPeriods[i].id);
+                    if (shouldSelect) {
+                        newSelected.add(biWeeklyPeriods[i].id);
+                    } else {
+                        newSelected.delete(biWeeklyPeriods[i].id);
+                    }
                 }
             } else {
                 // Regular click: Toggle single selection
@@ -191,12 +198,15 @@ export default function BiWeeklyPicker({
         }
     }, [saveOnClickOutside, selectedPeriods, biWeeklyPeriods, onSelectPeriods]);
 
+    const hasScrolledRef = useRef(false);
+
     useEffect(() => {
-        if (scrollRef.current && biWeeklyPeriods.length > 0) {
+        if (scrollRef.current && biWeeklyPeriods.length > 0 && !hasScrolledRef.current) {
             const currentYearIndex = biWeeklyPeriods.findIndex(p => p.year === currentYear);
             if (currentYearIndex !== -1) {
                 const itemHeight = 24;
                 scrollRef.current.scrollTop = currentYearIndex * itemHeight - 50;
+                hasScrolledRef.current = true;
             }
         }
     }, [biWeeklyPeriods, currentYear]);
