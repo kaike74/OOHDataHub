@@ -30,16 +30,14 @@ export default function MonthlyPicker({
         const firstDay = new Date(currentYear, currentMonth, 1);
         const lastDay = new Date(currentYear, currentMonth + 1, 0);
         const daysInMonth = lastDay.getDate();
-        const startingDayOfWeek = firstDay.getDay(); // 0 = Sunday
+        const startingDayOfWeek = firstDay.getDay();
 
         const days: (Date | null)[] = [];
 
-        // Add empty cells for days before the first of the month
         for (let i = 0; i < startingDayOfWeek; i++) {
             days.push(null);
         }
 
-        // Add all days of the month
         for (let day = 1; day <= daysInMonth; day++) {
             days.push(new Date(currentYear, currentMonth, day));
         }
@@ -69,23 +67,19 @@ export default function MonthlyPicker({
         const dateStr = formatDateForInput(date);
 
         if (!startDate) {
-            // Selecting start date
-            if (date < tomorrow) return; // Can't select past dates
+            if (date < tomorrow) return;
             onSelectStart(dateStr);
 
-            // Auto-suggest end date 1 month ahead
             const suggestedEnd = new Date(date);
             suggestedEnd.setMonth(suggestedEnd.getMonth() + 1);
             if (suggestedEnd.getDate() !== date.getDate()) {
-                suggestedEnd.setDate(0); // Last day of previous month
+                suggestedEnd.setDate(0);
             }
             onSelectEnd(formatDateForInput(suggestedEnd));
         } else {
-            // Selecting end date
             const startDateObj = new Date(startDate);
-            if (date <= startDateObj) return; // End must be after start
+            if (date <= startDateObj) return;
 
-            // Check if it's the same day of month or last day of month
             const isValidEndDate =
                 date.getDate() === startDayOfMonth ||
                 (date.getDate() === new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate() &&
@@ -98,13 +92,9 @@ export default function MonthlyPicker({
     };
 
     const isDayDisabled = (date: Date) => {
-        const dateStr = formatDateForInput(date);
-
         if (!startDate) {
-            // When selecting start date, disable past dates
             return date < tomorrow;
         } else {
-            // When selecting end date, only allow same day of month
             const startDateObj = new Date(startDate);
             if (date <= startDateObj) return true;
 
@@ -123,61 +113,62 @@ export default function MonthlyPicker({
     };
 
     const monthNames = [
-        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
+        'jul', 'ago', 'set', 'out', 'nov', 'dez'
     ];
 
-    const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const weekDays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
     return (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-50 w-[320px]">
+        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-50 w-[240px]">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between px-2 py-1.5 border-b border-gray-200">
                 <button
                     onClick={handlePrevMonth}
-                    className="p-1 hover:bg-gray-200 rounded"
+                    className="p-0.5 hover:bg-gray-100 rounded"
                 >
-                    <ChevronLeft size={16} />
+                    <ChevronLeft size={14} />
                 </button>
-                <h3 className="text-sm font-semibold text-gray-900">
-                    {monthNames[currentMonth]} {currentYear}
+                <h3 className="text-[11px] font-semibold text-gray-900">
+                    {monthNames[currentMonth]}. {currentYear}
                 </h3>
                 <button
                     onClick={handleNextMonth}
-                    className="p-1 hover:bg-gray-200 rounded"
+                    className="p-0.5 hover:bg-gray-100 rounded"
                 >
-                    <ChevronRight size={16} />
+                    <ChevronRight size={14} />
                 </button>
                 <button
                     onClick={onClose}
-                    className="p-1 text-gray-400 hover:text-gray-600"
+                    className="p-0.5 text-gray-400 hover:text-gray-600"
                 >
-                    <X size={16} />
+                    <X size={14} />
                 </button>
             </div>
 
             {/* Calendar Grid */}
-            <div className="p-3">
+            <div className="p-2">
                 {/* Week day headers */}
-                <div className="grid grid-cols-7 gap-1 mb-2">
-                    {weekDays.map(day => (
-                        <div key={day} className="text-center text-xs font-semibold text-gray-600 py-1">
+                <div className="grid grid-cols-7 gap-0.5 mb-1">
+                    {weekDays.map((day, i) => (
+                        <div key={i} className="text-center text-[9px] font-semibold text-gray-500 h-5 flex items-center justify-center">
                             {day}
                         </div>
                     ))}
                 </div>
 
                 {/* Calendar days */}
-                <div className="grid grid-cols-7 gap-1">
+                <div className="grid grid-cols-7 gap-0.5">
                     {calendarDays.map((date, index) => {
                         if (!date) {
-                            return <div key={`empty-${index}`} className="aspect-square" />;
+                            return <div key={`empty-${index}`} className="h-6" />;
                         }
 
                         const disabled = isDayDisabled(date);
                         const selected = isDaySelected(date);
                         const isStart = formatDateForInput(date) === startDate;
                         const isEnd = formatDateForInput(date) === endDate;
+                        const isToday = date.toDateString() === new Date().toDateString();
 
                         return (
                             <button
@@ -185,12 +176,13 @@ export default function MonthlyPicker({
                                 onClick={() => !disabled && handleDayClick(date)}
                                 disabled={disabled}
                                 className={`
-                                    aspect-square flex items-center justify-center text-xs rounded
+                                    h-6 flex items-center justify-center text-[10px] rounded
                                     transition-colors
-                                    ${disabled ? 'text-gray-300 cursor-not-allowed' : 'text-gray-900 cursor-pointer hover:bg-gray-100'}
+                                    ${disabled ? 'text-gray-300 cursor-not-allowed' : 'text-gray-900 cursor-pointer'}
                                     ${selected && isStart ? 'bg-blue-500 text-white font-semibold hover:bg-blue-600' : ''}
                                     ${selected && isEnd ? 'bg-green-500 text-white font-semibold hover:bg-green-600' : ''}
                                     ${!selected && !disabled ? 'hover:bg-gray-100' : ''}
+                                    ${isToday && !selected ? 'border border-blue-400' : ''}
                                 `}
                             >
                                 {date.getDate()}
@@ -200,12 +192,12 @@ export default function MonthlyPicker({
                 </div>
             </div>
 
-            {/* Footer with instructions */}
-            <div className="px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs text-gray-600">
+            {/* Footer */}
+            <div className="px-2 py-1.5 bg-gray-50 border-t border-gray-200 text-[9px] text-gray-600">
                 {!startDate ? (
-                    <p>💡 Selecione a <strong>data de início</strong></p>
+                    <p>Selecione a data de início</p>
                 ) : (
-                    <p>💡 Selecione a <strong>data de fim</strong> (mesmo dia do mês: <strong>{startDayOfMonth}</strong>)</p>
+                    <p>Selecione a data de fim (dia <strong>{startDayOfMonth}</strong>)</p>
                 )}
             </div>
         </div>

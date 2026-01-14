@@ -1388,7 +1388,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 )
             )
         }
-    ], [updateItem, removeItem, pontos, setSelectedPonto, itens, focusedCell, showStatusColumn, isClientView, readOnly]);
+    ], [updateItem, removeItem, pontos, setSelectedPonto, itens, focusedCell, showStatusColumn, isClientView, readOnly, openPickerRowId, setOpenPickerRowId]);
 
     // Initialize & Load Column Order
     useEffect(() => {

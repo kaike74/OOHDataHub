@@ -47,8 +47,10 @@ export default function PeriodDatePicker({
                 <BiWeeklyPicker
                     startDate={startDate}
                     endDate={endDate}
-                    onSelectStart={onSelectStart}
-                    onSelectEnd={onSelectEnd}
+                    onSelectPeriods={(start, end) => {
+                        onSelectStart(start);
+                        onSelectEnd(end);
+                    }}
                     onClose={onClose}
                 />
             ) : (
