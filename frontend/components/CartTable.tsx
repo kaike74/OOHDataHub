@@ -13,7 +13,9 @@ import {
     getSuggestedMonthlyEndDate,
     getNextValidBiWeeklyStartDate,
     formatDateForInput,
-    getTomorrow
+    getTomorrow,
+    getBiWeekInfo,
+    getMonthName
 } from '@/lib/periodUtils';
 import {
     Trash2,
@@ -1006,16 +1008,106 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     const periodoComercializado = row.original.periodo_comercializado;
 
                     if (periodoComercializado === 'bissemanal') {
-                        // For bi-weekly: show "BI 02, 04, 06... +X mais"
-                        // This is a simplified display - actual calculation would need the selected periods array
+                        // Check if we have specific selected periods
+                        if (row.original.selected_periods && row.original.selected_periods.length > 0) {
+                            const sortedPeriods = [...row.original.selected_periods].sort();
+                            const count = sortedPeriods.length;
+
+                            // Get info for up to 3 periods
+                            const firstThree = sortedPeriods.slice(0, 3).map(id => {
+                                // ID is startStr_endStr. We need startStr.
+                                const startStr = id.split('_')[0];
+                                const info = getBiWeekInfo(startStr);
+                                return info ? `BI ${String(info.number).padStart(2, '0')}` : 'BI --';
+                            });
+
+                            const listStr = firstThree.join(', ');
+                            const extra = count > 3 ? ` +${count - 3} mais` : '';
+
+                            // Tooltip content: Full list
+                            const tooltipContent = (
+                                <div className="text-xs">
+                                    {sortedPeriods.map(id => {
+                                        const [startStr, endStr] = id.split('_');
+                                        const startFormatted = formatDisplayDate(startStr);
+                                        const endFormatted = formatDisplayDate(endStr);
+                                        const info = getBiWeekInfo(startStr);
+                                        const biStr = info ? `BI ${String(info.number).padStart(2, '0')}-${String(info.year).slice(-2)}` : '';
+                                        return (
+                                            <div key={id}>
+                                                {biStr} ({startFormatted}-{endFormatted})
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+
+                            if (count <= 3) {
+                                // If short list, just show range or list? 
+                                // User requested: "Período: BI 02, 06, 10" for compact if > 3 bissemanas?
+                                // User says: 
+                                // "≤3 bissemanas: 29/12/25 → 11/01/26" (Uses range format if contiguous?)
+                                // NO. "≤3 bissemanas: 29/12/25 → 11/01/26" implies Contiguous.
+                                // But if non-contiguous? "BI 02, 06, 10".
+                                // If non-contiguous, showing range is misleading.
+                                // Let's check contiguousness.
+
+                                // Only check contiguous if count is small?
+                                // Let's simplify: If count <= 3 and list implies contiguous (checked by simple date diff matching duration), use range.
+                                // Else use list.
+
+                                // Contiguous check:
+                                const startDate = new Date(row.original.periodo_inicio);
+                                const endDate = new Date(row.original.periodo_fim);
+                                const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                                const expectedDuration = count * 14;
+                                const isContiguous = Math.abs(daysDiff + 1 - expectedDuration) < 2; // +1 inclusive, +/- margin
+
+                                if (isContiguous) {
+                                    const start = formatDisplayDate(row.original.periodo_inicio);
+                                    const end = formatDisplayDate(row.original.periodo_fim);
+                                    return <span>{start} → {end}</span>;
+                                } else {
+                                    // Non-contiguous or user wants list
+                                    return (
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <span className="truncate">Período: {listStr}</span>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    {tooltipContent}
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    );
+                                }
+                            } else {
+                                // > 3 periods
+                                return (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <span className="truncate cursor-help">
+                                                    Período: {listStr}{extra}
+                                                </span>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                {tooltipContent}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                );
+                            }
+                        }
+
+                        // Fallback logic for legacy data (range only)
                         const start = formatDisplayDate(row.original.periodo_inicio);
                         const end = formatDisplayDate(row.original.periodo_fim);
-
-                        // Calculate approximate number of bi-weeks
                         const startDate = new Date(row.original.periodo_inicio);
                         const endDate = new Date(row.original.periodo_fim);
                         const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-                        const biWeeksCount = Math.ceil(daysDiff / 14);
+                        const biWeeksCount = Math.ceil((daysDiff + 1) / 14);
 
                         if (biWeeksCount <= 3) {
                             return <span>{start} → {end}</span>;
@@ -1026,8 +1118,86 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 </span>
                             );
                         }
+
                     } else if (periodoComercializado === 'mensal') {
-                        // For monthly: show "Dia X: Jan, Mar, Mai... +X mais"
+                        if (row.original.selected_periods && row.original.selected_periods.length > 0) {
+                            const sortedPeriods = [...row.original.selected_periods].sort(); // YYYY-M sorts correctly
+                            const count = sortedPeriods.length;
+
+                            const firstThree = sortedPeriods.slice(0, 3).map(id => {
+                                const [year, monthIdx] = id.split('-').map(Number);
+                                return getMonthName(monthIdx);
+                            });
+
+                            const day = new Date(row.original.periodo_inicio).getDate(); // Fixed day
+
+                            const listStr = firstThree.join(', ');
+                            const extra = count > 3 ? ` +${count - 3} mais` : '';
+
+                            // Tooltip
+                            const tooltipContent = (
+                                <div className="text-xs">
+                                    {sortedPeriods.map(id => {
+                                        const [year, monthIdx] = id.split('-').map(Number);
+                                        // Calculate start/end of that specific month period
+                                        // Use date from periodo_inicio for 'day'
+                                        const periodStart = new Date(year, monthIdx, day);
+                                        const periodEnd = new Date(year, monthIdx + 1, day);
+                                        periodEnd.setDate(periodEnd.getDate() - 1);
+
+                                        return (
+                                            <div key={id}>
+                                                {formatDisplayDate(formatDateForInput(periodStart))} → {formatDisplayDate(formatDateForInput(periodEnd))}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+
+                            if (count <= 3) {
+                                // Check contiguous
+                                // Approximate logic: are months consecutive?
+                                let contiguous = true;
+                                for (let i = 0; i < count - 1; i++) {
+                                    const [y1, m1] = sortedPeriods[i].split('-').map(Number);
+                                    const [y2, m2] = sortedPeriods[i + 1].split('-').map(Number);
+                                    const diff = (y2 * 12 + m2) - (y1 * 12 + m1);
+                                    if (diff !== 1) contiguous = false;
+                                }
+
+                                if (contiguous) {
+                                    const start = formatDisplayDate(row.original.periodo_inicio);
+                                    const end = formatDisplayDate(row.original.periodo_fim);
+                                    return <span>{start} → {end}</span>;
+                                } else {
+                                    return (
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <span className="truncate">Dia {day}: {listStr}</span>
+                                                </TooltipTrigger>
+                                                <TooltipContent>{tooltipContent}</TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    );
+                                }
+                            } else {
+                                return (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <span className="truncate cursor-help">
+                                                    Dia {day}: {listStr}{extra}
+                                                </span>
+                                            </TooltipTrigger>
+                                            <TooltipContent>{tooltipContent}</TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                );
+                            }
+                        }
+
+                        // Legacy monthly
                         const start = formatDisplayDate(row.original.periodo_inicio);
                         const end = formatDisplayDate(row.original.periodo_fim);
 
@@ -1035,16 +1205,20 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                         const startDate = new Date(row.original.periodo_inicio);
                         const endDate = new Date(row.original.periodo_fim);
                         const monthsDiff = (endDate.getFullYear() - startDate.getFullYear()) * 12 +
-                            (endDate.getMonth() - startDate.getMonth()) + 1;
+                            (endDate.getMonth() - startDate.getMonth()) + 1; // +1 maybe
 
-                        const day = startDate.getDate();
+                        // Check if day is same - if so roughly X months. 
+                        // Logic in legacy code was:
+                        const diff = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
+                        // If precise?
 
-                        if (monthsDiff <= 3) {
+                        if (diff <= 3) {
                             return <span>{start} → {end}</span>;
                         } else {
+                            const day = startDate.getDate();
                             return (
-                                <span title={`${start} → {end}`}>
-                                    {monthsDiff} meses (Dia {day}: {start} → {end})
+                                <span title={`${start} → ${end}`}>
+                                    {diff} meses approx ({start} → {end})
                                 </span>
                             );
                         }
@@ -1087,22 +1261,15 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 periodType={periodoComercializado}
                                 startDate={row.original.periodo_inicio}
                                 endDate={row.original.periodo_fim}
-                                onSelectStart={(date) => {
-                                    // For bi-weekly, this will be called with both dates
-                                    // Store temporarily, will be updated by onSelectEnd
-                                }}
-                                onSelectEnd={(date) => {
-                                    // This is called after onSelectStart for bi-weekly
-                                    // Get the start date from the previous call
-                                    const startInput = document.querySelector(`[data-row-id="${row.original.id}"][data-temp-start]`) as HTMLInputElement;
-                                    const startDate = startInput?.value || row.original.periodo_inicio;
-
-                                    // Update both dates in a single call
+                                onSelectionChange={(start, end, periods) => {
                                     updateItem(row.original.id, {
-                                        periodo_inicio: startDate,
-                                        periodo_fim: date
+                                        periodo_inicio: start,
+                                        periodo_fim: end,
+                                        selected_periods: periods
                                     });
                                 }}
+                                onSelectStart={undefined}
+                                onSelectEnd={undefined}
                             />
                         )}
 

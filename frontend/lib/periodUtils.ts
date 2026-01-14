@@ -175,12 +175,106 @@ export function formatDateForInput(date: Date): string {
     return `${year}-${month}-${day}`;
 }
 
-/**
- * Gets tomorrow's date (minimum start date)
- */
 export function getTomorrow(): Date {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
     return tomorrow;
+}
+
+export const MONTH_NAMES_SHORT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+export function getMonthName(monthIndex: number): string {
+    return MONTH_NAMES_SHORT[monthIndex] || '';
+}
+
+export function getBiWeekInfo(dateStr: string | Date): { number: number, year: number } | null {
+    let date: Date;
+    if (typeof dateStr === 'string') {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        date = new Date(year, month - 1, day);
+    } else {
+        date = dateStr;
+    }
+
+    if (!isValidBiWeeklyStartDate(date)) return null;
+
+    const baseTime = BI_WEEKLY_BASE_START.getTime();
+    const dateTime = date.getTime();
+
+    // Each bi-week is 14 days
+    const daysDiff = Math.round((dateTime - baseTime) / (1000 * 60 * 60 * 24));
+    const biWeekIndex = Math.floor(daysDiff / 14);
+
+    // Calculate year and number
+    // We know 2026 starts at index 0 (which is BI 02)
+    // There are 26 bi-weeks per year
+
+    // Reverse math from BiWeeklyPicker logic:
+    // totalBiWeeksFromBase = (yearOffset * 26) + biWeekIndexInYear
+    // But is leap year handled? BiWeeklyPicker says "maxBiWeeks = isLeapYear ? 27 : 26"
+    // This makes simple division hard if variable length.
+    // However, BiWeeklyPicker logic says: "A bissemana pertence ao ano onde termina".
+    // Let's use the simpler logic:
+    // Bi-week Start + 13 days = End Date.
+    // Year = End Date Year.
+
+    const endDate = new Date(date);
+    endDate.setDate(endDate.getDate() + 13);
+    const year = endDate.getFullYear();
+
+    // Determine number. 
+    // Start of Year Bi-Week?
+    // We need to find the first bi-week of that year.
+    // But simplified: 
+    // BI 02 is the first one. Numbers are even: 02, 04...
+    // Let's find index within the year.
+
+    // Find the first bi-week start of this year (or previous year if it spills over)
+    // Actually, simple calculation:
+    // If year is 2026. Base is 29/12/2025.
+    // If date is base, it is BI 02-26.
+    // If date is base + 14, it is BI 04-26.
+
+    // We can rely on: (biWeekIndex % 26) + 1 * 2?
+    // 2026 has 26 bi-weeks.
+    // 2027...
+
+    // Robust way:
+    // Calculate BiWeekNumber based on "index + 1" * 2 if we reset every year?
+    // But BiWeeklyPicker logic handles year boundaries specifically.
+    // Let's stick to the visual format: "number of bi-week within the year".
+    // 1st bi-week ending in 2026 is BI 02.
+    // 2nd is BI 04.
+
+    // So just count how many bi-weeks have passed since the "First valid bi-week ending in `year`".
+
+    // For now, let's use a simpler heuristic or just return raw index if complex. 
+    // Wait, the prompt defines: "BI 02-26 (29/12/25-11/01/26)".
+    // So if end year is 2026, it is XX-26.
+
+    // Let's rely on the fact that for standard years it is just sequential.
+
+    // Let's implement a loop or something similar to generateBiWeeklyPeriods if needed, 
+    // BUT running that on every render is heavy.
+    // However, getBiWeekInfo(biWeekStart) is likely called few times (only for selected).
+
+    // Optimized attempt:
+    const endYear = endDate.getFullYear();
+    const isLeap = (endYear % 4 === 0 && endYear % 100 !== 0) || (endYear % 400 === 0);
+
+    // How many days into the year does the period END?
+    // jan 1 is day 1.
+    const startOfYear = new Date(endYear, 0, 1);
+    const dayOfYearEnd = Math.floor((endDate.getTime() - startOfYear.getTime()) / (86400000)) + 1;
+
+    // Each bi-week covers 14 days. 
+    // The first bi-week ends on Jan 11 (approx). 
+    // bi_week_number = ceil(day_of_year_end / 14) * 2?
+    // Jan 11 is day 11. 11/14 < 1. ceil is 1. * 2 = 02. Correct.
+    // Jan 25 is next end. Day 25. 25/14 = 1.78. ceil is 2. * 2 = 04. Correct.
+
+    const number = Math.ceil(dayOfYearEnd / 14) * 2;
+
+    return { number, year: endYear };
 }

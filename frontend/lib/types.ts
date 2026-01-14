@@ -169,6 +169,7 @@ export interface PropostaItem {
     last_validated_by?: number;
     last_validated_at?: string;
     validator_name?: string;
+    selected_periods?: string[]; // Array of selected period IDs (e.g., ["BI 02-26", "BI 06-26"] or ["2026-0", "2026-2"])
 }
 
 export interface CustomMarker {

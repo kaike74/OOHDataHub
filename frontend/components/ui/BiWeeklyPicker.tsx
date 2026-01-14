@@ -6,12 +6,13 @@ import { X, Check } from 'lucide-react';
 interface BiWeeklyPickerProps {
     startDate: string | null;
     endDate: string | null;
-    onSelectPeriods: (startDate: string, endDate: string) => void;
+    onSelectPeriods: (startDate: string, endDate: string, selectedPeriods: string[]) => void;
     onClose: (shouldSave: boolean) => void;
     saveOnClickOutside?: boolean;
 }
 
 // Base date for bi-weekly calendar: 29/12/2025 (BI 02 of 2026)
+// Adjust check to ensure we use local time or specific date logic if needed
 const BI_WEEKLY_BASE = new Date(2025, 11, 29);
 
 const formatDateForInput = (date: Date): string => {
@@ -114,10 +115,14 @@ export default function BiWeeklyPicker({
                 const start = Math.min(lastClickedIndex, index);
                 const end = Math.max(lastClickedIndex, index);
 
+                // Start fresh for range selection
+                // User requirement: Select APENAS as duas pontas (start and end), desmarca o resto
                 newSelected.clear();
 
-                for (let i = start; i <= end; i++) {
-                    newSelected.add(biWeeklyPeriods[i].id);
+                // Add endpoints only
+                newSelected.add(biWeeklyPeriods[start].id);
+                if (start !== end) {
+                    newSelected.add(biWeeklyPeriods[end].id);
                 }
             } else {
                 if (newSelected.has(period.id)) {
@@ -143,7 +148,7 @@ export default function BiWeeklyPicker({
             const firstPeriod = selectedPeriodsArray[0];
             const lastPeriod = selectedPeriodsArray[selectedPeriodsArray.length - 1];
 
-            onSelectPeriods(firstPeriod.startStr, lastPeriod.endStr);
+            onSelectPeriods(firstPeriod.startStr, lastPeriod.endStr, Array.from(selectedPeriods));
         }
         onClose(true); // Save
     };
@@ -163,7 +168,7 @@ export default function BiWeeklyPicker({
             if (selectedPeriodsArray.length > 0) {
                 const firstPeriod = selectedPeriodsArray[0];
                 const lastPeriod = selectedPeriodsArray[selectedPeriodsArray.length - 1];
-                onSelectPeriods(firstPeriod.startStr, lastPeriod.endStr);
+                onSelectPeriods(firstPeriod.startStr, lastPeriod.endStr, Array.from(selectedPeriods));
             }
         }
     }, [saveOnClickOutside, selectedPeriods, biWeeklyPeriods, onSelectPeriods]);

@@ -13,6 +13,7 @@ interface PeriodDatePickerProps {
     onSelectStart: (date: string) => void;
     onSelectEnd: (date: string) => void;
     onSelectBoth?: (startDate: string, endDate: string) => void;
+    onSelectionChange?: (startDate: string, endDate: string, selectedPeriods: string[]) => void;
 }
 
 export default function PeriodDatePicker({
@@ -23,7 +24,8 @@ export default function PeriodDatePicker({
     endDate,
     onSelectStart,
     onSelectEnd,
-    onSelectBoth
+    onSelectBoth,
+    onSelectionChange
 }: PeriodDatePickerProps) {
     const pickerRef = useRef<HTMLDivElement>(null);
     const saveOnCloseRef = useRef(false);
@@ -45,19 +47,25 @@ export default function PeriodDatePicker({
 
     if (!isOpen) return null;
 
+    const handleSelection = (start: string, end: string, periods: string[]) => {
+        if (onSelectionChange) {
+            onSelectionChange(start, end, periods);
+        } else if (onSelectBoth) {
+            onSelectBoth(start, end);
+        } else {
+            onSelectStart(start);
+            onSelectEnd(end);
+        }
+    };
+
     return (
         <div ref={pickerRef}>
             {periodType === 'bissemanal' ? (
                 <BiWeeklyPicker
                     startDate={startDate}
                     endDate={endDate}
-                    onSelectPeriods={(start, end) => {
-                        if (onSelectBoth) {
-                            onSelectBoth(start, end);
-                        } else {
-                            onSelectStart(start);
-                            onSelectEnd(end);
-                        }
+                    onSelectPeriods={(start, end, periods) => {
+                        handleSelection(start, end, periods);
                     }}
                     onClose={(shouldSave) => {
                         // If clicking outside or applying, save
@@ -73,9 +81,11 @@ export default function PeriodDatePicker({
                 <MonthlyPicker
                     startDate={startDate}
                     endDate={endDate}
-                    onSelectStart={onSelectStart}
-                    onSelectEnd={onSelectEnd}
+                    onSelectPeriods={(start, end, periods) => {
+                        handleSelection(start, end, periods);
+                    }}
                     onClose={onClose}
+                    saveOnClickOutside={saveOnCloseRef.current}
                 />
             )}
         </div>

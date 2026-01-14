@@ -6,9 +6,9 @@ import { X, Check } from 'lucide-react';
 interface MonthlyPickerProps {
     startDate: string | null;
     endDate: string | null;
-    onSelectStart: (date: string) => void;
-    onSelectEnd: (date: string) => void;
+    onSelectPeriods: (startDate: string, endDate: string, selectedPeriods: string[]) => void;
     onClose: () => void;
+    saveOnClickOutside?: boolean;
 }
 
 const formatDateForInput = (date: Date): string => {
@@ -23,9 +23,9 @@ const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set
 export default function MonthlyPicker({
     startDate,
     endDate,
-    onSelectStart,
-    onSelectEnd,
-    onClose
+    onSelectPeriods,
+    onClose,
+    saveOnClickOutside
 }: MonthlyPickerProps) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -61,6 +61,33 @@ export default function MonthlyPicker({
             setSelectedMonths(selected);
         }
     }, [startDate, endDate]);
+
+    // Handle save on click outside
+    useEffect(() => {
+        if (saveOnClickOutside && selectedMonths.size > 0) {
+            // Convert selected months to sorted array
+            const monthsArray = Array.from(selectedMonths)
+                .map(key => {
+                    const [year, month] = key.split('-').map(Number);
+                    return { year, month };
+                })
+                .sort((a, b) => {
+                    if (a.year !== b.year) return a.year - b.year;
+                    return a.month - b.month;
+                });
+
+            if (monthsArray.length > 0) {
+                const firstMonth = monthsArray[0];
+                const lastMonth = monthsArray[monthsArray.length - 1];
+
+                const startDateObj = new Date(firstMonth.year, firstMonth.month, selectedDay);
+                const endDateObj = new Date(lastMonth.year, lastMonth.month + 1, selectedDay);
+                endDateObj.setDate(endDateObj.getDate() - 1);
+
+                onSelectPeriods(formatDateForInput(startDateObj), formatDateForInput(endDateObj), Array.from(selectedMonths));
+            }
+        }
+    }, [saveOnClickOutside, selectedMonths, selectedDay, onSelectPeriods]);
 
     const handleDayChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedDay(parseInt(e.target.value));
@@ -104,8 +131,7 @@ export default function MonthlyPicker({
         const endDate = new Date(lastMonth.year, lastMonth.month + 1, selectedDay);
         endDate.setDate(endDate.getDate() - 1); // Last day of period
 
-        onSelectStart(formatDateForInput(startDate));
-        onSelectEnd(formatDateForInput(endDate));
+        onSelectPeriods(formatDateForInput(startDate), formatDateForInput(endDate), Array.from(selectedMonths));
         onClose();
     };
 
