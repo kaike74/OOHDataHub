@@ -1296,18 +1296,13 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             value={currentValue}
                             onChange={(e) => {
                                 const newValue = e.target.value;
-                                let qtd = 1;
-
-                                if (row.original.periodo_inicio && row.original.periodo_fim) {
-                                    const dataInicio = new Date(row.original.periodo_inicio);
-                                    const dataFim = new Date(row.original.periodo_fim);
-                                    const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
-                                    qtd = newValue === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                                }
-
+                                // Reset period data on type change
                                 updateItem(row.original.id, {
                                     periodo_comercializado: newValue,
-                                    qtd_bi_mes: qtd
+                                    periodo_inicio: null,
+                                    periodo_fim: null,
+                                    selected_periods: [],
+                                    qtd_bi_mes: 0
                                 });
                             }}
                             disabled={readOnly || !isInternal}

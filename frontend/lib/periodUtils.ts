@@ -250,16 +250,28 @@ export function formatDisplayDate(date: Date): string {
 
 /**
  * Add months to a date, handling month-end edge cases
- * Example: addMonths(new Date('2026-01-31'), 1) => 2026-02-28
+ * Special rule: If day is 01, end date is last day of target month
+ * Otherwise: End date is one day before same day in target month
+ * Example: 
+ *   - 01/01 + 1 month = 31/01 (last day of January)
+ *   - 02/01 + 1 month = 01/02 (one day before 02/02)
+ *   - 31/01 + 1 month = 27/02 (one day before 28/02)
  */
 export function addMonths(date: Date, months: number): Date {
     const result = new Date(date);
-    const day = result.getDate();
+    const originalDay = result.getDate();
 
     result.setMonth(result.getMonth() + months);
 
+    // Special case: If original day was 01, set to last day of the month
+    if (originalDay === 1) {
+        result.setMonth(result.getMonth() + 1);
+        result.setDate(0); // Sets to last day of previous month
+        return result;
+    }
+
     // Handle month-end edge case (e.g., Jan 31 + 1 month = Feb 28, not Mar 3)
-    if (result.getDate() !== day) {
+    if (result.getDate() !== originalDay) {
         result.setDate(0); // Set to last day of previous month
     }
 

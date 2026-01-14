@@ -78,6 +78,13 @@ export default function MonthlyPicker({
     // Portal positioning
     const [portalPosition, setPortalPosition] = useState<{ top: number; left: number } | null>(null);
 
+    // Helper: Get max days in a month
+    const getMaxDaysInMonth = (month: number, year: number): number => {
+        return new Date(year, month, 0).getDate();
+    };
+
+    // Calculate max day for current selection
+    const maxDay = getMaxDaysInMonth(parseInt(formStartMonth), parseInt(formStartYear));
     useEffect(() => {
         const updatePosition = () => {
             const parentElement = document.querySelector('[data-period-picker-trigger]');
@@ -97,6 +104,14 @@ export default function MonthlyPicker({
             window.removeEventListener('resize', updatePosition);
         };
     }, []);
+
+    // Auto-adjust day if it exceeds max days in selected month
+    useEffect(() => {
+        const currentDay = parseInt(formStartDay);
+        if (currentDay > maxDay) {
+            setFormStartDay(String(maxDay).padStart(2, '0'));
+        }
+    }, [formStartMonth, formStartYear, maxDay]);
 
     // Auto-calculate end date when form inputs change
     useEffect(() => {
@@ -330,9 +345,14 @@ export default function MonthlyPicker({
                                 <input
                                     type="number"
                                     min="1"
-                                    max="31"
+                                    max={maxDay}
                                     value={formStartDay}
-                                    onChange={(e) => setFormStartDay(e.target.value)}
+                                    onChange={(e) => {
+                                        const day = parseInt(e.target.value);
+                                        if (day >= 1 && day <= maxDay) {
+                                            setFormStartDay(e.target.value);
+                                        }
+                                    }}
                                     className="w-14 px-2 py-1 text-[11px] border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="DD"
                                 />
