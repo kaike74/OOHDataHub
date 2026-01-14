@@ -42,7 +42,6 @@ import { Button } from '@/components/ui/Button';
 import { X } from 'lucide-react'; // Import X icon
 import styles from './ui/AnimatedSearchBar.module.css'; // Import styles
 import { Input } from '@/components/ui/Input';
-import ApprovalFlow from './proposals/ApprovalFlow'; // Import ApprovalFlow
 import {
     useReactTable,
     getCoreRowModel,
@@ -251,38 +250,40 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     };
 
     // Stage 3: Final Approval (Validado - Aguardando Aprovação → Aprovado)
-    // Now handled by ApprovalFlow component
-    const [isApprovalFlowOpen, setIsApprovalFlowOpen] = useState(false);
-
-    const handleApprovalFlowConfirm = async (data: any) => {
+    const handleFinalApproval = async () => {
         if (!selectedProposta) return;
 
-        try {
-            console.log('📦 Approval Data:', data);
+        const unavailableItems = itens.filter(i => i.status_validacao === 'UNAVAILABLE');
 
-            // 1. Update Cart if needed (e.g. if we were saving material info, we'd do it here)
-            // For now, we assume material info is just for the email/pdf trigger context
+        if (unavailableItems.length > 0) {
+            setConfirmDialog({
+                isOpen: true,
+                title: 'Aprovar Proposta',
+                message: `⚠️ Existem ${unavailableItems.length} ponto(s) indisponível(is) que serão removidos automaticamente.\n\nDeseja continuar com a aprovação?`,
+                type: 'warning',
+                onConfirm: async () => {
+                    try {
+                        const availableItems = itens.filter(i => i.status_validacao !== 'UNAVAILABLE');
+                        await api.updateCart(selectedProposta.id, availableItems);
+                        setItens(availableItems);
+                        refreshProposta({ ...selectedProposta, itens: availableItems });
 
-            // 2. Perform regular approval
-            const availableItems = itens.filter(i => i.status_validacao !== 'UNAVAILABLE');
-
-            // Sanitize: ensure only valid items are kept
-            if (availableItems.length !== itens.length) {
-                await api.updateCart(selectedProposta.id, availableItems);
-                setItens(availableItems);
-                refreshProposta({ ...selectedProposta, itens: availableItems });
+                        await api.updateProposalStatus(selectedProposta.id, 'aprovado');
+                        refreshProposta({ ...selectedProposta, status: 'aprovado' });
+                    } catch (error) {
+                        console.error('Failed to approve proposal', error);
+                        alert('Falha ao aprovar proposta');
+                    }
+                }
+            });
+        } else {
+            try {
+                await api.updateProposalStatus(selectedProposta.id, 'aprovado');
+                refreshProposta({ ...selectedProposta, status: 'aprovado' });
+            } catch (error) {
+                console.error('Failed to approve proposal', error);
+                alert('Falha ao aprovar proposta');
             }
-
-            await api.updateProposalStatus(selectedProposta.id, 'aprovado');
-            refreshProposta({ ...selectedProposta, status: 'aprovado' });
-
-            // Optional: Send data to backend for email trigger
-            // await api.sendApprovalSummary(selectedProposta.id, data); 
-
-        } catch (error) {
-            console.error('Failed to approve proposal', error);
-            alert('Falha ao aprovar proposta');
-            throw error; // Let the modal know it failed
         }
     };
 
@@ -1669,7 +1670,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 ...(isInternal && selectedProposta?.status === 'validado_aguardando_aprovacao' ? [{
                                     label: "Aprovar",
                                     icon: <CheckCircle size={18} />,
-                                    onClick: () => setIsApprovalFlowOpen(true)
+                                    onClick: handleFinalApproval
                                 }] : [])
                             ]}
                         />
@@ -2085,16 +2086,6 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                         <AIChat />
                     </div>
                 </div>
-            )}
-
-            {selectedProposta && (
-                <ApprovalFlow
-                    isOpen={isApprovalFlowOpen}
-                    onClose={() => setIsApprovalFlowOpen(false)}
-                    proposta={selectedProposta}
-                    itens={itens.filter(i => i.status_validacao !== 'UNAVAILABLE')}
-                    onApprove={handleApprovalFlowConfirm}
-                />
             )}
         </div >
     );
