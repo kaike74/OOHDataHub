@@ -1127,33 +1127,36 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
                     } else if (periodoComercializado === 'mensal') {
                         if (row.original.selected_periods && row.original.selected_periods.length > 0) {
-                            const sortedPeriods = [...row.original.selected_periods].sort(); // YYYY-M sorts correctly
+                            const sortedPeriods = [...row.original.selected_periods].sort();
                             const count = sortedPeriods.length;
 
+                            // Format first 3 periods as "DD/MM-DD/MM"
                             const firstThree = sortedPeriods.slice(0, 3).map(id => {
-                                const [year, monthIdx] = id.split('-').map(Number);
-                                return getMonthName(monthIdx);
-                            });
+                                const [startStr, endStr] = id.split('_');
+                                const startDate = new Date(startStr);
+                                const endDate = new Date(endStr);
 
-                            const day = new Date(row.original.periodo_inicio).getDate(); // Fixed day
+                                const startDay = String(startDate.getDate()).padStart(2, '0');
+                                const startMonth = String(startDate.getMonth() + 1).padStart(2, '0');
+                                const endDay = String(endDate.getDate()).padStart(2, '0');
+                                const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
+
+                                return `${startDay}/${startMonth}-${endDay}/${endMonth}`;
+                            });
 
                             const listStr = firstThree.join(', ');
                             const extra = count > 3 ? ` +${count - 3} mais` : '';
 
-                            // Tooltip
+                            // Tooltip content: Full list with complete dates
                             const tooltipContent = (
                                 <div className="text-xs">
                                     {sortedPeriods.map(id => {
-                                        const [year, monthIdx] = id.split('-').map(Number);
-                                        // Calculate start/end of that specific month period
-                                        // Use date from periodo_inicio for 'day'
-                                        const periodStart = new Date(year, monthIdx, day);
-                                        const periodEnd = new Date(year, monthIdx + 1, day);
-                                        periodEnd.setDate(periodEnd.getDate() - 1);
-
+                                        const [startStr, endStr] = id.split('_');
+                                        const startFormatted = formatDisplayDate(startStr);
+                                        const endFormatted = formatDisplayDate(endStr);
                                         return (
                                             <div key={id}>
-                                                {formatDisplayDate(formatDateForInput(periodStart))} → {formatDisplayDate(formatDateForInput(periodEnd))}
+                                                {startFormatted} → {endFormatted}
                                             </div>
                                         );
                                     })}
@@ -1161,42 +1164,31 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             );
 
                             if (count <= 3) {
-                                // Check contiguous
-                                // Approximate logic: are months consecutive?
-                                let contiguous = true;
-                                for (let i = 0; i < count - 1; i++) {
-                                    const [y1, m1] = sortedPeriods[i].split('-').map(Number);
-                                    const [y2, m2] = sortedPeriods[i + 1].split('-').map(Number);
-                                    const diff = (y2 * 12 + m2) - (y1 * 12 + m1);
-                                    if (diff !== 1) contiguous = false;
-                                }
-
-                                if (contiguous) {
-                                    const start = formatDisplayDate(row.original.periodo_inicio);
-                                    const end = formatDisplayDate(row.original.periodo_fim);
-                                    return <span>{start} → {end}</span>;
-                                } else {
-                                    return (
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <span className="truncate">Dia {day}: {listStr}</span>
-                                                </TooltipTrigger>
-                                                <TooltipContent>{tooltipContent}</TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    );
-                                }
+                                return (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <span className="truncate">{listStr}</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                {tooltipContent}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                );
                             } else {
+                                // > 3 periods
                                 return (
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <span className="truncate">
-                                                    Dia {day}: {listStr}{extra}
+                                                    {listStr}{extra}
                                                 </span>
                                             </TooltipTrigger>
-                                            <TooltipContent>{tooltipContent}</TooltipContent>
+                                            <TooltipContent>
+                                                {tooltipContent}
+                                            </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
                                 );

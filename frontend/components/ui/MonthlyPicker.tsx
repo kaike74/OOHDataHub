@@ -108,14 +108,10 @@ export default function MonthlyPicker({
             );
 
             if (!isNaN(start.getTime())) {
-                if (formDuration === 'custom') {
-                    // Keep current end date for custom
-                } else {
-                    const months = parseInt(formDuration);
-                    const end = addMonths(start, months);
-                    end.setDate(end.getDate() - 1); // End date is last day of period
-                    setFormEndDate(end);
-                }
+                const months = parseInt(formDuration);
+                const end = addMonths(start, months);
+                end.setDate(end.getDate() - 1); // End date is last day of period
+                setFormEndDate(end);
             }
         }
     }, [formStartDay, formStartMonth, formStartYear, formDuration]);
@@ -126,6 +122,21 @@ export default function MonthlyPicker({
             handleApply();
         }
     }, [saveOnClickOutside]);
+
+    // Check if a new period overlaps with existing periods
+    const checkOverlap = (newStart: Date, newEnd: Date, excludeId?: string): boolean => {
+        return periods.some(period => {
+            if (excludeId && period.id === excludeId) return false;
+
+            const periodStart = period.startDate.getTime();
+            const periodEnd = period.endDate.getTime();
+            const checkStart = newStart.getTime();
+            const checkEnd = newEnd.getTime();
+
+            // Check if ranges overlap
+            return (checkStart <= periodEnd && checkEnd >= periodStart);
+        });
+    };
 
     const handleApply = () => {
         const activePeriods = periods.filter(p => p.active);
@@ -163,6 +174,12 @@ export default function MonthlyPicker({
             parseInt(formStartDay)
         );
 
+        // Check for overlap
+        if (checkOverlap(start, formEndDate, editingPeriodId || undefined)) {
+            alert('Este período se sobrepõe a um período já existente. Por favor, escolha datas diferentes.');
+            return;
+        }
+
         const newPeriod: MonthlyPeriod = {
             id: generateMonthlyPeriodId(start, formEndDate),
             startDate: start,
@@ -191,7 +208,11 @@ export default function MonthlyPicker({
         setFormStartMonth(String(period.startDate.getMonth() + 1).padStart(2, '0'));
         setFormStartYear(String(period.startDate.getFullYear()));
         setFormEndDate(period.endDate);
-        setFormDuration('custom');
+
+        // Calculate duration in months
+        const months = Math.round((period.endDate.getTime() - period.startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+        setFormDuration(String(Math.min(months, 6))); // Cap at 6 months
+
         setEditingPeriodId(period.id);
         setIsAddingPeriod(true);
     };
@@ -252,8 +273,8 @@ export default function MonthlyPicker({
                                 <div className="flex items-start gap-2">
                                     <div
                                         className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 cursor-pointer transition-all ${period.active
-                                                ? 'bg-blue-500 border-blue-500'
-                                                : 'bg-white border-gray-300'
+                                            ? 'bg-blue-500 border-blue-500'
+                                            : 'bg-white border-gray-300'
                                             }`}
                                         onClick={() => handleTogglePeriod(period.id)}
                                     >
@@ -353,23 +374,8 @@ export default function MonthlyPicker({
                                 <option value="4">4 meses</option>
                                 <option value="5">5 meses</option>
                                 <option value="6">6 meses</option>
-                                <option value="custom">Customizado</option>
                             </select>
                         </div>
-
-                        {formDuration === 'custom' && (
-                            <div>
-                                <label className="block text-[10px] font-medium text-gray-700 mb-1">
-                                    Data de Fim
-                                </label>
-                                <input
-                                    type="date"
-                                    value={formEndDate ? formatDateForInput(formEndDate) : ''}
-                                    onChange={(e) => setFormEndDate(new Date(e.target.value))}
-                                    className="w-full px-2 py-1 text-[11px] border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                            </div>
-                        )}
 
                         {formEndDate && (
                             <div className="text-[10px] text-gray-600 bg-gray-50 p-2 rounded">
