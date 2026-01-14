@@ -119,13 +119,20 @@ export default function BiWeeklyPicker({
             const newSelected = new Set(prevSelected);
 
             if (event.shiftKey && lastClickedIndex !== null) {
-                // Range selection (Standard Shift+Click behavior)
+                // Smart range selection: select only between last clicked and current
                 const start = Math.min(lastClickedIndex, index);
                 const end = Math.max(lastClickedIndex, index);
 
-                // Add all periods in the range
+                // Determine if we should select or deselect based on last clicked item state
+                const shouldSelect = prevSelected.has(biWeeklyPeriods[lastClickedIndex].id);
+
+                // Apply selection/deselection to range
                 for (let i = start; i <= end; i++) {
-                    newSelected.add(biWeeklyPeriods[i].id);
+                    if (shouldSelect) {
+                        newSelected.add(biWeeklyPeriods[i].id);
+                    } else {
+                        newSelected.delete(biWeeklyPeriods[i].id);
+                    }
                 }
             } else {
                 // Toggle single selection
@@ -188,7 +195,7 @@ export default function BiWeeklyPicker({
     }, [biWeeklyPeriods, currentYear]);
 
     return (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-50 w-[240px]">
+        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-[9999] w-[240px]">
             <div className="flex items-center justify-between px-2 py-1.5 border-b border-gray-200 bg-gray-50">
                 <h3 className="text-[11px] font-semibold text-gray-900">Bissemanas</h3>
                 <button
