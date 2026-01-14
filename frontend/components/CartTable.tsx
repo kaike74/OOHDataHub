@@ -6,6 +6,16 @@ import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Proposta, PropostaItem, MaterialSelection } from '@/lib/types';
 import {
+    isValidBiWeeklyStartDate,
+    isValidBiWeeklyEndDate,
+    isValidMonthlyEndDate,
+    getSuggestedBiWeeklyEndDate,
+    getSuggestedMonthlyEndDate,
+    getNextValidBiWeeklyStartDate,
+    formatDateForInput,
+    getTomorrow
+} from '@/lib/periodUtils';
+import {
     Trash2,
     Settings,
     ChevronDown,
@@ -895,38 +905,103 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             ),
             size: 240,
             cell: ({ row }) => {
+                const periodoComercializado = row.original.periodo_comercializado || 'bissemanal';
+                const isBissemanal = periodoComercializado === 'bissemanal';
+
+                // Calculate min date (tomorrow)
+                const minDate = formatDateForInput(getTomorrow());
+
+                // Handle start date change
+                const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                    const newStartDate = e.target.value;
+                    if (!newStartDate) return;
+
+                    const startDate = new Date(newStartDate);
+
+                    // Validate based on period type
+                    if (isBissemanal) {
+                        if (!isValidBiWeeklyStartDate(startDate)) {
+                            // Find next valid bi-weekly date
+                            const validDate = getNextValidBiWeeklyStartDate(startDate);
+                            e.target.value = formatDateForInput(validDate);
+                            alert('Data de início inválida para período bissemanal. Ajustada para a próxima data válida.');
+                            return;
+                        }
+
+                        // Auto-suggest end date (14 days later)
+                        const suggestedEnd = getSuggestedBiWeeklyEndDate(startDate);
+                        if (suggestedEnd) {
+                            updateItem(row.original.id, {
+                                periodo_inicio: newStartDate,
+                                periodo_fim: formatDateForInput(suggestedEnd)
+                            });
+                            return;
+                        }
+                    } else {
+                        // For monthly, suggest end date 1 month ahead
+                        const suggestedEnd = getSuggestedMonthlyEndDate(startDate);
+                        updateItem(row.original.id, {
+                            periodo_inicio: newStartDate,
+                            periodo_fim: formatDateForInput(suggestedEnd)
+                        });
+                        return;
+                    }
+
+                    updateItem(row.original.id, 'periodo_inicio', newStartDate);
+                };
+
+                // Handle end date change
+                const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                    const newEndDate = e.target.value;
+                    if (!newEndDate || !row.original.periodo_inicio) return;
+
+                    const startDate = new Date(row.original.periodo_inicio);
+                    const endDate = new Date(newEndDate);
+
+                    // Validate based on period type
+                    if (isBissemanal) {
+                        if (!isValidBiWeeklyEndDate(endDate)) {
+                            alert('Data de fim inválida para período bissemanal. Selecione uma data de fim válida do calendário.');
+                            e.target.value = row.original.periodo_fim || '';
+                            return;
+                        }
+                    } else {
+                        if (!isValidMonthlyEndDate(startDate, endDate)) {
+                            alert('Data de fim inválida para período mensal. Deve ser o mesmo dia do mês da data de início.');
+                            e.target.value = row.original.periodo_fim || '';
+                            return;
+                        }
+                    }
+
+                    updateItem(row.original.id, 'periodo_fim', newEndDate);
+                };
+
                 return (
                     <div className="flex items-center gap-1 relative h-full group/cell hover:bg-gray-50 -m-2 p-2 transition-colors">
                         <input
                             type="date"
                             className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none text-[12px] text-gray-700 w-[95px] transition-colors"
-                            defaultValue={row.original.periodo_inicio || ''}
-                            key={`inicio-${row.original.id}-${row.original.periodo_inicio}`}
+                            value={row.original.periodo_inicio || ''}
+                            min={minDate}
                             data-row-id={row.original.id}
                             data-column-id="periodo_inicio"
-                            onBlur={(e) => {
-                                if (e.target.value !== row.original.periodo_inicio) {
-                                    updateItem(row.original.id, 'periodo_inicio', e.target.value);
-                                }
-                            }}
+                            onChange={handleStartDateChange}
                             onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_inicio', itens)}
                             disabled={readOnly}
+                            title={isBissemanal ? 'Selecione uma data de início válida do calendário bissemanal' : 'Selecione qualquer data a partir de amanhã'}
                         />
                         <span className="text-gray-300 text-[10px] mx-0.5">→</span>
                         <input
                             type="date"
                             className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none text-[12px] text-gray-700 w-[95px] transition-colors"
-                            defaultValue={row.original.periodo_fim || ''}
-                            key={`fim-${row.original.id}-${row.original.periodo_fim}`}
+                            value={row.original.periodo_fim || ''}
+                            min={row.original.periodo_inicio || minDate}
                             data-row-id={row.original.id}
                             data-column-id="periodo_fim"
-                            onBlur={(e) => {
-                                if (e.target.value !== row.original.periodo_fim) {
-                                    updateItem(row.original.id, 'periodo_fim', e.target.value);
-                                }
-                            }}
+                            onChange={handleEndDateChange}
                             onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_fim', itens)}
-                            disabled={readOnly}
+                            disabled={readOnly || !row.original.periodo_inicio}
+                            title={isBissemanal ? 'Selecione uma data de fim válida do calendário bissemanal' : 'Deve ser o mesmo dia do mês da data de início'}
                         />
                     </div>
                 );

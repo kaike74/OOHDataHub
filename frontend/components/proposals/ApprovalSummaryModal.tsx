@@ -52,15 +52,8 @@ export default function ApprovalSummaryModal({
         let totalLona = 0;
 
         approvedItems.forEach(item => {
-            // Calculate rental total
-            let qtd = 1;
-            if (item.periodo_inicio && item.periodo_fim) {
-                const start = new Date(item.periodo_inicio);
-                const end = new Date(item.periodo_fim);
-                const diffMs = end.getTime() - start.getTime();
-                const diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-                qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-            }
+            // Use the quantity already calculated in the cart table
+            const qtd = item.qtd_bi_mes || 1;
             totalLocacao += (item.valor_locacao || 0) * qtd;
 
             // Calculate material totals if enabled
@@ -173,15 +166,8 @@ export default function ApprovalSummaryModal({
                                 </div>
                                 <div className="divide-y divide-gray-100">
                                     {approvedItems.map((item, index) => {
-                                        const qtd = (() => {
-                                            if (!item.periodo_inicio || !item.periodo_fim) return 1;
-                                            const start = new Date(item.periodo_inicio);
-                                            const end = new Date(item.periodo_fim);
-                                            const diffMs = end.getTime() - start.getTime();
-                                            const diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-                                            return item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                                        })();
-
+                                        // Use the quantity already calculated in the cart table
+                                        const qtd = item.qtd_bi_mes || 1;
                                         const locacaoTotal = (item.valor_locacao || 0) * qtd;
                                         const papelQty = papelQuantities[item.id] || 0;
                                         const lonaQty = lonaQuantities[item.id] || 0;
