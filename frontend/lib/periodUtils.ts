@@ -189,24 +189,42 @@ export function getMonthName(monthIndex: number): string {
 }
 
 export function getBiWeekInfo(dateStr: string | Date): { number: number, year: number } | null {
+    // Normalize the input date
     let checkDate: Date;
     if (typeof dateStr === 'string') {
         const [year, month, day] = dateStr.split('-').map(Number);
         checkDate = new Date(year, month - 1, day);
     } else {
-        checkDate = dateStr;
+        checkDate = new Date(dateStr.getFullYear(), dateStr.getMonth(), dateStr.getDate());
     }
 
-    if (!isValidBiWeeklyStartDate(checkDate)) return null;
+    // Calculate the base date (normalized to avoid timezone issues)
+    const baseDate = new Date(BI_WEEKLY_BASE_START.getFullYear(), BI_WEEKLY_BASE_START.getMonth(), BI_WEEKLY_BASE_START.getDate());
 
-    const endDate = new Date(checkDate);
-    endDate.setDate(endDate.getDate() + 13);
-    const endYear = endDate.getFullYear();
+    const baseTime = baseDate.getTime();
+    const checkTime = checkDate.getTime();
 
-    // Use day-of-year based calculation
-    // BI 02 ends ~Jan 11, BI 04 ends ~Jan 25
+    // Calculate days since base
+    const daysSinceBase = Math.floor((checkTime - baseTime) / (1000 * 60 * 60 * 24));
+
+    if (daysSinceBase < 0) return null;
+
+    // Find which 14-day period this date falls into
+    const biWeekIndex = Math.floor(daysSinceBase / 14);
+
+    // Calculate the start and end of this bi-week period
+    const periodStartDate = new Date(baseDate);
+    periodStartDate.setDate(periodStartDate.getDate() + (biWeekIndex * 14));
+
+    const periodEndDate = new Date(periodStartDate);
+    periodEndDate.setDate(periodEndDate.getDate() + 13);
+
+    // The year is determined by the end date of the bi-week
+    const endYear = periodEndDate.getFullYear();
+
+    // Calculate the bi-week number based on day of year of the end date
     const startOfYear = new Date(endYear, 0, 1);
-    const msDiff = endDate.getTime() - startOfYear.getTime();
+    const msDiff = periodEndDate.getTime() - startOfYear.getTime();
     const dayOfYearEnd = Math.floor(msDiff / (1000 * 60 * 60 * 24)) + 1;
 
     if (dayOfYearEnd < 1) return null;
