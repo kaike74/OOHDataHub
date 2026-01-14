@@ -50,6 +50,7 @@ import { ConfirmDialog } from './ui/ConfirmDialog';
 import AIChat from './AIChat';
 import ApprovalSummaryModal from './proposals/ApprovalSummaryModal';
 import ApprovalSuccessModal from './proposals/ApprovalSuccessModal';
+import PeriodDatePicker from './ui/PeriodDatePicker';
 import { Button } from '@/components/ui/Button';
 import { X } from 'lucide-react'; // Import X icon
 import styles from './ui/AnimatedSearchBar.module.css'; // Import styles
@@ -158,6 +159,9 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const [isMenuOpen, setIsMenuOpen] = useState(false); // Track FloatingActionMenu state
     const [focusedCell, setFocusedCell] = useState<{ rowId: number | null; columnId: string | null }>({ rowId: null, columnId: null });
     const [isAIChatOpen, setIsAIChatOpen] = useState(false); // AI Chat state
+
+    // Period Date Picker State
+    const [openPickerRowId, setOpenPickerRowId] = useState<number | null>(null);
 
     // Approval Modal States
     const [isApprovalSummaryOpen, setIsApprovalSummaryOpen] = useState(false);
@@ -920,11 +924,19 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
                     // Validate based on period type
                     if (isBissemanal) {
-                        if (!isValidBiWeeklyStartDate(startDate)) {
-                            // Find next valid bi-weekly date
-                            const validDate = getNextValidBiWeeklyStartDate(startDate);
-                            e.target.value = formatDateForInput(validDate);
-                            alert('Data de início inválida para período bissemanal. Ajustada para a próxima data válida.');
+                        if (!isValidBiWeeklyStartDate(newStartDate)) {
+                            // Find next valid bi-weekly date and auto-correct
+                            const [year, month, day] = newStartDate.split('-').map(Number);
+                            const selectedDate = new Date(year, month - 1, day);
+                            const validDate = getNextValidBiWeeklyStartDate(selectedDate);
+                            const validDateStr = formatDateForInput(validDate);
+                            const suggestedEnd = getSuggestedBiWeeklyEndDate(validDate);
+                            if (suggestedEnd) {
+                                updateItem(row.original.id, {
+                                    periodo_inicio: validDateStr,
+                                    periodo_fim: formatDateForInput(suggestedEnd)
+                                });
+                            }
                             return;
                         }
 
@@ -955,19 +967,22 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     const newEndDate = e.target.value;
                     if (!newEndDate || !row.original.periodo_inicio) return;
 
-                    const startDate = new Date(row.original.periodo_inicio);
-                    const endDate = new Date(newEndDate);
-
                     // Validate based on period type
                     if (isBissemanal) {
-                        if (!isValidBiWeeklyEndDate(endDate)) {
-                            alert('Data de fim inválida para período bissemanal. Selecione uma data de fim válida do calendário.');
+                        // Validate using string directly
+                        if (!isValidBiWeeklyEndDate(newEndDate)) {
+                            // Silently reject invalid date
                             e.target.value = row.original.periodo_fim || '';
                             return;
                         }
                     } else {
+                        const [startYear, startMonth, startDay] = row.original.periodo_inicio.split('-').map(Number);
+                        const startDate = new Date(startYear, startMonth - 1, startDay);
+                        const [endYear, endMonth, endDay] = newEndDate.split('-').map(Number);
+                        const endDate = new Date(endYear, endMonth - 1, endDay);
+
                         if (!isValidMonthlyEndDate(startDate, endDate)) {
-                            alert('Data de fim inválida para período mensal. Deve ser o mesmo dia do mês da data de início.');
+                            // Silently reject invalid date
                             e.target.value = row.original.periodo_fim || '';
                             return;
                         }
@@ -976,33 +991,64 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     updateItem(row.original.id, 'periodo_fim', newEndDate);
                 };
 
+                const formatDisplayDate = (dateStr: string | null) => {
+                    if (!dateStr) return '--/--/----';
+                    const [year, month, day] = dateStr.split('-');
+                    return `${day}/${month}/${year}`;
+                };
+
+                const isPickerOpen = openPickerRowId === row.original.id;
+
                 return (
                     <div className="flex items-center gap-1 relative h-full group/cell hover:bg-gray-50 -m-2 p-2 transition-colors">
-                        <input
-                            type="date"
-                            className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none text-[12px] text-gray-700 w-[95px] transition-colors"
-                            value={row.original.periodo_inicio || ''}
-                            min={minDate}
-                            data-row-id={row.original.id}
-                            data-column-id="periodo_inicio"
-                            onChange={handleStartDateChange}
-                            onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_inicio', itens)}
+                        {/* Start Date Display */}
+                        <button
+                            type="button"
+                            className={`
+                                bg-transparent border-b border-transparent hover:border-gray-300 
+                                focus:border-blue-500 focus:outline-none text-[12px] text-gray-700 
+                                w-[95px] transition-colors text-left px-1
+                                ${readOnly ? 'cursor-default' : 'cursor-pointer'}
+                            `}
+                            onClick={() => !readOnly && setOpenPickerRowId(row.original.id)}
                             disabled={readOnly}
-                            title={isBissemanal ? 'Selecione uma data de início válida do calendário bissemanal' : 'Selecione qualquer data a partir de amanhã'}
-                        />
+                        >
+                            {formatDisplayDate(row.original.periodo_inicio)}
+                        </button>
+
                         <span className="text-gray-300 text-[10px] mx-0.5">→</span>
-                        <input
-                            type="date"
-                            className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none text-[12px] text-gray-700 w-[95px] transition-colors"
-                            value={row.original.periodo_fim || ''}
-                            min={row.original.periodo_inicio || minDate}
-                            data-row-id={row.original.id}
-                            data-column-id="periodo_fim"
-                            onChange={handleEndDateChange}
-                            onKeyDown={(e) => handleKeyDown(e, row.original.id, 'periodo_fim', itens)}
+
+                        {/* End Date Display */}
+                        <button
+                            type="button"
+                            className={`
+                                bg-transparent border-b border-transparent hover:border-gray-300 
+                                focus:border-blue-500 focus:outline-none text-[12px] text-gray-700 
+                                w-[95px] transition-colors text-left px-1
+                                ${readOnly || !row.original.periodo_inicio ? 'cursor-default opacity-50' : 'cursor-pointer'}
+                            `}
+                            onClick={() => !readOnly && row.original.periodo_inicio && setOpenPickerRowId(row.original.id)}
                             disabled={readOnly || !row.original.periodo_inicio}
-                            title={isBissemanal ? 'Selecione uma data de fim válida do calendário bissemanal' : 'Deve ser o mesmo dia do mês da data de início'}
-                        />
+                        >
+                            {formatDisplayDate(row.original.periodo_fim)}
+                        </button>
+
+                        {/* Custom Date Picker */}
+                        {isPickerOpen && (
+                            <PeriodDatePicker
+                                isOpen={isPickerOpen}
+                                onClose={() => setOpenPickerRowId(null)}
+                                periodType={periodoComercializado}
+                                startDate={row.original.periodo_inicio}
+                                endDate={row.original.periodo_fim}
+                                onSelectStart={(date) => {
+                                    updateItem(row.original.id, 'periodo_inicio', date);
+                                }}
+                                onSelectEnd={(date) => {
+                                    updateItem(row.original.id, 'periodo_fim', date);
+                                }}
+                            />
+                        )}
                     </div>
                 );
             }

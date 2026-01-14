@@ -45,22 +45,45 @@ export function getValidBiWeeklyEndDates(fromDate: Date, count: number = 52): Da
 /**
  * Checks if a date is a valid bi-weekly start date
  */
-export function isValidBiWeeklyStartDate(date: Date): boolean {
-    const baseTime = BI_WEEKLY_BASE_START.getTime();
-    const dateTime = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+export function isValidBiWeeklyStartDate(date: Date | string): boolean {
+    // Normalize the date to avoid timezone issues
+    let checkDate: Date;
+    if (typeof date === 'string') {
+        // Parse YYYY-MM-DD format directly to avoid timezone issues
+        const [year, month, day] = date.split('-').map(Number);
+        checkDate = new Date(year, month - 1, day);
+    } else {
+        checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
 
-    const daysDiff = Math.floor((dateTime - baseTime) / (1000 * 60 * 60 * 24));
+    const baseDate = new Date(BI_WEEKLY_BASE_START.getFullYear(), BI_WEEKLY_BASE_START.getMonth(), BI_WEEKLY_BASE_START.getDate());
+
+    const baseTime = baseDate.getTime();
+    const dateTime = checkDate.getTime();
+
+    const daysDiff = Math.round((dateTime - baseTime) / (1000 * 60 * 60 * 24));
     return daysDiff >= 0 && daysDiff % 14 === 0;
 }
 
 /**
  * Checks if a date is a valid bi-weekly end date
  */
-export function isValidBiWeeklyEndDate(date: Date): boolean {
-    const baseTime = BI_WEEKLY_BASE_START.getTime();
-    const dateTime = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+export function isValidBiWeeklyEndDate(date: Date | string): boolean {
+    // Normalize the date to avoid timezone issues
+    let checkDate: Date;
+    if (typeof date === 'string') {
+        const [year, month, day] = date.split('-').map(Number);
+        checkDate = new Date(year, month - 1, day);
+    } else {
+        checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
 
-    const daysDiff = Math.floor((dateTime - baseTime) / (1000 * 60 * 60 * 24));
+    const baseDate = new Date(BI_WEEKLY_BASE_START.getFullYear(), BI_WEEKLY_BASE_START.getMonth(), BI_WEEKLY_BASE_START.getDate());
+
+    const baseTime = baseDate.getTime();
+    const dateTime = checkDate.getTime();
+
+    const daysDiff = Math.round((dateTime - baseTime) / (1000 * 60 * 60 * 24));
     // End dates are 13 days after start dates
     return daysDiff >= 13 && (daysDiff - 13) % 14 === 0;
 }
