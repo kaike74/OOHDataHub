@@ -61,7 +61,7 @@ export default function PeriodDatePicker({
     };
 
     return (
-        <div ref={pickerRef}>
+        <div ref={pickerRef} className="relative z-[9999]">
             {periodType === 'bissemanal' ? (
                 <BiWeeklyPicker
                     startDate={startDate}

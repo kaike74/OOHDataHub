@@ -119,23 +119,16 @@ export default function BiWeeklyPicker({
             const newSelected = new Set(prevSelected);
 
             if (event.shiftKey && lastClickedIndex !== null) {
-                // Smart range selection: select only between last clicked and current
+                // Shift-select: ALWAYS SELECT the range between last clicked and current
                 const start = Math.min(lastClickedIndex, index);
                 const end = Math.max(lastClickedIndex, index);
 
-                // Determine if we should select or deselect based on last clicked item state
-                const shouldSelect = prevSelected.has(biWeeklyPeriods[lastClickedIndex].id);
-
-                // Apply selection/deselection to range
+                // Select all periods in the range
                 for (let i = start; i <= end; i++) {
-                    if (shouldSelect) {
-                        newSelected.add(biWeeklyPeriods[i].id);
-                    } else {
-                        newSelected.delete(biWeeklyPeriods[i].id);
-                    }
+                    newSelected.add(biWeeklyPeriods[i].id);
                 }
             } else {
-                // Toggle single selection
+                // Regular click: Toggle single selection
                 if (newSelected.has(period.id)) {
                     newSelected.delete(period.id);
                 } else {

@@ -1095,14 +1095,14 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
                             // If we have just a date range, let's try to infer BIs
                             if (startInfo) {
-                                // For end info, we need the start date of the last bi-week.
-                                // If range is contiguous, last bi-week start = end date - 13 days
-                                const lastBiWeekStart = new Date(row.original.periodo_fim);
-                                lastBiWeekStart.setDate(lastBiWeekStart.getDate() - 13);
-                                const lastInfo = getBiWeekInfo(lastBiWeekStart);
+                                // Get the BI info for the end date (it will find which BI period it falls into)
+                                const endInfo = getBiWeekInfo(row.original.periodo_fim);
 
-                                if (lastInfo) {
-                                    return <span>BI {String(startInfo.number).padStart(2, '0')} → BI {String(lastInfo.number).padStart(2, '0')}</span>;
+                                if (endInfo && startInfo.number !== endInfo.number) {
+                                    return <span>BI {String(startInfo.number).padStart(2, '0')} → BI {String(endInfo.number).padStart(2, '0')}</span>;
+                                } else if (startInfo) {
+                                    // Single BI period
+                                    return <span>BI {String(startInfo.number).padStart(2, '0')}</span>;
                                 }
                             }
 
