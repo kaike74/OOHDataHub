@@ -7,13 +7,13 @@ interface BiWeeklyPickerProps {
     startDate: string | null;
     endDate: string | null;
     onSelectPeriods: (startDate: string, endDate: string) => void;
-    onClose: () => void;
+    onClose: (shouldSave: boolean) => void;
+    saveOnClickOutside?: boolean;
 }
 
 // Base date for bi-weekly calendar: 29/12/2025 (BI 02 of 2026)
-const BI_WEEKLY_BASE = new Date(2025, 11, 29); // December 29, 2025
+const BI_WEEKLY_BASE = new Date(2025, 11, 29);
 
-// Helper function to format date for input (YYYY-MM-DD)
 const formatDateForInput = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -21,7 +21,6 @@ const formatDateForInput = (date: Date): string => {
     return `${year}-${month}-${day}`;
 };
 
-// Helper function to format date for display (DD/MM/YY)
 const formatDisplayDate = (date: Date): string => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -29,7 +28,6 @@ const formatDisplayDate = (date: Date): string => {
     return `${day}/${month}/${year}`;
 };
 
-// Generate bi-weekly periods dynamically
 const generateBiWeeklyPeriods = (startYear: number, endYear: number) => {
     const allPeriods: any[] = [];
     const today = new Date();
@@ -75,12 +73,12 @@ export default function BiWeeklyPicker({
     startDate,
     endDate,
     onSelectPeriods,
-    onClose
+    onClose,
+    saveOnClickOutside
 }: BiWeeklyPickerProps) {
     const currentYear = new Date().getFullYear();
     const biWeeklyPeriods = generateBiWeeklyPeriods(currentYear, currentYear + 4);
 
-    // Initialize selection based on current dates
     const getInitialSelection = (): Set<string> => {
         if (!startDate || !endDate) return new Set();
 
@@ -88,12 +86,10 @@ export default function BiWeeklyPicker({
         const start = new Date(startDate);
         const end = new Date(endDate);
 
-        // Find all periods that fall within the selected range
         biWeeklyPeriods.forEach(period => {
             const periodStart = new Date(period.startStr);
             const periodEnd = new Date(period.endStr);
 
-            // Include period if it overlaps with selected range
             if (periodStart <= end && periodEnd >= start) {
                 selected.add(period.id);
             }
@@ -102,9 +98,9 @@ export default function BiWeeklyPicker({
         return selected;
     };
 
-    const [selectedPeriods, setSelectedPeriods] = useState<Set<string>>(getInitialSelection);
+    const initialSelection = getInitialSelection();
+    const [selectedPeriods, setSelectedPeriods] = useState<Set<string>>(initialSelection);
     const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null);
-    const hasChangedRef = useRef(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const handlePeriodClick = (period: typeof biWeeklyPeriods[0], index: number, event: React.MouseEvent) => {
@@ -118,6 +114,8 @@ export default function BiWeeklyPicker({
                 const start = Math.min(lastClickedIndex, index);
                 const end = Math.max(lastClickedIndex, index);
 
+                newSelected.clear();
+
                 for (let i = start; i <= end; i++) {
                     newSelected.add(biWeeklyPeriods[i].id);
                 }
@@ -129,7 +127,6 @@ export default function BiWeeklyPicker({
                 }
             }
 
-            hasChangedRef.current = true;
             return newSelected;
         });
 
@@ -148,24 +145,28 @@ export default function BiWeeklyPicker({
 
             onSelectPeriods(firstPeriod.startStr, lastPeriod.endStr);
         }
-        onClose();
+        onClose(true); // Save
     };
 
-    const handleClose = () => {
-        // Save if there were changes
-        if (hasChangedRef.current && selectedPeriods.size > 0) {
+    const handleCancel = () => {
+        onClose(false); // Don't save
+    };
+
+    // Handle save on click outside
+    useEffect(() => {
+        if (saveOnClickOutside && selectedPeriods.size > 0) {
             const selectedPeriodsArray = Array.from(selectedPeriods)
                 .map(id => biWeeklyPeriods.find(p => p.id === id)!)
                 .filter(Boolean)
                 .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
-            const firstPeriod = selectedPeriodsArray[0];
-            const lastPeriod = selectedPeriodsArray[selectedPeriodsArray.length - 1];
-
-            onSelectPeriods(firstPeriod.startStr, lastPeriod.endStr);
+            if (selectedPeriodsArray.length > 0) {
+                const firstPeriod = selectedPeriodsArray[0];
+                const lastPeriod = selectedPeriodsArray[selectedPeriodsArray.length - 1];
+                onSelectPeriods(firstPeriod.startStr, lastPeriod.endStr);
+            }
         }
-        onClose();
-    };
+    }, [saveOnClickOutside, selectedPeriods, biWeeklyPeriods, onSelectPeriods]);
 
     useEffect(() => {
         if (scrollRef.current && biWeeklyPeriods.length > 0) {
@@ -182,9 +183,10 @@ export default function BiWeeklyPicker({
             <div className="flex items-center justify-between px-2 py-1.5 border-b border-gray-200 bg-gray-50">
                 <h3 className="text-[11px] font-semibold text-gray-900">Bissemanas</h3>
                 <button
-                    onClick={handleClose}
+                    onClick={handleCancel}
                     className="text-gray-400 hover:text-gray-600"
                     type="button"
+                    title="Cancelar (não salvar)"
                 >
                     <X size={14} />
                 </button>

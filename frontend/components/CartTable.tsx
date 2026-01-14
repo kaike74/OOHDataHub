@@ -994,7 +994,70 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 const formatDisplayDate = (dateStr: string | null) => {
                     if (!dateStr) return '--/--/----';
                     const [year, month, day] = dateStr.split('-');
-                    return `${day}/${month}/${year}`;
+                    return `${day}/${month}/${year.slice(-2)}`;
+                };
+
+                // Format period display based on type
+                const formatPeriodDisplay = () => {
+                    if (!row.original.periodo_inicio || !row.original.periodo_fim) {
+                        return <span className="text-gray-400">Selecionar período</span>;
+                    }
+
+                    const periodoComercializado = row.original.periodo_comercializado;
+
+                    if (periodoComercializado === 'bissemanal') {
+                        // For bi-weekly: show "BI 02, 04, 06... +X mais"
+                        // This is a simplified display - actual calculation would need the selected periods array
+                        const start = formatDisplayDate(row.original.periodo_inicio);
+                        const end = formatDisplayDate(row.original.periodo_fim);
+
+                        // Calculate approximate number of bi-weeks
+                        const startDate = new Date(row.original.periodo_inicio);
+                        const endDate = new Date(row.original.periodo_fim);
+                        const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                        const biWeeksCount = Math.ceil(daysDiff / 14);
+
+                        if (biWeeksCount <= 3) {
+                            return <span>{start} → {end}</span>;
+                        } else {
+                            return (
+                                <span title={`${start} → ${end}`}>
+                                    {biWeeksCount} bissemanas ({start} → {end})
+                                </span>
+                            );
+                        }
+                    } else if (periodoComercializado === 'mensal') {
+                        // For monthly: show "Dia X: Jan, Mar, Mai... +X mais"
+                        const start = formatDisplayDate(row.original.periodo_inicio);
+                        const end = formatDisplayDate(row.original.periodo_fim);
+
+                        // Calculate approximate number of months
+                        const startDate = new Date(row.original.periodo_inicio);
+                        const endDate = new Date(row.original.periodo_fim);
+                        const monthsDiff = (endDate.getFullYear() - startDate.getFullYear()) * 12 +
+                            (endDate.getMonth() - startDate.getMonth()) + 1;
+
+                        const day = startDate.getDate();
+
+                        if (monthsDiff <= 3) {
+                            return <span>{start} → {end}</span>;
+                        } else {
+                            return (
+                                <span title={`${start} → {end}`}>
+                                    {monthsDiff} meses (Dia {day}: {start} → {end})
+                                </span>
+                            );
+                        }
+                    }
+
+                    // Default display
+                    return (
+                        <>
+                            <span>{formatDisplayDate(row.original.periodo_inicio)}</span>
+                            <span className="text-gray-300 text-[10px] mx-0.5">→</span>
+                            <span>{formatDisplayDate(row.original.periodo_fim)}</span>
+                        </>
+                    );
                 };
 
                 const isPickerOpen = openPickerRowId === row.original.id;
@@ -1013,9 +1076,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             onClick={() => !readOnly && setOpenPickerRowId(row.original.id)}
                             disabled={readOnly}
                         >
-                            <span>{formatDisplayDate(row.original.periodo_inicio)}</span>
-                            <span className="text-gray-300 text-[10px]">→</span>
-                            <span>{formatDisplayDate(row.original.periodo_fim)}</span>
+                            {formatPeriodDisplay()}
                         </button>
 
                         {/* Custom Date Picker */}
