@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Check } from 'lucide-react';
 
 interface BiWeeklyPickerProps {
@@ -29,6 +29,51 @@ const formatDisplayDate = (date: Date): string => {
     return `${day}/${month}/${year}`;
 };
 
+// Generate bi-weekly periods dynamically
+const generateBiWeeklyPeriods = (startYear: number, endYear: number) => {
+    const allPeriods: any[] = [];
+
+    for (let year = startYear; year <= endYear; year++) {
+        // Each year has 26 bi-weeks (BI 02, BI 04, ..., BI 52)
+        // Leap years may have BI 54
+        const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+        const maxBiWeeks = isLeapYear ? 27 : 26; // 27 bi-weeks = up to BI 54
+
+        for (let biWeekIndex = 0; biWeekIndex < maxBiWeeks; biWeekIndex++) {
+            // Calculate start date from base
+            const yearOffset = year - 2026; // 2026 is our reference year
+            const totalBiWeeksFromBase = (yearOffset * 26) + biWeekIndex;
+
+            const start = new Date(BI_WEEKLY_BASE);
+            start.setDate(start.getDate() + (totalBiWeeksFromBase * 14));
+
+            const end = new Date(start);
+            end.setDate(end.getDate() + 13);
+
+            // The bi-week belongs to the year where it ENDS
+            const biWeekYear = end.getFullYear();
+
+            // Only include if it belongs to the current year we're generating
+            if (biWeekYear === year) {
+                const startStr = formatDateForInput(start);
+                const endStr = formatDateForInput(end);
+
+                allPeriods.push({
+                    number: (biWeekIndex + 1) * 2, // BI 02, BI 04, BI 06, etc.
+                    year: biWeekYear,
+                    startDate: start,
+                    endDate: end,
+                    startStr,
+                    endStr,
+                    id: `${startStr}_${endStr}`
+                });
+            }
+        }
+    }
+
+    return allPeriods;
+};
+
 export default function BiWeeklyPicker({
     startDate,
     endDate,
@@ -39,36 +84,14 @@ export default function BiWeeklyPicker({
     const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    // Generate bi-weekly periods for multiple years (infinite scroll)
-    const biWeeklyPeriods = useMemo(() => {
-        const allPeriods: any[] = [];
-        const totalPeriods = 26 * 5; // 26 bi-weeks per year * 5 years = 130 periods
+    // Generate periods for current year and next 4 years
+    const currentYear = new Date().getFullYear();
+    const biWeeklyPeriods = generateBiWeeklyPeriods(currentYear, currentYear + 4);
 
-        for (let i = 0; i < totalPeriods; i++) {
-            const start = new Date(BI_WEEKLY_BASE);
-            start.setDate(start.getDate() + (i * 14));
+    const handlePeriodClick = (period: typeof biWeeklyPeriods[0], index: number, event: React.MouseEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
 
-            const end = new Date(start);
-            end.setDate(end.getDate() + 13);
-
-            const startStr = formatDateForInput(start);
-            const endStr = formatDateForInput(end);
-
-            allPeriods.push({
-                number: (i + 1) * 2, // BI 02, BI 04, BI 06, etc.
-                year: start.getFullYear(),
-                startDate: start,
-                endDate: end,
-                startStr,
-                endStr,
-                id: `${startStr}_${endStr}`
-            });
-        }
-
-        return allPeriods;
-    }, []);
-
-    const togglePeriod = (period: typeof biWeeklyPeriods[0], index: number, event: React.MouseEvent) => {
         const newSelected = new Set(selectedPeriods);
 
         // Handle Shift+Click for range selection
@@ -108,23 +131,23 @@ export default function BiWeeklyPicker({
     // Scroll to current year on mount
     useEffect(() => {
         if (scrollRef.current) {
-            const currentYear = new Date().getFullYear();
             const currentYearIndex = biWeeklyPeriods.findIndex(p => p.year === currentYear);
             if (currentYearIndex !== -1) {
-                const itemHeight = 28; // Approximate height of each item
+                const itemHeight = 24;
                 scrollRef.current.scrollTop = currentYearIndex * itemHeight - 50;
             }
         }
-    }, [biWeeklyPeriods]);
+    }, [biWeeklyPeriods, currentYear]);
 
     return (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-50 w-[300px]">
+        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-50 w-[240px]">
             {/* Header */}
-            <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-200 bg-gray-50">
-                <h3 className="text-xs font-semibold text-gray-900">Bissemanas</h3>
+            <div className="flex items-center justify-between px-2 py-1.5 border-b border-gray-200 bg-gray-50">
+                <h3 className="text-[11px] font-semibold text-gray-900">Bissemanas</h3>
                 <button
                     onClick={onClose}
                     className="text-gray-400 hover:text-gray-600"
+                    type="button"
                 >
                     <X size={14} />
                 </button>
@@ -136,45 +159,40 @@ export default function BiWeeklyPicker({
                     const isSelected = selectedPeriods.has(period.id);
 
                     return (
-                        <label
+                        <div
                             key={period.id}
                             className={`
-                                flex items-center gap-2 px-2 py-1 rounded cursor-pointer
+                                flex items-center gap-1.5 px-2 py-0.5 rounded cursor-pointer
                                 transition-colors text-[10px]
                                 ${isSelected ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'}
                             `}
-                            onClick={(e) => togglePeriod(period, index, e)}
+                            onClick={(e) => handlePeriodClick(period, index, e)}
+                            onMouseDown={(e) => e.preventDefault()}
                         >
                             <div className={`
-                                w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0
+                                w-3 h-3 rounded border flex items-center justify-center flex-shrink-0
                                 ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}
                             `}>
-                                {isSelected && <Check size={10} className="text-white" />}
+                                {isSelected && <Check size={8} className="text-white" strokeWidth={3} />}
                             </div>
-                            <input
-                                type="checkbox"
-                                className="hidden"
-                                checked={isSelected}
-                                onChange={() => { }}
-                            />
-                            <span className={`font-mono ${isSelected ? 'font-semibold text-blue-700' : 'text-gray-600'}`}>
+                            <span className={`font-mono text-[9px] ${isSelected ? 'font-semibold text-blue-700' : 'text-gray-600'}`}>
                                 BI {String(period.number).padStart(2, '0')}-{String(period.year).slice(-2)}
                             </span>
-                            <span className={isSelected ? 'text-gray-900' : 'text-gray-600'}>
+                            <span className={`text-[9px] ${isSelected ? 'text-gray-900' : 'text-gray-600'}`}>
                                 ({formatDisplayDate(period.startDate)}-{formatDisplayDate(period.endDate)})
                             </span>
-                        </label>
+                        </div>
                     );
                 })}
             </div>
 
             {/* Footer */}
-            <div className="px-3 py-1.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+            <div className="px-2 py-1.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
                 <span className="text-[9px] text-gray-500">
                     {selectedPeriods.size} selecionado{selectedPeriods.size !== 1 ? 's' : ''}
                 </span>
                 <span className="text-[8px] text-gray-400">
-                    Shift+Click para selecionar múltiplos
+                    Shift+Click
                 </span>
             </div>
         </div>
