@@ -88,17 +88,18 @@ export default function BiWeeklyPicker({
             return new Set(initialSelectedPeriods);
         }
 
-        if (!startDate || !endDate) return new Set();
+        if (!startDate) return new Set();
 
+        // Only select the period that contains the start date
         const selected = new Set<string>();
         const start = new Date(startDate);
-        const end = new Date(endDate);
 
         biWeeklyPeriods.forEach(period => {
             const periodStart = new Date(period.startStr);
             const periodEnd = new Date(period.endStr);
 
-            if (periodStart <= end && periodEnd >= start) {
+            // Check if start date falls within this period
+            if (start >= periodStart && start <= periodEnd) {
                 selected.add(period.id);
             }
         });
@@ -115,6 +116,14 @@ export default function BiWeeklyPicker({
         event.preventDefault();
         event.stopPropagation();
 
+        console.log('🖱️ Click:', {
+            index,
+            period: period.number,
+            isShift: event.shiftKey,
+            lastClickedIndex,
+            lastClickedPeriod: lastClickedIndex !== null ? biWeeklyPeriods[lastClickedIndex]?.number : null
+        });
+
         setSelectedPeriods(prevSelected => {
             const newSelected = new Set(prevSelected);
 
@@ -122,6 +131,8 @@ export default function BiWeeklyPicker({
                 // Shift-select: ALWAYS SELECT the range between last clicked and current
                 const start = Math.min(lastClickedIndex, index);
                 const end = Math.max(lastClickedIndex, index);
+
+                console.log('📊 Shift-select range:', { start, end, count: end - start + 1 });
 
                 // Select all periods in the range
                 for (let i = start; i <= end; i++) {
@@ -136,9 +147,11 @@ export default function BiWeeklyPicker({
                 }
             }
 
+            console.log('✅ New selection size:', newSelected.size);
             return newSelected;
         });
 
+        // Always update last clicked index
         setLastClickedIndex(index);
     };
 
