@@ -59,7 +59,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             pi.id, pi.id_proposta, pi.id_ooh, pi.periodo_inicio, pi.periodo_fim, 
             pi.valor_locacao, pi.valor_papel, pi.valor_lona, 
             pi.periodo_comercializado, pi.observacoes, pi.fluxo_diario, pi.status,
-            pi.status_validacao, pi.approved_until, pi.last_validated_at,
+            pi.status_validacao, pi.approved_until, pi.last_validated_at, pi.selected_periods,
             val_user.name as validator_name,
             p.endereco, p.cidade, p.uf, p.pais, p.codigo_ooh, p.tipo, p.medidas, p.ponto_referencia,
             p.latitude, p.longitude,
@@ -102,9 +102,15 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             sharedUsers = [...shares, ...invites];
         }
 
+        // Parse selected_periods
+        const parsedItens = itens.map((item: any) => ({
+            ...item,
+            selected_periods: item.selected_periods ? JSON.parse(item.selected_periods) : []
+        }));
+
         return new Response(JSON.stringify({
             ...proposal,
-            itens,
+            itens: parsedItens,
             currentUserRole: currentRole,
             sharedUsers
         }), { headers });
@@ -332,13 +338,15 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                 INSERT INTO proposta_itens (
                     id_proposta, id_ooh, periodo_inicio, periodo_fim, 
                     valor_locacao, valor_papel, valor_lona, 
-                    periodo_comercializado, observacoes, fluxo_diario, status, approved_until, status_validacao
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    periodo_comercializado, observacoes, fluxo_diario, status, approved_until, status_validacao,
+                    selected_periods
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
                     id, item.id_ooh, item.periodo_inicio, item.periodo_fim,
                     finalValores.valor_locacao, finalValores.valor_papel, finalValores.valor_lona,
                     item.periodo_comercializado, item.observacoes, item.fluxo_diario || null,
-                    finalValores.status, finalValores.approved_until, finalValores.status_validacao
+                    finalValores.status, finalValores.approved_until, finalValores.status_validacao,
+                    item.selected_periods ? JSON.stringify(item.selected_periods) : null
                 ));
             }
 

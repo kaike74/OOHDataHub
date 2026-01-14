@@ -10,8 +10,8 @@ interface PeriodDatePickerProps {
     periodType: 'bissemanal' | 'mensal';
     startDate: string | null;
     endDate: string | null;
-    onSelectStart: (date: string) => void;
-    onSelectEnd: (date: string) => void;
+    onSelectStart?: (date: string) => void;
+    onSelectEnd?: (date: string) => void;
     onSelectBoth?: (startDate: string, endDate: string) => void;
     onSelectionChange?: (startDate: string, endDate: string, selectedPeriods: string[]) => void;
 }
@@ -22,8 +22,8 @@ export default function PeriodDatePicker({
     periodType,
     startDate,
     endDate,
-    onSelectStart,
-    onSelectEnd,
+    onSelectStart = () => { },
+    onSelectEnd = () => { },
     onSelectBoth,
     onSelectionChange
 }: PeriodDatePickerProps) {

@@ -1043,45 +1043,22 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             );
 
                             if (count <= 3) {
-                                // If short list, just show range or list? 
-                                // User requested: "Período: BI 02, 06, 10" for compact if > 3 bissemanas?
-                                // User says: 
-                                // "≤3 bissemanas: 29/12/25 → 11/01/26" (Uses range format if contiguous?)
-                                // NO. "≤3 bissemanas: 29/12/25 → 11/01/26" implies Contiguous.
-                                // But if non-contiguous? "BI 02, 06, 10".
-                                // If non-contiguous, showing range is misleading.
-                                // Let's check contiguousness.
+                                // User requested to ALWAYS use compact text format "BI 04, 06" even if < 3.
+                                // Previous logic tried to detect contiguous ranges.
+                                // New logic: Always show list if valid.
 
-                                // Only check contiguous if count is small?
-                                // Let's simplify: If count <= 3 and list implies contiguous (checked by simple date diff matching duration), use range.
-                                // Else use list.
-
-                                // Contiguous check:
-                                const startDate = new Date(row.original.periodo_inicio);
-                                const endDate = new Date(row.original.periodo_fim);
-                                const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-                                const expectedDuration = count * 14;
-                                const isContiguous = Math.abs(daysDiff + 1 - expectedDuration) < 2; // +1 inclusive, +/- margin
-
-                                if (isContiguous) {
-                                    const start = formatDisplayDate(row.original.periodo_inicio);
-                                    const end = formatDisplayDate(row.original.periodo_fim);
-                                    return <span>{start} → {end}</span>;
-                                } else {
-                                    // Non-contiguous or user wants list
-                                    return (
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <span className="truncate">Período: {listStr}</span>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    {tooltipContent}
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    );
-                                }
+                                return (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <span className="truncate">Período: {listStr}</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                {tooltipContent}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                );
                             } else {
                                 // > 3 periods
                                 return (
