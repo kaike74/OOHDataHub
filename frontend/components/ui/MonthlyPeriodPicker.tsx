@@ -199,14 +199,10 @@ export default function MonthlyPeriodPicker({
             const firstPeriod = sortedPeriods[0];
             const lastPeriod = sortedPeriods[sortedPeriods.length - 1];
 
-            // Create selected_periods array with YYYY-MM format
-            const selectedPeriods = sortedPeriods.map(p => {
-                const year = p.startDate.getFullYear();
-                const month = String(p.startDate.getMonth() + 1).padStart(2, '0');
-                return `${year}-${month}`;
-            });
+            // Create selected_periods array with period IDs
+            const selectedPeriodIds = sortedPeriods.map(p => p.id);
 
-            onSelectPeriods(firstPeriod.startStr, lastPeriod.endStr, selectedPeriods);
+            onSelectPeriods(firstPeriod.startStr, lastPeriod.endStr, selectedPeriodIds);
         }
 
         onClose(true);
