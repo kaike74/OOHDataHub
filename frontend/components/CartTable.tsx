@@ -1051,7 +1051,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <span className="truncate">Período: {listStr}</span>
+                                                <span className="truncate">{listStr}</span>
                                             </TooltipTrigger>
                                             <TooltipContent>
                                                 {tooltipContent}
@@ -1066,7 +1066,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <span className="truncate cursor-help">
-                                                    Período: {listStr}{extra}
+                                                    {listStr}{extra}
                                                 </span>
                                             </TooltipTrigger>
                                             <TooltipContent>
@@ -1087,8 +1087,37 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                         const biWeeksCount = Math.ceil((daysDiff + 1) / 14);
 
                         if (biWeeksCount <= 3) {
+                            // Try to format as BI range
+                            const startInfo = getBiWeekInfo(row.original.periodo_inicio);
+                            const endInfo = getBiWeekInfo(row.original.periodo_fim); // Actually this is end date
+                            // getBiWeekInfo(end) calculates based on that date acting as a start?
+                            // CAUTION: getBiWeekInfo assumes input IS a start date.
+
+                            // If we have just a date range, let's try to infer BIs
+                            if (startInfo) {
+                                // For end info, we need the start date of the last bi-week.
+                                // If range is contiguous, last bi-week start = end date - 13 days
+                                const lastBiWeekStart = new Date(row.original.periodo_fim);
+                                lastBiWeekStart.setDate(lastBiWeekStart.getDate() - 13);
+                                const lastInfo = getBiWeekInfo(lastBiWeekStart);
+
+                                if (lastInfo) {
+                                    return <span>BI {String(startInfo.number).padStart(2, '0')} → BI {String(lastInfo.number).padStart(2, '0')}</span>;
+                                }
+                            }
+
                             return <span>{start} → {end}</span>;
                         } else {
+                            // Try BI range format for long periods too
+                            const startInfo = getBiWeekInfo(row.original.periodo_inicio);
+                            if (startInfo) {
+                                return (
+                                    <span title={`${start} → ${end}`}>
+                                        {biWeeksCount} bissemanas (Início: BI {String(startInfo.number).padStart(2, '0')})
+                                    </span>
+                                );
+                            }
+
                             return (
                                 <span title={`${start} → ${end}`}>
                                     {biWeeksCount} bissemanas ({start} → {end})

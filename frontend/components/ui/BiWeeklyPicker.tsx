@@ -119,19 +119,16 @@ export default function BiWeeklyPicker({
             const newSelected = new Set(prevSelected);
 
             if (event.shiftKey && lastClickedIndex !== null) {
+                // Range selection (Standard Shift+Click behavior)
                 const start = Math.min(lastClickedIndex, index);
                 const end = Math.max(lastClickedIndex, index);
 
-                // Start fresh for range selection
-                // User requirement: Select APENAS as duas pontas (start and end), desmarca o resto
-                newSelected.clear();
-
-                // Add endpoints only
-                newSelected.add(biWeeklyPeriods[start].id);
-                if (start !== end) {
-                    newSelected.add(biWeeklyPeriods[end].id);
+                // Add all periods in the range
+                for (let i = start; i <= end; i++) {
+                    newSelected.add(biWeeklyPeriods[i].id);
                 }
             } else {
+                // Toggle single selection
                 if (newSelected.has(period.id)) {
                     newSelected.delete(period.id);
                 } else {
