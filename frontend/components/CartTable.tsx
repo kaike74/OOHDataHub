@@ -1027,13 +1027,24 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 startDate={row.original.periodo_inicio}
                                 endDate={row.original.periodo_fim}
                                 onSelectStart={(date) => {
-                                    updateItem(row.original.id, 'periodo_inicio', date);
+                                    // For bi-weekly, this will be called with both dates
+                                    // Store temporarily, will be updated by onSelectEnd
                                 }}
                                 onSelectEnd={(date) => {
-                                    updateItem(row.original.id, 'periodo_fim', date);
+                                    // This is called after onSelectStart for bi-weekly
+                                    // Get the start date from the previous call
+                                    const startInput = document.querySelector(`[data-row-id="${row.original.id}"][data-temp-start]`) as HTMLInputElement;
+                                    const startDate = startInput?.value || row.original.periodo_inicio;
+
+                                    // Update both dates in a single call
+                                    updateItem(row.original.id, {
+                                        periodo_inicio: startDate,
+                                        periodo_fim: date
+                                    });
                                 }}
                             />
                         )}
+
                     </div>
                 );
             }

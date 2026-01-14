@@ -12,6 +12,7 @@ interface PeriodDatePickerProps {
     endDate: string | null;
     onSelectStart: (date: string) => void;
     onSelectEnd: (date: string) => void;
+    onSelectBoth?: (startDate: string, endDate: string) => void; // New callback for bi-weekly
 }
 
 export default function PeriodDatePicker({
@@ -21,7 +22,8 @@ export default function PeriodDatePicker({
     startDate,
     endDate,
     onSelectStart,
-    onSelectEnd
+    onSelectEnd,
+    onSelectBoth
 }: PeriodDatePickerProps) {
     const pickerRef = useRef<HTMLDivElement>(null);
 
@@ -48,8 +50,13 @@ export default function PeriodDatePicker({
                     startDate={startDate}
                     endDate={endDate}
                     onSelectPeriods={(start, end) => {
-                        onSelectStart(start);
-                        onSelectEnd(end);
+                        // Use onSelectBoth if available to avoid double update
+                        if (onSelectBoth) {
+                            onSelectBoth(start, end);
+                        } else {
+                            onSelectStart(start);
+                            onSelectEnd(end);
+                        }
                     }}
                     onClose={onClose}
                 />
