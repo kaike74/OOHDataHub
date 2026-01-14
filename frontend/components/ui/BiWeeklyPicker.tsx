@@ -234,6 +234,7 @@ export default function BiWeeklyPicker({
 
     const modalContent = (
         <div
+            data-period-picker-modal
             className="fixed bg-white border border-gray-300 rounded-lg shadow-xl z-[99999] w-[240px]"
             style={{
                 top: `${portalPosition.top}px`,

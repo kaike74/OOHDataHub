@@ -37,7 +37,13 @@ export default function PeriodDatePicker({
         if (!isOpen) return;
 
         const handleClickOutside = (event: MouseEvent) => {
-            if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+            const target = event.target as HTMLElement;
+
+            // Check if click is inside the portal modal or the trigger button
+            const isInsideModal = target.closest('[data-period-picker-modal]');
+            const isInsideTrigger = target.closest('[data-period-picker-trigger]');
+
+            if (!isInsideModal && !isInsideTrigger) {
                 saveOnCloseRef.current = true; // Mark to save
                 onClose();
             }

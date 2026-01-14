@@ -1065,7 +1065,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <span className="truncate cursor-help">
+                                                <span className="truncate">
                                                     {listStr}{extra}
                                                 </span>
                                             </TooltipTrigger>
@@ -1192,7 +1192,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <span className="truncate cursor-help">
+                                                <span className="truncate">
                                                     Dia {day}: {listStr}{extra}
                                                 </span>
                                             </TooltipTrigger>
