@@ -109,20 +109,23 @@ export default function BiWeeklyPicker({
 
     const initialSelection = getInitialSelection();
     const [selectedPeriods, setSelectedPeriods] = useState<Set<string>>(initialSelection);
-    const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null);
+
+    // Initialize lastClickedIndex with the first selected period
+    const getInitialLastClickedIndex = (): number | null => {
+        if (initialSelection.size === 0) return null;
+
+        // Find the index of the first selected period
+        const firstSelectedId = Array.from(initialSelection)[0];
+        const index = biWeeklyPeriods.findIndex(p => p.id === firstSelectedId);
+        return index !== -1 ? index : null;
+    };
+
+    const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(getInitialLastClickedIndex());
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const handlePeriodClick = (period: typeof biWeeklyPeriods[0], index: number, event: React.MouseEvent) => {
         event.preventDefault();
         event.stopPropagation();
-
-        console.log('🖱️ Click:', {
-            index,
-            period: period.number,
-            isShift: event.shiftKey,
-            lastClickedIndex,
-            lastClickedPeriod: lastClickedIndex !== null ? biWeeklyPeriods[lastClickedIndex]?.number : null
-        });
 
         setSelectedPeriods(prevSelected => {
             const newSelected = new Set(prevSelected);
@@ -131,8 +134,6 @@ export default function BiWeeklyPicker({
                 // Shift-select: ALWAYS SELECT the range between last clicked and current
                 const start = Math.min(lastClickedIndex, index);
                 const end = Math.max(lastClickedIndex, index);
-
-                console.log('📊 Shift-select range:', { start, end, count: end - start + 1 });
 
                 // Select all periods in the range
                 for (let i = start; i <= end; i++) {
@@ -147,7 +148,6 @@ export default function BiWeeklyPicker({
                 }
             }
 
-            console.log('✅ New selection size:', newSelected.size);
             return newSelected;
         });
 
@@ -201,7 +201,7 @@ export default function BiWeeklyPicker({
     }, [biWeeklyPeriods, currentYear]);
 
     return (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-[9999] w-[240px]">
+        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-[99999] w-[240px]">
             <div className="flex items-center justify-between px-2 py-1.5 border-b border-gray-200 bg-gray-50">
                 <h3 className="text-[11px] font-semibold text-gray-900">Bissemanas</h3>
                 <button

@@ -92,11 +92,17 @@ export default function MapTooltip({
       const valorLona = lonaProduto ? parseFloat((lonaProduto.valor * 1.25).toFixed(2)) : 0;
       const valorLocacao = locacaoProduto ? calcularValorComissao(locacaoProduto.valor, selectedProposta.comissao) : 0;
 
+      // Get the next valid bi-weekly start date from tomorrow
+      const { getNextValidBiWeeklyStartDate, getSuggestedBiWeeklyEndDate, formatDateForInput, getTomorrow } = await import('@/lib/periodUtils');
+      const tomorrow = getTomorrow();
+      const validStartDate = getNextValidBiWeeklyStartDate(tomorrow);
+      const validEndDate = getSuggestedBiWeeklyEndDate(validStartDate);
+
       const item = {
         id_proposta: selectedProposta.id,
         id_ooh: ponto.id,
-        periodo_inicio: new Date().toISOString().split('T')[0],
-        periodo_fim: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        periodo_inicio: formatDateForInput(validStartDate),
+        periodo_fim: validEndDate ? formatDateForInput(validEndDate) : formatDateForInput(new Date(validStartDate.getTime() + 13 * 24 * 60 * 60 * 1000)),
         valor_locacao: valorLocacao,
         valor_papel: valorPapel,
         valor_lona: valorLona,
