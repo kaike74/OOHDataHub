@@ -1001,36 +1001,21 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
                 return (
                     <div className="flex items-center gap-1 relative h-full group/cell hover:bg-gray-50 -m-2 p-2 transition-colors">
-                        {/* Start Date Display */}
+                        {/* Combined Period Display Button */}
                         <button
                             type="button"
                             className={`
                                 bg-transparent border-b border-transparent hover:border-gray-300 
                                 focus:border-blue-500 focus:outline-none text-[12px] text-gray-700 
-                                w-[95px] transition-colors text-left px-1
+                                transition-colors text-left px-1 flex items-center gap-1
                                 ${readOnly ? 'cursor-default' : 'cursor-pointer'}
                             `}
                             onClick={() => !readOnly && setOpenPickerRowId(row.original.id)}
                             disabled={readOnly}
                         >
-                            {formatDisplayDate(row.original.periodo_inicio)}
-                        </button>
-
-                        <span className="text-gray-300 text-[10px] mx-0.5">→</span>
-
-                        {/* End Date Display */}
-                        <button
-                            type="button"
-                            className={`
-                                bg-transparent border-b border-transparent hover:border-gray-300 
-                                focus:border-blue-500 focus:outline-none text-[12px] text-gray-700 
-                                w-[95px] transition-colors text-left px-1
-                                ${readOnly || !row.original.periodo_inicio ? 'cursor-default opacity-50' : 'cursor-pointer'}
-                            `}
-                            onClick={() => !readOnly && row.original.periodo_inicio && setOpenPickerRowId(row.original.id)}
-                            disabled={readOnly || !row.original.periodo_inicio}
-                        >
-                            {formatDisplayDate(row.original.periodo_fim)}
+                            <span>{formatDisplayDate(row.original.periodo_inicio)}</span>
+                            <span className="text-gray-300 text-[10px]">→</span>
+                            <span>{formatDisplayDate(row.original.periodo_fim)}</span>
                         </button>
 
                         {/* Custom Date Picker */}

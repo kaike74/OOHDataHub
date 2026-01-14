@@ -13,6 +13,22 @@ interface BiWeeklyPickerProps {
 // Base date for bi-weekly calendar: 29/12/2025 (BI 02 of 2026)
 const BI_WEEKLY_BASE = new Date(2025, 11, 29); // December 29, 2025
 
+// Helper function to format date for input (YYYY-MM-DD)
+const formatDateForInput = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+// Helper function to format date for display (DD/MM/YY)
+const formatDisplayDate = (date: Date): string => {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = String(date.getFullYear()).slice(-2);
+    return `${day}/${month}/${year}`;
+};
+
 export default function BiWeeklyPicker({
     startDate,
     endDate,
@@ -51,20 +67,6 @@ export default function BiWeeklyPicker({
 
         return allPeriods;
     }, []);
-
-    const formatDateForInput = (date: Date): string => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
-
-    const formatDisplayDate = (date: Date) => {
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = String(date.getFullYear()).slice(-2); // Last 2 digits
-        return `${day}/${month}/${year}`;
-    };
 
     const togglePeriod = (period: typeof biWeeklyPeriods[0], index: number, event: React.MouseEvent) => {
         const newSelected = new Set(selectedPeriods);
