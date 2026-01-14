@@ -36,14 +36,11 @@ const generateBiWeeklyPeriods = (startYear: number, endYear: number) => {
     today.setHours(0, 0, 0, 0);
 
     for (let year = startYear; year <= endYear; year++) {
-        // Each year has 26 bi-weeks (BI 02, BI 04, ..., BI 52)
-        // Leap years may have BI 54
         const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-        const maxBiWeeks = isLeapYear ? 27 : 26; // 27 bi-weeks = up to BI 54
+        const maxBiWeeks = isLeapYear ? 27 : 26;
 
         for (let biWeekIndex = 0; biWeekIndex < maxBiWeeks; biWeekIndex++) {
-            // Calculate start date from base
-            const yearOffset = year - 2026; // 2026 is our reference year
+            const yearOffset = year - 2026;
             const totalBiWeeksFromBase = (yearOffset * 26) + biWeekIndex;
 
             const start = new Date(BI_WEEKLY_BASE);
@@ -52,17 +49,14 @@ const generateBiWeeklyPeriods = (startYear: number, endYear: number) => {
             const end = new Date(start);
             end.setDate(end.getDate() + 13);
 
-            // The bi-week belongs to the year where it ENDS
             const biWeekYear = end.getFullYear();
 
-            // Only include if it belongs to the current year we're generating
-            // AND if the end date is today or in the future
             if (biWeekYear === year && end >= today) {
                 const startStr = formatDateForInput(start);
                 const endStr = formatDateForInput(end);
 
                 allPeriods.push({
-                    number: (biWeekIndex + 1) * 2, // BI 02, BI 04, BI 06, etc.
+                    number: (biWeekIndex + 1) * 2,
                     year: biWeekYear,
                     startDate: start,
                     endDate: end,
@@ -83,14 +77,35 @@ export default function BiWeeklyPicker({
     onSelectPeriods,
     onClose
 }: BiWeeklyPickerProps) {
-    const [selectedPeriods, setSelectedPeriods] = useState<Set<string>>(new Set());
-    const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null);
-    const [pendingSelection, setPendingSelection] = useState<{ start: string; end: string } | null>(null);
-    const scrollRef = useRef<HTMLDivElement>(null);
-
-    // Generate periods for current year and next 4 years
     const currentYear = new Date().getFullYear();
     const biWeeklyPeriods = generateBiWeeklyPeriods(currentYear, currentYear + 4);
+
+    // Initialize selection based on current dates
+    const getInitialSelection = (): Set<string> => {
+        if (!startDate || !endDate) return new Set();
+
+        const selected = new Set<string>();
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        // Find all periods that fall within the selected range
+        biWeeklyPeriods.forEach(period => {
+            const periodStart = new Date(period.startStr);
+            const periodEnd = new Date(period.endStr);
+
+            // Include period if it overlaps with selected range
+            if (periodStart <= end && periodEnd >= start) {
+                selected.add(period.id);
+            }
+        });
+
+        return selected;
+    };
+
+    const [selectedPeriods, setSelectedPeriods] = useState<Set<string>>(getInitialSelection);
+    const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null);
+    const hasChangedRef = useRef(false);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     const handlePeriodClick = (period: typeof biWeeklyPeriods[0], index: number, event: React.MouseEvent) => {
         event.preventDefault();
@@ -99,7 +114,6 @@ export default function BiWeeklyPicker({
         setSelectedPeriods(prevSelected => {
             const newSelected = new Set(prevSelected);
 
-            // Handle Shift+Click for range selection
             if (event.shiftKey && lastClickedIndex !== null) {
                 const start = Math.min(lastClickedIndex, index);
                 const end = Math.max(lastClickedIndex, index);
@@ -108,7 +122,6 @@ export default function BiWeeklyPicker({
                     newSelected.add(biWeeklyPeriods[i].id);
                 }
             } else {
-                // Normal click - toggle
                 if (newSelected.has(period.id)) {
                     newSelected.delete(period.id);
                 } else {
@@ -116,39 +129,44 @@ export default function BiWeeklyPicker({
                 }
             }
 
-            // Calculate pending selection (don't save yet)
-            if (newSelected.size > 0) {
-                const selectedPeriodsArray = Array.from(newSelected)
-                    .map(id => biWeeklyPeriods.find(p => p.id === id)!)
-                    .filter(Boolean)
-                    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-
-                const firstPeriod = selectedPeriodsArray[0];
-                const lastPeriod = selectedPeriodsArray[selectedPeriodsArray.length - 1];
-
-                setPendingSelection({
-                    start: firstPeriod.startStr,
-                    end: lastPeriod.endStr
-                });
-            } else {
-                setPendingSelection(null);
-            }
-
+            hasChangedRef.current = true;
             return newSelected;
         });
 
         setLastClickedIndex(index);
     };
 
-    // Save on close
-    const handleClose = () => {
-        if (pendingSelection) {
-            onSelectPeriods(pendingSelection.start, pendingSelection.end);
+    const handleApply = () => {
+        if (selectedPeriods.size > 0) {
+            const selectedPeriodsArray = Array.from(selectedPeriods)
+                .map(id => biWeeklyPeriods.find(p => p.id === id)!)
+                .filter(Boolean)
+                .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+
+            const firstPeriod = selectedPeriodsArray[0];
+            const lastPeriod = selectedPeriodsArray[selectedPeriodsArray.length - 1];
+
+            onSelectPeriods(firstPeriod.startStr, lastPeriod.endStr);
         }
         onClose();
     };
 
-    // Scroll to current year on mount
+    const handleClose = () => {
+        // Save if there were changes
+        if (hasChangedRef.current && selectedPeriods.size > 0) {
+            const selectedPeriodsArray = Array.from(selectedPeriods)
+                .map(id => biWeeklyPeriods.find(p => p.id === id)!)
+                .filter(Boolean)
+                .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+
+            const firstPeriod = selectedPeriodsArray[0];
+            const lastPeriod = selectedPeriodsArray[selectedPeriodsArray.length - 1];
+
+            onSelectPeriods(firstPeriod.startStr, lastPeriod.endStr);
+        }
+        onClose();
+    };
+
     useEffect(() => {
         if (scrollRef.current && biWeeklyPeriods.length > 0) {
             const currentYearIndex = biWeeklyPeriods.findIndex(p => p.year === currentYear);
@@ -161,7 +179,6 @@ export default function BiWeeklyPicker({
 
     return (
         <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-50 w-[240px]">
-            {/* Header */}
             <div className="flex items-center justify-between px-2 py-1.5 border-b border-gray-200 bg-gray-50">
                 <h3 className="text-[11px] font-semibold text-gray-900">Bissemanas</h3>
                 <button
@@ -173,7 +190,6 @@ export default function BiWeeklyPicker({
                 </button>
             </div>
 
-            {/* Checkbox List - Reduced height */}
             <div ref={scrollRef} className="max-h-[160px] overflow-y-auto p-2">
                 {biWeeklyPeriods.map((period, index) => {
                     const isSelected = selectedPeriods.has(period.id);
@@ -212,13 +228,12 @@ export default function BiWeeklyPicker({
                 })}
             </div>
 
-            {/* Footer */}
             <div className="px-2 py-1.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
                 <span className="text-[9px] text-gray-500">
                     {selectedPeriods.size} selecionado{selectedPeriods.size !== 1 ? 's' : ''}
                 </span>
                 <button
-                    onClick={handleClose}
+                    onClick={handleApply}
                     className="px-2 py-0.5 text-[10px] bg-blue-500 text-white rounded hover:bg-blue-600 font-medium"
                     type="button"
                 >
