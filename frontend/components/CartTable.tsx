@@ -1127,107 +1127,55 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
                     } else if (periodoComercializado === 'mensal') {
                         if (row.original.selected_periods && row.original.selected_periods.length > 0) {
-                            const sortedPeriods = [...row.original.selected_periods].sort(); // YYYY-M sorts correctly
-                            const count = sortedPeriods.length;
+                            const sortedPeriods = [...row.original.selected_periods].sort();
 
-                            const firstThree = sortedPeriods.slice(0, 3).map(id => {
-                                const [year, monthIdx] = id.split('-').map(Number);
-                                return getMonthName(monthIdx);
-                            });
+                            // Format: YYYY-MM
+                            const formatMonthPeriod = (periodStr: string) => {
+                                const [year, month] = periodStr.split('-');
+                                const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                                return `${monthNames[parseInt(month) - 1]}/${year.slice(-2)}`;
+                            };
 
-                            const day = new Date(row.original.periodo_inicio).getDate(); // Fixed day
-
-                            const listStr = firstThree.join(', ');
-                            const extra = count > 3 ? ` +${count - 3} mais` : '';
-
-                            // Tooltip
-                            const tooltipContent = (
-                                <div className="text-xs">
-                                    {sortedPeriods.map(id => {
-                                        const [year, monthIdx] = id.split('-').map(Number);
-                                        // Calculate start/end of that specific month period
-                                        // Use date from periodo_inicio for 'day'
-                                        const periodStart = new Date(year, monthIdx, day);
-                                        const periodEnd = new Date(year, monthIdx + 1, day);
-                                        periodEnd.setDate(periodEnd.getDate() - 1);
-
-                                        return (
-                                            <div key={id}>
-                                                {formatDisplayDate(formatDateForInput(periodStart))} → {formatDisplayDate(formatDateForInput(periodEnd))}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            );
-
-                            if (count <= 3) {
-                                // Check contiguous
-                                // Approximate logic: are months consecutive?
-                                let contiguous = true;
-                                for (let i = 0; i < count - 1; i++) {
-                                    const [y1, m1] = sortedPeriods[i].split('-').map(Number);
-                                    const [y2, m2] = sortedPeriods[i + 1].split('-').map(Number);
-                                    const diff = (y2 * 12 + m2) - (y1 * 12 + m1);
-                                    if (diff !== 1) contiguous = false;
-                                }
-
-                                if (contiguous) {
-                                    const start = formatDisplayDate(row.original.periodo_inicio);
-                                    const end = formatDisplayDate(row.original.periodo_fim);
-                                    return <span>{start} → {end}</span>;
-                                } else {
-                                    return (
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <span className="truncate">Dia {day}: {listStr}</span>
-                                                </TooltipTrigger>
-                                                <TooltipContent>{tooltipContent}</TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    );
-                                }
+                            if (sortedPeriods.length <= 3) {
+                                // Show all periods
+                                return (
+                                    <span>
+                                        {sortedPeriods.map((p, i) => (
+                                            <React.Fragment key={p}>
+                                                {i > 0 && ', '}
+                                                {formatMonthPeriod(p)}
+                                            </React.Fragment>
+                                        ))}
+                                    </span>
+                                );
                             } else {
+                                // Show first 2 + count
+                                const firstTwo = sortedPeriods.slice(0, 2).map(formatMonthPeriod).join(', ');
+                                const remaining = sortedPeriods.length - 2;
+
                                 return (
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <span className="truncate">
-                                                    Dia {day}: {listStr}{extra}
+                                                <span>
+                                                    {firstTwo} +{remaining} mais
                                                 </span>
                                             </TooltipTrigger>
-                                            <TooltipContent>{tooltipContent}</TooltipContent>
+                                            <TooltipContent>
+                                                <div className="text-[11px]">
+                                                    {sortedPeriods.map(p => formatMonthPeriod(p)).join(', ')}
+                                                </div>
+                                            </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
                                 );
                             }
                         }
 
-                        // Legacy monthly
+                        // Fallback to date range display
                         const start = formatDisplayDate(row.original.periodo_inicio);
                         const end = formatDisplayDate(row.original.periodo_fim);
-
-                        // Calculate approximate number of months
-                        const startDate = new Date(row.original.periodo_inicio);
-                        const endDate = new Date(row.original.periodo_fim);
-                        const monthsDiff = (endDate.getFullYear() - startDate.getFullYear()) * 12 +
-                            (endDate.getMonth() - startDate.getMonth()) + 1; // +1 maybe
-
-                        // Check if day is same - if so roughly X months. 
-                        // Logic in legacy code was:
-                        const diff = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
-                        // If precise?
-
-                        if (diff <= 3) {
-                            return <span>{start} → {end}</span>;
-                        } else {
-                            const day = startDate.getDate();
-                            return (
-                                <span title={`${start} → ${end}`}>
-                                    {diff} meses approx ({start} → {end})
-                                </span>
-                            );
-                        }
+                        return <span>{start} → {end}</span>;
                     }
 
                     // Default display
