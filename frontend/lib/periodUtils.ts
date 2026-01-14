@@ -263,9 +263,10 @@ export function addMonths(date: Date, months: number): Date {
 
     result.setMonth(result.getMonth() + months);
 
-    // Special case: If original day was 01, set to last day of the previous month
+    // Special case: If original day was 01, we want to return the same day in next month (01)
+    // The calling component (MonthlyPicker) handles the -1 day subtraction to get the end of previous month
+    // Example: 01/02 -> 01/03. MonthlyPicker does 01/03 - 1 day = 28/02. Correct.
     if (originalDay === 1) {
-        result.setDate(0); // Sets to last day of previous month (which is the month we want end date to be in)
         return result;
     }
 

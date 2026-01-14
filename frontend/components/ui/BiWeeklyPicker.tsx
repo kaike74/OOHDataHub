@@ -93,7 +93,9 @@ export default function BiWeeklyPicker({
 
         // Only select the period that contains the start date
         const selected = new Set<string>();
-        const start = new Date(startDate);
+        // Parse "YYYY-MM-DD" manually to avoid UTC conversion and timezone shifts
+        const [y, m, d] = startDate.split('-').map(Number);
+        const start = new Date(y, m - 1, d);
 
         biWeeklyPeriods.forEach(period => {
             const periodStart = new Date(period.startStr);
