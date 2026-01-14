@@ -1247,6 +1247,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                         {/* Combined Period Display Button */}
                         <button
                             type="button"
+                            data-period-picker-trigger
                             className={`
                                 bg-transparent border-b border-transparent hover:border-gray-300 
                                 focus:border-blue-500 focus:outline-none text-[12px] text-gray-700 

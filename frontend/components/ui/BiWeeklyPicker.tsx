@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Check } from 'lucide-react';
 
 interface BiWeeklyPickerProps {
@@ -200,8 +201,45 @@ export default function BiWeeklyPicker({
         }
     }, [biWeeklyPeriods, currentYear]);
 
-    return (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-[99999] w-[240px]">
+    // State for portal positioning
+    const [portalPosition, setPortalPosition] = useState<{ top: number; left: number } | null>(null);
+    const triggerRef = useRef<HTMLElement | null>(null);
+
+    // Calculate position when component mounts
+    useEffect(() => {
+        // Find the trigger element (the button that opened this picker)
+        // We'll use the parent element's position
+        const updatePosition = () => {
+            const parentElement = document.querySelector('[data-period-picker-trigger]');
+            if (parentElement) {
+                const rect = parentElement.getBoundingClientRect();
+                setPortalPosition({
+                    top: rect.bottom + window.scrollY + 4, // 4px gap (mt-1)
+                    left: rect.left + window.scrollX
+                });
+            }
+        };
+
+        updatePosition();
+        window.addEventListener('resize', updatePosition);
+        window.addEventListener('scroll', updatePosition, true);
+
+        return () => {
+            window.removeEventListener('resize', updatePosition);
+            window.removeEventListener('scroll', updatePosition, true);
+        };
+    }, []);
+
+    if (!portalPosition) return null;
+
+    const modalContent = (
+        <div
+            className="fixed bg-white border border-gray-300 rounded-lg shadow-xl z-[99999] w-[240px]"
+            style={{
+                top: `${portalPosition.top}px`,
+                left: `${portalPosition.left}px`
+            }}
+        >
             <div className="flex items-center justify-between px-2 py-1.5 border-b border-gray-200 bg-gray-50">
                 <h3 className="text-[11px] font-semibold text-gray-900">Bissemanas</h3>
                 <button
@@ -266,4 +304,6 @@ export default function BiWeeklyPicker({
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }
