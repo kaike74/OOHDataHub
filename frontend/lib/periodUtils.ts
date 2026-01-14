@@ -233,3 +233,73 @@ export function getBiWeekInfo(dateStr: string | Date): { number: number, year: n
 
     return { number: biWeekNumber, year: endYear };
 }
+
+/**
+ * Format a date for display in DD/MM/YY format
+ */
+export function formatDisplayDate(date: Date): string {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = String(date.getFullYear()).slice(-2);
+    return `${day}/${month}/${year}`;
+}
+
+// ============================================
+// Monthly Period Utilities
+// ============================================
+
+/**
+ * Add months to a date, handling month-end edge cases
+ * Example: addMonths(new Date('2026-01-31'), 1) => 2026-02-28
+ */
+export function addMonths(date: Date, months: number): Date {
+    const result = new Date(date);
+    const day = result.getDate();
+
+    result.setMonth(result.getMonth() + months);
+
+    // Handle month-end edge case (e.g., Jan 31 + 1 month = Feb 28, not Mar 3)
+    if (result.getDate() !== day) {
+        result.setDate(0); // Set to last day of previous month
+    }
+
+    return result;
+}
+
+/**
+ * Calculate the difference in months between two dates
+ */
+export function getMonthsDifference(start: Date, end: Date): number {
+    const yearDiff = end.getFullYear() - start.getFullYear();
+    const monthDiff = end.getMonth() - start.getMonth();
+    const dayDiff = end.getDate() - start.getDate();
+
+    let totalMonths = yearDiff * 12 + monthDiff;
+
+    // If end day is before start day, don't count the last month as complete
+    if (dayDiff < 0) {
+        totalMonths--;
+    }
+
+    return Math.max(0, totalMonths);
+}
+
+/**
+ * Format a monthly period for display
+ * Returns format like "17/01/26 → 17/02/26 (1 mês)"
+ */
+export function formatMonthlyPeriodDisplay(startDate: Date, endDate: Date): string {
+    const start = formatDisplayDate(startDate);
+    const end = formatDisplayDate(endDate);
+    const months = getMonthsDifference(startDate, endDate) + 1; // +1 to include both start and end months
+
+    const monthLabel = months === 1 ? 'mês' : 'meses';
+    return `${start} → ${end} (${months} ${monthLabel})`;
+}
+
+/**
+ * Generate a unique ID for a monthly period
+ */
+export function generateMonthlyPeriodId(startDate: Date, endDate: Date): string {
+    return `${formatDateForInput(startDate)}_${formatDateForInput(endDate)}`;
+}

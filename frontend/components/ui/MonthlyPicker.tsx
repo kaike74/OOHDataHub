@@ -1,240 +1,422 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Check } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { X, Check, Plus, Edit2, Trash2 } from 'lucide-react';
+import {
+    addMonths,
+    formatMonthlyPeriodDisplay,
+    generateMonthlyPeriodId,
+    formatDateForInput,
+    formatDisplayDate
+} from '@/lib/periodUtils';
 
 interface MonthlyPickerProps {
     startDate: string | null;
     endDate: string | null;
     onSelectPeriods: (startDate: string, endDate: string, selectedPeriods: string[]) => void;
-    onClose: () => void;
+    onClose: (shouldSave: boolean) => void;
     saveOnClickOutside?: boolean;
+    initialSelectedPeriods?: string[];
 }
 
-const formatDateForInput = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-};
-
-const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+interface MonthlyPeriod {
+    id: string;
+    startDate: Date;
+    endDate: Date;
+    active: boolean;
+}
 
 export default function MonthlyPicker({
     startDate,
     endDate,
     onSelectPeriods,
     onClose,
-    saveOnClickOutside
+    saveOnClickOutside,
+    initialSelectedPeriods
 }: MonthlyPickerProps) {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-
-    // Extract day from startDate or default to tomorrow's day
-    const getInitialDay = () => {
-        if (startDate) {
-            return parseInt(startDate.split('-')[2]);
+    // Parse initial periods from selected_periods array or start/end dates
+    const getInitialPeriods = (): MonthlyPeriod[] => {
+        if (initialSelectedPeriods && initialSelectedPeriods.length > 0) {
+            // Parse from selected_periods format: "2026-01-17_2026-02-17"
+            return initialSelectedPeriods.map(periodStr => {
+                const [start, end] = periodStr.split('_');
+                return {
+                    id: periodStr,
+                    startDate: new Date(start),
+                    endDate: new Date(end),
+                    active: true
+                };
+            });
         }
-        return tomorrow.getDate();
-    };
 
-    const [selectedDay, setSelectedDay] = useState(getInitialDay());
-    const [selectedMonths, setSelectedMonths] = useState<Set<string>>(new Set());
-    const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-    const scrollRef = useRef<HTMLDivElement>(null);
-
-    // Initialize selected months from startDate and endDate
-    useEffect(() => {
         if (startDate && endDate) {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            const selected = new Set<string>();
-
-            let current = new Date(start);
-            while (current <= end) {
-                const key = `${current.getFullYear()}-${current.getMonth()}`;
-                selected.add(key);
-                current.setMonth(current.getMonth() + 1);
-            }
-
-            setSelectedMonths(selected);
+            // Legacy format: single period from start/end dates
+            const period = {
+                id: generateMonthlyPeriodId(new Date(startDate), new Date(endDate)),
+                startDate: new Date(startDate),
+                endDate: new Date(endDate),
+                active: true
+            };
+            return [period];
         }
-    }, [startDate, endDate]);
 
-    // Handle save on click outside
+        return [];
+    };
+
+    const [periods, setPeriods] = useState<MonthlyPeriod[]>(getInitialPeriods());
+    const [isAddingPeriod, setIsAddingPeriod] = useState(false);
+    const [editingPeriodId, setEditingPeriodId] = useState<string | null>(null);
+
+    // Form state
+    const [formStartDay, setFormStartDay] = useState('01');
+    const [formStartMonth, setFormStartMonth] = useState('01');
+    const [formStartYear, setFormStartYear] = useState('2026');
+    const [formDuration, setFormDuration] = useState('1');
+    const [formEndDate, setFormEndDate] = useState<Date | null>(null);
+
+    // Portal positioning
+    const [portalPosition, setPortalPosition] = useState<{ top: number; left: number } | null>(null);
+
     useEffect(() => {
-        if (saveOnClickOutside && selectedMonths.size > 0) {
-            // Convert selected months to sorted array
-            const monthsArray = Array.from(selectedMonths)
-                .map(key => {
-                    const [year, month] = key.split('-').map(Number);
-                    return { year, month };
-                })
-                .sort((a, b) => {
-                    if (a.year !== b.year) return a.year - b.year;
-                    return a.month - b.month;
+        const updatePosition = () => {
+            const parentElement = document.querySelector('[data-period-picker-trigger]');
+            if (parentElement) {
+                const rect = parentElement.getBoundingClientRect();
+                setPortalPosition({
+                    top: rect.bottom + window.scrollY + 4,
+                    left: rect.left + window.scrollX
                 });
+            }
+        };
 
-            if (monthsArray.length > 0) {
-                const firstMonth = monthsArray[0];
-                const lastMonth = monthsArray[monthsArray.length - 1];
+        updatePosition();
+        window.addEventListener('resize', updatePosition);
 
-                const startDateObj = new Date(firstMonth.year, firstMonth.month, selectedDay);
-                const endDateObj = new Date(lastMonth.year, lastMonth.month + 1, selectedDay);
-                endDateObj.setDate(endDateObj.getDate() - 1);
+        return () => {
+            window.removeEventListener('resize', updatePosition);
+        };
+    }, []);
 
-                onSelectPeriods(formatDateForInput(startDateObj), formatDateForInput(endDateObj), Array.from(selectedMonths));
+    // Auto-calculate end date when form inputs change
+    useEffect(() => {
+        if (formStartDay && formStartMonth && formStartYear && formDuration) {
+            const start = new Date(
+                parseInt(formStartYear),
+                parseInt(formStartMonth) - 1,
+                parseInt(formStartDay)
+            );
+
+            if (!isNaN(start.getTime())) {
+                if (formDuration === 'custom') {
+                    // Keep current end date for custom
+                } else {
+                    const months = parseInt(formDuration);
+                    const end = addMonths(start, months);
+                    end.setDate(end.getDate() - 1); // End date is last day of period
+                    setFormEndDate(end);
+                }
             }
         }
-    }, [saveOnClickOutside, selectedMonths, selectedDay, onSelectPeriods]);
+    }, [formStartDay, formStartMonth, formStartYear, formDuration]);
 
-    const handleDayChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedDay(parseInt(e.target.value));
-    };
-
-    const handleMonthToggle = (year: number, month: number) => {
-        const key = `${year}-${month}`;
-        setSelectedMonths(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(key)) {
-                newSet.delete(key);
-            } else {
-                newSet.add(key);
-            }
-            return newSet;
-        });
-    };
+    // Save on click outside
+    useEffect(() => {
+        if (saveOnClickOutside && periods.length > 0) {
+            handleApply();
+        }
+    }, [saveOnClickOutside]);
 
     const handleApply = () => {
-        if (selectedMonths.size === 0) {
-            onClose();
-            return;
+        const activePeriods = periods.filter(p => p.active);
+
+        if (activePeriods.length > 0) {
+            const sortedPeriods = [...activePeriods].sort((a, b) =>
+                a.startDate.getTime() - b.startDate.getTime()
+            );
+
+            const firstPeriod = sortedPeriods[0];
+            const lastPeriod = sortedPeriods[sortedPeriods.length - 1];
+
+            const selectedPeriodIds = sortedPeriods.map(p => p.id);
+
+            onSelectPeriods(
+                formatDateForInput(firstPeriod.startDate),
+                formatDateForInput(lastPeriod.endDate),
+                selectedPeriodIds
+            );
         }
 
-        // Convert selected months to sorted array
-        const monthsArray = Array.from(selectedMonths)
-            .map(key => {
-                const [year, month] = key.split('-').map(Number);
-                return { year, month };
-            })
-            .sort((a, b) => {
-                if (a.year !== b.year) return a.year - b.year;
-                return a.month - b.month;
-            });
-
-        // Calculate start and end dates
-        const firstMonth = monthsArray[0];
-        const lastMonth = monthsArray[monthsArray.length - 1];
-
-        const startDate = new Date(firstMonth.year, firstMonth.month, selectedDay);
-        const endDate = new Date(lastMonth.year, lastMonth.month + 1, selectedDay);
-        endDate.setDate(endDate.getDate() - 1); // Last day of period
-
-        onSelectPeriods(formatDateForInput(startDate), formatDateForInput(endDate), Array.from(selectedMonths));
-        onClose();
+        onClose(true);
     };
 
     const handleCancel = () => {
-        onClose();
+        onClose(false);
     };
 
-    // Generate years (current + next 2)
-    const years = [currentYear, currentYear + 1, currentYear + 2];
+    const handleAddPeriod = () => {
+        if (!formEndDate) return;
 
-    // Generate day options (1-31)
-    const dayOptions = Array.from({ length: 31 }, (_, i) => i + 1);
+        const start = new Date(
+            parseInt(formStartYear),
+            parseInt(formStartMonth) - 1,
+            parseInt(formStartDay)
+        );
 
-    return (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-50 w-[280px]">
+        const newPeriod: MonthlyPeriod = {
+            id: generateMonthlyPeriodId(start, formEndDate),
+            startDate: start,
+            endDate: formEndDate,
+            active: true
+        };
+
+        if (editingPeriodId) {
+            // Update existing period
+            setPeriods(prev => prev.map(p =>
+                p.id === editingPeriodId ? newPeriod : p
+            ));
+            setEditingPeriodId(null);
+        } else {
+            // Add new period
+            setPeriods(prev => [...prev, newPeriod]);
+        }
+
+        // Reset form
+        setIsAddingPeriod(false);
+        resetForm();
+    };
+
+    const handleEditPeriod = (period: MonthlyPeriod) => {
+        setFormStartDay(String(period.startDate.getDate()).padStart(2, '0'));
+        setFormStartMonth(String(period.startDate.getMonth() + 1).padStart(2, '0'));
+        setFormStartYear(String(period.startDate.getFullYear()));
+        setFormEndDate(period.endDate);
+        setFormDuration('custom');
+        setEditingPeriodId(period.id);
+        setIsAddingPeriod(true);
+    };
+
+    const handleRemovePeriod = (periodId: string) => {
+        setPeriods(prev => prev.filter(p => p.id !== periodId));
+    };
+
+    const handleTogglePeriod = (periodId: string) => {
+        setPeriods(prev => prev.map(p =>
+            p.id === periodId ? { ...p, active: !p.active } : p
+        ));
+    };
+
+    const resetForm = () => {
+        const today = new Date();
+        setFormStartDay(String(today.getDate()).padStart(2, '0'));
+        setFormStartMonth(String(today.getMonth() + 1).padStart(2, '0'));
+        setFormStartYear(String(today.getFullYear()));
+        setFormDuration('1');
+        setFormEndDate(null);
+    };
+
+    if (!portalPosition) return null;
+
+    const modalContent = (
+        <div
+            data-period-picker-modal
+            className="fixed bg-white border border-gray-300 rounded-lg shadow-xl z-[99999] w-[320px]"
+            style={{
+                top: `${portalPosition.top}px`,
+                left: `${portalPosition.left}px`
+            }}
+        >
             {/* Header */}
-            <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-200 bg-gray-50">
-                <h3 className="text-[11px] font-semibold text-gray-900">Período Mensal</h3>
+            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 bg-gray-50">
+                <h3 className="text-[12px] font-semibold text-gray-900">Períodos Mensais</h3>
                 <button
                     onClick={handleCancel}
                     className="text-gray-400 hover:text-gray-600"
                     type="button"
-                    title="Cancelar"
+                    title="Cancelar (não salvar)"
                 >
                     <X size={14} />
                 </button>
             </div>
 
-            {/* Day Selector */}
-            <div className="px-3 py-2 border-b border-gray-200 bg-gray-50">
-                <label className="text-[10px] text-gray-600 block mb-1">
-                    Dia do mês:
-                </label>
-                <select
-                    value={selectedDay}
-                    onChange={handleDayChange}
-                    className="w-full text-[11px] border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
-                >
-                    {dayOptions.map(day => (
-                        <option key={day} value={day}>
-                            Dia {day}
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            {/* Month Selection */}
-            <div ref={scrollRef} className="max-h-[200px] overflow-y-auto p-3">
-                {years.map(year => (
-                    <div key={year} className="mb-3">
-                        <h4 className="text-[10px] font-semibold text-gray-700 mb-2">{year}</h4>
-                        <div className="grid grid-cols-4 gap-1.5">
-                            {monthNames.map((monthName, monthIndex) => {
-                                const key = `${year}-${monthIndex}`;
-                                const isSelected = selectedMonths.has(key);
-
-                                // Check if month is in the past
-                                const monthDate = new Date(year, monthIndex, selectedDay);
-                                const isPast = monthDate < tomorrow;
-
-                                return (
-                                    <button
-                                        key={key}
-                                        onClick={() => !isPast && handleMonthToggle(year, monthIndex)}
-                                        disabled={isPast}
-                                        className={`
-                                            px-2 py-1.5 text-[10px] rounded border transition-all
-                                            ${isPast ? 'bg-gray-100 text-gray-300 cursor-not-allowed border-gray-200' : ''}
-                                            ${!isPast && isSelected ? 'bg-blue-500 text-white border-blue-500 font-semibold' : ''}
-                                            ${!isPast && !isSelected ? 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' : ''}
-                                        `}
-                                        type="button"
+            {/* Period List or Add Form */}
+            <div className="max-h-[300px] overflow-y-auto p-3">
+                {!isAddingPeriod ? (
+                    <>
+                        {/* Period List */}
+                        {periods.map(period => (
+                            <div
+                                key={period.id}
+                                className="mb-2 p-2 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+                            >
+                                <div className="flex items-start gap-2">
+                                    <div
+                                        className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 cursor-pointer transition-all ${period.active
+                                                ? 'bg-blue-500 border-blue-500'
+                                                : 'bg-white border-gray-300'
+                                            }`}
+                                        onClick={() => handleTogglePeriod(period.id)}
                                     >
-                                        {isSelected && !isPast && (
-                                            <Check size={10} className="inline mr-0.5" strokeWidth={3} />
+                                        {period.active && (
+                                            <Check size={10} className="text-white" strokeWidth={3} />
                                         )}
-                                        {monthName}
-                                    </button>
-                                );
-                            })}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-[11px] text-gray-900 font-medium">
+                                            {formatMonthlyPeriodDisplay(period.startDate, period.endDate)}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-1">
+                                        <button
+                                            onClick={() => handleEditPeriod(period)}
+                                            className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded"
+                                            title="Editar"
+                                        >
+                                            <Edit2 size={12} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleRemovePeriod(period.id)}
+                                            className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded"
+                                            title="Remover"
+                                        >
+                                            <Trash2 size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Add Period Button */}
+                        <button
+                            onClick={() => {
+                                resetForm();
+                                setIsAddingPeriod(true);
+                            }}
+                            className="w-full py-2 px-3 border-2 border-dashed border-gray-300 rounded-md text-gray-600 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 text-[11px] font-medium"
+                        >
+                            <Plus size={14} />
+                            Adicionar Período
+                        </button>
+                    </>
+                ) : (
+                    /* Add/Edit Period Form */
+                    <div className="space-y-3">
+                        <div>
+                            <label className="block text-[10px] font-medium text-gray-700 mb-1">
+                                Data de Início
+                            </label>
+                            <div className="flex gap-1">
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="31"
+                                    value={formStartDay}
+                                    onChange={(e) => setFormStartDay(e.target.value)}
+                                    className="w-14 px-2 py-1 text-[11px] border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="DD"
+                                />
+                                <span className="text-gray-400 self-center">/</span>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="12"
+                                    value={formStartMonth}
+                                    onChange={(e) => setFormStartMonth(e.target.value)}
+                                    className="w-14 px-2 py-1 text-[11px] border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="MM"
+                                />
+                                <span className="text-gray-400 self-center">/</span>
+                                <input
+                                    type="number"
+                                    min="2026"
+                                    max="2030"
+                                    value={formStartYear}
+                                    onChange={(e) => setFormStartYear(e.target.value)}
+                                    className="w-20 px-2 py-1 text-[11px] border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="AAAA"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-medium text-gray-700 mb-1">
+                                Duração
+                            </label>
+                            <select
+                                value={formDuration}
+                                onChange={(e) => setFormDuration(e.target.value)}
+                                className="w-full px-2 py-1 text-[11px] border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="1">1 mês</option>
+                                <option value="2">2 meses</option>
+                                <option value="3">3 meses</option>
+                                <option value="4">4 meses</option>
+                                <option value="5">5 meses</option>
+                                <option value="6">6 meses</option>
+                                <option value="custom">Customizado</option>
+                            </select>
+                        </div>
+
+                        {formDuration === 'custom' && (
+                            <div>
+                                <label className="block text-[10px] font-medium text-gray-700 mb-1">
+                                    Data de Fim
+                                </label>
+                                <input
+                                    type="date"
+                                    value={formEndDate ? formatDateForInput(formEndDate) : ''}
+                                    onChange={(e) => setFormEndDate(new Date(e.target.value))}
+                                    className="w-full px-2 py-1 text-[11px] border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+                        )}
+
+                        {formEndDate && (
+                            <div className="text-[10px] text-gray-600 bg-gray-50 p-2 rounded">
+                                <strong>Fim:</strong> {formatDisplayDate(formEndDate)}
+                            </div>
+                        )}
+
+                        <div className="flex gap-2 pt-2">
+                            <button
+                                onClick={() => {
+                                    setIsAddingPeriod(false);
+                                    setEditingPeriodId(null);
+                                    resetForm();
+                                }}
+                                className="flex-1 px-3 py-1.5 text-[11px] border border-gray-300 rounded hover:bg-gray-50 font-medium"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleAddPeriod}
+                                disabled={!formEndDate}
+                                className="flex-1 px-3 py-1.5 text-[11px] bg-blue-500 text-white rounded hover:bg-blue-600 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
+                            >
+                                {editingPeriodId ? 'Salvar' : 'Adicionar'}
+                            </button>
                         </div>
                     </div>
-                ))}
-            </div>
-
-            {/* Info */}
-            <div className="px-3 py-1.5 bg-blue-50 border-t border-blue-200 text-[9px] text-blue-700">
-                ℹ️ Todos os períodos começam no dia {selectedDay} de cada mês
+                )}
             </div>
 
             {/* Footer */}
-            <div className="px-3 py-1.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-                <span className="text-[9px] text-gray-500">
-                    {selectedMonths.size} {selectedMonths.size === 1 ? 'mês' : 'meses'}
-                </span>
-                <button
-                    onClick={handleApply}
-                    className="px-2 py-0.5 text-[10px] bg-blue-500 text-white rounded hover:bg-blue-600 font-medium"
-                    type="button"
-                >
-                    Aplicar
-                </button>
-            </div>
+            {!isAddingPeriod && (
+                <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+                    <span className="text-[10px] text-gray-500">
+                        {periods.filter(p => p.active).length} período{periods.filter(p => p.active).length !== 1 ? 's' : ''} selecionado{periods.filter(p => p.active).length !== 1 ? 's' : ''}
+                    </span>
+                    <button
+                        onClick={handleApply}
+                        className="px-3 py-1 text-[11px] bg-blue-500 text-white rounded hover:bg-blue-600 font-medium"
+                        type="button"
+                    >
+                        Aplicar
+                    </button>
+                </div>
+            )}
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }

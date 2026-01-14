@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import BiWeeklyPicker from './BiWeeklyPicker';
-import MonthlyPeriodPicker from './MonthlyPeriodPicker';
+import MonthlyPicker from './MonthlyPicker';
 
 interface PeriodDatePickerProps {
     isOpen: boolean;
@@ -87,15 +87,16 @@ export default function PeriodDatePicker({
                     initialSelectedPeriods={selectedPeriods}
                 />
             ) : (
-                <MonthlyPeriodPicker
+                <MonthlyPicker
                     startDate={startDate}
                     endDate={endDate}
                     onSelectPeriods={(start, end, periods) => {
                         handleSelection(start, end, periods);
                     }}
                     onClose={(shouldSave) => {
+                        // If clicking outside or applying, save
                         if (shouldSave || saveOnCloseRef.current) {
-                            // Trigger save handled by MonthlyPeriodPicker
+                            // Trigger save handled by MonthlyPicker
                         }
                         saveOnCloseRef.current = false;
                         onClose();
