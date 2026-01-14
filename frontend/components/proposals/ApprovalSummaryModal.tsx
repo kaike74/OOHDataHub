@@ -33,13 +33,17 @@ export default function ApprovalSummaryModal({
     const [papelQuantities, setPapelQuantities] = useState<Record<number, number>>({});
     const [lonaQuantities, setLonaQuantities] = useState<Record<number, number>>({});
 
-    if (!isOpen || !proposta) return null;
-
-    // Filter only approved items
-    const approvedItems = itens.filter(item => item.status_validacao === 'APPROVED');
+    // Filter only approved items - memoized to prevent recalculation
+    const approvedItems = useMemo(() =>
+        itens.filter(item => item.status_validacao === 'APPROVED'),
+        [itens]
+    );
 
     // Generate static map URL
-    const mapUrl = useMemo(() => generateStaticMapUrl(approvedItems, 1200, 500), [approvedItems]);
+    const mapUrl = useMemo(() =>
+        generateStaticMapUrl(approvedItems, 1200, 500),
+        [approvedItems]
+    );
 
     // Calculate totals
     const totals = useMemo(() => {
@@ -92,6 +96,8 @@ export default function ApprovalSummaryModal({
     const updateLonaQuantity = (itemId: number, qty: number) => {
         setLonaQuantities(prev => ({ ...prev, [itemId]: Math.max(0, qty) }));
     };
+
+    if (!isOpen || !proposta) return null;
 
     return (
         <>
