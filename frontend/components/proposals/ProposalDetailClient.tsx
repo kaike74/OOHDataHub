@@ -138,16 +138,44 @@ export default function ProposalDetailClient() {
                 // Actually, to show the MAP, do we want to show OTHER points? 
                 // User said: "apenas com os pontos selecionados" (only selected points).
 
-                const [pontosData, exibidorasData, clientsData] = await Promise.all([
-                    api.getPontos(), // Optimization: Backend should ideally support filtering, but currently we fetch all
-                    api.getExibidoras(),
-                    api.getClientes()
-                ]);
+                // 3. Load Dependencies (Points, etc)
+                // If public, we only load RELEVANT points (optimization & security)
+                // Actually, to show the MAP, do we want to show OTHER points? 
+                // User said: "apenas com os pontos selecionados" (only selected points).
+
+                let pontosData: any[] = [];
+                let exibidorasData: any[] = [];
+                let clientsData: any[] = [];
+
+                if (!isPublic) {
+                    // Internal View: Fetch all data for full map exploration
+                    [pontosData, exibidorasData, clientsData] = await Promise.all([
+                        api.getPontos(),
+                        api.getExibidoras(),
+                        api.getClientes()
+                    ]);
+                } else {
+                    // Public View: WE DO NOT FETCH ALL POINTS.
+                    // We must rely on the proposal's items to build the 'pontos' list.
+                    // Assuming proposal.itens contains the point data or we need to fetch them specifically if not hydrated.
+                    // Usually `getPublicProposal` should return expanded items.
+                    // If items have `ponto` object nested:
+                    if (proposta.itens) {
+                        pontosData = proposta.itens.map((item: any) => item.ponto).filter(Boolean);
+                    }
+
+                    // Same for client, if nested or we use the one in proposal
+                    if (proposta.cliente) {
+                        clientsData = [proposta.cliente];
+                    }
+                }
 
                 // Filter points if public view
+                // Filter points if public view
+                // In public view, pointsData is ALREADY filtered to just the proposal items above.
                 const relevantPoints = isPublic
-                    ? pontosData.filter((p: any) => proposta.itens?.some((item: any) => item.id_ponto === p.id))
-                    : pontosData;
+                    ? pontosData
+                    : pontosData; // For internal view, we might keep all or filter later. Keeping logic simple.
 
                 setPontos(relevantPoints);
                 setExibidoras(exibidorasData);
@@ -156,7 +184,8 @@ export default function ProposalDetailClient() {
                 // Enrich Proposal
                 const enrichedProposal = {
                     ...proposta,
-                    cliente: clientsData.find((c: any) => c.id === proposta.id_cliente)
+                    // If public, client might already be attached or found in the single-item clientsData array
+                    cliente: isPublic ? proposta.cliente : clientsData.find((c: any) => c.id === proposta.id_cliente)
                 };
                 setProposal(enrichedProposal);
 
