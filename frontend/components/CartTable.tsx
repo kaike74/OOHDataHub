@@ -1118,8 +1118,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             <TooltipProvider>
                                 <Tooltip delayDuration={300}>
                                     <TooltipTrigger asChild>
-                                        <div className="flex items-center gap-1 max-w-full overflow-hidden w-[140px]">
-                                            <span className="truncate block w-full text-ellipsis overflow-hidden whitespace-nowrap">
+                                        <div className="w-full max-w-full">
+                                            <span className="truncate block w-full text-ellipsis overflow-hidden whitespace-nowrap text-[13px]">
                                                 {displayText}
                                             </span>
                                         </div>
@@ -1170,8 +1170,8 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 <TooltipProvider>
                                     <Tooltip delayDuration={300}>
                                         <TooltipTrigger asChild>
-                                            <div className="flex items-center gap-1 max-w-full overflow-hidden w-[140px]">
-                                                <span className="truncate block w-full text-ellipsis overflow-hidden whitespace-nowrap" title={listStr}>
+                                            <div className="w-full max-w-full">
+                                                <span className="truncate block w-full text-ellipsis overflow-hidden whitespace-nowrap text-[13px]" title={listStr}>
                                                     {listStr}
                                                 </span>
                                             </div>
