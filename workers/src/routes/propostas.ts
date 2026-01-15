@@ -402,8 +402,20 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const data = await request.json() as any;
 
             // 1. Update Public Access Level
+            // Handle public access level changes
             if (data.public_access_level) {
-                await env.DB.prepare('UPDATE propostas SET public_access_level = ? WHERE id = ?').bind(data.public_access_level, id).run();
+                if (data.public_access_level === 'view') {
+                    // Generate public token if not exists
+                    const existingProposal = await env.DB.prepare('SELECT public_token FROM propostas WHERE id = ?').bind(id).first() as any;
+                    const token = existingProposal?.public_token || crypto.randomUUID();
+
+                    await env.DB.prepare('UPDATE propostas SET public_access_level = ?, public_token = ? WHERE id = ?')
+                        .bind(data.public_access_level, token, id).run();
+                } else {
+                    // Set to 'none' - keep token but disable access
+                    await env.DB.prepare('UPDATE propostas SET public_access_level = ? WHERE id = ?')
+                        .bind(data.public_access_level, id).run();
+                }
             }
 
             // 2. Invite/Update User
