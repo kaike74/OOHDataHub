@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
+import { useStore } from '@/lib/store';
 import { AnimatedSearchBar } from '@/components/ui/AnimatedSearchBar';
 import AccountsTable from '@/components/accounts/AccountsTable';
 import AccountDetailsSidebar from '@/components/accounts/AccountDetailsSidebar';
 import CreateUserModal from '@/components/accounts/CreateUserModal';
 import { Button } from '@/components/ui/Button';
-import { Plus } from 'lucide-react';
+import { Plus, AlertCircle } from 'lucide-react';
 
 interface UserAccount {
     id: number;
@@ -26,15 +27,23 @@ interface AccountsViewProps {
 }
 
 export default function AccountsView({ searchTerm = '' }: AccountsViewProps) {
+    const user = useStore((state) => state.user);
     const [accounts, setAccounts] = useState<UserAccount[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedAccount, setSelectedAccount] = useState<UserAccount | null>(null);
     const [userTypeFilter, setUserTypeFilter] = useState<UserTypeFilter>('internal');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+    // Access Control: Only internal admins can access this page
+    const canAccess = user?.type === 'internal' && (user?.role === 'admin' || user?.role === 'master');
+
     useEffect(() => {
-        loadAccounts();
-    }, []);
+        if (canAccess) {
+            loadAccounts();
+        } else {
+            setLoading(false);
+        }
+    }, [canAccess]);
 
     const loadAccounts = async () => {
         try {
@@ -80,6 +89,26 @@ export default function AccountsView({ searchTerm = '' }: AccountsViewProps) {
         (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Show access denied message if user doesn't have permission
+    if (!canAccess) {
+        return (
+            <div className="h-full bg-gray-50 flex items-center justify-center p-6">
+                <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle className="w-8 h-8 text-red-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso Restrito</h2>
+                    <p className="text-gray-600 mb-4">
+                        Apenas administradores internos podem acessar a gestão de usuários.
+                    </p>
+                    <p className="text-sm text-gray-500">
+                        Se você acredita que deveria ter acesso, entre em contato com um administrador.
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="h-full bg-gray-50 flex flex-col overflow-hidden relative">

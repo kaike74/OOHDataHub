@@ -19,6 +19,7 @@ interface ShareModalProps {
 export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: ShareModalProps) {
     const [email, setEmail] = useState('');
     const [role, setRole] = useState<'viewer' | 'editor' | 'admin'>('viewer'); // Default to viewer
+    const [sendEmail, setSendEmail] = useState(true); // Default to send email
 
     const [loading, setLoading] = useState(false);
     const [publicAccess, setPublicAccess] = useState<'none' | 'view'>('none');
@@ -51,8 +52,8 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
         if (!proposta || !email) return;
         setLoading(true);
         try {
-            await api.shareProposal(proposta.id, { email, role });
-            toast.success('Convite enviado');
+            await api.shareProposal(proposta.id, { email, role, sendEmail });
+            toast.success(sendEmail ? 'Convite enviado por email' : 'Acesso concedido');
 
             // Optimistic update
             setSharedUsers(prev => [...prev, {
@@ -157,27 +158,42 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
                 )}
 
                 {/* Input Section */}
-                <div className="relative">
-                    <div className="flex rounded-md border border-gray-300 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 overflow-hidden">
-                        <input
-                            type="text"
-                            placeholder="Adicionar participantes, grupos, espaços e eventos da agenda"
-                            className="flex-1 w-full border-none px-4 py-3 text-base text-gray-900 placeholder:text-gray-500 focus:ring-0 outline-none"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
-                            disabled={!canManage}
-                        />
-                        {email && (
-                            <button
-                                onClick={handleInvite}
-                                disabled={loading}
-                                className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
-                            >
-                                Enviar
-                            </button>
-                        )}
+                <div className="space-y-3">
+                    <div className="relative">
+                        <div className="flex rounded-md border border-gray-300 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 overflow-hidden">
+                            <input
+                                type="text"
+                                placeholder="Adicionar participantes, grupos, espaços e eventos da agenda"
+                                className="flex-1 w-full border-none px-4 py-3 text-base text-gray-900 placeholder:text-gray-500 focus:ring-0 outline-none"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
+                                disabled={!canManage}
+                            />
+                            {email && (
+                                <button
+                                    onClick={handleInvite}
+                                    disabled={loading}
+                                    className="px-4 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                                >
+                                    Enviar
+                                </button>
+                            )}
+                        </div>
                     </div>
+
+                    {/* Send Email Checkbox */}
+                    {email && (
+                        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={sendEmail}
+                                onChange={(e) => setSendEmail(e.target.checked)}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span>Enviar notificação por email</span>
+                        </label>
+                    )}
                 </div>
 
                 {/* People List */}

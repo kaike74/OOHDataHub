@@ -7,24 +7,35 @@ import { createNotification } from './notifications';
 export async function handlePropostas(request: Request, env: Env, path: string): Promise<Response> {
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
 
-    // Helper to determine role
-    const getProposalRole = async (proposalId: string, userId: number | null, userRole: string | null, publicAccess: string = 'none'): Promise<string> => {
+    // Helper to determine role and user type
+    const getProposalRole = async (proposalId: string, userId: number | null, userRole: string | null, publicAccess: string = 'none'): Promise<{ role: string; userType: string | null }> => {
         if (!userId) {
-            return publicAccess === 'view' ? 'viewer' : 'none';
+            return { role: publicAccess === 'view' ? 'viewer' : 'none', userType: null };
         }
-        // Master/Global Admin
-        if (userRole === 'master' || userRole === 'admin') return 'admin';
+
+        // Get user type
+        const user = await env.DB.prepare('SELECT type FROM users WHERE id = ?').bind(userId).first() as any;
+        const userType = user?.type || 'internal';
+
+        // Master/Global Admin (internal only)
+        if (userRole === 'master' || userRole === 'admin') {
+            return { role: 'admin', userType };
+        }
 
         // Check ownership
         const proposal = await env.DB.prepare('SELECT created_by FROM propostas WHERE id = ?').bind(proposalId).first();
-        if (proposal && proposal.created_by === userId) return 'admin';
+        if (proposal && proposal.created_by === userId) {
+            return { role: 'admin', userType };
+        }
 
         // Check Unified Share
         const share = await env.DB.prepare('SELECT role FROM proposta_shares WHERE proposal_id = ? AND user_id = ?').bind(proposalId, userId).first();
-        if (share) return share.role as string;
+        if (share) {
+            return { role: share.role as string, userType };
+        }
 
         // Check Public Access
-        return publicAccess === 'view' ? 'viewer' : 'none';
+        return { role: publicAccess === 'view' ? 'viewer' : 'none', userType };
     };
 
     // GET /api/propostas/:id - Detalhes da proposta com itens
@@ -45,7 +56,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         let payload = null;
         if (token) payload = await verifyToken(token);
 
-        const currentRole = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level);
+        const { role: currentRole, userType } = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level);
 
         if (currentRole === 'none') {
             if (!payload) {
@@ -182,7 +193,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const creator = await env.DB.prepare('SELECT type FROM users WHERE id = ?').bind(proposal.created_by).first() as any;
             const creatorType = creator ? creator.type : 'internal'; // Fallback
 
-            const role = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
+            const { role } = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
 
             // Access Control Logic
             if (role !== 'admin' && role !== 'editor') {
@@ -259,7 +270,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const proposal = await env.DB.prepare('SELECT public_access_level FROM propostas WHERE id = ?').bind(id).first();
             if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
 
-            const role = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
+            const { role, userType } = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
 
             if (role !== 'admin' && role !== 'editor') {
                 return new Response(JSON.stringify({ error: 'Unauthorized: Only editors or admins can modify items' }), { status: 403, headers });
@@ -276,7 +287,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const { results: existingRows } = await env.DB.prepare('SELECT * FROM proposta_itens WHERE id_proposta = ?').bind(id).all();
             const existingItemsMap = new Map((existingRows as any[]).map(r => [r.id_ooh, r]));
 
-            const isClient = payload!.type === 'external';
+            const isExternalEditor = userType === 'external' && role === 'editor';
 
             batch.push(env.DB.prepare('DELETE FROM proposta_itens WHERE id_proposta = ?').bind(id));
 
@@ -291,7 +302,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     approved_until: item.approved_until || null
                 };
 
-                if (isClient) {
+                if (isExternalEditor || payload!.type === 'external') {
                     const existing: any = existingItemsMap.get(item.id_ooh);
 
                     if (existing) {
@@ -382,7 +393,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const proposal = await env.DB.prepare('SELECT public_access_level FROM propostas WHERE id = ?').bind(id).first();
             if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
 
-            const role = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
+            const { role } = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
 
             if (role !== 'admin') {
                 return new Response(JSON.stringify({ error: 'Unauthorized: Only admins can manage sharing' }), { status: 403, headers });
@@ -442,7 +453,11 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                             VALUES (?, ?, ?, ?, ?, 'pending', ?)
                         `).bind(id, email, payload!.userId, creatorType, token, data.role).run();
 
-                        await sendUserInviteEmail(env, email, token, Number(id));
+                        // Only send email if sendEmail is true (default to true if not specified)
+                        const shouldSendEmail = data.sendEmail !== false;
+                        if (shouldSendEmail) {
+                            await sendUserInviteEmail(env, email, token, Number(id));
+                        }
                     }
                 }
             }
@@ -775,7 +790,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const proposal = await env.DB.prepare('SELECT public_access_level FROM propostas WHERE id = ?').bind(id).first();
             if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
 
-            const role = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
+            const { role } = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
 
             if (role !== 'admin') {
                 return new Response(JSON.stringify({ error: 'Unauthorized: Only admins can change status' }), { status: 403, headers });
@@ -809,7 +824,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const proposal = await env.DB.prepare('SELECT public_access_level, created_by, nome FROM propostas WHERE id = ?').bind(id).first();
             if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
 
-            const role = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
+            const { role } = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
 
             // Only external admins can request validation
             if (role !== 'admin' || payload?.type !== 'external') {
@@ -915,7 +930,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const proposal = await env.DB.prepare('SELECT public_access_level, validation_status, nome FROM propostas WHERE id = ?').bind(id).first();
             if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
 
-            const role = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
+            const { role } = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
 
             // Only external admins can approve
             if (role !== 'admin' || payload?.type !== 'external') {

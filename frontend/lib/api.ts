@@ -261,7 +261,7 @@ export const api = {
         body: JSON.stringify({ token })
     }),
 
-    shareProposal: (id: number, data: { email?: string, role?: 'viewer' | 'editor' | 'admin', public_access_level?: 'none' | 'view' }) =>
+    shareProposal: (id: number, data: { email?: string, role?: 'viewer' | 'editor' | 'admin', public_access_level?: 'none' | 'view', sendEmail?: boolean }) =>
         fetchAPI(`/api/propostas/${id}/share`, {
             method: 'POST',
             body: JSON.stringify(data)

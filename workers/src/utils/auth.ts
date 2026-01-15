@@ -20,6 +20,7 @@ export type ClientUser = User;
 export interface CustomJWTPayload {
     userId: number;
     email: string;
+    name?: string | null;
     role: string;
     type: 'internal' | 'external';
 }
@@ -50,6 +51,7 @@ export async function generateToken(user: User): Promise<string> {
     const payload = {
         userId: user.id,
         email: user.email,
+        name: user.name,
         role: user.role,
         type: user.type
     };
