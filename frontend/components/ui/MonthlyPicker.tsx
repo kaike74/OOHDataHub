@@ -152,12 +152,7 @@ export default function MonthlyPicker({
         }
     }, [formStartDay, formStartMonth, formStartYear, formEndDate, editingPeriodId]);
 
-    // Save on click outside
-    useEffect(() => {
-        if (saveOnClickOutside && periods.length > 0) {
-            handleApply();
-        }
-    }, [saveOnClickOutside]);
+
 
     // Check if a new period overlaps with existing periods
     const checkOverlap = (newStart: Date, newEnd: Date, excludeId?: string): boolean => {
@@ -174,8 +169,9 @@ export default function MonthlyPicker({
         });
     };
 
-    const handleApply = () => {
-        const activePeriods = periods.filter(p => p.active);
+    // Auto-save helper
+    const saveWithPeriods = (currentPeriods: MonthlyPeriod[]) => {
+        const activePeriods = currentPeriods.filter(p => p.active);
 
         if (activePeriods.length > 0) {
             const sortedPeriods = [...activePeriods].sort((a, b) =>
@@ -192,9 +188,10 @@ export default function MonthlyPicker({
                 formatDateForInput(lastPeriod.endDate),
                 selectedPeriodIds
             );
+        } else {
+            // Clear selection
+            onSelectPeriods('', '', []);
         }
-
-        onClose(true);
     };
 
     const handleCancel = () => {
@@ -225,13 +222,17 @@ export default function MonthlyPicker({
 
         if (editingPeriodId) {
             // Update existing period
-            setPeriods(prev => prev.map(p =>
+            const updated = periods.map(p =>
                 p.id === editingPeriodId ? newPeriod : p
-            ));
+            );
+            setPeriods(updated);
             setEditingPeriodId(null);
+            saveWithPeriods(updated);
         } else {
             // Add new period
-            setPeriods(prev => [...prev, newPeriod]);
+            const updated = [...periods, newPeriod];
+            setPeriods(updated);
+            saveWithPeriods(updated);
         }
 
         // Reset form
@@ -254,13 +255,17 @@ export default function MonthlyPicker({
     };
 
     const handleRemovePeriod = (periodId: string) => {
-        setPeriods(prev => prev.filter(p => p.id !== periodId));
+        const updated = periods.filter(p => p.id !== periodId);
+        setPeriods(updated);
+        saveWithPeriods(updated);
     };
 
     const handleTogglePeriod = (periodId: string) => {
-        setPeriods(prev => prev.map(p =>
+        const updated = periods.map(p =>
             p.id === periodId ? { ...p, active: !p.active } : p
-        ));
+        );
+        setPeriods(updated);
+        saveWithPeriods(updated);
     };
 
     const resetForm = () => {
@@ -452,15 +457,8 @@ export default function MonthlyPicker({
             {!isAddingPeriod && (
                 <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
                     <span className="text-[10px] text-gray-500">
-                        {periods.filter(p => p.active).length} período{periods.filter(p => p.active).length !== 1 ? 's' : ''} selecionado{periods.filter(p => p.active).length !== 1 ? 's' : ''}
+                        {periods.filter(p => p.active).length} período{periods.filter(p => p.active).length !== 1 ? 's' : ''} (Salvo automático)
                     </span>
-                    <button
-                        onClick={handleApply}
-                        className="px-3 py-1 text-[11px] bg-blue-500 text-white rounded hover:bg-blue-600 font-medium"
-                        type="button"
-                    >
-                        Aplicar
-                    </button>
                 </div>
             )}
         </div>
