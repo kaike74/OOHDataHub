@@ -51,6 +51,7 @@ export default function PropostasView({ isModalOpen, onCloseModal, searchTerm = 
     const setSelectedCliente = useStore((state) => state.setSelectedCliente);
     const setCurrentView = useStore((state) => state.setCurrentView);
     const setSelectedProposta = useStore((state) => state.setSelectedProposta);
+    const user = useStore((state) => state.user);
 
     useEffect(() => {
         loadPropostas();
@@ -82,8 +83,10 @@ export default function PropostasView({ isModalOpen, onCloseModal, searchTerm = 
     };
 
     const handlePropostaClick = (proposta: Proposta) => {
-        // We navigate to the dedicated proposal page
-        router.push(`/propostas/visualizar?id=${proposta.id}`);
+        // We navigate to the dedicated proposal page with correct params
+        const uid = user?.id ? `uid=${user.id}&` : '';
+        const id = proposta.public_token || proposta.id;
+        router.push(`/propostas?${uid}id=${id}`);
     };
 
     const handleDeleteProposta = async (id: number, e: React.MouseEvent) => {
@@ -99,8 +102,7 @@ export default function PropostasView({ isModalOpen, onCloseModal, searchTerm = 
         }
     };
 
-    // Check user role for commission visibility correction
-    const user = useStore((state) => state.user);
+    // Check user role for commission visibility correction (already hooked above)
 
     // Filtered and Sorted
     const filteredPropostas = propostas

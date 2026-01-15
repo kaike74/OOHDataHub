@@ -180,7 +180,7 @@ export default function ClientDetailsSidebar({ client, onClose, isOpen }: Client
                                 {proposals.map(proposal => (
                                     <div
                                         key={proposal.id}
-                                        onClick={() => router.push(`/propostas/visualizar?id=${proposal.id}`)}
+                                        onClick={() => router.push(`/propostas?id=${proposal.id}`)}
                                         className="group bg-white border border-gray-200 rounded-xl p-3 hover:border-emidias-accent/30 hover:shadow-md transition-all cursor-pointer relative overflow-hidden"
                                     >
                                         <div className="flex items-start justify-between mb-2">

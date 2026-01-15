@@ -211,7 +211,7 @@ export default function ExhibitorDetailsSidebar({ exibidoras, onClose, isOpen }:
                                     <div
                                         key={prop.id}
                                         className={`p-3 flex items-center justify-between hover:bg-gray-50 cursor-pointer transition-colors ${idx !== proposals.length - 1 ? 'border-b border-gray-100' : ''}`}
-                                        onClick={() => router.push(`/propostas/visualizar?id=${prop.id}`)}
+                                        onClick={() => router.push(`/propostas?id=${prop.id}`)}
                                     >
                                         <div className="flex flex-col gap-1">
                                             <span className="text-sm font-medium text-gray-900">{prop.nome}</span>

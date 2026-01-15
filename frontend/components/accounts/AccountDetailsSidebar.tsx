@@ -171,7 +171,7 @@ export default function AccountDetailsSidebar({ account, onClose, isOpen }: Acco
                                         <div>
                                             <p
                                                 className="font-medium text-sm text-gray-900 cursor-pointer hover:text-emidias-accent hover:underline"
-                                                onClick={() => router.push(`/propostas/visualizar?id=${share.proposal_id}`)}
+                                                onClick={() => router.push(`/propostas?id=${share.proposal_id}`)}
                                             >
                                                 {share.proposal_name}
                                             </p>
@@ -216,7 +216,7 @@ export default function AccountDetailsSidebar({ account, onClose, isOpen }: Acco
                                     <div
                                         key={prop.id}
                                         className="bg-white border border-gray-200 p-3 rounded-lg flex items-center justify-between cursor-pointer hover:border-emidias-primary/30 hover:shadow-sm"
-                                        onClick={() => router.push(`/propostas/visualizar?id=${prop.id}`)}
+                                        onClick={() => router.push(`/propostas?id=${prop.id}`)}
                                     >
                                         <div>
                                             <p className="font-medium text-sm text-gray-900">{prop.nome}</p>
