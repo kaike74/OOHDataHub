@@ -133,6 +133,7 @@ export interface Proposta {
     approved_by?: number;
     itens?: PropostaItem[];
     cliente?: Cliente;
+    usuario?: { id: number; nome: string; email: string };
 }
 
 export interface PropostaItem {
