@@ -361,4 +361,32 @@ export const api = {
     // Soft Delete Proposal override (if needed, currently standard deletePonto does DELETE)
     // Assuming backend handles soft delete on DELETE /api/propostas/:id
     deleteProposta: (id: number) => fetchAPI(`/api/propostas/${id}`, { method: 'DELETE' }),
+
+    // Notifications
+    getNotifications: () => fetchAPI('/api/notifications'),
+    markNotificationRead: (id: number) => fetchAPI(`/api/notifications/${id}/read`, { method: 'POST' }),
+    markAllNotificationsRead: () => fetchAPI('/api/notifications/read-all', { method: 'POST' }),
+
+    // User Creation (Internal & External)
+    createInternalUser: (data: { email: string; name: string; password: string; role: 'viewer' | 'editor' | 'admin' }) =>
+        fetchAPI('/api/users/invite', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+
+    createExternalUser: (data: { email: string; name: string; password: string; plan?: string }) =>
+        fetchAPI('/api/clients/register', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+
+    // Validation & Approval Workflow
+    requestProposalValidation: (id: number) =>
+        fetchAPI(`/api/propostas/${id}/request-validation`, { method: 'POST' }),
+
+    validateProposal: (id: number) =>
+        fetchAPI(`/api/propostas/${id}/validate`, { method: 'POST' }),
+
+    approveProposal: (id: number) =>
+        fetchAPI(`/api/propostas/${id}/approve`, { method: 'POST' }),
 };

@@ -13,6 +13,8 @@ import Breadcrumbs, { BreadcrumbItem } from './Breadcrumbs';
 import { Button } from '@/components/ui/Button';
 import { useStore } from '@/lib/store';
 import { ReactNode, useState, useEffect } from 'react';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
+import { api } from '@/lib/api';
 
 interface TopBarProps {
     breadcrumbs?: BreadcrumbItem[];
@@ -22,7 +24,28 @@ interface TopBarProps {
 }
 
 export default function TopBar({ breadcrumbs, user, actions, counts }: TopBarProps) {
-    const { setMenuOpen } = useStore(); // Legacy menu for mobile or backup
+    const { setMenuOpen } = useStore();
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    // Poll for notifications every 30 seconds
+    useEffect(() => {
+        const fetchUnreadCount = async () => {
+            try {
+                const data = await api.getNotifications();
+                setUnreadCount(data.unreadCount || 0);
+            } catch (error) {
+                // Silently fail - user might not be logged in
+                console.debug('Could not fetch notifications:', error);
+            }
+        };
+
+        fetchUnreadCount(); // Initial fetch
+
+        const interval = setInterval(fetchUnreadCount, 30000); // Poll every 30s
+
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <div className="bg-white border-b border-gray-200 sticky top-0 z-30 flex flex-col shadow-sm transition-all duration-200">
@@ -71,9 +94,6 @@ export default function TopBar({ breadcrumbs, user, actions, counts }: TopBarPro
 
                 {/* Right Area: Profile & Actions */}
                 <div className="flex items-center gap-2 sm:gap-4">
-                    {/* Page specific actions could theoretically go here if passed via props, 
-                        currently they are often redundant or page-specific logic is internal. 
-                        If 'actions' are passed, we show them. */}
                     {actions && (
                         <div className="flex items-center gap-2 mr-2">
                             {actions}
@@ -81,15 +101,28 @@ export default function TopBar({ breadcrumbs, user, actions, counts }: TopBarPro
                     )}
 
                     {/* Notifications */}
-                    <button className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors relative">
+                    <button
+                        onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                        className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors relative"
+                    >
                         <Bell size={18} />
-                        <span className="absolute top-2 right-2.5 w-2 h-2 bg-emidias-danger rounded-full border border-white" />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] flex items-center justify-center bg-emidias-primary text-white text-[10px] font-bold rounded-full border-2 border-white px-1">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                        )}
                     </button>
 
                     {/* User Profile Menu */}
                     <UserMenu />
                 </div>
             </div>
+
+            {/* Notification Center */}
+            <NotificationCenter
+                isOpen={isNotificationOpen}
+                onClose={() => setIsNotificationOpen(false)}
+            />
         </div>
     );
 }

@@ -2,6 +2,7 @@ import { Env } from '../index';
 import { corsHeaders } from '../utils/cors';
 import { extractToken, verifyToken, requireAuth, sendUserInviteEmail } from '../utils/auth';
 import { logAudit } from '../utils/audit';
+import { createNotification } from './notifications';
 
 export async function handlePropostas(request: Request, env: Env, path: string): Promise<Response> {
     const headers = { ...corsHeaders(request, env), 'Content-Type': 'application/json' };
@@ -412,6 +413,15 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                     }
                     // Cleanup access request if exists
                     await env.DB.prepare('DELETE FROM proposta_access_requests WHERE proposal_id = ? AND user_id = ?').bind(id, user.id).run();
+
+                    // Create notification for user
+                    await createNotification(env, {
+                        userId: user.id as number,
+                        type: 'access_granted',
+                        title: 'Acesso concedido',
+                        message: `Você recebeu acesso à proposta "${(await env.DB.prepare('SELECT nome FROM propostas WHERE id = ?').bind(id).first() as any)?.nome}"`,
+                        relatedProposalId: Number(id)
+                    });
                 } else {
                     // Check if there is already a pending invite
                     const existingInvite = await env.DB.prepare('SELECT id, token FROM proposta_invites WHERE proposal_id = ? AND email = ? AND status = \'pending\'').bind(id, email).first();
@@ -688,7 +698,39 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                 VALUES (?, ?, 'client')
             `).bind(id, payload.userId).run();
 
+            // Notify proposal owner/admins
+            const proposal = await env.DB.prepare('SELECT created_by, nome FROM propostas WHERE id = ?').bind(id).first();
+            if (proposal) {
+                // Notify creator
+                await createNotification(env, {
+                    userId: proposal.created_by as number,
+                    type: 'access_request',
+                    title: 'Solicitação de Acesso',
+                    message: `${payload.name || payload.email} solicitou acesso à proposta "${proposal.nome}"`,
+                    relatedProposalId: Number(id),
+                    relatedUserId: payload.userId
+                });
+
+                // Also notify other admins with access
+                const admins = await env.DB.prepare(`
+                    SELECT user_id FROM proposta_shares 
+                    WHERE proposal_id = ? AND role = 'admin' AND user_id != ?
+                `).bind(id, proposal.created_by).all();
+
+                for (const admin of admins.results) {
+                    await createNotification(env, {
+                        userId: admin.user_id as number,
+                        type: 'access_request',
+                        title: 'Solicitação de Acesso',
+                        message: `${payload.name || payload.email} solicitou acesso à proposta "${proposal.nome}"`,
+                        relatedProposalId: Number(id),
+                        relatedUserId: payload.userId
+                    });
+                }
+            }
+
             return new Response(JSON.stringify({ success: true, message: 'Solicitação enviada' }), { headers });
+
 
         } catch (e: any) {
             return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
@@ -751,6 +793,176 @@ export async function handlePropostas(request: Request, env: Env, path: string):
                 changes: { status }
             });
             return new Response(JSON.stringify({ success: true }), { headers });
+        } catch (e: any) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
+    // POST /api/propostas/:id/request-validation - External admin requests validation
+    if (request.method === 'POST' && path.match(/^\/api\/propostas\/\d+\/request-validation$/)) {
+        try {
+            const id = path.split('/')[3];
+            const token = extractToken(request);
+            if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+            const payload = await verifyToken(token);
+
+            const proposal = await env.DB.prepare('SELECT public_access_level, created_by, nome FROM propostas WHERE id = ?').bind(id).first();
+            if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
+
+            const role = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
+
+            // Only external admins can request validation
+            if (role !== 'admin' || payload?.type !== 'external') {
+                return new Response(JSON.stringify({ error: 'Apenas administradores externos podem solicitar validação' }), { status: 403, headers });
+            }
+
+            // Update proposal validation status
+            await env.DB.prepare(`
+                UPDATE propostas 
+                SET validation_status = 'pending', 
+                    validation_requested_at = CURRENT_TIMESTAMP,
+                    validation_requested_by = ?
+                WHERE id = ?
+            `).bind(payload.userId, id).run();
+
+            // Notify all internal admins
+            const internalAdmins = await env.DB.prepare(
+                'SELECT id FROM users WHERE type = "internal" AND (role = "admin" OR role = "master")'
+            ).all();
+
+            for (const admin of internalAdmins.results) {
+                await createNotification(env, {
+                    userId: admin.id as number,
+                    type: 'validation_request',
+                    title: 'Solicitação de Validação',
+                    message: `${payload.name} solicitou validação da proposta "${proposal.nome}"`,
+                    relatedProposalId: Number(id),
+                    relatedUserId: payload.userId
+                });
+            }
+
+            await logAudit(env, {
+                tableName: 'propostas',
+                recordId: Number(id),
+                action: 'UPDATE',
+                changedBy: payload!.userId,
+                userType: payload!.role as any,
+                changes: { validation_status: 'pending' }
+            });
+
+            return new Response(JSON.stringify({ success: true, message: 'Solicitação de validação enviada' }), { headers });
+        } catch (e: any) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
+    // POST /api/propostas/:id/validate - Internal admin validates proposal
+    if (request.method === 'POST' && path.match(/^\/api\/propostas\/\d+\/validate$/)) {
+        try {
+            const id = path.split('/')[3];
+            const user = await requireAuth(request, env);
+
+            // Only internal admins can validate
+            if (user.type !== 'internal' || (user.role !== 'admin' && user.role !== 'master')) {
+                return new Response(JSON.stringify({ error: 'Apenas administradores internos podem validar propostas' }), { status: 403, headers });
+            }
+
+            const proposal = await env.DB.prepare('SELECT validation_requested_by, nome FROM propostas WHERE id = ?').bind(id).first();
+            if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
+
+            await env.DB.prepare(`
+                UPDATE propostas 
+                SET validation_status = 'validated',
+                    validated_at = CURRENT_TIMESTAMP,
+                    validated_by = ?
+                WHERE id = ?
+            `).bind(user.id, id).run();
+
+            // Notify the requester
+            if (proposal.validation_requested_by) {
+                await createNotification(env, {
+                    userId: proposal.validation_requested_by as number,
+                    type: 'access_granted',
+                    title: 'Proposta Validada',
+                    message: `Sua proposta "${proposal.nome}" foi validada e está pronta para aprovação`,
+                    relatedProposalId: Number(id)
+                });
+            }
+
+            await logAudit(env, {
+                tableName: 'propostas',
+                recordId: Number(id),
+                action: 'UPDATE',
+                changedBy: user.id,
+                userType: user.role as any,
+                changes: { validation_status: 'validated' }
+            });
+
+            return new Response(JSON.stringify({ success: true }), { headers });
+        } catch (e: any) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
+        }
+    }
+
+    // POST /api/propostas/:id/approve - External admin approves proposal (after validation)
+    if (request.method === 'POST' && path.match(/^\/api\/propostas\/\d+\/approve$/)) {
+        try {
+            const id = path.split('/')[3];
+            const token = extractToken(request);
+            if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+            const payload = await verifyToken(token);
+
+            const proposal = await env.DB.prepare('SELECT public_access_level, validation_status, nome FROM propostas WHERE id = ?').bind(id).first();
+            if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
+
+            const role = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level as string);
+
+            // Only external admins can approve
+            if (role !== 'admin' || payload?.type !== 'external') {
+                return new Response(JSON.stringify({ error: 'Apenas administradores externos podem aprovar propostas' }), { status: 403, headers });
+            }
+
+            // Check if proposal has been validated
+            if (proposal.validation_status !== 'validated') {
+                return new Response(JSON.stringify({ error: 'Proposta precisa ser validada internamente antes da aprovação' }), { status: 400, headers });
+            }
+
+            // Update proposal status
+            await env.DB.prepare(`
+                UPDATE propostas 
+                SET validation_status = 'approved',
+                    status = 'aprovado',
+                    approved_at = CURRENT_TIMESTAMP,
+                    approved_by = ?
+                WHERE id = ?
+            `).bind(payload.userId, id).run();
+
+            // Notify internal admins
+            const internalAdmins = await env.DB.prepare(
+                'SELECT id FROM users WHERE type = "internal" AND (role = "admin" OR role = "master")'
+            ).all();
+
+            for (const admin of internalAdmins.results) {
+                await createNotification(env, {
+                    userId: admin.id as number,
+                    type: 'proposal_approved',
+                    title: 'Proposta Aprovada',
+                    message: `${payload.name} aprovou a proposta "${proposal.nome}"`,
+                    relatedProposalId: Number(id),
+                    relatedUserId: payload.userId
+                });
+            }
+
+            await logAudit(env, {
+                tableName: 'propostas',
+                recordId: Number(id),
+                action: 'UPDATE',
+                changedBy: payload!.userId,
+                userType: payload!.role as any,
+                changes: { validation_status: 'approved', status: 'aprovado' }
+            });
+
+            return new Response(JSON.stringify({ success: true, message: 'Proposta aprovada com sucesso' }), { headers });
         } catch (e: any) {
             return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
         }

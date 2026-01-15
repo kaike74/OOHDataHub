@@ -76,6 +76,7 @@ export interface User {
     name: string | null;
     type: 'internal' | 'external';
     role: 'master' | 'editor' | 'viewer' | 'client' | 'admin';
+    plan?: string; // For external users (e.g., 'Gratuito', 'Pro', 'Enterprise')
     created_at?: string;
     client_name?: string | null;
 }
@@ -104,25 +105,34 @@ export interface Cliente {
 export interface SharedUser {
     email: string;
     name: string | null;
-    role: 'viewer' | 'editor' | 'admin';
+    role: 'viewer' | 'editor' | 'admin' | 'reader'; // Added 'reader' for external users
+    type?: 'internal' | 'external';
+    isPending?: boolean; // For pending invites
 }
 
 export interface Proposta {
     id: number;
     id_cliente: number;
     nome: string;
-    comissao: 'V2' | 'V3' | 'V4';
+    comissao: 'V2' | 'V3' | 'V4' | 'V0';
     status: string;
     created_at: string;
     updated_at?: string;
     created_by?: number | null;
     public_token?: string;
-    public_access_level?: 'none' | 'view'; // New
-    currentUserRole?: 'none' | 'viewer' | 'editor' | 'admin'; // New
-    sharedUsers?: SharedUser[]; // New
-    accessRequests?: { request_id: number; user_id: number; email: string; name: string }[]; // New
+    public_access_level?: 'none' | 'view';
+    currentUserRole?: 'none' | 'viewer' | 'editor' | 'admin' | 'reader';
+    sharedUsers?: SharedUser[];
+    accessRequests?: { request_id: number; user_id: number; email: string; name: string }[];
+    validation_status?: 'none' | 'pending' | 'validated' | 'approved';
+    validation_requested_at?: string;
+    validation_requested_by?: number;
+    validated_at?: string;
+    validated_by?: number;
+    approved_at?: string;
+    approved_by?: number;
     itens?: PropostaItem[];
-    cliente?: Cliente; // Added for breadcrumbs
+    cliente?: Cliente;
 }
 
 export interface PropostaItem {
@@ -202,3 +212,18 @@ export interface MaterialSelection {
     lonaQuantities: Record<number, number>;  // itemId -> quantity
 }
 
+export interface Notification {
+    id: number;
+    user_id: number;
+    type: 'access_request' | 'access_granted' | 'share_invite' | 'validation_request' | 'proposal_approved';
+    title: string;
+    message: string | null;
+    related_proposal_id: number | null;
+    related_user_id: number | null;
+    is_read: number; // 0 or 1 (SQLite boolean)
+    created_at: string;
+    // Joined fields
+    proposal_name?: string;
+    related_user_name?: string;
+    related_user_email?: string;
+}
