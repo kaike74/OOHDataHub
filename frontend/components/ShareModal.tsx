@@ -105,11 +105,18 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
     const handleCopyLink = () => {
         if (!proposta) return;
 
-        // URL Structure: /propostas?uid={userId}&id={proposalCode}
-        const proposalCode = proposta.public_token || proposta.id;
-        const userId = proposta?.usuario?.id || proposta.created_by || 'anon';
+        // URL Structure: 
+        // Public: /propostas?token={token} (Bypasses auth)
+        // Internal: /propostas?id={id} (Requires auth)
 
-        const url = `${window.location.origin}/propostas?uid=${userId}&id=${proposalCode}`;
+        let url = '';
+
+        if (publicAccess === 'view') {
+            const token = proposta.public_token || proposta.id; // Use public_token if available
+            url = `${window.location.origin}/propostas?token=${token}`;
+        } else {
+            url = `${window.location.origin}/propostas?id=${proposta.id}`;
+        }
 
         navigator.clipboard.writeText(url);
 
