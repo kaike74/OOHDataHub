@@ -102,9 +102,18 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
 
     const handleCopyLink = () => {
         if (!proposta) return;
-        let url = `${window.location.origin}/propostas?id=${proposta.id}`;
-        navigator.clipboard.writeText(url);
-        toast.success('Link copiado');
+
+        // If public access is enabled and we have a public_token, use the public link
+        if (publicAccess === 'view' && proposta.public_token) {
+            const url = `${window.location.origin}/public/${proposta.public_token}`;
+            navigator.clipboard.writeText(url);
+            toast.success('Link público copiado');
+        } else {
+            // Otherwise, use the authenticated link
+            const url = `${window.location.origin}/propostas?id=${proposta.id}`;
+            navigator.clipboard.writeText(url);
+            toast.success('Link copiado');
+        }
     };
 
     if (!proposta) return null;

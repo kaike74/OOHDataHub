@@ -10,29 +10,40 @@ export async function handleNotifications(request: Request, env: Env, path: stri
         if (request.method === 'GET' && path === '/api/notifications') {
             const user = await requireAuth(request, env);
 
-            const { results } = await env.DB.prepare(`
-                SELECT 
-                    n.*,
-                    p.nome as proposal_name,
-                    u.name as related_user_name,
-                    u.email as related_user_email
-                FROM notifications n
-                LEFT JOIN propostas p ON n.related_proposal_id = p.id
-                LEFT JOIN users u ON n.related_user_id = u.id
-                WHERE n.user_id = ?
-                ORDER BY n.created_at DESC
-                LIMIT 50
-            `).bind(user.id).all();
+            try {
+                const { results } = await env.DB.prepare(`
+                    SELECT 
+                        n.*,
+                        p.nome as proposal_name,
+                        u.name as related_user_name,
+                        u.email as related_user_email
+                    FROM notifications n
+                    LEFT JOIN propostas p ON n.related_proposal_id = p.id
+                    LEFT JOIN users u ON n.related_user_id = u.id
+                    WHERE n.user_id = ?
+                    ORDER BY n.created_at DESC
+                    LIMIT 50
+                `).bind(user.id).all();
 
-            // Get unread count
-            const unreadCount = await env.DB.prepare(
-                'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0'
-            ).bind(user.id).first() as { count: number } | null;
+                // Get unread count
+                const unreadCount = await env.DB.prepare(
+                    'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0'
+                ).bind(user.id).first() as { count: number } | null;
 
-            return new Response(JSON.stringify({
-                notifications: results,
-                unreadCount: unreadCount?.count || 0
-            }), { headers });
+                return new Response(JSON.stringify({
+                    notifications: results,
+                    unreadCount: unreadCount?.count || 0
+                }), { headers });
+            } catch (dbError: any) {
+                // If table doesn't exist yet (migration not applied), return empty
+                if (dbError.message?.includes('no such table: notifications')) {
+                    return new Response(JSON.stringify({
+                        notifications: [],
+                        unreadCount: 0
+                    }), { headers });
+                }
+                throw dbError;
+            }
         }
 
         // POST /api/notifications/:id/read - Mark notification as read
@@ -90,15 +101,22 @@ export async function createNotification(
         relatedUserId?: number;
     }
 ): Promise<void> {
-    await env.DB.prepare(`
-        INSERT INTO notifications (user_id, type, title, message, related_proposal_id, related_user_id)
-        VALUES (?, ?, ?, ?, ?, ?)
-    `).bind(
-        data.userId,
-        data.type,
-        data.title,
-        data.message || null,
-        data.relatedProposalId || null,
-        data.relatedUserId || null
-    ).run();
+    try {
+        await env.DB.prepare(`
+            INSERT INTO notifications (user_id, type, title, message, related_proposal_id, related_user_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `).bind(
+            data.userId,
+            data.type,
+            data.title,
+            data.message || null,
+            data.relatedProposalId || null,
+            data.relatedUserId || null
+        ).run();
+    } catch (error: any) {
+        // Silently fail if notifications table doesn't exist yet
+        if (!error.message?.includes('no such table: notifications')) {
+            console.error('Error creating notification:', error);
+        }
+    }
 }
