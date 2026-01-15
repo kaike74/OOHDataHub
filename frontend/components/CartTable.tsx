@@ -1097,49 +1097,39 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                         const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
                         const biWeeksCount = Math.ceil((daysDiff + 1) / 14);
 
-                        if (biWeeksCount <= 3) {
-                            // Try to format as BI range
-                            const startInfo = getBiWeekInfo(row.original.periodo_inicio);
-                            const endInfo = getBiWeekInfo(row.original.periodo_fim); // Actually this is end date
-                            // getBiWeekInfo(end) calculates based on that date acting as a start?
-                            // CAUTION: getBiWeekInfo assumes input IS a start date.
+                        const startInfo = getBiWeekInfo(row.original.periodo_inicio);
+                        const endInfo = getBiWeekInfo(row.original.periodo_fim);
 
-                            // If we have just a date range, let's try to infer BIs
-                            if (startInfo) {
-                                // Force single BI display if count is 1 (approx 14 days)
-                                if (biWeeksCount === 1) {
-                                    return <span>BI {String(startInfo.number).padStart(2, '0')}</span>;
-                                }
-
-                                // Get the BI info for the end date (it will find which BI period it falls into)
-                                const endInfo = getBiWeekInfo(row.original.periodo_fim);
-
-                                if (endInfo && startInfo.number !== endInfo.number) {
-                                    return <span>BI {String(startInfo.number).padStart(2, '0')} → BI {String(endInfo.number).padStart(2, '0')}</span>;
-                                } else if (startInfo) {
-                                    // Single BI period
-                                    return <span>BI {String(startInfo.number).padStart(2, '0')}</span>;
-                                }
+                        let displayText = `${start} → ${end}`;
+                        if (startInfo) {
+                            if (biWeeksCount === 1) {
+                                displayText = `BI ${String(startInfo.number).padStart(2, '0')}`;
+                            } else if (endInfo && startInfo.number !== endInfo.number) {
+                                // e.g. BI 01 -> BI 04
+                                // If they are adjacent/range
+                                displayText = `BI ${String(startInfo.number).padStart(2, '0')} → BI ${String(endInfo.number).padStart(2, '0')}`;
+                            } else {
+                                displayText = `BI ${String(startInfo.number).padStart(2, '0')}`;
                             }
-
-                            return <span>{start} → {end}</span>;
-                        } else {
-                            // Try BI range format for long periods too
-                            const startInfo = getBiWeekInfo(row.original.periodo_inicio);
-                            if (startInfo) {
-                                return (
-                                    <span title={`${start} → ${end}`}>
-                                        {biWeeksCount} bissemanas (Início: BI {String(startInfo.number).padStart(2, '0')})
-                                    </span>
-                                );
-                            }
-
-                            return (
-                                <span title={`${start} → ${end}`}>
-                                    {biWeeksCount} bissemanas ({start} → {end})
-                                </span>
-                            );
                         }
+
+                        // Use tooltip for overflow
+                        return (
+                            <TooltipProvider>
+                                <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                        <div className="flex items-center gap-1 max-w-full overflow-hidden w-[140px]">
+                                            <span className="truncate block w-full text-ellipsis overflow-hidden whitespace-nowrap">
+                                                {displayText}
+                                            </span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" align="start" className="bg-white p-2 border shadow-lg rounded-md z-50">
+                                        {displayText} ({biWeeksCount} bissemanas)
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        );
 
                     } else if (periodoComercializado === 'mensal') {
                         if (row.original.selected_periods && row.original.selected_periods.length > 0) {
@@ -1180,7 +1170,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 <TooltipProvider>
                                     <Tooltip delayDuration={300}>
                                         <TooltipTrigger asChild>
-                                            <div className="flex items-center gap-1 max-w-full overflow-hidden w-[150px]">
+                                            <div className="flex items-center gap-1 max-w-full overflow-hidden w-[140px]">
                                                 <span className="truncate block w-full text-ellipsis overflow-hidden whitespace-nowrap" title={listStr}>
                                                     {listStr}
                                                 </span>
