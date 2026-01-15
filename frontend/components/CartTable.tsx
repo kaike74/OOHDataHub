@@ -1266,10 +1266,25 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 startDate={row.original.periodo_inicio}
                                 endDate={row.original.periodo_fim}
                                 onSelectionChange={(start, end, periods) => {
+                                    let qtd = periods.length;
+
+                                    // For monthly periods, calculate total duration in months
+                                    if (row.original.periodo_comercializado === 'mensal') {
+                                        qtd = periods.reduce((acc, periodId) => {
+                                            const [startStr, endStr] = periodId.split('_');
+                                            const s = new Date(startStr);
+                                            const e = new Date(endStr);
+                                            // Approximate months (~30 days)
+                                            const days = (e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24);
+                                            return acc + Math.max(1, Math.round(days / 30));
+                                        }, 0);
+                                    }
+
                                     updateItem(row.original.id, {
                                         periodo_inicio: start,
                                         periodo_fim: end,
-                                        selected_periods: periods
+                                        selected_periods: periods,
+                                        qtd_bi_mes: qtd
                                     });
                                 }}
                                 onSelectStart={undefined}

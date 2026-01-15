@@ -74,6 +74,7 @@ export default function MonthlyPicker({
     const [formStartYear, setFormStartYear] = useState('2026');
     const [formDuration, setFormDuration] = useState('1');
     const [formEndDate, setFormEndDate] = useState<Date | null>(null);
+    const [overlapError, setOverlapError] = useState<string | null>(null);
 
     // Portal positioning
     const [portalPosition, setPortalPosition] = useState<{ top: number; left: number } | null>(null);
@@ -130,6 +131,26 @@ export default function MonthlyPicker({
             }
         }
     }, [formStartDay, formStartMonth, formStartYear, formDuration]);
+
+    // Check overlap in real-time
+    useEffect(() => {
+        if (!formEndDate) {
+            setOverlapError(null);
+            return;
+        }
+
+        const start = new Date(
+            parseInt(formStartYear),
+            parseInt(formStartMonth) - 1,
+            parseInt(formStartDay)
+        );
+
+        if (checkOverlap(start, formEndDate, editingPeriodId || undefined)) {
+            setOverlapError('Data indisponível');
+        } else {
+            setOverlapError(null);
+        }
+    }, [formStartDay, formStartMonth, formStartYear, formEndDate, editingPeriodId]);
 
     // Save on click outside
     useEffect(() => {
@@ -189,9 +210,9 @@ export default function MonthlyPicker({
             parseInt(formStartDay)
         );
 
-        // Check for overlap
+        // Check for overlap (redundant but safe)
         if (checkOverlap(start, formEndDate, editingPeriodId || undefined)) {
-            alert('Este período se sobrepõe a um período já existente. Por favor, escolha datas diferentes.');
+            // Already handled by UI state, but prevent submission
             return;
         }
 
@@ -243,10 +264,19 @@ export default function MonthlyPicker({
     };
 
     const resetForm = () => {
-        const today = new Date();
-        setFormStartDay(String(today.getDate()).padStart(2, '0'));
-        setFormStartMonth(String(today.getMonth() + 1).padStart(2, '0'));
-        setFormStartYear(String(today.getFullYear()));
+        let suggestion = new Date();
+
+        // Suggest next available date if periods exist
+        if (periods.length > 0) {
+            const sorted = [...periods].sort((a, b) => b.endDate.getTime() - a.endDate.getTime());
+            const latestEnd = sorted[0].endDate;
+            suggestion = new Date(latestEnd);
+            suggestion.setDate(suggestion.getDate() + 1);
+        }
+
+        setFormStartDay(String(suggestion.getDate()).padStart(2, '0'));
+        setFormStartMonth(String(suggestion.getMonth() + 1).padStart(2, '0'));
+        setFormStartYear(String(suggestion.getFullYear()));
         setFormDuration('1');
         setFormEndDate(null);
     };
@@ -286,18 +316,7 @@ export default function MonthlyPicker({
                                 className="mb-2 p-2 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
                             >
                                 <div className="flex items-start gap-2">
-                                    <div
-                                        className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 cursor-pointer transition-all ${period.active
-                                            ? 'bg-blue-500 border-blue-500'
-                                            : 'bg-white border-gray-300'
-                                            }`}
-                                        onClick={() => handleTogglePeriod(period.id)}
-                                    >
-                                        {period.active && (
-                                            <Check size={10} className="text-white" strokeWidth={3} />
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
+                                    <div className="flex-1 min-w-0 pl-1">
                                         <div className="text-[11px] text-gray-900 font-medium">
                                             {formatMonthlyPeriodDisplay(period.startDate, period.endDate)}
                                         </div>
@@ -398,8 +417,11 @@ export default function MonthlyPicker({
                         </div>
 
                         {formEndDate && (
-                            <div className="text-[10px] text-gray-600 bg-gray-50 p-2 rounded">
-                                <strong>Fim:</strong> {formatDisplayDate(formEndDate)}
+                            <div className="flex justify-between items-center text-[10px] text-gray-600 bg-gray-50 p-2 rounded">
+                                <span><strong>Fim:</strong> {formatDisplayDate(formEndDate)}</span>
+                                {overlapError && (
+                                    <span className="text-red-500 font-bold">{overlapError}</span>
+                                )}
                             </div>
                         )}
 
@@ -416,7 +438,7 @@ export default function MonthlyPicker({
                             </button>
                             <button
                                 onClick={handleAddPeriod}
-                                disabled={!formEndDate}
+                                disabled={!formEndDate || !!overlapError}
                                 className="flex-1 px-3 py-1.5 text-[11px] bg-blue-500 text-white rounded hover:bg-blue-600 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
                             >
                                 {editingPeriodId ? 'Salvar' : 'Adicionar'}
