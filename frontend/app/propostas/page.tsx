@@ -20,30 +20,21 @@ export default function PropostasPage() {
     const [checkingPublicAccess, setCheckingPublicAccess] = useState(false);
 
     useEffect(() => {
-        // If not logged in, check if accessing a specific proposal
+        const proposalId = searchParams.get('id');
+
+        // If accessing a specific proposal, redirect to the detail view
+        if (proposalId) {
+            router.push(`/propostas/visualizar?id=${proposalId}`);
+            return;
+        }
+
+        // If not logged in and no proposal ID, redirect to login
         if (!isAuthenticated) {
-            const proposalId = searchParams.get('id');
-
-            if (proposalId) {
-                // Check if this proposal has public access
-                setCheckingPublicAccess(true);
-
-                // Try to fetch proposal to check if it's public
-                // If it's public, PropostasView will handle showing it
-                // If it's not public or doesn't exist, we'll redirect to login
-                // This check happens in PropostasView component
-
-                // For now, let PropostasView handle the logic
-                // It will show public view if accessible, or show "access denied" message
-                setCheckingPublicAccess(false);
+            const emailParam = searchParams.get('email');
+            if (emailParam) {
+                router.push(`/login?email=${encodeURIComponent(emailParam)}`);
             } else {
-                // No specific proposal ID, redirect to login
-                const emailParam = searchParams.get('email');
-                if (emailParam) {
-                    router.push(`/login?email=${encodeURIComponent(emailParam)}`);
-                } else {
-                    router.push('/login');
-                }
+                router.push('/login');
             }
         }
     }, [isAuthenticated, searchParams, router]);
