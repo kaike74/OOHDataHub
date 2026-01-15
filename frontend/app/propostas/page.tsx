@@ -27,25 +27,10 @@ export default function PropostasPage() {
             // If user is authenticated, redirect to their scoped URL
             // internal: /propostas/{userId}?id={proposalId}
             if (isAuthenticated && user?.id) {
-                // If there is a proposal ID, preserve it
-                if (proposalId) {
-                    router.push(`/propostas/${user.id}?id=${proposalId}`);
-                } else {
-                    // If no proposal ID, probably just browsing list?
-                    // But requirement says "Interno: ... aparecem na aba propostas" (List).
-                    // If I am at /propostas (no ID), I should see the list.
-                    // Does the list view need to be scoped? "/propostas/[userId]"?
-                    // User said: "https://oohdatahub.pages.dev/propostas/{idusuario}?id=codigo" for accessing a proposal.
-                    // It implies LIST might handle itself on /propostas or /propostas/{userId}.
-                    // For now, if no ID, let's keep showing the list here OR redirect to scoped list?
-                    // Let's stay here for list view as it's cleaner, UNLESS the new route is required for list too.
-                    // The request focused on "ao acessar uma proposta".
-                    // So if NO ID, we stay here and render list.
-
-                    // BUT, if I have an ID and I am logged in, I redirect.
-                    router.push(`/propostas/${user.id}?id=${proposalId}`);
-                    return;
-                }
+                // Since we are using Static Export, we cannot use dynamic route segments like /propostas/[userId]
+                // We will stay on /propostas and use query params to maintain state/context if needed.
+                // The URL will remain /propostas?id=... which matches ShareModal logic.
+                // We do NOT redirect to scoped path anymore.
             } else {
                 // Not authenticated
                 if (proposalId) {
