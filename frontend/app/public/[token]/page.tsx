@@ -7,6 +7,10 @@ import { Proposta } from '@/lib/types';
 import { ExternalLink, Mail, Phone, MapPin, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
+// This page uses dynamic routing, so we need to tell Next.js to render it dynamically
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+
 export default function PublicProposalPage() {
     const params = useParams();
     const router = useRouter();
