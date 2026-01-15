@@ -83,10 +83,10 @@ export default function PropostasView({ isModalOpen, onCloseModal, searchTerm = 
     };
 
     const handlePropostaClick = (proposta: Proposta) => {
-        // We navigate to the dedicated proposal page with correct params
-        const uid = user?.id ? `uid=${user.id}&` : '';
-        const id = proposta.public_token || proposta.id;
-        router.push(`/propostas?${uid}id=${id}`);
+        // Navigate to dedicated page. Authentication will handle the rest via 'id' param.
+        // UID not strictly required in URL for internal access anymore, but could be added if preferred.
+        // Keeping it simple as per new logic: Internal = id.
+        router.push(`/propostas?id=${proposta.id}`);
     };
 
     const handleDeleteProposta = async (id: number, e: React.MouseEvent) => {

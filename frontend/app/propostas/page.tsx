@@ -22,54 +22,56 @@ export default function PropostasPage() {
 
     useEffect(() => {
         const checkRouting = async () => {
+            const tokenParam = searchParams.get('token');
             const idParam = searchParams.get('id');
-            const uidParam = searchParams.get('uid');
 
-            // If user is authenticated, we want to ensure the URL has the correct context (uid)
-            // Desired format: /propostas?uid={myId}&id={token|id}
-            if (isAuthenticated && user?.id) {
-                // If the URL logic already matches, do nothing to avoid loop
-                if (uidParam === String(user.id) && idParam) {
+            // 1. If TOKEN is present, we assume Public Access intent.
+            // We do NOT force login. The ProposalDetailClient will handle fetching via Public API.
+            if (tokenParam) {
+                // Happy path for public access
+                setIsChecking(false);
+                return;
+            }
+
+            // 2. If ID is present (Internal Access intent)
+            if (idParam) {
+                if (isAuthenticated) {
+                    // Logged in + ID = Allowed
                     setIsChecking(false);
                     return;
-                }
-
-                // If we have an ID but wrong/missing UID, redirect to include UID
-                if (idParam) {
-                    // We keep the ID param as is (whether it's numeric ID or token)
-                    // Ideally we convert numeric ID to token if available, but we might not have it here yet.
-                    // For now, simply enforcing the UID presence.
-                    router.replace(`/propostas?uid=${user.id}&id=${idParam}`);
+                } else {
+                    // Not logged in + ID = Force Login
+                    // We preserve the ID in the redirect so they come back to ?id=...
+                    const currentPath = `/propostas?id=${idParam}`;
+                    router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
                     return;
                 }
-            } else {
-                // Not authenticated
-                if (idParam) {
-                    // Public view: Just render Detail. UID might be missing or present (creator's UID?), 
-                    // but functionally we just need the ID/Token.
-                } else {
-                    // No ID, not logged in -> Login
-                    const emailParam = searchParams.get('email');
-                    if (emailParam) {
-                        router.push(`/login?email=${encodeURIComponent(emailParam)}`);
-                    } else {
-                        router.push('/login');
-                    }
-                }
             }
-            setIsChecking(false);
+
+            // 3. No ID, No Token -> List View or Login
+            if (!isAuthenticated) {
+                // No params, not logged in -> Login
+                router.push('/login');
+            } else {
+                // Logged in, no params -> List View (handled by return null below + component render)
+                setIsChecking(false);
+            }
         };
 
         checkRouting();
-    }, [isAuthenticated, user, searchParams, router]);
+    }, [isAuthenticated, searchParams, router]);
 
-    const proposalId = searchParams.get('id');
+    const tokenParam = searchParams.get('token');
+    const idParam = searchParams.get('id');
 
-    if (isChecking && proposalId && isAuthenticated) {
+    // Show loading while checking auth logic (unless we have a token, which bypasses immediately)
+    if (isChecking && !tokenParam) {
         return <LoadingSpinner />;
     }
 
-    if (proposalId) {
+    // Render Detail if we have either Token or ID
+    // (If ID + Unauth, we redirected above, so if we are here we are safe)
+    if (tokenParam || idParam) {
         return <ProposalDetailClient />;
     }
 

@@ -23,11 +23,13 @@ export default function ProposalDetailClient() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const idParam = searchParams.get('id');
+    const tokenParam = searchParams.get('token');
 
-    // Determine if ID is numeric or token
-    const isToken = idParam && isNaN(Number(idParam));
-    const numericId = idParam && !isToken ? Number(idParam) : null;
-    const token = isToken ? idParam : null;
+    // Determine mode
+    // If we have a TOKEN, it is strictly Public Access (via token)
+    // If we have an ID, it is Internal Access (or public via ID if supported, but usually ID=Internal)
+    const token = tokenParam;
+    const numericId = idParam ? Number(idParam) : null;
 
     // Legacy Store
     const {
@@ -79,7 +81,7 @@ export default function ProposalDetailClient() {
 
     useEffect(() => {
         const loadContext = async () => {
-            if (!idParam) return;
+            if (!token && !numericId) return;
 
             try {
                 let proposta: any;
@@ -87,7 +89,7 @@ export default function ProposalDetailClient() {
 
                 // 1. Try to fetch proposal
                 if (token) {
-                    // Fetch by token (Public API)
+                    // Public Access via Token (Bypasses Auth)
                     proposta = await api.getPublicProposal(token);
                     isPublic = true;
                 } else if (numericId) {
@@ -167,7 +169,7 @@ export default function ProposalDetailClient() {
         };
 
         loadContext();
-    }, [idParam, token, numericId, isAuthenticated, user, setPontos, setExibidoras, setSelectedProposta, setProposal]);
+    }, [token, numericId, isAuthenticated, user, setPontos, setExibidoras, setSelectedProposta, setProposal]);
 
     // Breadcrumbs
     const breadcrumbs = [
@@ -231,7 +233,7 @@ export default function ProposalDetailClient() {
                     </p>
                     <div className="flex flex-col gap-3">
                         <Button
-                            onClick={() => router.push(`/auth/login?redirect=/propostas?id=${idParam}`)}
+                            onClick={() => router.push(`/auth/login?redirect=/propostas?id=${numericId || ''}`)}
                             className="bg-blue-600 hover:bg-blue-700 text-white w-full"
                         >
                             Fazer Login
