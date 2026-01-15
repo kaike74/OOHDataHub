@@ -104,8 +104,17 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
     const handleCopyLink = () => {
         if (!proposta) return;
 
-        // Always use the same link format - the app will handle authentication automatically
-        const url = `${window.location.origin}/propostas?id=${proposta.id}`;
+        // Use different URLs based on public access level
+        let url: string;
+        if (publicAccess === 'view' && proposta.public_token) {
+            // Public link - use worker endpoint for presentation page
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8787';
+            url = `${apiUrl}/public/view/${proposta.public_token}`;
+        } else {
+            // Restricted link - use app URL (requires login)
+            url = `${window.location.origin}/propostas?id=${proposta.id}`;
+        }
+
         navigator.clipboard.writeText(url);
 
         if (publicAccess === 'view') {
