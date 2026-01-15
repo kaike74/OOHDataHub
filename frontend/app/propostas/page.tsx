@@ -8,6 +8,7 @@ import PropostasView from '@/components/PropostasView';
 import { Button } from '@/components/ui/Button';
 import { Plus } from 'lucide-react';
 import { AnimatedSearchBar } from '@/components/ui/AnimatedSearchBar';
+import { api } from '@/lib/api';
 
 export default function PropostasPage() {
     const searchParams = useSearchParams();
@@ -16,15 +17,33 @@ export default function PropostasPage() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [checkingPublicAccess, setCheckingPublicAccess] = useState(false);
 
     useEffect(() => {
-        // If not logged in, check for invite params
+        // If not logged in, check if accessing a specific proposal
         if (!isAuthenticated) {
-            const emailParam = searchParams.get('email');
-            if (emailParam) {
-                router.push(`/login?email=${encodeURIComponent(emailParam)}`);
+            const proposalId = searchParams.get('id');
+
+            if (proposalId) {
+                // Check if this proposal has public access
+                setCheckingPublicAccess(true);
+
+                // Try to fetch proposal to check if it's public
+                // If it's public, PropostasView will handle showing it
+                // If it's not public or doesn't exist, we'll redirect to login
+                // This check happens in PropostasView component
+
+                // For now, let PropostasView handle the logic
+                // It will show public view if accessible, or show "access denied" message
+                setCheckingPublicAccess(false);
             } else {
-                router.push('/login');
+                // No specific proposal ID, redirect to login
+                const emailParam = searchParams.get('email');
+                if (emailParam) {
+                    router.push(`/login?email=${encodeURIComponent(emailParam)}`);
+                } else {
+                    router.push('/login');
+                }
             }
         }
     }, [isAuthenticated, searchParams, router]);

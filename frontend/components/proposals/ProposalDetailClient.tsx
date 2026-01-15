@@ -41,6 +41,11 @@ export default function ProposalDetailClient() {
     // Sync Hook
     const { isSaving } = useProposalSync();
     const [isLoading, setIsLoading] = useState(true);
+    const [isPublicView, setIsPublicView] = useState(false);
+    const [accessDenied, setAccessDenied] = useState(false);
+
+    // Check if user is authenticated
+    const isAuthenticated = useStore(state => state.isAuthenticated);
 
     // Isolated Filter State for Proposal View
     const [filterPais, setFilterPais] = useState<string[]>([]);
@@ -68,37 +73,69 @@ export default function ProposalDetailClient() {
             if (!id) return;
 
             try {
-                // Fetch data
-                const [proposta, pontosData, exibidorasData, clientsData] = await Promise.all([
-                    api.getProposta(id),
-                    api.getPontos(),
-                    api.getExibidoras(),
-                    api.getClientes()
-                ]);
+                // If not authenticated, try to fetch as public proposal
+                if (!isAuthenticated) {
+                    try {
+                        // Try to get proposal - if it's public, API will return it
+                        const proposta = await api.getProposta(id);
 
-                // Update Legacy Store
-                setPontos(pontosData);
-                setExibidoras(exibidorasData);
-                setSelectedProposta(proposta);
+                        // Check if proposal has public access
+                        if (proposta.public_access_level === 'view') {
+                            setIsPublicView(true);
 
-                // Update New Store (Enrich with Client)
-                const enrichedProposal = {
-                    ...proposta,
-                    cliente: clientsData.find((c: any) => c.id === proposta.id_cliente)
-                };
-                setProposal(enrichedProposal);
+                            // Load minimal data for public view
+                            const [pontosData, exibidorasData] = await Promise.all([
+                                api.getPontos(),
+                                api.getExibidoras()
+                            ]);
 
+                            setPontos(pontosData);
+                            setExibidoras(exibidorasData);
+                            setSelectedProposta(proposta);
+                            setProposal(proposta);
+                        } else {
+                            // Proposal exists but is not public
+                            setAccessDenied(true);
+                        }
+                    } catch (err: any) {
+                        // Proposal doesn't exist or user doesn't have access
+                        setAccessDenied(true);
+                    }
+                } else {
+                    // Authenticated user - normal flow
+                    const [proposta, pontosData, exibidorasData, clientsData] = await Promise.all([
+                        api.getProposta(id),
+                        api.getPontos(),
+                        api.getExibidoras(),
+                        api.getClientes()
+                    ]);
+
+                    // Update Legacy Store
+                    setPontos(pontosData);
+                    setExibidoras(exibidorasData);
+                    setSelectedProposta(proposta);
+
+                    // Update New Store (Enrich with Client)
+                    const enrichedProposal = {
+                        ...proposta,
+                        cliente: clientsData.find((c: any) => c.id === proposta.id_cliente)
+                    };
+                    setProposal(enrichedProposal);
+                }
             } catch (err) {
                 console.error("Error loading proposal context:", err);
-                router.push('/propostas');
+                if (isAuthenticated) {
+                    router.push('/propostas');
+                } else {
+                    setAccessDenied(true);
+                }
             } finally {
                 setIsLoading(false);
             }
         };
 
         loadContext();
-        loadContext();
-    }, [id, setPontos, setExibidoras, setSelectedProposta, setProposal, router]);
+    }, [id, isAuthenticated, setPontos, setExibidoras, setSelectedProposta, setProposal, router]);
 
     // Breadcrumbs
     const breadcrumbs = [
@@ -136,6 +173,40 @@ export default function ProposalDetailClient() {
 
     if (isLoading) {
         return <MapSkeleton />;
+    }
+
+    // Access Denied Screen for unauthenticated users
+    if (accessDenied) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+                    <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Acesso Restrito</h1>
+                    <p className="text-gray-600 mb-6">
+                        Esta proposta não está disponível publicamente. Faça login para visualizar.
+                    </p>
+                    <div className="flex flex-col gap-3">
+                        <Button
+                            onClick={() => router.push(`/auth/login?redirect=/propostas?id=${id}`)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                        >
+                            Fazer Login
+                        </Button>
+                        <Button
+                            onClick={() => router.push('/auth/signup')}
+                            variant="outline"
+                            className="w-full"
+                        >
+                            Criar Conta
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (

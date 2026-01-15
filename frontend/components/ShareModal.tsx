@@ -103,18 +103,14 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
     const handleCopyLink = () => {
         if (!proposta) return;
 
-        // If public access is enabled and we have a public_token, use the worker's public HTML view
-        if (publicAccess === 'view' && proposta.public_token) {
-            // Use the worker's public HTML view endpoint
-            const workerUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ooh-system.kaike-458.workers.dev';
-            const url = `${workerUrl}/public/${proposta.public_token}`;
-            navigator.clipboard.writeText(url);
-            toast.success('Link público copiado - compartilhe para visualização');
+        // Always use the same link format - the app will handle authentication automatically
+        const url = `${window.location.origin}/propostas?id=${proposta.id}`;
+        navigator.clipboard.writeText(url);
+
+        if (publicAccess === 'view') {
+            toast.success('Link público copiado - qualquer pessoa pode visualizar');
         } else {
-            // Otherwise, use the authenticated link
-            const url = `${window.location.origin}/propostas?id=${proposta.id}`;
-            navigator.clipboard.writeText(url);
-            toast.success('Link copiado');
+            toast.success('Link copiado - apenas pessoas com acesso podem visualizar');
         }
     };
 
