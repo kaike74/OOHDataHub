@@ -161,7 +161,18 @@ export default function ProposalDetailClient() {
                     // Usually `getPublicProposal` should return expanded items.
                     // If items have `ponto` object nested:
                     if (proposta.itens) {
-                        pontosData = proposta.itens.map((item: any) => item.ponto).filter(Boolean);
+                        // Robust extraction: Check item.ponto, or if item itself looks like a point (fallback)
+                        pontosData = proposta.itens.map((item: any) => {
+                            // Ensure we have coordinates for the map
+                            const p = item.ponto || item;
+                            const val = item.valor || p.valor;
+                            return {
+                                ...p,
+                                lat: parseFloat(p.lat),
+                                lng: parseFloat(p.lng),
+                                valor: val
+                            };
+                        }).filter((p: any) => p && !isNaN(p.lat) && !isNaN(p.lng));
                     }
 
                     // Same for client, if nested or we use the one in proposal
@@ -275,24 +286,24 @@ export default function ProposalDetailClient() {
 
     // Public Header Component
     const PublicHeader = () => (
-        <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 z-50 relative shadow-sm">
-            <div className="flex items-center gap-4">
-                {/* Client Logo or Default */}
+        <div className="h-24 bg-white border-b border-gray-200 flex items-center justify-between px-6 lg:px-8 z-50 relative shadow-sm">
+            <div className="flex items-center gap-6">
+                {/* Client Logo - Larger */}
                 {selectedProposal?.cliente?.logo_url ? (
-                    <img src={selectedProposal.cliente.logo_url} alt="Logo" className="h-10 w-auto object-contain" />
+                    <img src={selectedProposal.cliente.logo_url} alt="Logo" className="h-16 w-auto object-contain" />
                 ) : (
-                    <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <span className="text-xs font-bold text-gray-400">LOGO</span>
+                    <div className="h-16 w-16 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <span className="text-sm font-bold text-gray-400">LOGO</span>
                     </div>
                 )}
 
-                <div className="h-8 w-px bg-gray-200 mx-2" />
+                <div className="h-12 w-px bg-gray-200 mx-2" />
 
                 <div>
-                    <h1 className="text-lg font-bold text-gray-900 leading-tight">
+                    <h1 className="text-3xl font-bold text-gray-900 leading-tight">
                         {selectedProposal?.nome || 'Proposta Sem Título'}
                     </h1>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
                         <span>Criado por {selectedProposal?.usuario?.nome || 'Usuário'}</span>
                         <span>•</span>
                         <span>{new Date(selectedProposal?.created_at || Date.now()).toLocaleDateString()}</span>
@@ -300,37 +311,16 @@ export default function ProposalDetailClient() {
                 </div>
             </div>
 
-            <div className="flex items-center gap-3">
-                {!isAuthenticated ? (
-                    <>
-                        <Button
-                            onClick={() => router.push('/auth/signup')}
-                            variant="outline"
-                            size="sm"
-                        >
-                            Criar Conta
-                        </Button>
-                        <Button
-                            onClick={() => router.push(`/auth/login?redirect=/propostas?id=${idParam}`)}
-                            variant="accent"
-                            size="sm"
-                            leftIcon={<LogIn size={16} />}
-                        >
-                            Login
-                        </Button>
-                    </>
-                ) : (
-                    // Authenticated Actions in Public View (e.g. if viewing as guest/client)
-                    permission === 'admin' ? (
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Admin View</span>
-                        </div>
-                    ) : (
-                        <Button variant="outline" size="sm">Solicitar Edição</Button>
-                    )
-                )}
+            <div className="flex items-center gap-4">
+                {/* "Feito com..." Branding */}
+                <div className="flex flex-col items-end mr-4">
+                    <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold mb-1">Feito com</span>
+                    <a href="/auth/login" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+                        <img src="/assets/E-Logo.png" alt="OOH DataHub" className="h-8 w-auto" />
+                    </a>
+                </div>
 
-                {permission === 'admin' && ( // "Solicitar validação e aprovar" logic
+                {permission === 'admin' && (
                     <Button variant="accent" size="sm" leftIcon={<CheckCircle size={16} />}>
                         Aprovar
                     </Button>
