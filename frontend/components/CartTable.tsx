@@ -97,7 +97,18 @@ const formatDecimal = (value: number) => {
     }).format(value);
 }
 
-// Helper to handle Enter to move to next row, Tab for regular behavior
+// Helper to calculate total months from selected periods
+const calculateTotalMonths = (periods: string[]): number => {
+    return periods.reduce((acc, periodId) => {
+        const [startStr, endStr] = periodId.split('_');
+        const s = new Date(startStr);
+        const e = new Date(endStr);
+        // Approximate months (~30 days)
+        const days = (e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24);
+        return acc + Math.max(1, Math.round(days / 30));
+    }, 0);
+};
+
 // Helper to handle Enter to move to next row, Tab for regular behavior
 const handleKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -1459,9 +1470,14 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             cell: ({ row }) => {
                 let qtd = 1;
 
-                // Use selected_periods length if available, otherwise fallback to date range calculation
                 if (row.original.selected_periods && row.original.selected_periods.length > 0) {
-                    qtd = row.original.selected_periods.length;
+                    if (row.original.periodo_comercializado === 'mensal') {
+                        qtd = calculateTotalMonths(row.original.selected_periods);
+                    } else {
+                        qtd = row.original.selected_periods.length;
+                    }
+                } else if (row.original.qtd_bi_mes) {
+                    qtd = row.original.qtd_bi_mes;
                 } else if (row.original.periodo_inicio && row.original.periodo_fim) {
                     const dataInicio = new Date(row.original.periodo_inicio);
                     const dataFim = new Date(row.original.periodo_fim);
@@ -1484,9 +1500,14 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             cell: ({ row }) => {
                 let qtd = 1;
 
-                // Use selected_periods length if available, otherwise fallback to date range calculation
                 if (row.original.selected_periods && row.original.selected_periods.length > 0) {
-                    qtd = row.original.selected_periods.length;
+                    if (row.original.periodo_comercializado === 'mensal') {
+                        qtd = calculateTotalMonths(row.original.selected_periods);
+                    } else {
+                        qtd = row.original.selected_periods.length;
+                    }
+                } else if (row.original.qtd_bi_mes) {
+                    qtd = row.original.qtd_bi_mes;
                 } else if (row.original.periodo_inicio && row.original.periodo_fim) {
                     const dataInicio = new Date(row.original.periodo_inicio);
                     const dataFim = new Date(row.original.periodo_fim);
