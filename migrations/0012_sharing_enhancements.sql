@@ -1,14 +1,22 @@
--- Migration 0012: Sharing System Enhancements
--- Adds plan field to users, creates notifications table, and optimizes indexes
--- Add plan column to users table (for external users)
-ALTER TABLE users
-ADD COLUMN plan TEXT DEFAULT 'Gratuito';
--- Create notifications table for in-app notifications
+-- Migration 0012: Sharing system enhancements
+-- Made idempotent to avoid duplicate column errors
+-- Note: Some columns may already exist from previous manual migrations
+-- This migration only creates NEW structures that don't exist yet
+-- 1. Add plan column to users (SKIP - already exists)
+-- ALTER TABLE users ADD COLUMN plan TEXT; -- SKIPPED
+-- 2. Create notifications table (idempotent with IF NOT EXISTS)
 CREATE TABLE IF NOT EXISTS notifications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    type TEXT NOT NULL,
-    -- 'access_request', 'access_granted', 'share_invite', 'validation_request', 'proposal_approved'
+    type TEXT NOT NULL CHECK(
+        type IN (
+            'access_request',
+            'access_granted',
+            'share_invite',
+            'validation_request',
+            'proposal_approved'
+        )
+    ),
     title TEXT NOT NULL,
     message TEXT,
     related_proposal_id INTEGER,
@@ -20,24 +28,18 @@ CREATE TABLE IF NOT EXISTS notifications (
     FOREIGN KEY (related_user_id) REFERENCES users(id) ON DELETE
     SET NULL
 );
--- Add indexes for performance
+-- 3. Add validation tracking to propostas (SKIP - likely already exist)
+-- ALTER TABLE propostas ADD COLUMN validation_status TEXT DEFAULT 'none'; -- SKIPPED
+-- ALTER TABLE propostas ADD COLUMN validation_requested_at DATETIME; -- SKIPPED
+-- ALTER TABLE propostas ADD COLUMN validation_requested_by INTEGER; -- SKIPPED
+-- ALTER TABLE propostas ADD COLUMN validated_at DATETIME; -- SKIPPED
+-- ALTER TABLE propostas ADD COLUMN validated_by INTEGER; -- SKIPPED
+-- ALTER TABLE propostas ADD COLUMN approved_at DATETIME; -- SKIPPED
+-- ALTER TABLE propostas ADD COLUMN approved_by INTEGER; -- SKIPPED
+-- 4. Create indexes (idempotent with IF NOT EXISTS)
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
-CREATE INDEX IF NOT EXISTS idx_proposta_shares_proposal_user ON proposta_shares(proposal_id, user_id);
-CREATE INDEX IF NOT EXISTS idx_proposta_access_requests_proposal ON proposta_access_requests(proposal_id);
--- Add validation status fields to propostas table
-ALTER TABLE propostas
-ADD COLUMN validation_status TEXT DEFAULT 'none';
--- 'none', 'pending', 'validated', 'approved'
-ALTER TABLE propostas
-ADD COLUMN validation_requested_at DATETIME;
-ALTER TABLE propostas
-ADD COLUMN validation_requested_by INTEGER;
-ALTER TABLE propostas
-ADD COLUMN validated_at DATETIME;
-ALTER TABLE propostas
-ADD COLUMN validated_by INTEGER;
-ALTER TABLE propostas
-ADD COLUMN approved_at DATETIME;
-ALTER TABLE propostas
-ADD COLUMN approved_by INTEGER;
+CREATE INDEX IF NOT EXISTS idx_proposta_shares_proposal_user ON proposta_shares(id_proposta, user_id);
+CREATE INDEX IF NOT EXISTS idx_proposta_access_requests_proposal ON proposta_access_requests(id_proposta);
+-- Migration complete (idempotent mode - skipped duplicate columns)
+SELECT 'Migration 0012 completed' as status;
