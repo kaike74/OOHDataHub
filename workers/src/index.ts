@@ -19,6 +19,7 @@ import { handlePropostas } from './routes/propostas';
 import { handleSearch } from './routes/search';
 import { handleAIChat } from './routes/ai';
 import { handlePublicProposal } from './routes/proposal_public';
+import { handlePublicProposalView } from './routes/proposal_public_view';
 import { handleClients } from './routes/client_users';
 import { handlePortal } from './routes/portal';
 import { handleTrash } from './routes/trash';
@@ -90,7 +91,12 @@ export default {
                 return await handleAIChat(request, env);
             }
 
-            // Public Routes
+            // Public Routes (HTML views - must come before API routes)
+            if (path.startsWith('/public/') && !path.startsWith('/api/public/')) {
+                return await handlePublicProposalView(request, env);
+            }
+
+            // Public API Routes (JSON)
             if (path.startsWith('/api/public/proposals/')) {
                 return await handlePublicProposal(request, env);
             }
