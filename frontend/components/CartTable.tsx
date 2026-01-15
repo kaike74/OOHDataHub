@@ -1180,7 +1180,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 <TooltipProvider>
                                     <Tooltip delayDuration={300}>
                                         <TooltipTrigger asChild>
-                                            <div className="flex items-center gap-1 max-w-full overflow-hidden">
+                                            <div className="flex items-center gap-1 max-w-full overflow-hidden w-[150px]">
                                                 <span className="truncate block w-full text-ellipsis overflow-hidden whitespace-nowrap" title={listStr}>
                                                     {listStr}
                                                 </span>
