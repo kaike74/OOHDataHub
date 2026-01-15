@@ -22,20 +22,31 @@ export default function PropostasPage() {
 
     useEffect(() => {
         const checkRouting = async () => {
-            const proposalId = searchParams.get('id');
+            const idParam = searchParams.get('id');
+            const uidParam = searchParams.get('uid');
 
-            // If user is authenticated, redirect to their scoped URL
-            // internal: /propostas/{userId}?id={proposalId}
+            // If user is authenticated, we want to ensure the URL has the correct context (uid)
+            // Desired format: /propostas?uid={myId}&id={token|id}
             if (isAuthenticated && user?.id) {
-                // Since we are using Static Export, we cannot use dynamic route segments like /propostas/[userId]
-                // We will stay on /propostas and use query params to maintain state/context if needed.
-                // The URL will remain /propostas?id=... which matches ShareModal logic.
-                // We do NOT redirect to scoped path anymore.
+                // If the URL logic already matches, do nothing to avoid loop
+                if (uidParam === String(user.id) && idParam) {
+                    setIsChecking(false);
+                    return;
+                }
+
+                // If we have an ID but wrong/missing UID, redirect to include UID
+                if (idParam) {
+                    // We keep the ID param as is (whether it's numeric ID or token)
+                    // Ideally we convert numeric ID to token if available, but we might not have it here yet.
+                    // For now, simply enforcing the UID presence.
+                    router.replace(`/propostas?uid=${user.id}&id=${idParam}`);
+                    return;
+                }
             } else {
                 // Not authenticated
-                if (proposalId) {
-                    // Public view attempt
-                    // We stay here and render ProposalDetailClient (which handles public logic)
+                if (idParam) {
+                    // Public view: Just render Detail. UID might be missing or present (creator's UID?), 
+                    // but functionally we just need the ID/Token.
                 } else {
                     // No ID, not logged in -> Login
                     const emailParam = searchParams.get('email');
@@ -58,8 +69,6 @@ export default function PropostasPage() {
         return <LoadingSpinner />;
     }
 
-    // If we have an ID (and are not redirected yet, i.e. not auth or public view), render Detail
-    // If we are auth, we redirected above. So if we are here and have ID, we must be Public (Unauth).
     if (proposalId) {
         return <ProposalDetailClient />;
     }

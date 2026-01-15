@@ -105,61 +105,11 @@ export default function ShareModal({ isOpen, onClose, proposta, onUpdate }: Shar
     const handleCopyLink = () => {
         if (!proposta) return;
 
-        // Use different URLs based on public access level
-        if (publicAccess === 'view') {
-            // Public link - use app URL with token if available, or ID
-            // User requested: /propostas?id=codigo (where codigo is likely the public token or hash)
-            const idParam = proposta.public_token || proposta.id;
-            url = `${window.location.origin}/propostas?id=${idParam}`;
-        } else {
-            // Restricted link - use app internal URL
-            // User requested: /propostas/{idusuario}?id={codigo/id}
-            // We use the current user's ID if available, or the proposal owner's ID regarding the "context".
-            // However, the link is for OTHERS to access.
-            // If I share with an internal user, they will view it under THEIR user ID? 
-            // Or the share link should point to a canonical internal URL?
-            // "eu utilizo {idusuario} pq ali eu identifico qual o usuario... se é interno ou externo"
-            // If I send a link to another internal employee, they should probably see it in their context?
-            // BUT specific URL is requested: /propostas/{idusuario}?id=codigo
-            // If I generate a link for SOMEONE ELSE, whose ID goes there?
-            // If I am sending to User B, I don't know User B's ID.
-            // Thus, the link presumably contains MY ID (the sender/creator)?
-            // OR the link is generic `/propostas/internal?id=...`?
-            // The prompt says: "https://oohdatahub.pages.dev/propostas/{idusuario}?id=codigo ... eu utilizo {idusuario} pq ali eu identifico qual o usuario"
-            // It seems the {idusuario} is the one VIEWING it?
-            // If so, we can't put it in the link we copy, because we don't know who will click it.
-            // UNLESS the link is meant to be opened by the specific user.
-            // BUT, if I just "Copy Link", it's generic.
-            // Maybe the user meant "When I browse, the URL looks like that".
-            // If I share, I should probably share a link that REDIRECTS to the user's scoped URL.
-            // So sharing `${origin}/propostas?id=${proposta.id}` (without public token if restricted) 
-            // is probably correct for internal sharing too, and the PAGE will redirect to `propostas/{me}?id=...`
+        // URL Structure: /propostas?uid={userId}&id={proposalCode}
+        const proposalCode = proposta.public_token || proposta.id;
+        const userId = proposta?.usuario?.id || proposta.created_by || 'anon';
 
-            // However, to satisfy the user's specific request about link formation:
-            // "o link é formado como ... mas preciso reformular para ..."
-            // This implies the link IN THE BROWSER BAR.
-            // But if I copy the link to send to someone...
-
-            // Let's assume for sharing INTERNAL access, we provide the generic entry point:
-            // `${origin}/propostas?id=${proposta.id}`
-            // And let the router handle the `{idusuario}` injection upon visit.
-
-            // Wait, "Interno: ... Quero compartilhar a minha proposta com um externo... O caminho idusuario, ficará vazio"
-            // This implies the URL structure differentiates the access type.
-
-            // Let's stick to generating `${origin}/propostas?id=${proposta.id}` for now, 
-            // and rely on the redirection logic we added in `app/propostas/page.tsx` (to be updated) to handle the routing.
-            // If the user meant "The link I COPY should look like X", I might be missing something.
-            // But I can't know the recipient's ID.
-            // Maybe `{idusuario}` is the CREATOR's ID? "identifico qual o usuario... permissoes... daquela proposta"
-            // "O caminho idusuario, ficará vazio, então o link vai ficar..." for anonymous.
-            // If it identifies the viewer, we can't bake it in.
-            // If it identifies the owner, we can. `proposta.id_usuario`?
-            // "identifico qual o usuario... se é interno ou externo... permissoes... *ele* (the viewer) tem"
-            // So it MUST be the viewer.
-            // Therefore, the shared link MUST be generic, and the app must redirect.
-            url = `${window.location.origin}/propostas?id=${proposta.id}`;
-        }
+        const url = `${window.location.origin}/propostas?uid=${userId}&id=${proposalCode}`;
 
         navigator.clipboard.writeText(url);
 
