@@ -175,6 +175,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
     // Period Date Picker State
     const [openPickerRowId, setOpenPickerRowId] = useState<number | null>(null);
+    const preservePickerRef = useRef<number | null>(null);
 
     // Approval Modal States
     const [isApprovalSummaryOpen, setIsApprovalSummaryOpen] = useState(false);
@@ -478,10 +479,17 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     }, [handleMouseMove]);
 
 
+
     // Optimistic Update Helper
     const updateItem = useCallback(async (id: number, fieldOrUpdates: string | Record<string, any>, value?: any) => {
         const updates = typeof fieldOrUpdates === 'string' ? { [fieldOrUpdates]: value } : fieldOrUpdates;
         console.log(`📝 CartTable updateItem called:`, { id, updates });
+
+        // Preserve picker state if updating period-related fields
+        const isPeriodUpdate = 'periodo_inicio' in updates || 'periodo_fim' in updates || 'selected_periods' in updates;
+        if (isPeriodUpdate && openPickerRowId === id) {
+            preservePickerRef.current = id;
+        }
 
         const updatedItens = itens.map(item => {
             if (item.id === id) {
@@ -532,12 +540,18 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 const res = await api.getProposta(selectedProposta.id);
                 if (res) refreshProposta(res);
             }
+
+            // Restore picker state after update completes
+            if (preservePickerRef.current !== null) {
+                setOpenPickerRowId(preservePickerRef.current);
+                preservePickerRef.current = null;
+            }
         } catch (error) {
             console.error('Falha ao atualizar carrinho', error);
         } finally {
             setIsSyncing(false);
         }
-    }, [itens, refreshProposta, selectedProposta, isClientView]);
+    }, [itens, refreshProposta, selectedProposta, isClientView, openPickerRowId]);
 
     // Drag-to-Fill Handlers - Simplified to avoid circular dependencies
     const dragEndRef = useRef<(() => void) | null>(null);
@@ -1022,20 +1036,17 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                         // Check if we have specific selected periods
                         if (row.original.selected_periods && row.original.selected_periods.length > 0) {
                             const sortedPeriods = [...row.original.selected_periods].sort();
-                            const count = sortedPeriods.length;
 
-                            // Get info for up to 3 periods
-                            const firstThree = sortedPeriods.slice(0, 3).map(id => {
-                                // ID is startStr_endStr. We need startStr.
+                            // Format all periods as "BI 04, BI 06, BI 08..."
+                            const allPeriodsFormatted = sortedPeriods.map(id => {
                                 const startStr = id.split('_')[0];
                                 const info = getBiWeekInfo(startStr);
                                 return info ? `BI ${String(info.number).padStart(2, '0')}` : 'BI --';
                             });
 
-                            const listStr = firstThree.join(', ');
-                            const extra = count > 3 ? ` +${count - 3} mais` : '';
+                            const listStr = allPeriodsFormatted.join(', ');
 
-                            // Tooltip content: Full list
+                            // Tooltip content: Full list with dates
                             const tooltipContent = (
                                 <div className="text-xs">
                                     {sortedPeriods.map(id => {
@@ -1053,40 +1064,22 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 </div>
                             );
 
-                            if (count <= 3) {
-                                // User requested to ALWAYS use compact text format "BI 04, 06" even if < 3.
-                                // Previous logic tried to detect contiguous ranges.
-                                // New logic: Always show list if valid.
-
-                                return (
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <span className="truncate">{listStr}</span>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                {tooltipContent}
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                );
-                            } else {
-                                // > 3 periods
-                                return (
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <span className="truncate">
-                                                    {listStr}{extra}
+                            return (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="w-full max-w-full">
+                                                <span className="truncate block w-full text-ellipsis overflow-hidden whitespace-nowrap text-[13px]">
+                                                    {listStr}
                                                 </span>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                {tooltipContent}
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                );
-                            }
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            {tooltipContent}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            );
                         }
 
                         // Fallback logic for legacy data (range only)
@@ -1224,7 +1217,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 const isPickerOpen = openPickerRowId === row.original.id;
 
                 return (
-                    <div className="flex items-center gap-1 relative h-full group/cell hover:bg-gray-50 -m-2 p-2 transition-colors">
+                    <div className="flex items-center gap-1 relative h-full group/cell hover:bg-gray-50 -m-2 p-2 transition-colors max-w-full overflow-hidden">
                         {/* Combined Period Display Button */}
                         <button
                             type="button"
@@ -1232,7 +1225,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             className={`
                                 bg-transparent border-b border-transparent hover:border-gray-300 
                                 focus:border-blue-500 focus:outline-none text-[12px] text-gray-700 
-                                transition-colors text-left px-1 flex items-center gap-1
+                                transition-colors text-left px-1 flex items-center gap-1 max-w-full overflow-hidden
                                 ${readOnly ? 'cursor-default' : 'cursor-pointer'}
                             `}
                             onClick={() => !readOnly && setOpenPickerRowId(row.original.id)}
