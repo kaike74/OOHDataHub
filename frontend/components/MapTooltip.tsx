@@ -198,6 +198,42 @@ export default function MapTooltip({
   }, [position]);
 
 
+  // Extract rental value and period information
+  const getRentalInfo = () => {
+    const locacaoProduto = ponto.produtos?.find(p =>
+      p.tipo.toLowerCase().includes('locação') ||
+      p.tipo.toLowerCase().includes('locacao') ||
+      p.tipo.toLowerCase().includes('bissemanal') ||
+      p.tipo.toLowerCase().includes('mensal')
+    );
+
+    if (!locacaoProduto) return null;
+
+    // Determine period type
+    let periodoTipo = 'Bissemanal';
+    const tipoLower = locacaoProduto.tipo.toLowerCase();
+    if (tipoLower.includes('mensal')) {
+      periodoTipo = 'Mensal';
+    } else if (tipoLower.includes('unitário') || tipoLower.includes('unitario')) {
+      periodoTipo = 'Unitário';
+    }
+
+    return {
+      valor: locacaoProduto.valor,
+      periodo: periodoTipo
+    };
+  };
+
+  const rentalInfo = getRentalInfo();
+
+  // Format currency
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
   return (
     <div
       ref={tooltipRef}
@@ -211,71 +247,81 @@ export default function MapTooltip({
       <div
         className="absolute w-full h-[60px] bg-transparent"
         style={{
-          // If flipped (below), bridge goes UP from top: 0
-          // If normal (above), bridge goes DOWN from bottom: 0 (top: 100%)
           top: isFlipped ? '-60px' : '100%',
           left: 0,
-          // Debug: 'rgba(255, 0, 0, 0.2)' 
         }}
       />
 
-      {/* 
-        Card Container 
-        Matches the "Card" UX request: 
-        - Fixed size
-        - Image background
-        - Hover blur effect
-        - TextBox overlay with transition
-        - Added onClick handler to container
-      */}
+      {/* Google Maps Style Card */}
       <div
         onClick={(e) => {
-          // If clicking buttons inside, stop propagation is handled there.
-          // If clicking the card itself:
           if (props.onClick) props.onClick();
         }}
-        className="group relative w-[220px] h-[280px] bg-[#313131] rounded-[20px] shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-in-out hover:scale-105"
+        className="relative w-[280px] bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer"
       >
 
-        {/* Layer 1: Image (Background) */}
-        {imagens.length > 0 && (
-          <div className="absolute inset-0 z-0 h-full w-full transition-all duration-300 ease-in-out group-hover:blur-[3px] group-hover:scale-110">
+        {/* Image Carousel Section */}
+        {imagens.length > 0 ? (
+          <div className="relative w-full h-[160px] bg-gray-200">
             <img
               src={currentImageUrl}
               alt={ponto.codigo_ooh}
               className="w-full h-full object-cover"
             />
-            {/* Dark gradient for text readability (always present but stronger on bottom) */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
-          </div>
-        )}
-
-        {/* Layer 2: TextBox (Content Overlay) */}
-        <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col justify-end p-4 gap-2 bg-gradient-to-t from-black/90 via-black/50 to-transparent backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out translate-y-4 group-hover:translate-y-0">
-
-          {/* Header Info */}
-          <div className="flex flex-col gap-0.5">
-            <span className="text-xl font-bold text-white tracking-wide drop-shadow-md">
-              {ponto.codigo_ooh}
-            </span>
-            <span className="text-xs text-gray-200 font-light line-clamp-2 drop-shadow-sm">
-              {ponto.endereco}
-            </span>
-            {ponto.exibidora_nome && (
-              <div className="flex items-center gap-1.5 mt-1">
-                <Building2 size={12} className="text-gray-300" />
-                <span className="text-[10px] text-gray-300 uppercase tracking-wider">{ponto.exibidora_nome}</span>
+            {/* Image counter */}
+            {imagens.length > 1 && (
+              <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+                {currentImageIndex + 1}/{imagens.length}
               </div>
             )}
           </div>
+        ) : (
+          <div className="relative w-full h-[160px] bg-gray-200 flex items-center justify-center">
+            <Building2 size={48} className="text-gray-400" />
+          </div>
+        )}
 
-          {/* Actions */}
-          <div className="flex flex-col gap-2 mt-2 w-full">
+        {/* Information Section */}
+        <div className="p-4 flex flex-col gap-2">
+          {/* Title */}
+          <h3 className="text-lg font-semibold text-gray-900 leading-tight">
+            {ponto.codigo_ooh}
+          </h3>
+
+          {/* Address */}
+          <p className="text-sm text-gray-600 line-clamp-1">
+            {ponto.endereco}
+          </p>
+
+          {/* Exibidora */}
+          {ponto.exibidora_nome && (
+            <div className="flex items-center gap-1.5 text-gray-500">
+              <Building2 size={14} />
+              <span className="text-xs">{ponto.exibidora_nome}</span>
+            </div>
+          )}
+
+          {/* Rental Value and Period */}
+          {rentalInfo && (
+            <div className="mt-1 pt-2 border-t border-gray-200">
+              <div className="flex items-baseline gap-2">
+                <span className="text-lg font-bold text-[#FC1E75]">
+                  {formatCurrency(rentalInfo.valor)}
+                </span>
+                <span className="text-xs text-gray-500">
+                  / {rentalInfo.periodo}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 mt-2">
             {/* Street View Button */}
             {ponto.latitude && ponto.longitude && (
               <button
                 onClick={(e) => { e.stopPropagation(); onStreetViewClick?.(); }}
-                className="flex items-center justify-center gap-2 w-full py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white text-xs font-bold transition-all"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 text-xs font-medium transition-colors"
               >
                 <Eye size={14} />
                 Street View
@@ -289,13 +335,13 @@ export default function MapTooltip({
                 <button
                   onClick={handleAddToCart}
                   disabled={isAdding}
-                  className={`flex items-center justify-center gap-2 w-full py-2 rounded-xl text-xs font-bold transition-all ${isInCart
-                    ? 'bg-red-500/80 hover:bg-red-500 text-white backdrop-blur-md'
-                    : 'bg-green-500/80 hover:bg-green-500 text-white backdrop-blur-md'
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-colors ${isInCart
+                      ? 'bg-red-50 hover:bg-red-100 text-red-600'
+                      : 'bg-[#FC1E75] hover:bg-[#E01A6A] text-white'
                     }`}
                 >
                   {isAdding ? (
-                    <div className="animate-spin h-3 w-3 border-2 border-white/50 border-t-white rounded-full" />
+                    <div className="animate-spin h-3 w-3 border-2 border-current border-t-transparent rounded-full" />
                   ) : (
                     <ShoppingCart size={14} />
                   )}
@@ -304,31 +350,23 @@ export default function MapTooltip({
               );
             })()}
           </div>
-
         </div>
-
-        {/* Default State (Visible when NOT hovering) - Optional */}
-        {/* The user requested "hover moves image up / reveals info". 
-            But typically users need to see *at least* the code to know what they are hovering.
-            The user's example shows "TextBox opacity 0" initially. 
-            I will keep it 0 as requested to match the reference exactly, 
-            so it looks just like an image tile until interaction. 
-            
-            However, for a map pin tooltip, completely blank image might be confusing?
-            No, the pin itself is on the map. The tooltip appears when hovering the pin.
-            So showing just the image is fine.
-        */}
       </div>
 
-      {/* Seta do tooltip (Optional, style-dependent. The card user showed doesn't have one, but for a map tooltip it's useful to point to location) */}
+      {/* Tooltip Arrow */}
       <div
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        className="absolute left-1/2 -translate-x-1/2"
         style={{
+          top: isFlipped ? '-8px' : 'auto',
+          bottom: isFlipped ? 'auto' : '-8px',
           width: 0,
           height: 0,
           borderLeft: '8px solid transparent',
           borderRight: '8px solid transparent',
-          borderTop: '8px solid #313131', // Matches card bg
+          ...(isFlipped
+            ? { borderBottom: '8px solid white' }
+            : { borderTop: '8px solid white' }
+          )
         }}
       />
     </div>
