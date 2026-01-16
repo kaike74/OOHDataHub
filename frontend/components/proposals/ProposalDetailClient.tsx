@@ -178,12 +178,27 @@ export default function ProposalDetailClient() {
                             const p = item.ponto || item;
                             return {
                                 ...item,
-                                // If vlr_total is missing/zero, try to use valid values from item or point
+                                // Normalizing fields for CartTable Columns
+                                latitude: parseFloat(p.lat || p.latitude || item.lat || item.latitude),
+                                longitude: parseFloat(p.lng || p.longitude || item.lng || item.longitude),
+
+                                // Costs
+                                valor_locacao: item.valor_locacao || item.valor || p.valor || 0,
+                                valor_papel: item.valor_papel || 0,
+                                valor_lona: item.valor_lona || 0,
                                 vlr_total: item.vlr_total || item.valor || p.valor || 0,
                                 vlr_tabela: item.vlr_tabela || p.valor || 0,
-                                impactos: item.impactos || item.impacto_estimado || p.impacto_estimado || 0,
+
+                                // Impacts
+                                fluxo_diario: item.fluxo_diario || item.impactos || item.impacto_estimado || p.impacto_estimado || 0,
+                                impactos: item.impactos || ((item.fluxo_diario || p.impacto_estimado || 0) * 14), // Fallback calculation if needed
+
                                 // Ensure point data is attached for display
-                                ponto: p
+                                ponto: {
+                                    ...p,
+                                    latitude: parseFloat(p.lat || p.latitude || item.lat || item.latitude),
+                                    longitude: parseFloat(p.lng || p.longitude || item.lng || item.longitude),
+                                }
                             };
                         });
                     }
