@@ -581,7 +581,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                 {/* --- RIGHT: DATA (60%) --- */}
                 <div className="w-[60%] h-full flex flex-col bg-white relative">
 
-                    {/* Header - Address Focused */}
+                    {/* Header - Address & Coordinates Focused */}
                     <div className="px-5 py-5 border-b border-gray-100 shrink-0 bg-white z-20">
                         <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0 pr-4">
@@ -589,12 +589,18 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                     <MapPin size={18} className="text-emidias-primary" />
                                     {selectedPonto.endereco}
                                 </h1>
-                                <p className="text-sm text-gray-500 flex items-center gap-2">
-                                    <span className="font-semibold">{selectedPonto.cidade} - {selectedPonto.uf}</span>
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                    <p className="text-sm text-gray-500 font-semibold">
+                                        {selectedPonto.cidade} - {selectedPonto.uf}
+                                    </p>
                                     {selectedPonto.ponto_referencia && (
                                         <span className="text-gray-300 italic truncate text-xs">• {selectedPonto.ponto_referencia}</span>
                                     )}
-                                </p>
+                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-50 rounded-lg border border-gray-100 text-[10px] font-mono text-gray-400">
+                                        <Crosshair size={10} />
+                                        {selectedPonto.latitude?.toFixed(6)}, {selectedPonto.longitude?.toFixed(6)}
+                                    </div>
+                                </div>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button onClick={handleCopyAddress} className="p-2 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all border border-gray-100" title="Copiar Endereço">
@@ -610,60 +616,80 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                         </div>
                     </div>
 
-                    {/* Content Body - Organized Grid */}
+                    {/* Content Body - Organized Grid 2x2 */}
                     <div className="flex-1 p-5 overflow-y-auto custom-scrollbar">
-                        <div className="space-y-5">
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Card 1: Valores de Tabela */}
+                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-full min-h-[160px]">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
+                                        <DollarSign size={16} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Valores de Tabela</h3>
+                                        <p className="text-[9px] text-gray-400 tracking-tight leading-none">Média de mercado</p>
+                                    </div>
+                                </div>
 
-                            {/* Address Section */}
-                            <div>
-                                <div className="flex justify-between items-start">
-                                    <div className="flex-1 pr-4">
-                                        <p className="text-base font-semibold text-gray-900 leading-snug mb-1">{selectedPonto.endereco}</p>
-                                        <p className="text-sm text-gray-600">{selectedPonto.cidade} - {selectedPonto.uf}</p>
-                                        {selectedPonto.ponto_referencia && (
-                                            <p className="text-xs text-gray-400 italic mt-1">Ref: {selectedPonto.ponto_referencia}</p>
-                                        )}
-                                        {/* Coordinates */}
-                                        <div className="flex items-center gap-1.5 text-[10px] text-gray-500 font-mono mt-2 pt-2 border-t border-gray-100 w-fit">
-                                            <MapPin size={10} />
-                                            <span>{selectedPonto.latitude?.toFixed(6)}, {selectedPonto.longitude?.toFixed(6)}</span>
+                                {proposalItem ? (
+                                    <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-100/50 flex-1 flex flex-col justify-center">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-[9px] font-black text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full uppercase tracking-tighter ring-1 ring-blue-200">ITEM DO PLANO</span>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <div className="flex justify-between items-end">
+                                                <span className="text-[11px] text-gray-500 font-medium font-mono uppercase">Locação</span>
+                                                <span className="text-base font-black text-gray-900">{formatCurrency(proposalItem.valor_locacao)}</span>
+                                            </div>
+                                            {proposalItem.valor_papel > 0 && (
+                                                <div className="flex justify-between items-end pt-1.5 border-t border-blue-100">
+                                                    <span className="text-[11px] text-gray-500 font-medium font-mono uppercase">Produção</span>
+                                                    <span className="text-xs font-bold text-gray-700">{formatCurrency(proposalItem.valor_papel)}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                    <button onClick={handleCopyAddress} className="p-1.5 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded transition-all border border-gray-100">
-                                        <Copy size={16} />
-                                    </button>
-                                </div>
+                                ) : (
+                                    <div className="space-y-2 flex-1 flex flex-col justify-center">
+                                        {produtos.length > 0 ? (
+                                            produtos.slice(0, 3).map((produto, idx) => {
+                                                const displayValue = user?.type === 'external' ? produto.valor * 2 : produto.valor;
+                                                return (
+                                                    <div key={idx} className="flex justify-between items-center py-1.5 border-b border-gray-50 last:border-0 last:pb-0">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold text-gray-700 text-[10px] uppercase tracking-tighter">{produto.tipo}</span>
+                                                            {produto.periodo && <span className="text-[9px] text-gray-400 uppercase font-medium">{produto.periodo}</span>}
+                                                        </div>
+                                                        <span className="font-black text-gray-900 text-xs">{formatCurrency(displayValue)}</span>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <p className="text-xs text-gray-400 italic text-center py-4">Consulte o comercial</p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="h-px bg-gray-100" />
+                            {/* Card 2: Performance & Alcance */}
+                            <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl p-4 border border-gray-200/60 shadow-sm flex flex-col h-full min-h-[160px]">
+                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
+                                    <TrendingUp size={14} className="text-emidias-primary" />
+                                    Performance
+                                </h3>
 
-                            {/* Specs, Performance & Values Grid */}
-                            {/* Performance Card - Full Width Top */}
-                            <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl p-4 border border-gray-200/60 shadow-sm">
-                                <div className="flex items-center justify-between mb-3">
-                                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                                        <TrendingUp size={12} className="text-emidias-primary" />
-                                        Performance & Alcance
-                                    </h3>
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-white rounded-lg border border-gray-100 text-[10px] font-mono text-gray-500">
-                                            <MapPin size={10} />
-                                            {selectedPonto.latitude?.toFixed(4)}, {selectedPonto.longitude?.toFixed(4)}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">Impacto Diário Estimado</p>
-                                        <p className="text-2xl font-black text-gray-900 tracking-tighter">
+                                <div className="space-y-4 flex-1 justify-center flex flex-col">
+                                    <div className="space-y-0.5">
+                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">Impacto Diário</p>
+                                        <p className="text-2xl font-black text-gray-900 tracking-tighter leading-none">
                                             {selectedPonto.fluxo ? parseInt(selectedPonto.fluxo as any).toLocaleString() : 'N/A'}
                                             <span className="text-xs font-medium text-gray-400 ml-1">pessoas</span>
                                         </p>
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">CPM (Custo por Mil)</p>
+                                    <div className="space-y-0.5">
+                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">CPM Estimado</p>
                                         <div className="flex items-baseline gap-1">
-                                            <p className="text-2xl font-black text-emidias-primary tracking-tighter">
+                                            <p className="text-2xl font-black text-emidias-primary tracking-tighter leading-none">
                                                 {(() => {
                                                     const locacaoProd = produtos.find(p => p.tipo.toLowerCase().includes('locação') || p.tipo.toLowerCase().includes('locacao') || p.tipo.toLowerCase().includes('bissemanal') || p.tipo.toLowerCase().includes('mensal'));
                                                     const valor = locacaoProd ? (user?.type === 'external' ? locacaoProd.valor * 2 : locacaoProd.valor) : 0;
@@ -671,163 +697,98 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                                     return cpm ? formatCurrency(cpm) : 'N/A';
                                                 })()}
                                             </p>
-                                            <span className="text-[10px] font-bold text-gray-400">/ mil imp.</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Exhibitor & Values - Side by Side */}
-                            <div className="grid grid-cols-2 gap-4">
-                                {/* Exhibitor Card */}
-                                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between group">
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
-                                                <Building2 size={16} />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Exibidora</h3>
-                                                <p className="text-sm font-bold text-gray-900 leading-tight">{selectedPonto.exibidora_nome}</p>
-                                            </div>
-                                        </div>
-                                        {selectedPonto.exibidora_cnpj && (
-                                            <p className="text-[10px] text-gray-400 font-mono mb-4">{selectedPonto.exibidora_cnpj}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <ExhibitorPopover
-                                            exhibitorId={selectedPonto.id_exibidora || 0}
-                                            exhibitorName={selectedPonto.exibidora_nome || 'Exibidora'}
-                                            onFilter={(id) => {
-                                                setFilterExibidora([id]);
-                                                setSelectedExibidora(exibidoras.find(e => e.id === id) || null);
-                                                setCurrentView('map');
-                                                handleClose();
-                                            }}
-                                        >
-                                            <button className="w-full py-2 px-3 bg-gray-50 hover:bg-emidias-primary/10 text-gray-600 hover:text-emidias-primary rounded-xl text-xs font-bold transition-all border border-transparent hover:border-emidias-primary/20 flex items-center justify-center gap-2">
-                                                <Users size={14} />
-                                                Ver Contatos
-                                            </button>
-                                        </ExhibitorPopover>
-                                    </div>
-                                </div>
-
-                                {/* Values Card */}
-                                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm h-full">
+                            {/* Card 3: Exibidora */}
+                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between h-[180px] group">
+                                <div>
                                     <div className="flex items-center gap-2 mb-3">
-                                        <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
-                                            <DollarSign size={16} />
+                                        <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
+                                            <Building2 size={16} />
                                         </div>
                                         <div>
-                                            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Valores de Tabela</h3>
-                                            <p className="text-[10px] text-gray-400 tracking-tight">Médias de mercado</p>
+                                            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Exibidora</h3>
+                                            <p className="text-sm font-bold text-gray-900 leading-tight truncate max-w-[120px]">{selectedPonto.exibidora_nome}</p>
                                         </div>
                                     </div>
+                                    {selectedPonto.exibidora_cnpj && (
+                                        <p className="text-[10px] text-gray-400 font-mono mb-1">{selectedPonto.exibidora_cnpj}</p>
+                                    )}
+                                </div>
 
-                                    {proposalItem ? (
-                                        <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-100/50">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="text-[9px] font-black text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full uppercase tracking-tighter ring-1 ring-blue-200">ITEM DO PLANO</span>
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                <div className="flex justify-between items-end">
-                                                    <span className="text-[11px] text-gray-500 font-medium">Locação</span>
-                                                    <span className="text-base font-black text-gray-900">{formatCurrency(proposalItem.valor_locacao)}</span>
-                                                </div>
-                                                {proposalItem.valor_papel > 0 && (
-                                                    <div className="flex justify-between items-end pt-1.5 border-t border-blue-100">
-                                                        <span className="text-[11px] text-gray-500 font-medium">Produção</span>
-                                                        <span className="text-xs font-bold text-gray-700">{formatCurrency(proposalItem.valor_papel)}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            {produtos.length > 0 ? (
-                                                produtos.slice(0, 3).map((produto, idx) => {
-                                                    const displayValue = user?.type === 'external' ? produto.valor * 2 : produto.valor;
-                                                    return (
-                                                        <div key={idx} className="flex justify-between items-center py-1.5 border-b border-gray-50 last:border-0 last:pb-0">
-                                                            <div className="flex flex-col">
-                                                                <span className="font-bold text-gray-700 text-[11px]">{produto.tipo}</span>
-                                                                {produto.periodo && <span className="text-[9px] text-gray-400 uppercase font-medium">{produto.periodo}</span>}
-                                                            </div>
-                                                            <span className="font-black text-gray-900 text-xs">{formatCurrency(displayValue)}</span>
+                                <div className="space-y-2">
+                                    <ExhibitorPopover
+                                        exhibitorId={selectedPonto.id_exibidora || 0}
+                                        exhibitorName={selectedPonto.exibidora_nome || 'Exibidora'}
+                                        onFilter={(id) => {
+                                            setFilterExibidora([id]);
+                                            setSelectedExibidora(exibidoras.find(e => e.id === id) || null);
+                                            setCurrentView('map');
+                                            handleClose();
+                                        }}
+                                    >
+                                        <button className="w-full py-2 px-3 bg-gray-50 hover:bg-emidias-primary/10 text-gray-600 hover:text-emidias-primary rounded-xl text-[10px] font-bold transition-all border border-transparent hover:border-emidias-primary/20 flex items-center justify-center gap-2 uppercase tracking-tight">
+                                            <Users size={12} />
+                                            Ver Contatos
+                                        </button>
+                                    </ExhibitorPopover>
+                                </div>
+                            </div>
+
+                            {/* Card 4: Presença em Planos de Mídia */}
+                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-[180px]">
+                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] flex items-center gap-2 mb-3 truncate leading-none">
+                                    <ShoppingCart size={14} className="text-blue-500" />
+                                    Presença
+                                    {pointProposals.length > 0 && <span className="bg-blue-600 text-white px-1.5 py-0.5 rounded-full text-[9px] font-black">{pointProposals.length}</span>}
+                                </h3>
+
+                                <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2">
+                                    {pointProposals.length > 0 ? (
+                                        pointProposals.map((proposta) => (
+                                            <div key={proposta.id} className="group bg-gray-50/50 hover:bg-gray-50 border border-gray-100 rounded-xl p-2 transition-all duration-200">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-1.5 mb-0.5">
+                                                            <div className={cn(
+                                                                "w-1 h-1 rounded-full",
+                                                                proposta.status === 'aprovado' ? "bg-green-500" :
+                                                                    proposta.status === 'em validação' ? "bg-yellow-500" : "bg-gray-300"
+                                                            )} />
+                                                            <h4 className="font-black text-[9px] text-gray-900 truncate uppercase tracking-tight">{proposta.nome}</h4>
                                                         </div>
-                                                    );
-                                                })
-                                            ) : (
-                                                <p className="text-xs text-gray-400 italic text-center py-4">Consulte o comercial</p>
-                                            )}
+                                                        <div className="flex items-center gap-2 text-[8px] text-gray-500 font-medium">
+                                                            {(() => {
+                                                                const item = proposta.itens?.find(i => i.id_ooh === selectedPonto.id);
+                                                                return item?.periodo_inicio ? (
+                                                                    <span className="truncate italic">Até {new Date(item.periodo_fim!).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
+                                                                ) : <span className="italic">Ver Detalhes</span>;
+                                                            })()}
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleClose();
+                                                            window.location.href = `/propostas?id=${proposta.id}`;
+                                                        }}
+                                                        className="h-6 w-6 flex items-center justify-center text-gray-300 hover:text-emidias-primary transition-all shrink-0"
+                                                    >
+                                                        <ExternalLink size={10} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="h-full border border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-1 opacity-50">
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase">Disponível</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
-
-                            {/* Presence in Media Proposals Section */}
-                            {!isInProposalContext && (
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] flex items-center gap-2">
-                                            <ShoppingCart size={14} className="text-blue-500" />
-                                            Presença em Planos de Mídia
-                                            {pointProposals.length > 0 && <span className="bg-blue-600 text-white px-2 py-0.5 rounded-full text-[9px] font-black">{pointProposals.length}</span>}
-                                        </h3>
-                                    </div>
-
-                                    {pointProposals.length > 0 ? (
-                                        <div className="grid grid-cols-1 gap-2 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
-                                            {pointProposals.map((proposta) => (
-                                                <div key={proposta.id} className="group bg-white hover:bg-gray-50 border border-gray-100 hover:border-gray-200 rounded-2xl p-3 transition-all duration-200">
-                                                    <div className="flex items-center justify-between gap-4">
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <div className={cn(
-                                                                    "w-1.5 h-1.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)]",
-                                                                    proposta.status === 'aprovado' ? "bg-green-500 shadow-green-500/40" :
-                                                                        proposta.status === 'em validação' ? "bg-yellow-500 shadow-yellow-500/40" : "bg-gray-300 shadow-gray-400/40"
-                                                                )} />
-                                                                <h4 className="font-black text-xs text-gray-900 truncate uppercase tracking-tight">{proposta.nome}</h4>
-                                                                <span className="text-[9px] font-bold text-gray-400 px-1.5 py-0.5 bg-gray-100 rounded uppercase">{proposta.status}</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-4 text-[10px] text-gray-500 font-medium">
-                                                                <span className="flex items-center gap-1"><User size={10} className="text-gray-400" /> {proposta.cliente?.nome || 'Proprio'}</span>
-                                                                {(() => {
-                                                                    const item = proposta.itens?.find(i => i.id_ooh === selectedPonto.id);
-                                                                    return item?.periodo_inicio ? (
-                                                                        <span className="flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100"><Clock size={10} className="text-gray-400" /> {new Date(item.periodo_inicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} — {new Date(item.periodo_fim!).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
-                                                                    ) : null;
-                                                                })()}
-                                                            </div>
-                                                        </div>
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleClose();
-                                                                window.location.href = `/propostas?id=${proposta.id}`;
-                                                            }}
-                                                            className="h-10 w-10 flex items-center justify-center text-gray-400 hover:text-emidias-primary hover:bg-emidias-primary/10 rounded-xl transition-all border border-transparent hover:border-emidias-primary/20"
-                                                            title="Ver Proposta"
-                                                        >
-                                                            <ExternalLink size={16} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="bg-gray-50/50 border border-dashed border-gray-200 rounded-2xl py-8 flex flex-col items-center justify-center gap-2">
-                                            <ShoppingCart size={24} className="text-gray-200" strokeWidth={1} />
-                                            <p className="text-[11px] font-bold text-gray-400 tracking-tight uppercase">Ponto disponível em todos os períodos</p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
                         </div>
                     </div>
 
