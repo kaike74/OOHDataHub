@@ -376,13 +376,15 @@ export default function ProposalDetailClient() {
             <PointDetailsModal readOnly={permission === 'viewer'} />
 
             {/* Floating Cart Table */}
-            <CartTable
-                isOpen={isTableOpen}
-                onToggle={() => setIsTableOpen(!isTableOpen)}
-                embedded={false}
-                readOnly={permission === 'viewer'} // Implement readOnly prop in CartTable if not exists
-                onHeightChange={setTableHeight}
-            />
+            <div data-cart-table className={isTableOpen ? "relative z-[1000]" : ""}>
+                <CartTable
+                    isOpen={isTableOpen}
+                    onToggle={() => setIsTableOpen(!isTableOpen)}
+                    embedded={false}
+                    readOnly={permission === 'viewer'} // Implement readOnly prop in CartTable if not exists
+                    onHeightChange={setTableHeight}
+                />
+            </div>
 
             <ShareModal
                 isOpen={isShareModalOpen}

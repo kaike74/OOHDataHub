@@ -364,17 +364,37 @@ export default function GoogleMap({
 
                 container.addEventListener('mouseenter', handleHover);
                 container.addEventListener('mouseleave', handleOut);
-                container.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    // Close tooltip immediately
+
+                // CLICK HANDLER - CRITICAL FIX
+                // Use both click and touchend for better mobile support if needed, but click is standard
+                const handleClick = (e: Event) => {
+                    e.stopPropagation(); // Stop event from bubbling to map
+                    e.preventDefault();  // Prevent default behavior
+
+                    console.log('Pin Clicked:', ponto.id);
+
+                    // 1. Force Close Tooltip logic
+                    if (hoverTimeoutRef.current) {
+                        clearTimeout(hoverTimeoutRef.current);
+                        hoverTimeoutRef.current = null;
+                    }
+                    isHoveringTooltipRef.current = false;
                     setHoveredPonto(null);
-                    // Open modal instead of sidebar
+
+                    // 2. Determine index
                     const cartItemIndex = cartItemIds.has(ponto.id)
                         ? Array.from(cartItemIds).indexOf(ponto.id)
                         : 0;
+
+                    // 3. Open Modal
                     openPointModal(ponto, cartItemIndex);
+
+                    // 4. Visual feedback
                     pulse.style.display = 'block';
-                });
+                    setTimeout(() => { pulse.style.display = 'none'; }, 500);
+                };
+
+                container.addEventListener('click', handleClick);
 
                 return marker;
             });

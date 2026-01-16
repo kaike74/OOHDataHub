@@ -151,64 +151,118 @@ export default function MapTooltip({
 
   // --- Render ---
 
-  // Collision Detection
+  // Collision Detection and Smart Positioning
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [adjustedStyle, setAdjustedStyle] = useState<React.CSSProperties>({
     left: `${position.x}px`,
     top: `${position.y}px`,
-    transform: 'translate(-50%, -100%) translateY(-15px)'
+    opacity: 0, // Start invisible to calculate position
+    pointerEvents: 'none'
   });
-
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [bridgeStyle, setBridgeStyle] = useState<React.CSSProperties>({});
+  const [arrowStyle, setArrowStyle] = useState<React.CSSProperties>({});
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     if (!tooltipRef.current) return;
 
-    const rect = tooltipRef.current.getBoundingClientRect();
+    const tooltip = tooltipRef.current;
+    const rect = tooltip.getBoundingClientRect();
+    const width = 240; // Fixed width
+    const height = rect.height || 380; // Approximate height if not rendered yet
+    const gap = 15; // Gap between pin and tooltip
+
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    // Default above (closer to pin: -15px for minimal gap)
-    let newTransform = 'translate(-50%, -100%) translateY(-15px)';
-    let flipped = false;
-
-    // Check for cart table collision FIRST
+    // Cart Table Collision Check
     const cartTable = document.querySelector('[data-cart-table]');
+    let cartRect = null;
     if (cartTable) {
-      const cartRect = cartTable.getBoundingClientRect();
-      // If tooltip would overlap with cart table horizontally AND vertically
-      const horizontalOverlap = rect.right > cartRect.left && rect.left < cartRect.right;
-      const verticalOverlap = rect.bottom > cartRect.top && rect.top < cartRect.bottom;
+      cartRect = cartTable.getBoundingClientRect();
+    }
 
-      if (horizontalOverlap && verticalOverlap) {
-        // Move tooltip to the left of the pin to avoid cart table
-        newTransform = 'translate(-100%, -100%) translateY(-15px) translateX(-15px)';
+    // Possible positions around the pin (0,0 is pin position)
+    // Priorities: Top > TopRight > TopLeft > Bottom > BottomRight > BottomLeft > Right > Left
+    const positions = [
+      { name: 'top', x: -width / 2, y: -height - gap, origin: 'bottom center' },
+      { name: 'top-right', x: gap, y: -height - gap, origin: 'bottom left' },
+      { name: 'top-left', x: -width - gap, y: -height - gap, origin: 'bottom right' },
+      { name: 'bottom', x: -width / 2, y: gap, origin: 'top center' },
+      { name: 'bottom-right', x: gap, y: gap, origin: 'top left' },
+      { name: 'bottom-left', x: -width - gap, y: gap, origin: 'top right' },
+      { name: 'right', x: gap, y: -height / 2, origin: 'center left' },
+      { name: 'left', x: -width - gap, y: -height / 2, origin: 'center right' },
+    ];
+
+    let bestPosition = positions[0];
+    let maxScore = -Infinity;
+
+    // Evaluate each position
+    positions.forEach(pos => {
+      let score = 1000; // Base score
+
+      // Calculate absolute screen coordinates
+      const absX = position.x + pos.x;
+      const absY = position.y + pos.y;
+      const absRight = absX + width;
+      const absBottom = absY + height;
+
+      // 1. Viewport Collision Penalty
+      if (absX < 10) score -= 10000; // Left edge
+      if (absY < 80) score -= 10000; // Top edge (header)
+      if (absRight > viewportWidth - 10) score -= 10000; // Right edge
+      if (absBottom > viewportHeight - 10) score -= 10000; // Bottom edge
+
+      // 2. Cart Table Collision Penalty
+      if (cartRect) {
+        // Simple AABB check
+        const overlap = !(absRight < cartRect.left ||
+          absX > cartRect.right ||
+          absBottom < cartRect.top ||
+          absY > cartRect.bottom);
+
+        if (overlap) {
+          score -= 50000; // Huge penalty for overlapping cart table
+        }
       }
-    }
 
-    // Check Right Edge (only if not already moved left for cart table)
-    if (!newTransform.includes('translateX(-15px)') && rect.right > viewportWidth - 20) {
-      newTransform = 'translate(-100%, -100%) translateY(-15px) translateX(-10px)';
-    }
-    // Check Left Edge
-    if (rect.left < 20) {
-      newTransform = 'translate(0%, -100%) translateY(-15px) translateX(10px)';
-    }
-    // Check Top Edge (if too close to top, flip to bottom)
-    if (rect.top < 80) {
-      // Flip to bottom (clear pin downwards)
-      newTransform = newTransform.replace('-100%) translateY(-15px)', '0%) translateY(15px)');
-      flipped = true;
-    }
+      // 3. Preference Bonuses (slightly prefer Top and Right if safe)
+      if (pos.name === 'top') score += 500;
+      if (pos.name === 'right') score += 200;
 
+      if (score > maxScore) {
+        maxScore = score;
+        bestPosition = pos;
+      }
+    });
+
+    // Apply Best Position
     setAdjustedStyle({
       left: `${position.x}px`,
       top: `${position.y}px`,
-      transform: newTransform
+      transform: `translate(${bestPosition.x}px, ${bestPosition.y}px)`,
+      opacity: 1,
+      pointerEvents: 'none' // Container doesn't capture events, content does
     });
-    setIsFlipped(flipped);
 
-  }, [position]);
+    // Calculate Bridge (invisible connection)
+    // This is complex for 8 directions, simplifying to just ensure gap coverage
+    // If tooltip is far, just make a big circle behind pointer? Or specific rect?
+    // Let's rely on a large transparent area around the tooltip content
+
+    setIsReady(true);
+
+    // Arrow positioning based on chosen side
+    // (Simplification: Just center for top/bottom, adjust for others if needed)
+    // For now we omit the arrow or make it dynamic. 
+    // Let's use a simpler approach for arrow: hide it for corner/side positions to avoid complexity,
+    // or just render it for Top/Bottom specific cases.
+
+    // For this iteration, let's keep the arrow simple or remove if complicating layout.
+    // The "Bridge" is more important for UX.
+
+  }, [position, ponto.id]); // Re-run when position or point changes
 
 
   // Extract rental value and period information
@@ -250,27 +304,27 @@ export default function MapTooltip({
   return (
     <div
       ref={tooltipRef}
-      className="absolute z-[9999] pointer-events-auto"
+      className="absolute z-[9999]"
       style={adjustedStyle}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      onClick={props.onClick}
     >
-      {/* Invisible Bridge to maintain hover state over the gap */}
+      {/* Invisible Bridge - Expanded Area around tooltip to catch mouse movement */}
       <div
-        className="absolute w-full h-[60px] bg-transparent"
-        style={{
-          top: isFlipped ? '-60px' : '100%',
-          left: 0,
-        }}
+        className="absolute inset-0 -m-8 bg-transparent"
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        style={{ pointerEvents: 'auto' }} // Capture events around the tooltip
       />
 
       {/* Google Maps Style Card - Ultra Compact */}
       <div
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
         onClick={(e) => {
+          e.stopPropagation(); // Prevent map click
           if (props.onClick) props.onClick();
         }}
-        className="relative w-[240px] bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer"
+        className="relative w-[240px] bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer transform transition-transform hover:scale-[1.02] active:scale-[0.98]"
+        style={{ pointerEvents: 'auto' }}
       >
 
         {/* Image Section with Código OOH Overlay */}
@@ -331,8 +385,8 @@ export default function MapTooltip({
                     onClick={handleAddToCart}
                     disabled={isAdding}
                     className={`p-1.5 rounded transition-colors ${isInCart
-                        ? 'bg-red-50 hover:bg-red-100 text-red-600'
-                        : 'bg-[#FC1E75] hover:bg-[#E01A6A] text-white'
+                      ? 'bg-red-50 hover:bg-red-100 text-red-600'
+                      : 'bg-[#FC1E75] hover:bg-[#E01A6A] text-white'
                       }`}
                     title={isInCart ? 'Remover do carrinho' : 'Adicionar ao carrinho'}
                   >
@@ -371,22 +425,6 @@ export default function MapTooltip({
         </div>
       </div>
 
-      {/* Tooltip Arrow */}
-      <div
-        className="absolute left-1/2 -translate-x-1/2"
-        style={{
-          top: isFlipped ? '-8px' : 'auto',
-          bottom: isFlipped ? 'auto' : '-8px',
-          width: 0,
-          height: 0,
-          borderLeft: '8px solid transparent',
-          borderRight: '8px solid transparent',
-          ...(isFlipped
-            ? { borderBottom: '8px solid white' }
-            : { borderTop: '8px solid white' }
-          )
-        }}
-      />
     </div>
   );
 }
