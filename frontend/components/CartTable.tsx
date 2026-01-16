@@ -149,6 +149,9 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     const refreshProposta = useStore((state) => state.refreshProposta);
     const setSelectedPonto = useStore((state) => state.setSelectedPonto);
     const pontos = useStore((state) => state.pontos);
+    const openPointModal = useStore((state) => state.openPointModal);
+    const setHoveredCartItemId = useStore((state) => state.setHoveredCartItemId);
+    const highlightedPointId = useStore((state) => state.highlightedPointId);
 
     const [itens, setItens] = useState<PropostaItem[]>([]);
     const [searchTerm, setSearchTerm] = useState(''); // Add Search State
@@ -861,9 +864,9 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     onClick={() => {
                         const ponto = pontos.find(p => p.id === row.original.id_ooh);
                         if (ponto) {
-                            setSelectedPonto(ponto);
-                        } else {
-                            setSelectedPonto({ id: row.original.id_ooh } as any);
+                            // Find the index of this item in the cart
+                            const cartIndex = itens.findIndex(item => item.id === row.original.id);
+                            openPointModal(ponto, cartIndex >= 0 ? cartIndex : 0);
                         }
                     }}
                 >

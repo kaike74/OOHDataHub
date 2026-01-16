@@ -3,7 +3,7 @@
 import MainLayout from '@/components/layout/MainLayout';
 import GoogleMap from '@/components/map/GoogleMap';
 import CartTable from '@/components/CartTable';
-import Sidebar from '@/components/Sidebar';
+import PointDetailsModal from '@/components/PointDetailsModal';
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
@@ -369,8 +369,8 @@ export default function ProposalDetailClient() {
                 setValorMax={setFilterValorMax}
             />
 
-            {/* Sidebar */}
-            <Sidebar />
+            {/* Point Details Modal */}
+            <PointDetailsModal readOnly={permission === 'viewer'} />
 
             {/* Floating Cart Table */}
             <CartTable

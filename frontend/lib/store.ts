@@ -28,6 +28,12 @@ interface AppState {
     streetViewCoordinates: { lat: number; lng: number } | null;
     streetViewRequest: { lat: number; lng: number } | null;
 
+    // Point Details Modal State
+    isPointModalOpen: boolean;
+    pointModalIndex: number; // Index in cart items for navigation
+    hoveredCartItemId: number | null; // ID of cart item being hovered
+    highlightedPointId: number | null; // ID of point to highlight (for "Ver na Proposta" animation)
+
     // Filters
     filterCidade: string[];
     filterUF: string[];
@@ -71,6 +77,13 @@ interface AppState {
     setFilterText: (text: string) => void;
     clearFilters: () => void;
 
+    // Point Modal Actions
+    setPointModalOpen: (open: boolean) => void;
+    setPointModalIndex: (index: number) => void;
+    setHoveredCartItemId: (id: number | null) => void;
+    setHighlightedPointId: (id: number | null) => void;
+    openPointModal: (ponto: Ponto, index?: number) => void;
+
     // Custom Layers
     customLayers: MapLayer[];
     setCustomLayers: (layers: MapLayer[]) => void;
@@ -110,6 +123,13 @@ export const useStore = create<AppState>()(
             currentView: 'map',
             streetViewCoordinates: null,
             streetViewRequest: null,
+
+            // Point Modal State
+            isPointModalOpen: false,
+            pointModalIndex: 0,
+            hoveredCartItemId: null,
+            highlightedPointId: null,
+
             filterCidade: [],
             filterUF: [],
             filterPais: [],
@@ -229,6 +249,17 @@ export const useStore = create<AppState>()(
                 filterValorMax: null,
                 searchQuery: '',
                 filterText: '',
+            }),
+
+            // Point Modal Actions
+            setPointModalOpen: (open) => set({ isPointModalOpen: open }),
+            setPointModalIndex: (index) => set({ pointModalIndex: index }),
+            setHoveredCartItemId: (id) => set({ hoveredCartItemId: id }),
+            setHighlightedPointId: (id) => set({ highlightedPointId: id }),
+            openPointModal: (ponto, index = 0) => set({
+                selectedPonto: ponto,
+                isPointModalOpen: true,
+                pointModalIndex: index,
             }),
 
             refreshProposta: (proposta) => set({ selectedProposta: proposta }),

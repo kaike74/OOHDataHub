@@ -83,6 +83,9 @@ export default function GoogleMap({
     const setStreetViewRequest = useStore((state) => state.setStreetViewRequest);
     const selectedProposta = useStore((state) => state.selectedProposta);
     const isAuthenticated = useStore((state) => state.isAuthenticated);
+    const openPointModal = useStore((state) => state.openPointModal);
+    const hoveredCartItemId = useStore((state) => state.hoveredCartItemId);
+    const highlightedPointId = useStore((state) => state.highlightedPointId);
     const [isLoaded, setIsLoaded] = useState(false);
     const [isStreetViewMode, setIsStreetViewMode] = useState(false);
     const [streetViewPosition, setStreetViewPosition] = useState<{ lat: number; lng: number } | null>(null);
@@ -358,7 +361,13 @@ export default function GoogleMap({
                 container.addEventListener('mouseleave', handleOut);
                 container.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    setSelectedPonto(ponto);
+                    // Close tooltip immediately
+                    setHoveredPonto(null);
+                    // Open modal instead of sidebar
+                    const cartItemIndex = cartItemIds.has(ponto.id)
+                        ? Array.from(cartItemIds).indexOf(ponto.id)
+                        : 0;
+                    openPointModal(ponto, cartItemIndex);
                     pulse.style.display = 'block';
                 });
 
@@ -414,6 +423,77 @@ export default function GoogleMap({
 
 
     }, [filteredPontos, selectedProposta, setSelectedPonto]);
+
+    // Effect for Hover Highlight from Table
+    useEffect(() => {
+        if (!hoveredCartItemId || !selectedProposta) return;
+
+        // Find the marker for the hovered cart item
+        const hoveredItem = selectedProposta.itens?.find((item: any) => item.id === hoveredCartItemId);
+        if (!hoveredItem) return;
+
+        // Find the corresponding marker
+        markersRef.current.forEach((marker: any) => {
+            const markerPonto = filteredPontos.find(p =>
+                p.latitude === marker.position.lat &&
+                p.longitude === marker.position.lng
+            );
+
+            if (markerPonto?.id === hoveredItem.id_ooh) {
+                // Scale up the hovered marker
+                const pinWrapper = marker.content?.querySelector('.pin-wrapper');
+                if (pinWrapper) {
+                    pinWrapper.style.transform = 'scale(1.2) translateY(-5px)';
+                    pinWrapper.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                }
+            } else {
+                // Reset other markers
+                const pinWrapper = marker.content?.querySelector('.pin-wrapper');
+                if (pinWrapper) {
+                    pinWrapper.style.transform = 'scale(1) translateY(0)';
+                }
+            }
+        });
+    }, [hoveredCartItemId, selectedProposta, filteredPontos]);
+
+    // Effect for "Ver na Proposta" Animation
+    useEffect(() => {
+        if (!highlightedPointId || !googleMapRef.current) return;
+
+        const highlightedPonto = filteredPontos.find(p => p.id === highlightedPointId);
+        if (!highlightedPonto || !highlightedPonto.latitude || !highlightedPonto.longitude) return;
+
+        // Pan and zoom to the point
+        googleMapRef.current.panTo({ lat: highlightedPonto.latitude, lng: highlightedPonto.longitude });
+        googleMapRef.current.setZoom(17);
+
+        // Find and animate the marker
+        markersRef.current.forEach((marker: any) => {
+            const markerPonto = filteredPontos.find(p =>
+                p.latitude === marker.position.lat &&
+                p.longitude === marker.position.lng
+            );
+
+            if (markerPonto?.id === highlightedPointId) {
+                const pinWrapper = marker.content?.querySelector('.pin-wrapper');
+                const pulse = marker.content?.querySelector('.pulse');
+
+                if (pinWrapper && pulse) {
+                    // Show pulse
+                    pulse.style.display = 'block';
+
+                    // Bounce animation
+                    pinWrapper.style.animation = 'bounce 0.6s ease-in-out 3';
+
+                    // Reset after animation
+                    setTimeout(() => {
+                        pulse.style.display = 'none';
+                        pinWrapper.style.animation = '';
+                    }, 2000);
+                }
+            }
+        });
+    }, [highlightedPointId, filteredPontos]);
 
     // 4. Effect for Rendering Custom Markers
     useEffect(() => {
@@ -590,6 +670,12 @@ export default function GoogleMap({
                     0% { transform: scale(0.1, 0.1); opacity: 0.0; }
                     50% { opacity: 1.0; }
                     100% { transform: scale(1.2, 1.2); opacity: 0; }
+                }
+                @keyframes bounce {
+                    0%, 100% { transform: scale(1) translateY(0); }
+                    25% { transform: scale(1.15) translateY(-10px); }
+                    50% { transform: scale(1.1) translateY(-5px); }
+                    75% { transform: scale(1.15) translateY(-10px); }
                 }
                 .pulse {
                     background: rgba(0,0,0,0.2);
