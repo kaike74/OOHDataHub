@@ -288,6 +288,11 @@ export default function GoogleMap({
             pulse.className = 'pulse';
             pulse.style.display = 'none';
 
+            // Increase clickable area
+            container.style.padding = '10px';
+            container.style.cursor = 'pointer';
+            container.style.pointerEvents = 'auto';
+
             container.appendChild(pinWrapper);
             container.appendChild(pulse);
 

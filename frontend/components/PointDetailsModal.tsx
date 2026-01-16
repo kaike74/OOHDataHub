@@ -10,6 +10,77 @@ import { Button } from '@/components/ui/Button';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { toast } from 'sonner';
 
+interface Contato {
+    id: number;
+    nome: string;
+    telefone: string;
+    email: string;
+}
+
+// Component to display exhibitor contacts
+function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undefined }) {
+    const [contatos, setContatos] = useState<Contato[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (!idExibidora) return;
+
+        const fetchContatos = async () => {
+            setLoading(true);
+            try {
+                const data = await api.getContatos(idExibidora);
+                setContatos(data);
+            } catch (error) {
+                console.error('Erro ao buscar contatos:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchContatos();
+    }, [idExibidora]);
+
+    if (loading || contatos.length === 0) return null;
+
+    return (
+        <div className="flex gap-3">
+            <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
+                <Phone size={16} />
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Contatos da Exibidora</p>
+                <div className="space-y-2 mt-1">
+                    {contatos.map((contato) => (
+                        <div key={contato.id} className="text-xs text-gray-700">
+                            {contato.nome && (
+                                <p className="font-medium text-gray-900">{contato.nome}</p>
+                            )}
+                            {contato.telefone && (
+                                <a
+                                    href={`tel:${contato.telefone}`}
+                                    className="flex items-center gap-1 hover:text-emidias-accent transition-colors"
+                                >
+                                    <Phone size={10} />
+                                    {contato.telefone}
+                                </a>
+                            )}
+                            {contato.email && (
+                                <a
+                                    href={`mailto:${contato.email}`}
+                                    className="flex items-center gap-1 hover:text-emidias-accent transition-colors"
+                                >
+                                    <Mail size={10} />
+                                    {contato.email}
+                                </a>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 const formatDecimal = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
         minimumFractionDigits: 2,
@@ -537,6 +608,9 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                 </div>
                             </div>
                         )}
+
+                        {/* Exhibitor Contacts - Dynamic from API */}
+                        <ContatosExibidora idExibidora={selectedPonto.id_exibidora} />
 
                         {/* Reference Point */}
                         {(proposalItem?.ponto_referencia || selectedPonto.ponto_referencia) && (
