@@ -51,7 +51,9 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
     const [lastUpdate, setLastUpdate] = useState<{ date: string; user: string; action: string } | null>(null);
     const [isCreateProposalOpen, setIsCreateProposalOpen] = useState(false);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
-    const [isExhibitorInfoExpanded, setIsExhibitorInfoExpanded] = useState(false);
+    const [isExhibitorInfoExpanded, setIsExhibitorInfoExpanded] = useState(false); // Mantido caso queira usar no futuro ou se estivesse em uso em outro lugar, mas vou remover se puder.
+    // Na verdade, vou remover o estado se não for mais usado.
+    // Mas para evitar quebra se houver referencia oculta, vou apenas remover o bloco JSX por enquanto.
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const mapRef = useRef<HTMLDivElement>(null);
@@ -152,10 +154,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
 
         const fetchPointProposals = async () => {
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/propostas`, {
-                    credentials: 'include'
-                });
-                const allProposals = await response.json();
+                const allProposals = await api.getAdminProposals();
                 const proposalsWithPoint = allProposals.filter((p: any) =>
                     p.itens?.some((item: any) => item.id_ooh === selectedPonto.id)
                 );
@@ -474,8 +473,8 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                 {/* --- LEFT: VISUALS (40%) --- */}
                 <div className="w-[40%] h-full flex flex-col bg-black relative border-r border-gray-100/10">
 
-                    {/* Image Section (60%) */}
-                    <div className="h-[60%] w-full relative overflow-hidden bg-gray-900 group/image">
+                    {/* Image Section (50%) */}
+                    <div className="h-[50%] w-full relative overflow-hidden bg-gray-900 group/image">
                         {imagens.length > 0 ? (
                             <>
                                 <SafeImage
@@ -485,42 +484,16 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
 
-                                {/* Expand Button */}
-                                <button
-                                    onClick={() => setIsLightboxOpen(true)}
-                                    className="absolute top-4 right-4 p-2 bg-black/40 hover:bg-black/60 text-white rounded-lg backdrop-blur-sm opacity-0 group-hover/image:opacity-100 transition-opacity z-20"
-                                    title="Expandir Imagem"
-                                >
-                                    <Expand size={18} />
-                                </button>
+                                {/* Glass Badges with Infinite Blur Effect */}
+                                <div className="absolute top-4 inset-x-4 flex justify-between items-start z-20">
+                                    {/* Left: OOH Code */}
+                                    <div className="px-3 py-1.5 rounded-xl bg-black/30 backdrop-blur-md border border-white/10 shadow-lg ring-1 ring-white/5">
+                                        <span className="text-xs font-black text-white tracking-widest uppercase">{selectedPonto.codigo_ooh}</span>
+                                    </div>
 
-                                {/* Navigation Arrows */}
-                                {imagens.length > 1 && (
-                                    <>
-                                        <button
-                                            onClick={() => setCurrentImageIndex((prev) => (prev - 1 + imagens.length) % imagens.length)}
-                                            className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/30 hover:bg-black/50 text-white transition-opacity opacity-0 group-hover/image:opacity-100 z-20"
-                                        >
-                                            <ChevronLeft size={20} />
-                                        </button>
-                                        <button
-                                            onClick={() => setCurrentImageIndex((prev) => (prev + 1) % imagens.length)}
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/30 hover:bg-black/50 text-white transition-opacity opacity-0 group-hover/image:opacity-100 z-20"
-                                        >
-                                            <ChevronRight size={20} />
-                                        </button>
-                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-                                            {imagens.map((_, idx) => (
-                                                <div key={idx} className={cn("w-1.5 h-1.5 rounded-full transition-all", idx === currentImageIndex ? "bg-white w-3" : "bg-white/40")} />
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
-
-                                {/* OOH Code Badge on Image */}
-                                <div className="absolute top-4 left-4 z-20">
-                                    <div className="px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/20">
-                                        <span className="text-sm font-bold text-white tracking-wide">{selectedPonto.codigo_ooh}</span>
+                                    {/* Right: Type Badge */}
+                                    <div className="px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 shadow-lg ring-1 ring-white/5">
+                                        <span className="text-[10px] font-bold text-white tracking-wide uppercase">{selectedPonto.tipo}</span>
                                     </div>
                                 </div>
                             </>
@@ -580,8 +553,8 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                         </div>
                     )}
 
-                    {/* Map Section (Remaining space - 40%) */}
-                    <div className="flex-1 w-full relative bg-gray-100 border-t border-white/10">
+                    {/* Map Section (50%) */}
+                    <div className="h-[50%] w-full relative bg-gray-100 border-t border-white/10">
                         <div ref={mapRef} className="w-full h-full grayscale-[20%] hover:grayscale-0 transition-all duration-500" />
 
                         <div className="absolute bottom-2 right-2 flex gap-1 z-10">
@@ -608,49 +581,32 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                 {/* --- RIGHT: DATA (60%) --- */}
                 <div className="w-[60%] h-full flex flex-col bg-white relative">
 
-                    {/* Header - Clean & Simple */}
-                    <div className="px-5 py-4 border-b border-gray-100 shrink-0 bg-white z-20">
-                        <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                                <h1 className="text-xl font-bold text-gray-900 tracking-tight mb-2">{selectedPonto.codigo_ooh}</h1>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    {/* Exhibitor - SINGLE INSTANCE */}
-                                    <ExhibitorPopover
-                                        exhibitorId={selectedPonto.id_exibidora || 0}
-                                        exhibitorName={selectedPonto.exibidora_nome || 'Exibidora'}
-                                        onFilter={(id) => {
-                                            setFilterExibidora([id]);
-                                            setSelectedExibidora(exibidoras.find(e => e.id === id) || null);
-                                            setCurrentView('map');
-                                            handleClose();
-                                        }}
-                                    >
-                                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emidias-primary/10 hover:bg-emidias-primary/20 rounded-md cursor-pointer transition-all border border-emidias-primary/20">
-                                            <Building2 size={14} className="text-emidias-primary" />
-                                            <span className="font-semibold text-xs text-emidias-primary">{selectedPonto.exibidora_nome || 'Exibidora'}</span>
-                                        </div>
-                                    </ExhibitorPopover>
-
-                                    {/* Type Badge - SINGLE INSTANCE */}
-                                    <div className="px-2.5 py-1 bg-gray-100 rounded-md border border-gray-200">
-                                        <span className="font-semibold text-xs text-gray-700 uppercase">{selectedPonto.tipo}</span>
-                                    </div>
-
-                                    {/* Proposals Count (Map context only) */}
-                                    {!isInProposalContext && pointProposals.length > 0 && (
-                                        <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded-md border border-blue-200">
-                                            <ShoppingCart size={12} className="text-blue-600" />
-                                            <span className="text-xs font-semibold text-blue-700">{pointProposals.length}</span>
-                                        </div>
+                    {/* Header - Address Focused */}
+                    <div className="px-5 py-5 border-b border-gray-100 shrink-0 bg-white z-20">
+                        <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0 pr-4">
+                                <h1 className="text-lg font-bold text-gray-900 tracking-tight leading-tight mb-1 truncate group flex items-center gap-2">
+                                    <MapPin size={18} className="text-emidias-primary" />
+                                    {selectedPonto.endereco}
+                                </h1>
+                                <p className="text-sm text-gray-500 flex items-center gap-2">
+                                    <span className="font-semibold">{selectedPonto.cidade} - {selectedPonto.uf}</span>
+                                    {selectedPonto.ponto_referencia && (
+                                        <span className="text-gray-300 italic truncate text-xs">• {selectedPonto.ponto_referencia}</span>
                                     )}
-                                </div>
+                                </p>
                             </div>
-                            <button
-                                onClick={handleClose}
-                                className="h-8 w-8 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-500 flex items-center justify-center transition-colors border border-gray-200"
-                            >
-                                <X size={18} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button onClick={handleCopyAddress} className="p-2 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all border border-gray-100" title="Copiar Endereço">
+                                    <Copy size={16} />
+                                </button>
+                                <button
+                                    onClick={handleClose}
+                                    className="h-9 w-9 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-500 flex items-center justify-center transition-all border border-gray-200"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -682,107 +638,131 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                             <div className="h-px bg-gray-100" />
 
                             {/* Specs, Performance & Values Grid */}
-                            <div className="grid grid-cols-2 gap-4">
-                                {/* Left: Specifications & Performance */}
-                                <div className="space-y-4">
-                                    {/* Performance Card */}
-                                    <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-3 border border-gray-200/60 shadow-sm">
-                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                            <TrendingUp size={10} className="text-emidias-primary" />
-                                            Performance
-                                        </h3>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div className="space-y-0.5">
-                                                <p className="text-[9px] text-gray-400 uppercase font-medium">Impacto Diário</p>
-                                                <p className="text-sm font-bold text-gray-900">{selectedPonto.fluxo ? parseInt(selectedPonto.fluxo as any).toLocaleString() : 'N/A'}</p>
-                                            </div>
-                                            <div className="space-y-0.5">
-                                                <p className="text-[9px] text-gray-400 uppercase font-medium">CPM Estimado</p>
-                                                <p className="text-sm font-bold text-emidias-primary">
-                                                    {(() => {
-                                                        const locacaoProd = produtos.find(p => p.tipo.toLowerCase().includes('locação') || p.tipo.toLowerCase().includes('locacao') || p.tipo.toLowerCase().includes('bissemanal') || p.tipo.toLowerCase().includes('mensal'));
-                                                        const valor = locacaoProd ? (user?.type === 'external' ? locacaoProd.valor * 2 : locacaoProd.valor) : 0;
-                                                        const cpm = calculateCPM(valor, Number(selectedPonto.fluxo));
-                                                        return cpm ? formatCurrency(cpm) : 'N/A';
-                                                    })()}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Specifications Card */}
-                                    <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm space-y-3">
-                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Especificações</h3>
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-2 p-1.5 bg-gray-50/50 rounded-lg">
-                                                <Ruler size={14} className="text-gray-400" />
-                                                <div>
-                                                    <p className="text-[9px] text-gray-400 uppercase font-medium">Medidas</p>
-                                                    <p className="text-xs font-semibold text-gray-900">{selectedPonto.medidas || 'N/A'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2 p-1.5 bg-gray-50/50 rounded-lg">
-                                                <Tag size={14} className="text-gray-400" />
-                                                <div>
-                                                    <p className="text-[9px] text-gray-400 uppercase font-medium">Formato</p>
-                                                    <p className="text-xs font-semibold text-gray-900 uppercase">{selectedPonto.tipo || 'N/A'}</p>
-                                                </div>
-                                            </div>
+                            {/* Performance Card - Full Width Top */}
+                            <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl p-4 border border-gray-200/60 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <TrendingUp size={12} className="text-emidias-primary" />
+                                        Performance & Alcance
+                                    </h3>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-white rounded-lg border border-gray-100 text-[10px] font-mono text-gray-500">
+                                            <MapPin size={10} />
+                                            {selectedPonto.latitude?.toFixed(4)}, {selectedPonto.longitude?.toFixed(4)}
                                         </div>
                                     </div>
                                 </div>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">Impacto Diário Estimado</p>
+                                        <p className="text-2xl font-black text-gray-900 tracking-tighter">
+                                            {selectedPonto.fluxo ? parseInt(selectedPonto.fluxo as any).toLocaleString() : 'N/A'}
+                                            <span className="text-xs font-medium text-gray-400 ml-1">pessoas</span>
+                                        </p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">CPM (Custo por Mil)</p>
+                                        <div className="flex items-baseline gap-1">
+                                            <p className="text-2xl font-black text-emidias-primary tracking-tighter">
+                                                {(() => {
+                                                    const locacaoProd = produtos.find(p => p.tipo.toLowerCase().includes('locação') || p.tipo.toLowerCase().includes('locacao') || p.tipo.toLowerCase().includes('bissemanal') || p.tipo.toLowerCase().includes('mensal'));
+                                                    const valor = locacaoProd ? (user?.type === 'external' ? locacaoProd.valor * 2 : locacaoProd.valor) : 0;
+                                                    const cpm = calculateCPM(valor, Number(selectedPonto.fluxo));
+                                                    return cpm ? formatCurrency(cpm) : 'N/A';
+                                                })()}
+                                            </p>
+                                            <span className="text-[10px] font-bold text-gray-400">/ mil imp.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                                {/* Right: Values & Observations */}
-                                <div className="space-y-4">
-                                    {/* Values Card */}
-                                    <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm h-fit">
-                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Valores</h3>
-                                        {proposalItem ? (
-                                            <div className="bg-blue-50/30 rounded-lg p-2.5 border border-blue-100/50">
-                                                <div className="flex justify-between items-center mb-1.5">
-                                                    <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">No Plano</span>
-                                                    <span className="text-[9px] text-gray-400 uppercase">{proposalItem.periodo_comercializado || 'MENSAL'}</span>
-                                                </div>
-                                                <div className="space-y-1.5">
-                                                    <div className="flex justify-between items-end">
-                                                        <span className="text-[11px] text-gray-500">Locação</span>
-                                                        <span className="text-base font-bold text-gray-900">{formatCurrency(proposalItem.valor_locacao)}</span>
-                                                    </div>
-                                                    {proposalItem.valor_papel > 0 && (
-                                                        <div className="flex justify-between items-end pt-1 border-t border-blue-100/50">
-                                                            <span className="text-[11px] text-gray-500">Produção</span>
-                                                            <span className="text-xs font-semibold text-gray-700">{formatCurrency(proposalItem.valor_papel)}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
+                            {/* Exhibitor & Values - Side by Side */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Exhibitor Card */}
+                                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between group">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
+                                                <Building2 size={16} />
                                             </div>
-                                        ) : (
-                                            <div className="space-y-2">
-                                                {produtos.length > 0 ? (
-                                                    produtos.slice(0, 3).map((produto, idx) => {
-                                                        const displayValue = user?.type === 'external' ? produto.valor * 2 : produto.valor;
-                                                        return (
-                                                            <div key={idx} className="flex justify-between items-center text-xs py-1.5 border-b border-gray-50 last:border-0">
-                                                                <div className="flex flex-col">
-                                                                    <span className="font-medium text-gray-700 text-[11px]">{produto.tipo}</span>
-                                                                    {produto.periodo && <span className="text-[9px] text-gray-400">{produto.periodo}</span>}
-                                                                </div>
-                                                                <span className="font-bold text-gray-900">{formatCurrency(displayValue)}</span>
-                                                            </div>
-                                                        );
-                                                    })
-                                                ) : (
-                                                    <p className="text-xs text-gray-400 italic text-center py-2">Preços sob consulta</p>
-                                                )}
+                                            <div>
+                                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Exibidora</h3>
+                                                <p className="text-sm font-bold text-gray-900 leading-tight">{selectedPonto.exibidora_nome}</p>
                                             </div>
+                                        </div>
+                                        {selectedPonto.exibidora_cnpj && (
+                                            <p className="text-[10px] text-gray-400 font-mono mb-4">{selectedPonto.exibidora_cnpj}</p>
                                         )}
                                     </div>
 
-                                    {/* Observations Card */}
-                                    {selectedPonto.observacoes && (
-                                        <div className="p-3 bg-yellow-50/40 rounded-xl border border-yellow-100/60 shadow-sm">
-                                            <h3 className="text-[10px] font-bold text-yellow-700 uppercase tracking-widest mb-1.5">Notas</h3>
-                                            <p className="text-[11px] text-gray-600 leading-relaxed line-clamp-4 italic">"{selectedPonto.observacoes}"</p>
+                                    <div className="space-y-2">
+                                        <ExhibitorPopover
+                                            exhibitorId={selectedPonto.id_exibidora || 0}
+                                            exhibitorName={selectedPonto.exibidora_nome || 'Exibidora'}
+                                            onFilter={(id) => {
+                                                setFilterExibidora([id]);
+                                                setSelectedExibidora(exibidoras.find(e => e.id === id) || null);
+                                                setCurrentView('map');
+                                                handleClose();
+                                            }}
+                                        >
+                                            <button className="w-full py-2 px-3 bg-gray-50 hover:bg-emidias-primary/10 text-gray-600 hover:text-emidias-primary rounded-xl text-xs font-bold transition-all border border-transparent hover:border-emidias-primary/20 flex items-center justify-center gap-2">
+                                                <Users size={14} />
+                                                Ver Contatos
+                                            </button>
+                                        </ExhibitorPopover>
+                                    </div>
+                                </div>
+
+                                {/* Values Card */}
+                                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm h-full">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
+                                            <DollarSign size={16} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Valores de Tabela</h3>
+                                            <p className="text-[10px] text-gray-400 tracking-tight">Médias de mercado</p>
+                                        </div>
+                                    </div>
+
+                                    {proposalItem ? (
+                                        <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-100/50">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-[9px] font-black text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full uppercase tracking-tighter ring-1 ring-blue-200">ITEM DO PLANO</span>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <div className="flex justify-between items-end">
+                                                    <span className="text-[11px] text-gray-500 font-medium">Locação</span>
+                                                    <span className="text-base font-black text-gray-900">{formatCurrency(proposalItem.valor_locacao)}</span>
+                                                </div>
+                                                {proposalItem.valor_papel > 0 && (
+                                                    <div className="flex justify-between items-end pt-1.5 border-t border-blue-100">
+                                                        <span className="text-[11px] text-gray-500 font-medium">Produção</span>
+                                                        <span className="text-xs font-bold text-gray-700">{formatCurrency(proposalItem.valor_papel)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {produtos.length > 0 ? (
+                                                produtos.slice(0, 3).map((produto, idx) => {
+                                                    const displayValue = user?.type === 'external' ? produto.valor * 2 : produto.valor;
+                                                    return (
+                                                        <div key={idx} className="flex justify-between items-center py-1.5 border-b border-gray-50 last:border-0 last:pb-0">
+                                                            <div className="flex flex-col">
+                                                                <span className="font-bold text-gray-700 text-[11px]">{produto.tipo}</span>
+                                                                {produto.periodo && <span className="text-[9px] text-gray-400 uppercase font-medium">{produto.periodo}</span>}
+                                                            </div>
+                                                            <span className="font-black text-gray-900 text-xs">{formatCurrency(displayValue)}</span>
+                                                        </div>
+                                                    );
+                                                })
+                                            ) : (
+                                                <p className="text-xs text-gray-400 italic text-center py-4">Consulte o comercial</p>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -791,34 +771,35 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                             {/* Presence in Media Proposals Section */}
                             {!isInProposalContext && (
                                 <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                            <ShoppingCart size={12} className="text-blue-500" />
+                                    <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] flex items-center gap-2">
+                                            <ShoppingCart size={14} className="text-blue-500" />
                                             Presença em Planos de Mídia
-                                            {pointProposals.length > 0 && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full text-[9px]">{pointProposals.length}</span>}
+                                            {pointProposals.length > 0 && <span className="bg-blue-600 text-white px-2 py-0.5 rounded-full text-[9px] font-black">{pointProposals.length}</span>}
                                         </h3>
                                     </div>
 
                                     {pointProposals.length > 0 ? (
-                                        <div className="grid grid-cols-1 gap-2 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
+                                        <div className="grid grid-cols-1 gap-2 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
                                             {pointProposals.map((proposta) => (
-                                                <div key={proposta.id} className="group bg-white hover:bg-blue-50/30 border border-gray-100 hover:border-blue-200 rounded-xl p-3 transition-all duration-200 shadow-sm hover:shadow-md">
-                                                    <div className="flex items-center justify-between gap-3">
+                                                <div key={proposta.id} className="group bg-white hover:bg-gray-50 border border-gray-100 hover:border-gray-200 rounded-2xl p-3 transition-all duration-200">
+                                                    <div className="flex items-center justify-between gap-4">
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <span className={cn(
-                                                                    "w-2 h-2 rounded-full",
-                                                                    proposta.status === 'aprovado' ? "bg-green-500" :
-                                                                        proposta.status === 'em validação' ? "bg-yellow-500" : "bg-gray-400"
+                                                                <div className={cn(
+                                                                    "w-1.5 h-1.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)]",
+                                                                    proposta.status === 'aprovado' ? "bg-green-500 shadow-green-500/40" :
+                                                                        proposta.status === 'em validação' ? "bg-yellow-500 shadow-yellow-500/40" : "bg-gray-300 shadow-gray-400/40"
                                                                 )} />
-                                                                <h4 className="font-bold text-xs text-gray-900 truncate group-hover:text-blue-700 transition-colors">{proposta.nome}</h4>
+                                                                <h4 className="font-black text-xs text-gray-900 truncate uppercase tracking-tight">{proposta.nome}</h4>
+                                                                <span className="text-[9px] font-bold text-gray-400 px-1.5 py-0.5 bg-gray-100 rounded uppercase">{proposta.status}</span>
                                                             </div>
-                                                            <div className="flex items-center gap-3 text-[10px] text-gray-500">
-                                                                <span className="flex items-center gap-1 font-medium"><User size={10} /> {proposta.cliente?.nome || 'S/ Cliente'}</span>
+                                                            <div className="flex items-center gap-4 text-[10px] text-gray-500 font-medium">
+                                                                <span className="flex items-center gap-1"><User size={10} className="text-gray-400" /> {proposta.cliente?.nome || 'Proprio'}</span>
                                                                 {(() => {
                                                                     const item = proposta.itens?.find(i => i.id_ooh === selectedPonto.id);
                                                                     return item?.periodo_inicio ? (
-                                                                        <span className="flex items-center gap-1"><Clock size={10} /> {new Date(item.periodo_inicio).toLocaleDateString()} - {new Date(item.periodo_fim!).toLocaleDateString()}</span>
+                                                                        <span className="flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100"><Clock size={10} className="text-gray-400" /> {new Date(item.periodo_inicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} — {new Date(item.periodo_fim!).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
                                                                     ) : null;
                                                                 })()}
                                                             </div>
@@ -829,66 +810,19 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                                                 handleClose();
                                                                 window.location.href = `/propostas?id=${proposta.id}`;
                                                             }}
-                                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-100 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                                            className="h-10 w-10 flex items-center justify-center text-gray-400 hover:text-emidias-primary hover:bg-emidias-primary/10 rounded-xl transition-all border border-transparent hover:border-emidias-primary/20"
+                                                            title="Ver Proposta"
                                                         >
-                                                            <ExternalLink size={14} />
+                                                            <ExternalLink size={16} />
                                                         </button>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="bg-gray-50/50 border border-dashed border-gray-200 rounded-xl p-6 text-center">
-                                            <p className="text-xs text-gray-400">Este ponto ainda não foi incluído em nenhum plano.</p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Exhibitor Details Section (Admin/Internal only) */}
-                            {!isInProposalContext && isInternal && (
-                                <div className="pt-2 border-t border-gray-100">
-                                    <div
-                                        className="flex items-center justify-between cursor-pointer group"
-                                        onClick={() => setIsExhibitorInfoExpanded(!isExhibitorInfoExpanded)}
-                                    >
-                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                            <Building2 size={12} className="text-purple-500" />
-                                            Detalhes da Exibidora
-                                        </h3>
-                                        <div className="text-gray-400 group-hover:text-purple-500 transition-colors">
-                                            {isExhibitorInfoExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                                        </div>
-                                    </div>
-
-                                    {isExhibitorInfoExpanded && (
-                                        <div className="mt-3 grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                                            <div className="bg-purple-50/30 rounded-xl p-3 border border-purple-100/50">
-                                                <p className="text-[9px] text-purple-700 uppercase font-bold mb-1">Empresa</p>
-                                                <p className="text-xs font-bold text-gray-900 mb-1">{selectedPonto.exibidora_nome}</p>
-                                                {selectedPonto.exibidora_cnpj && (
-                                                    <p className="text-[10px] text-gray-500 font-mono">{selectedPonto.exibidora_cnpj}</p>
-                                                )}
-                                            </div>
-
-                                            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                                                <p className="text-[9px] text-gray-500 uppercase font-bold mb-2">Contatos Rápidos</p>
-                                                {exhibitorContacts.length > 0 ? (
-                                                    <div className="space-y-2">
-                                                        {exhibitorContacts.slice(0, 2).map((contato, idx) => (
-                                                            <div key={idx} className="flex flex-col gap-0.5">
-                                                                <p className="text-[11px] font-bold text-gray-800">{contato.nome}</p>
-                                                                <div className="flex items-center gap-2 text-[10px] text-gray-500">
-                                                                    {contato.telefone && <span className="flex items-center gap-0.5"><Phone size={8} /> {contato.telefone}</span>}
-                                                                    {contato.email && <span className="flex items-center gap-0.5"><Mail size={8} /> {contato.email}</span>}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-[10px] text-gray-400 italic">Nenhum contato cadastrado.</p>
-                                                )}
-                                            </div>
+                                        <div className="bg-gray-50/50 border border-dashed border-gray-200 rounded-2xl py-8 flex flex-col items-center justify-center gap-2">
+                                            <ShoppingCart size={24} className="text-gray-200" strokeWidth={1} />
+                                            <p className="text-[11px] font-bold text-gray-400 tracking-tight uppercase">Ponto disponível em todos os períodos</p>
                                         </div>
                                     )}
                                 </div>
@@ -946,6 +880,19 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
 
                         {/* Right Side: Context-Aware Actions */}
                         <div className="flex items-center gap-3">
+                            {/* Observações/Notas Button */}
+                            {selectedPonto.observacoes && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-9 px-4 text-xs font-bold border-yellow-200 text-yellow-700 bg-yellow-50/50 hover:bg-yellow-50"
+                                    leftIcon={<FileText size={14} />}
+                                    onClick={() => alert(`Observações do Ponto:\n\n${selectedPonto.observacoes}`)}
+                                >
+                                    Ver Notas
+                                </Button>
+                            )}
+
                             {/* Ver na Lista - ONLY in Proposals Context */}
                             {isInProposalContext && isInCart && (
                                 <Button onClick={handleViewInProposal} variant="outline" size="sm" className="h-9 px-3 text-xs border-gray-200 text-gray-600" leftIcon={<ExternalLink size={14} />}>
