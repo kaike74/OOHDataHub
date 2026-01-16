@@ -216,6 +216,7 @@ export default function ProposalDetailClient() {
     ];
 
     const [isTableOpen, setIsTableOpen] = useState(true);
+    const [tableHeight, setTableHeight] = useState(500); // Track table height
 
     const actions = (
         <div className="flex items-center gap-3">
@@ -268,8 +269,7 @@ export default function ProposalDetailClient() {
                     <div className="flex flex-col gap-3">
                         <Button
                             onClick={() => router.push(`/auth/login?redirect=/propostas?id=${numericId || ''}`)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white w-full"
-                        >
+                            className="bg-blue-600 hover:bg-blue-700 text-white w-full">
                             Fazer Login
                         </Button>
                     </div>
@@ -336,8 +336,11 @@ export default function ProposalDetailClient() {
 
     const content = (
         <div className="relative h-full w-full overflow-hidden flex flex-col">
-            {/* Map Section */}
-            <div className="relative flex-1 w-full h-full z-0">
+            {/* Map Section - Responsive to table height */}
+            <div
+                className="relative w-full z-0 transition-all duration-300 ease-in-out"
+                style={{ height: `calc(100% - ${tableHeight}px)` }}
+            >
                 <GoogleMap
                     searchLocation={searchLocation}
                     forcedFilterPais={filterPais}
@@ -378,6 +381,7 @@ export default function ProposalDetailClient() {
                 onToggle={() => setIsTableOpen(!isTableOpen)}
                 embedded={false}
                 readOnly={permission === 'viewer'} // Implement readOnly prop in CartTable if not exists
+                onHeightChange={setTableHeight}
             />
 
             <ShareModal

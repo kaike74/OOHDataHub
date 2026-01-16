@@ -54,70 +54,76 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
     const hasPrevious = currentIndex > 0;
     const hasNext = currentIndex < cartItems.length - 1;
 
-    // Initialize mini-map
+    // Initialize mini-map with delay to ensure DOM is ready
     useEffect(() => {
-        if (!isPointModalOpen || !selectedPonto || !mapRef.current) return;
+        if (!isPointModalOpen || !selectedPonto) return;
 
-        const initMiniMap = async () => {
-            try {
-                const { setOptions, importLibrary } = await import('@googlemaps/js-api-loader');
+        // Small delay to ensure modal is fully rendered
+        const timer = setTimeout(() => {
+            if (!mapRef.current) return;
 
-                setOptions({
-                    key: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-                    v: "weekly",
-                });
+            const initMiniMap = async () => {
+                try {
+                    const { setOptions, importLibrary } = await import('@googlemaps/js-api-loader');
 
-                await importLibrary("maps");
-                const { AdvancedMarkerElement } = await importLibrary("marker") as any;
+                    setOptions({
+                        key: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+                        v: "weekly",
+                    });
 
-                if (!mapRef.current) return;
+                    await importLibrary("maps");
+                    const { AdvancedMarkerElement } = await importLibrary("marker") as any;
 
-                // Create map centered on the point
-                googleMapRef.current = new google.maps.Map(mapRef.current, {
-                    center: { lat: selectedPonto.latitude!, lng: selectedPonto.longitude! },
-                    zoom: 16,
-                    mapId: "POINT_DETAILS_MAP",
-                    mapTypeControl: false,
-                    fullscreenControl: false,
-                    streetViewControl: false,
-                    zoomControl: true,
-                    gestureHandling: 'cooperative',
-                    styles: [
-                        {
-                            featureType: 'poi',
-                            elementType: 'labels',
-                            stylers: [{ visibility: 'off' }],
-                        },
-                    ],
-                });
+                    if (!mapRef.current) return;
 
-                // Create marker for the point
-                const pinWrapper = document.createElement('div');
-                pinWrapper.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="40" height="40" fill="#FC1E75">
-                        <path d="M384 192c0 87.4-117 243-168.3 307.2c-12.3 15.3-35.1 15.3-47.4 0C117 435 0 279.4 0 192C0 86 86 0 192 0S384 86 384 192z M192 272c44.2 0 80-35.8 80-80s-35.8-80-80-80s-80 35.8-80 80s35.8 80 80 80z"/>
-                    </svg>`;
+                    // Create map centered on the point
+                    googleMapRef.current = new google.maps.Map(mapRef.current, {
+                        center: { lat: selectedPonto.latitude!, lng: selectedPonto.longitude! },
+                        zoom: 16,
+                        mapId: "POINT_DETAILS_MAP",
+                        mapTypeControl: false,
+                        fullscreenControl: false,
+                        streetViewControl: false,
+                        zoomControl: true,
+                        gestureHandling: 'cooperative',
+                        styles: [
+                            {
+                                featureType: 'poi',
+                                elementType: 'labels',
+                                stylers: [{ visibility: 'off' }],
+                            },
+                        ],
+                    });
 
-                markerRef.current = new AdvancedMarkerElement({
-                    position: { lat: selectedPonto.latitude!, lng: selectedPonto.longitude! },
-                    map: googleMapRef.current,
-                    content: pinWrapper,
-                });
+                    // Create marker for the point
+                    const pinWrapper = document.createElement('div');
+                    pinWrapper.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="40" height="40" fill="#FC1E75">
+                            <path d="M384 192c0 87.4-117 243-168.3 307.2c-12.3 15.3-35.1 15.3-47.4 0C117 435 0 279.4 0 192C0 86 86 0 192 0S384 86 384 192z M192 272c44.2 0 80-35.8 80-80s-35.8-80-80-80s-80 35.8-80 80s35.8 80 80 80z"/>
+                        </svg>`;
 
-                // Click on map opens Google Maps
-                googleMapRef.current.addListener('click', () => {
-                    const url = `https://www.google.com/maps?q=${selectedPonto.latitude},${selectedPonto.longitude}`;
-                    window.open(url, '_blank');
-                });
+                    markerRef.current = new AdvancedMarkerElement({
+                        position: { lat: selectedPonto.latitude!, lng: selectedPonto.longitude! },
+                        map: googleMapRef.current,
+                        content: pinWrapper,
+                    });
 
-            } catch (error) {
-                console.error("Error loading mini-map:", error);
-            }
-        };
+                    // Click on map opens Google Maps
+                    googleMapRef.current.addListener('click', () => {
+                        const url = `https://www.google.com/maps?q=${selectedPonto.latitude},${selectedPonto.longitude}`;
+                        window.open(url, '_blank');
+                    });
 
-        initMiniMap();
+                } catch (error) {
+                    console.error("Error loading mini-map:", error);
+                }
+            };
+
+            initMiniMap();
+        }, 100); // Small delay to ensure DOM is ready
 
         return () => {
+            clearTimeout(timer);
             if (markerRef.current) {
                 markerRef.current.map = null;
             }
@@ -405,29 +411,26 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                 </>
                             )}
                         </div>
-
-                        {isInCart && (
-                            <Button
-                                onClick={handleViewInProposal}
-                                variant="outline"
-                                size="sm"
-                                leftIcon={<ExternalLink size={14} />}
-                                className="text-xs"
-                            >
-                                Ver na Proposta
-                            </Button>
-                        )}
                     </div>
 
                     {/* Point Information */}
                     <div className="space-y-4">
-                        {/* Address */}
+                        {/* Address with inline copy button */}
                         <div className="flex gap-3">
                             <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
                                 <MapPin size={16} />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Endereço</p>
+                                <div className="flex items-center justify-between gap-2">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Endereço</p>
+                                    <button
+                                        onClick={handleCopyAddress}
+                                        className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                        title="Copiar endereço"
+                                    >
+                                        <Copy size={14} className="text-gray-400 hover:text-gray-600" />
+                                    </button>
+                                </div>
                                 <p className="text-gray-900 font-medium text-sm mt-0.5 leading-snug">{selectedPonto.endereco}</p>
                                 {selectedPonto.cidade && selectedPonto.uf && (
                                     <p className="text-xs text-gray-500 mt-0.5">
@@ -558,9 +561,13 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                             <Button
                                 onClick={handleAddToCart}
                                 disabled={isAddingToCart}
-                                variant={isInCart ? "outline" : "primary"}
+                                className={cn(
+                                    "flex-1",
+                                    isInCart
+                                        ? "bg-red-500 hover:bg-red-600 text-white border-red-500"
+                                        : "bg-green-500 hover:bg-green-600 text-white border-green-500"
+                                )}
                                 leftIcon={isAddingToCart ? <Loader2 size={16} className="animate-spin" /> : <ShoppingCart size={16} />}
-                                className="flex-1"
                             >
                                 {isAddingToCart ? 'Processando...' : isInCart ? 'Remover do Carrinho' : 'Adicionar ao Carrinho'}
                             </Button>
@@ -576,14 +583,17 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                             </Button>
                         )}
 
-                        <Button
-                            onClick={handleCopyAddress}
-                            variant="outline"
-                            size="icon"
-                            title="Copiar endereço"
-                        >
-                            <Copy size={16} />
-                        </Button>
+                        {isInCart && (
+                            <Button
+                                onClick={handleViewInProposal}
+                                variant="outline"
+                                size="sm"
+                                leftIcon={<ExternalLink size={14} />}
+                                className="text-xs"
+                            >
+                                Ver na Proposta
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>

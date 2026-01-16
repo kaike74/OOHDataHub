@@ -140,9 +140,11 @@ interface CartTableProps {
     isClientView?: boolean;
     readOnly?: boolean;
     embedded?: boolean;
+    onHeightChange?: (height: number) => void; // Callback when table height changes
 }
 
-export default function CartTable({ isOpen, onToggle, isClientView = false, readOnly = false, proposta, embedded = false }: CartTableProps) {
+
+export default function CartTable({ isOpen, onToggle, isClientView = false, readOnly = false, proposta, embedded = false, onHeightChange }: CartTableProps) {
     const storeSelectedProposta = useStore((state) => state.selectedProposta);
     const selectedProposta = proposta || storeSelectedProposta;
 
@@ -222,6 +224,9 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
     // Ref for search bar container
     const searchBarRef = useRef<HTMLDivElement>(null);
+
+    // Ref for table body container (for scrolling to highlighted row)
+    const tableBodyRef = useRef<HTMLDivElement>(null);
 
     // Height Resizing State
     const [tableHeight, setTableHeight] = useState(500);
@@ -395,7 +400,39 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         }
     }, [isOpen]);
 
+    // Notify parent of height changes
+    useEffect(() => {
+        if (onHeightChange) {
+            const actualHeight = isOpen ? tableHeight : 50; // 50px when collapsed (header only)
+            onHeightChange(actualHeight);
+        }
+    }, [tableHeight, isOpen, onHeightChange]);
 
+    // Scroll to and highlight row when "Ver na Proposta" is clicked
+    useEffect(() => {
+        if (!highlightedPointId || !tableBodyRef.current) return;
+
+        // Find the item in the cart
+        const highlightedItem = itens.find(item => item.id_ooh === highlightedPointId);
+        if (!highlightedItem) return;
+
+        // Find the row element
+        const rowElement = tableBodyRef.current.querySelector(`[data-row-id="${highlightedItem.id}"]`);
+        if (!rowElement) return;
+
+        // Scroll to the row
+        rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Add highlight animation class
+        rowElement.classList.add('highlight-flash');
+
+        // Remove class after animation completes
+        const timer = setTimeout(() => {
+            rowElement.classList.remove('highlight-flash');
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [highlightedPointId, itens]);
 
     // Group items by selected field
     const groupedData = useMemo(() => {
@@ -2248,7 +2285,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     )}
 
                     {/* Body */}
-                    <div className="bg-white text-[13px]">
+                    <div ref={tableBodyRef} className="bg-white text-[13px]">
                         {/* Grouped View */}
                         {groupedData ? (
                             <>
@@ -2495,6 +2532,19 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     )}
                 </div>
             )}
+
+            {/* CSS for highlight animation */}
+            <style jsx>{`
+                @keyframes highlightFlash {
+                    0%, 100% { background-color: transparent; }
+                    10%, 30%, 50% { background-color: #fef3c7; }
+                    20%, 40%, 60% { background-color: transparent; }
+                }
+                
+                :global(.highlight-flash) {
+                    animation: highlightFlash 3s ease-in-out;
+                }
+            `}</style>
         </div>
     );
 }
