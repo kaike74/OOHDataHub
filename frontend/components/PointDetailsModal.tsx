@@ -474,8 +474,8 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                 {/* --- LEFT: VISUALS (40%) --- */}
                 <div className="w-[40%] h-full flex flex-col bg-black relative border-r border-gray-100/10">
 
-                    {/* Image Section (70%) */}
-                    <div className="h-[70%] w-full relative overflow-hidden bg-gray-900 group/image">
+                    {/* Image Section (60%) */}
+                    <div className="h-[60%] w-full relative overflow-hidden bg-gray-900 group/image">
                         {imagens.length > 0 ? (
                             <>
                                 <SafeImage
@@ -580,7 +580,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                         </div>
                     )}
 
-                    {/* Map Section (Remaining space) */}
+                    {/* Map Section (Remaining space - 40%) */}
                     <div className="flex-1 w-full relative bg-gray-100 border-t border-white/10">
                         <div ref={mapRef} className="w-full h-full grayscale-[20%] hover:grayscale-0 transition-all duration-500" />
 
@@ -681,133 +681,155 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
 
                             <div className="h-px bg-gray-100" />
 
-                            {/* Specs & Values Grid */}
-                            <div className="grid grid-cols-2 gap-5">
-                                {/* Left: Specifications */}
-                                <div className="space-y-3">
-                                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Especificações</h3>
-
-                                    <div className="space-y-2">
-                                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                                            <Ruler size={14} className="text-gray-400" />
-                                            <div>
-                                                <p className="text-[9px] text-gray-400 uppercase font-medium">Medidas</p>
-                                                <p className="text-sm font-semibold text-gray-900">{selectedPonto.medidas || 'N/A'}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                                            <Users size={14} className="text-gray-400" />
-                                            <div>
+                            {/* Specs, Performance & Values Grid */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Left: Specifications & Performance */}
+                                <div className="space-y-4">
+                                    {/* Performance Card */}
+                                    <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-3 border border-gray-200/60 shadow-sm">
+                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                            <TrendingUp size={10} className="text-emidias-primary" />
+                                            Performance
+                                        </h3>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div className="space-y-0.5">
                                                 <p className="text-[9px] text-gray-400 uppercase font-medium">Impacto Diário</p>
-                                                <p className="text-sm font-semibold text-gray-900">{selectedPonto.fluxo ? `${parseInt(selectedPonto.fluxo as any).toLocaleString()}` : 'N/A'}</p>
+                                                <p className="text-sm font-bold text-gray-900">{selectedPonto.fluxo ? parseInt(selectedPonto.fluxo as any).toLocaleString() : 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-0.5">
+                                                <p className="text-[9px] text-gray-400 uppercase font-medium">CPM Estimado</p>
+                                                <p className="text-sm font-bold text-emidias-primary">
+                                                    {(() => {
+                                                        const locacaoProd = produtos.find(p => p.tipo.toLowerCase().includes('locação') || p.tipo.toLowerCase().includes('locacao') || p.tipo.toLowerCase().includes('bissemanal') || p.tipo.toLowerCase().includes('mensal'));
+                                                        const valor = locacaoProd ? (user?.type === 'external' ? locacaoProd.valor * 2 : locacaoProd.valor) : 0;
+                                                        const cpm = calculateCPM(valor, Number(selectedPonto.fluxo));
+                                                        return cpm ? formatCurrency(cpm) : 'N/A';
+                                                    })()}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {selectedPonto.observacoes && (
-                                        <div className="mt-3 p-3 bg-yellow-50/50 rounded-lg text-xs text-gray-600 border border-yellow-100/50">
-                                            <p className="font-bold text-yellow-700/80 mb-1 uppercase text-[9px]">Observações</p>
-                                            <p className="leading-relaxed line-clamp-3">{selectedPonto.observacoes}</p>
+                                    {/* Specifications Card */}
+                                    <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm space-y-3">
+                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Especificações</h3>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2 p-1.5 bg-gray-50/50 rounded-lg">
+                                                <Ruler size={14} className="text-gray-400" />
+                                                <div>
+                                                    <p className="text-[9px] text-gray-400 uppercase font-medium">Medidas</p>
+                                                    <p className="text-xs font-semibold text-gray-900">{selectedPonto.medidas || 'N/A'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 p-1.5 bg-gray-50/50 rounded-lg">
+                                                <Tag size={14} className="text-gray-400" />
+                                                <div>
+                                                    <p className="text-[9px] text-gray-400 uppercase font-medium">Formato</p>
+                                                    <p className="text-xs font-semibold text-gray-900 uppercase">{selectedPonto.tipo || 'N/A'}</p>
+                                                </div>
+                                            </div>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
 
-                                {/* Right: Values */}
-                                <div className="space-y-3">
-                                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Valores</h3>
-
-                                    {proposalItem ? (
-                                        <div className="bg-blue-50/30 rounded-lg p-3 border border-blue-100/50">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="text-xs font-medium text-blue-800 bg-blue-100/50 px-2 py-0.5 rounded">Selecionado</span>
-                                                <span className="text-[9px] text-gray-400 uppercase">{proposalItem.periodo_comercializado || 'MENSAL'}</span>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between items-end">
-                                                    <span className="text-xs text-gray-500">Locação</span>
-                                                    <span className="text-lg font-bold text-gray-900">{formatCurrency(proposalItem.valor_locacao)}</span>
+                                {/* Right: Values & Observations */}
+                                <div className="space-y-4">
+                                    {/* Values Card */}
+                                    <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm h-fit">
+                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Valores</h3>
+                                        {proposalItem ? (
+                                            <div className="bg-blue-50/30 rounded-lg p-2.5 border border-blue-100/50">
+                                                <div className="flex justify-between items-center mb-1.5">
+                                                    <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">No Plano</span>
+                                                    <span className="text-[9px] text-gray-400 uppercase">{proposalItem.periodo_comercializado || 'MENSAL'}</span>
                                                 </div>
-                                                {proposalItem.valor_papel > 0 && (
-                                                    <div className="flex justify-between items-end pt-2 border-t border-blue-100/50">
-                                                        <span className="text-xs text-gray-500">Produção</span>
-                                                        <span className="text-sm font-semibold text-gray-700">{formatCurrency(proposalItem.valor_papel)}</span>
+                                                <div className="space-y-1.5">
+                                                    <div className="flex justify-between items-end">
+                                                        <span className="text-[11px] text-gray-500">Locação</span>
+                                                        <span className="text-base font-bold text-gray-900">{formatCurrency(proposalItem.valor_locacao)}</span>
                                                     </div>
-                                                )}
+                                                    {proposalItem.valor_papel > 0 && (
+                                                        <div className="flex justify-between items-end pt-1 border-t border-blue-100/50">
+                                                            <span className="text-[11px] text-gray-500">Produção</span>
+                                                            <span className="text-xs font-semibold text-gray-700">{formatCurrency(proposalItem.valor_papel)}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ) : (
-                                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                                            {produtos.length > 0 ? (
-                                                <div className="space-y-2">
-                                                    {produtos.slice(0, 3).map((produto, idx) => {
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {produtos.length > 0 ? (
+                                                    produtos.slice(0, 3).map((produto, idx) => {
                                                         const displayValue = user?.type === 'external' ? produto.valor * 2 : produto.valor;
                                                         return (
-                                                            <div key={idx} className="flex justify-between items-center text-sm">
+                                                            <div key={idx} className="flex justify-between items-center text-xs py-1.5 border-b border-gray-50 last:border-0">
                                                                 <div className="flex flex-col">
-                                                                    <span className="font-medium text-gray-700 text-xs">{produto.tipo}</span>
+                                                                    <span className="font-medium text-gray-700 text-[11px]">{produto.tipo}</span>
                                                                     {produto.periodo && <span className="text-[9px] text-gray-400">{produto.periodo}</span>}
                                                                 </div>
-                                                                <span className="font-semibold text-gray-900">{formatCurrency(displayValue)}</span>
+                                                                <span className="font-bold text-gray-900">{formatCurrency(displayValue)}</span>
                                                             </div>
                                                         );
-                                                    })}
-                                                </div>
-                                            ) : (
-                                                <p className="text-xs text-gray-400 italic text-center py-2">Preços sob consulta</p>
-                                            )}
+                                                    })
+                                                ) : (
+                                                    <p className="text-xs text-gray-400 italic text-center py-2">Preços sob consulta</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Observations Card */}
+                                    {selectedPonto.observacoes && (
+                                        <div className="p-3 bg-yellow-50/40 rounded-xl border border-yellow-100/60 shadow-sm">
+                                            <h3 className="text-[10px] font-bold text-yellow-700 uppercase tracking-widest mb-1.5">Notas</h3>
+                                            <p className="text-[11px] text-gray-600 leading-relaxed line-clamp-4 italic">"{selectedPonto.observacoes}"</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Proposals List (Map Context Only) */}
-                            {!isInProposalContext && pointProposals.length > 0 && (
-                                <>
-                                    <div className="h-px bg-gray-100" />
-                                    <div>
-                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Propostas ({pointProposals.length})</h3>
-                                        <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar">
+                            {/* Presence in Media Proposals Section */}
+                            {!isInProposalContext && (
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                            <ShoppingCart size={12} className="text-blue-500" />
+                                            Presença em Planos de Mídia
+                                            {pointProposals.length > 0 && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full text-[9px]">{pointProposals.length}</span>}
+                                        </h3>
+                                    </div>
+
+                                    {pointProposals.length > 0 ? (
+                                        <div className="grid grid-cols-1 gap-2 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
                                             {pointProposals.map((proposta) => (
-                                                <div key={proposta.id} className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-100 hover:shadow-sm transition-all">
-                                                    <div className="flex items-start justify-between gap-3">
+                                                <div key={proposta.id} className="group bg-white hover:bg-blue-50/30 border border-gray-100 hover:border-blue-200 rounded-xl p-3 transition-all duration-200 shadow-sm hover:shadow-md">
+                                                    <div className="flex items-center justify-between gap-3">
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <h4 className="font-semibold text-sm text-gray-900 truncate">{proposta.nome}</h4>
                                                                 <span className={cn(
-                                                                    "text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase",
-                                                                    proposta.status === 'rascunho' && "bg-gray-200 text-gray-700",
-                                                                    proposta.status === 'em validação' && "bg-yellow-200 text-yellow-800",
-                                                                    proposta.status === 'aprovado' && "bg-green-200 text-green-800"
-                                                                )}>
-                                                                    {proposta.status}
-                                                                </span>
+                                                                    "w-2 h-2 rounded-full",
+                                                                    proposta.status === 'aprovado' ? "bg-green-500" :
+                                                                        proposta.status === 'em validação' ? "bg-yellow-500" : "bg-gray-400"
+                                                                )} />
+                                                                <h4 className="font-bold text-xs text-gray-900 truncate group-hover:text-blue-700 transition-colors">{proposta.nome}</h4>
                                                             </div>
-                                                            <p className="text-[10px] text-gray-600">
-                                                                Cliente: {proposta.cliente?.nome || 'N/A'}
-                                                            </p>
-                                                            {(() => {
-                                                                const item = proposta.itens?.find(i => i.id_ooh === selectedPonto.id);
-                                                                if (!item) return null;
-                                                                return (
-                                                                    <div className="mt-1 flex items-center gap-3 text-[10px] text-gray-500">
-                                                                        {item.periodo_inicio && item.periodo_fim && (
-                                                                            <span>📅 {new Date(item.periodo_inicio).toLocaleDateString()} - {new Date(item.periodo_fim).toLocaleDateString()}</span>
-                                                                        )}
-                                                                        {item.valor_locacao > 0 && (
-                                                                            <span className="font-semibold text-blue-700">💰 {formatCurrency(item.valor_locacao)}</span>
-                                                                        )}
-                                                                    </div>
-                                                                );
-                                                            })()}
+                                                            <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                                                                <span className="flex items-center gap-1 font-medium"><User size={10} /> {proposta.cliente?.nome || 'S/ Cliente'}</span>
+                                                                {(() => {
+                                                                    const item = proposta.itens?.find(i => i.id_ooh === selectedPonto.id);
+                                                                    return item?.periodo_inicio ? (
+                                                                        <span className="flex items-center gap-1"><Clock size={10} /> {new Date(item.periodo_inicio).toLocaleDateString()} - {new Date(item.periodo_fim!).toLocaleDateString()}</span>
+                                                                    ) : null;
+                                                                })()}
+                                                            </div>
                                                         </div>
                                                         <button
-                                                            onClick={() => {
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
                                                                 handleClose();
                                                                 window.location.href = `/propostas?id=${proposta.id}`;
                                                             }}
-                                                            className="p-1.5 text-blue-600 hover:bg-blue-100 rounded transition-all"
-                                                            title="Abrir Proposta"
+                                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-100 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                                                         >
                                                             <ExternalLink size={14} />
                                                         </button>
@@ -815,8 +837,61 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                                 </div>
                                             ))}
                                         </div>
+                                    ) : (
+                                        <div className="bg-gray-50/50 border border-dashed border-gray-200 rounded-xl p-6 text-center">
+                                            <p className="text-xs text-gray-400">Este ponto ainda não foi incluído em nenhum plano.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Exhibitor Details Section (Admin/Internal only) */}
+                            {!isInProposalContext && isInternal && (
+                                <div className="pt-2 border-t border-gray-100">
+                                    <div
+                                        className="flex items-center justify-between cursor-pointer group"
+                                        onClick={() => setIsExhibitorInfoExpanded(!isExhibitorInfoExpanded)}
+                                    >
+                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                            <Building2 size={12} className="text-purple-500" />
+                                            Detalhes da Exibidora
+                                        </h3>
+                                        <div className="text-gray-400 group-hover:text-purple-500 transition-colors">
+                                            {isExhibitorInfoExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                        </div>
                                     </div>
-                                </>
+
+                                    {isExhibitorInfoExpanded && (
+                                        <div className="mt-3 grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <div className="bg-purple-50/30 rounded-xl p-3 border border-purple-100/50">
+                                                <p className="text-[9px] text-purple-700 uppercase font-bold mb-1">Empresa</p>
+                                                <p className="text-xs font-bold text-gray-900 mb-1">{selectedPonto.exibidora_nome}</p>
+                                                {selectedPonto.exibidora_cnpj && (
+                                                    <p className="text-[10px] text-gray-500 font-mono">{selectedPonto.exibidora_cnpj}</p>
+                                                )}
+                                            </div>
+
+                                            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                                                <p className="text-[9px] text-gray-500 uppercase font-bold mb-2">Contatos Rápidos</p>
+                                                {exhibitorContacts.length > 0 ? (
+                                                    <div className="space-y-2">
+                                                        {exhibitorContacts.slice(0, 2).map((contato, idx) => (
+                                                            <div key={idx} className="flex flex-col gap-0.5">
+                                                                <p className="text-[11px] font-bold text-gray-800">{contato.nome}</p>
+                                                                <div className="flex items-center gap-2 text-[10px] text-gray-500">
+                                                                    {contato.telefone && <span className="flex items-center gap-0.5"><Phone size={8} /> {contato.telefone}</span>}
+                                                                    {contato.email && <span className="flex items-center gap-0.5"><Mail size={8} /> {contato.email}</span>}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-[10px] text-gray-400 italic">Nenhum contato cadastrado.</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             )}
 
                         </div>
