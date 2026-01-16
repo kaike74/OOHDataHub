@@ -409,8 +409,14 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     }, [tableHeight, isOpen, onHeightChange]);
 
     // Scroll to and highlight row when "Ver na Proposta" is clicked
+    const lastHighlightedIdRef = useRef<number | null>(null);
+
     useEffect(() => {
         if (!highlightedPointId || !tableBodyRef.current) return;
+
+        // Only trigger if it's a new highlight (not just re-render)
+        if (lastHighlightedIdRef.current === highlightedPointId) return;
+        lastHighlightedIdRef.current = highlightedPointId;
 
         // Find the item in the cart
         const highlightedItem = itens.find(item => item.id_ooh === highlightedPointId);
@@ -429,10 +435,11 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         // Remove class after animation completes
         const timer = setTimeout(() => {
             rowElement.classList.remove('highlight-flash');
+            lastHighlightedIdRef.current = null; // Reset after animation
         }, 3000);
 
         return () => clearTimeout(timer);
-    }, [highlightedPointId, itens]);
+    }, [highlightedPointId]); // Only depend on highlightedPointId, not itens
 
     // Group items by selected field
     const groupedData = useMemo(() => {

@@ -3,7 +3,7 @@
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, cn } from '@/lib/utils';
-import { X, MapPin, Building2, Ruler, Users, FileText, DollarSign, ChevronLeft, ChevronRight, Eye, ShoppingCart, Copy, ExternalLink, Loader2 } from 'lucide-react';
+import { X, MapPin, Building2, Ruler, Users, FileText, DollarSign, ChevronLeft, ChevronRight, Eye, ShoppingCart, Copy, ExternalLink, Loader2, Tag, Navigation, Phone, Mail, MessageSquare } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -483,6 +483,92 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                 </div>
                             )}
                         </div>
+
+                        {/* Tipo do Ponto */}
+                        {selectedPonto.tipo && (
+                            <div className="flex gap-3">
+                                <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
+                                    <Tag size={16} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tipo</p>
+                                    <p className="text-gray-900 font-semibold text-sm mt-0.5">{selectedPonto.tipo}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Coordinates */}
+                        {selectedPonto.latitude && selectedPonto.longitude && (
+                            <div className="flex gap-3">
+                                <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
+                                    <Navigation size={16} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Coordenadas</p>
+                                    <p className="text-gray-700 text-xs mt-0.5 font-mono">
+                                        {selectedPonto.latitude.toFixed(6)}, {selectedPonto.longitude.toFixed(6)}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Exhibitor Contact */}
+                        {((selectedPonto as any).exibidora_telefone || (selectedPonto as any).exibidora_email) && (
+                            <div className="flex gap-3">
+                                <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
+                                    <Phone size={16} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Contato da Exibidora</p>
+                                    <div className="space-y-0.5 mt-0.5">
+                                        {(selectedPonto as any).exibidora_telefone && (
+                                            <p className="text-gray-700 text-xs">
+                                                <Phone size={12} className="inline mr-1" />
+                                                {(selectedPonto as any).exibidora_telefone}
+                                            </p>
+                                        )}
+                                        {(selectedPonto as any).exibidora_email && (
+                                            <p className="text-gray-700 text-xs">
+                                                <Mail size={12} className="inline mr-1" />
+                                                {(selectedPonto as any).exibidora_email}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Reference Point */}
+                        {(proposalItem?.ponto_referencia || selectedPonto.ponto_referencia) && (
+                            <div className="flex gap-3">
+                                <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
+                                    <MapPin size={16} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Ponto de Referência</p>
+                                    <p className="text-gray-700 text-sm mt-0.5">
+                                        {proposalItem?.ponto_referencia || selectedPonto.ponto_referencia}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Observations */}
+                        {(proposalItem?.observacoes || selectedPonto.observacoes) && (
+                            <div className="flex gap-3">
+                                <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
+                                    <MessageSquare size={16} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Observações</p>
+                                    <p className="text-gray-700 text-sm mt-0.5 leading-relaxed">
+                                        {proposalItem?.observacoes || selectedPonto.observacoes}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
 
                         {/* Values Section */}
                         {proposalItem ? (
