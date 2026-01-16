@@ -155,52 +155,22 @@ export default function ProposalDetailClient() {
                         api.getClientes()
                     ]);
                 } else {
-                    // Public View: Use data from proposal items
+                    // Public View: Use data from proposal items EXACTLY as they come
                     if (proposta.itens) {
-                        // 1. Map Points Mapping (Ensure latitude/longitude)
-                        pontosData = proposta.itens.map((item: any) => {
-                            const p = item.ponto || item;
-                            const val = item.valor || p.valor || 0;
-                            return {
-                                ...p,
-                                // GoogleMap expects 'latitude'/'longitude'
-                                latitude: parseFloat(p.lat || p.latitude),
-                                longitude: parseFloat(p.lng || p.longitude),
-                                lat: parseFloat(p.lat || p.latitude), // Keep both for safety
-                                lng: parseFloat(p.lng || p.longitude),
-                                valor: val
-                            };
-                        }).filter((p: any) => p && !isNaN(p.lat) && !isNaN(p.lng));
-
-                        // 2. Normalize Proposal Items for CartTable
-                        // Ensure fields like vlr_total, impactos are present
-                        proposta.itens = proposta.itens.map((item: any) => {
-                            const p = item.ponto || item;
-                            return {
-                                ...item,
-                                // Normalizing fields for CartTable Columns
-                                latitude: parseFloat(p.lat || p.latitude || item.lat || item.latitude),
-                                longitude: parseFloat(p.lng || p.longitude || item.lng || item.longitude),
-
-                                // Costs
-                                valor_locacao: item.valor_locacao || item.valor || p.valor || 0,
-                                valor_papel: item.valor_papel || 0,
-                                valor_lona: item.valor_lona || 0,
-                                vlr_total: item.vlr_total || item.valor || p.valor || 0,
-                                vlr_tabela: item.vlr_tabela || p.valor || 0,
-
-                                // Impacts
-                                fluxo_diario: item.fluxo_diario || item.impactos || item.impacto_estimado || p.impacto_estimado || 0,
-                                impactos: item.impactos || ((item.fluxo_diario || p.impacto_estimado || 0) * 14), // Fallback calculation if needed
-
-                                // Ensure point data is attached for display
-                                ponto: {
-                                    ...p,
-                                    latitude: parseFloat(p.lat || p.latitude || item.lat || item.latitude),
-                                    longitude: parseFloat(p.lng || p.longitude || item.lng || item.longitude),
-                                }
-                            };
-                        });
+                        // Map points for the map - items already have latitude/longitude from the query
+                        pontosData = proposta.itens.map((item: any) => ({
+                            id: item.id_ooh,
+                            latitude: item.latitude,
+                            longitude: item.longitude,
+                            codigo_ooh: item.codigo_ooh,
+                            endereco: item.endereco,
+                            cidade: item.cidade,
+                            uf: item.uf,
+                            tipo: item.tipo,
+                            medidas: item.medidas,
+                            valor: item.valor_locacao,
+                            exibidora_nome: item.exibidora_nome
+                        })).filter((p: any) => p.latitude && p.longitude);
                     }
 
                     if (proposta.cliente) {
