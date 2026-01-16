@@ -155,38 +155,48 @@ export default function ProposalDetailClient() {
                         api.getClientes()
                     ]);
                 } else {
-                    // Public View: WE DO NOT FETCH ALL POINTS.
-                    // We must rely on the proposal's items to build the 'pontos' list.
-                    // Assuming proposal.itens contains the point data or we need to fetch them specifically if not hydrated.
-                    // Usually `getPublicProposal` should return expanded items.
-                    // If items have `ponto` object nested:
+                    // Public View: Use data from proposal items
                     if (proposta.itens) {
-                        // Robust extraction: Check item.ponto, or if item itself looks like a point (fallback)
+                        // 1. Map Points Mapping (Ensure latitude/longitude)
                         pontosData = proposta.itens.map((item: any) => {
-                            // Ensure we have coordinates for the map
                             const p = item.ponto || item;
-                            const val = item.valor || p.valor;
+                            const val = item.valor || p.valor || 0;
                             return {
                                 ...p,
-                                lat: parseFloat(p.lat),
-                                lng: parseFloat(p.lng),
+                                // GoogleMap expects 'latitude'/'longitude'
+                                latitude: parseFloat(p.lat || p.latitude),
+                                longitude: parseFloat(p.lng || p.longitude),
+                                lat: parseFloat(p.lat || p.latitude), // Keep both for safety
+                                lng: parseFloat(p.lng || p.longitude),
                                 valor: val
                             };
                         }).filter((p: any) => p && !isNaN(p.lat) && !isNaN(p.lng));
+
+                        // 2. Normalize Proposal Items for CartTable
+                        // Ensure fields like vlr_total, impactos are present
+                        proposta.itens = proposta.itens.map((item: any) => {
+                            const p = item.ponto || item;
+                            return {
+                                ...item,
+                                // If vlr_total is missing/zero, try to use valid values from item or point
+                                vlr_total: item.vlr_total || item.valor || p.valor || 0,
+                                vlr_tabela: item.vlr_tabela || p.valor || 0,
+                                impactos: item.impactos || item.impacto_estimado || p.impacto_estimado || 0,
+                                // Ensure point data is attached for display
+                                ponto: p
+                            };
+                        });
                     }
 
-                    // Same for client, if nested or we use the one in proposal
                     if (proposta.cliente) {
                         clientsData = [proposta.cliente];
                     }
                 }
 
                 // Filter points if public view
-                // Filter points if public view
-                // In public view, pointsData is ALREADY filtered to just the proposal items above.
                 const relevantPoints = isPublic
                     ? pontosData
-                    : pontosData; // For internal view, we might keep all or filter later. Keeping logic simple.
+                    : pontosData;
 
                 setPontos(relevantPoints);
                 setExibidoras(exibidorasData);
@@ -195,7 +205,6 @@ export default function ProposalDetailClient() {
                 // Enrich Proposal
                 const enrichedProposal = {
                     ...proposta,
-                    // If public, client might already be attached or found in the single-item clientsData array
                     cliente: isPublic ? proposta.cliente : clientsData.find((c: any) => c.id === proposta.id_cliente)
                 };
                 setProposal(enrichedProposal);
@@ -312,13 +321,18 @@ export default function ProposalDetailClient() {
             </div>
 
             <div className="flex items-center gap-4">
-                {/* "Feito com..." Branding */}
-                <div className="flex flex-col items-end mr-4">
-                    <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold mb-1">Feito com</span>
-                    <a href="/auth/login" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
-                        <img src="/assets/E-Logo.png" alt="OOH DataHub" className="h-8 w-auto" />
-                    </a>
-                </div>
+                {/* "Feito com..." Branding - Notion Style */}
+                <a
+                    href="/auth/login"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group"
+                >
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 rounded shadow-sm transition-all duration-200 group-hover:border-gray-300">
+                        <span className="text-[11px] text-gray-500 font-medium">Feito com</span>
+                        <img src="/assets/E-Logo.png" alt="OOH DataHub" className="h-4 w-auto opacity-80 group-hover:opacity-100" />
+                    </div>
+                </a>
 
                 {permission === 'admin' && (
                     <Button variant="accent" size="sm" leftIcon={<CheckCircle size={16} />}>
