@@ -27,19 +27,22 @@ export const handlePublicProposal = async (request: Request, env: Env) => {
             return new Response('Proposal not found', { status: 404, headers });
         }
 
-        // Get items but HIDE COSTS
+        // Get items with all necessary fields for display
         const itemsStmt = env.DB.prepare(`
-            SELECT pi.id, pi.id_ooh, pi.periodo_inicio, pi.periodo_fim, 
+            SELECT pi.id, pi.id_ooh, pi.id_proposta,
+                   pi.periodo_inicio, pi.periodo_fim, pi.selected_periods,
                    pi.status, pi.client_comment,
-                   po.codigo_ooh, po.endereco, po.cidade, po.uf, NULL as bairro,
-                   po.latitude, po.longitude, po.medidas, po.tipo,
-                   e.nome as exibidora_nome,
-                   -- Calculate public price (total_investimento equivalent) but maybe without breakdown?
-                   -- For now, let's return total_investimento if it exists or calculate it.
-                   -- User said: "sem valores de custo, só venda".
-                   -- So we return the 'sales price' which is essentially valor_locacao + others?
-                   -- Let's return the simplified values.
-                   (pi.valor_locacao + pi.valor_papel + pi.valor_lona) as valor_total
+                   pi.valor_locacao, pi.valor_papel, pi.valor_lona,
+                   pi.vlr_total, pi.vlr_tabela,
+                   pi.fluxo_diario, pi.impactos,
+                   po.id as ponto_id,
+                   po.codigo_ooh, po.endereco, po.cidade, po.uf, po.bairro,
+                   po.latitude, po.longitude, 
+                   po.lat, po.lng,
+                   po.medidas, po.tipo,
+                   po.impacto_estimado, po.valor,
+                   e.id as exibidora_id,
+                   e.nome as exibidora_nome
             FROM proposta_itens pi
             JOIN pontos_ooh po ON pi.id_ooh = po.id
             JOIN exibidoras e ON po.id_exibidora = e.id
@@ -48,9 +51,47 @@ export const handlePublicProposal = async (request: Request, env: Env) => {
 
         const { results } = await itemsStmt.all();
 
+        // Structure items to match what the frontend expects
+        const structuredItems = results.map((item: any) => ({
+            ...item,
+            // Ensure both coordinate formats are available
+            lat: item.lat || item.latitude,
+            lng: item.lng || item.longitude,
+            latitude: item.latitude || item.lat,
+            longitude: item.longitude || item.lng,
+            // Ensure valor fields are present
+            valor: item.valor_locacao || item.valor || 0,
+            valor_locacao: item.valor_locacao || 0,
+            valor_papel: item.valor_papel || 0,
+            valor_lona: item.valor_lona || 0,
+            vlr_total: item.vlr_total || (item.valor_locacao + item.valor_papel + item.valor_lona),
+            vlr_tabela: item.vlr_tabela || item.valor_locacao || 0,
+            // Ensure impact fields are present
+            fluxo_diario: item.fluxo_diario || item.impacto_estimado || 0,
+            impactos: item.impactos || ((item.fluxo_diario || item.impacto_estimado || 0) * 14),
+            // Nested ponto object for compatibility
+            ponto: {
+                id: item.ponto_id,
+                codigo_ooh: item.codigo_ooh,
+                endereco: item.endereco,
+                cidade: item.cidade,
+                uf: item.uf,
+                bairro: item.bairro,
+                latitude: item.latitude || item.lat,
+                longitude: item.longitude || item.lng,
+                lat: item.lat || item.latitude,
+                lng: item.lng || item.longitude,
+                medidas: item.medidas,
+                tipo: item.tipo,
+                impacto_estimado: item.impacto_estimado,
+                valor: item.valor,
+                id_exibidora: item.exibidora_id
+            }
+        }));
+
         return new Response(JSON.stringify({
             ...proposal,
-            itens: results
+            itens: structuredItems
         }), {
             headers
         });
