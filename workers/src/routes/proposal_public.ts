@@ -52,10 +52,11 @@ export const handlePublicProposal = async (request: Request, env: Env) => {
         }));
 
         // Build cliente object from proposal data
+        // Convert logo_url (R2 key) to full URL
         const cliente = proposal.id_cliente ? {
             id: proposal.id_cliente,
             nome: proposal.cliente_nome,
-            logo_url: proposal.cliente_logo
+            logo_url: proposal.cliente_logo ? `https://ooh-system.kaike-458.workers.dev/api/images/${encodeURIComponent(proposal.cliente_logo)}` : null
         } : null;
 
         return new Response(JSON.stringify({
