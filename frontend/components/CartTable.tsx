@@ -2008,490 +2008,489 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
                         {/* Floating Action Menu - Hide in readOnly (Public View) */}
                         {!readOnly && (
+                            <FloatingActionMenu
+                                onOpenChange={setIsMenuOpen}
+                                actions={[
+                                    {
+                                        label: "Agrupar",
+                                        icon: <Layers size={18} />,
+                                        onClick: () => setIsGroupMenuOpen(true)
+                                    },
+                                    {
+                                        label: "Mostrar/Ocultar Colunas",
+                                        icon: <Settings size={18} />,
+                                        onClick: () => setIsSettingsOpen(true)
+                                    },
+                                    {
+                                        label: "Compartilhar",
+                                        icon: <Share2 size={18} />,
+                                        onClick: () => setIsShareModalOpen(true)
+                                    },
+                                    {
+                                        label: "Assistente IA",
+                                        icon: <Bot size={18} />,
+                                        onClick: () => setIsAIChatOpen(true)
+                                    },
+                                    // Stage 1: Solicitar Validação (only for rascunho)
+                                    ...(isInternal && selectedProposta?.status === 'rascunho' ? [{
+                                        label: "Solicitar Validação",
+                                        icon: <ShoppingCart size={18} />,
+                                        onClick: handleRequestValidation
+                                    }] : []),
+                                    // Stage 2: Concluir Validação (only for em_validacao)
+                                    ...(isInternal && selectedProposta?.status === 'em_validacao' ? [{
+                                        label: "Concluir Validação",
+                                        icon: <Check size={18} />,
+                                        onClick: handleConcludeValidation
+                                    }] : []),
+                                    // Stage 3: Aprovar (only for validado_aguardando_aprovacao)
+                                    ...(isInternal && selectedProposta?.status === 'validado_aguardando_aprovacao' ? [{
+                                        label: "Aprovar",
+                                        icon: <CheckCircle size={18} />,
+                                        onClick: handleFinalApproval
+                                    }] : [])
+                                ]}
+                            />
+                        )}
+
+                        {/* Grouping Dropdown - Repositioned */}
+                        {isGroupMenuOpen && (
                             <>
-                                <FloatingActionMenu
-                                    onOpenChange={setIsMenuOpen}
-                                    actions={[
-                                        {
-                                            label: "Agrupar",
-                                            icon: <Layers size={18} />,
-                                            onClick: () => setIsGroupMenuOpen(true)
-                                        },
-                                        {
-                                            label: "Mostrar/Ocultar Colunas",
-                                            icon: <Settings size={18} />,
-                                            onClick: () => setIsSettingsOpen(true)
-                                        },
-                                        {
-                                            label: "Compartilhar",
-                                            icon: <Share2 size={18} />,
-                                            onClick: () => setIsShareModalOpen(true)
-                                        },
-                                        {
-                                            label: "Assistente IA",
-                                            icon: <Bot size={18} />,
-                                            onClick: () => setIsAIChatOpen(true)
-                                        },
-                                        // Stage 1: Solicitar Validação (only for rascunho)
-                                        ...(isInternal && selectedProposta?.status === 'rascunho' ? [{
-                                            label: "Solicitar Validação",
-                                            icon: <ShoppingCart size={18} />,
-                                            onClick: handleRequestValidation
-                                        }] : []),
-                                        // Stage 2: Concluir Validação (only for em_validacao)
-                                        ...(isInternal && selectedProposta?.status === 'em_validacao' ? [{
-                                            label: "Concluir Validação",
-                                            icon: <Check size={18} />,
-                                            onClick: handleConcludeValidation
-                                        }] : []),
-                                        // Stage 3: Aprovar (only for validado_aguardando_aprovacao)
-                                        ...(isInternal && selectedProposta?.status === 'validado_aguardando_aprovacao' ? [{
-                                            label: "Aprovar",
-                                            icon: <CheckCircle size={18} />,
-                                            onClick: handleFinalApproval
-                                        }] : [])
-                                    ]}
-                                />
+                                <div className="fixed inset-0 z-40" onClick={() => setIsGroupMenuOpen(false)} />
+                                <div className="absolute right-0 top-0 mt-0 mr-[140px] w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
+                                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Agrupar Por</h4>
+                                    <div className="px-1">
+                                        {[
+                                            { value: 'none' as GroupByField, label: 'Sem agrupamento', icon: '—' },
+                                            { value: 'pais' as GroupByField, label: 'País', icon: '🌍' },
+                                            { value: 'uf' as GroupByField, label: 'UF', icon: '📍' },
+                                            { value: 'cidade' as GroupByField, label: 'Cidade', icon: '🏙️' },
+                                            { value: 'exibidora_nome' as GroupByField, label: 'Exibidora', icon: '🏢' },
+                                        ].map((option) => (
+                                            <div
+                                                key={option.value}
+                                                className={`px-2 py-2 flex items-center gap-3 hover:bg-gray-50 rounded cursor-pointer transition-colors ${groupBy === option.value ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}
+                                                onClick={() => {
+                                                    setGroupBy(option.value);
+                                                    setIsGroupMenuOpen(false);
+                                                    setCollapsedGroups(new Set()); // Reset collapsed groups
+                                                }}
+                                            >
+                                                <span className="text-base">{option.icon}</span>
+                                                <span className="text-sm font-medium flex-1">{option.label}</span>
+                                                {groupBy === option.value && (
+                                                    <Check size={14} className="text-blue-600" strokeWidth={3} />
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
-                                {/* Grouping Dropdown - Repositioned */}
-                                {isGroupMenuOpen && (
-                                    <>
-                                        <div className="fixed inset-0 z-40" onClick={() => setIsGroupMenuOpen(false)} />
-                                        <div className="absolute right-0 top-0 mt-0 mr-[140px] w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
-                                            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Agrupar Por</h4>
-                                            <div className="px-1">
-                                                {[
-                                                    { value: 'none' as GroupByField, label: 'Sem agrupamento', icon: '—' },
-                                                    { value: 'pais' as GroupByField, label: 'País', icon: '🌍' },
-                                                    { value: 'uf' as GroupByField, label: 'UF', icon: '📍' },
-                                                    { value: 'cidade' as GroupByField, label: 'Cidade', icon: '🏙️' },
-                                                    { value: 'exibidora_nome' as GroupByField, label: 'Exibidora', icon: '🏢' },
-                                                ].map((option) => (
+                        {isSettingsOpen && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
+                                {/* Settings Dropdown - Aligned with Grouping Dropdown */}
+                                <div className="absolute right-0 top-0 mt-0 mr-[140px] w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
+                                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Colunas Visíveis</h4>
+                                    <div className="max-h-60 overflow-y-auto px-1">
+                                        {table.getAllLeafColumns()
+                                            .filter(col => col.id !== 'select' && col.id !== 'actions')
+                                            .map(column => {
+                                                if (!column.id) return null;
+
+                                                // Map column IDs to readable labels
+                                                const columnLabels: Record<string, string> = {
+                                                    'uf': 'UF',
+                                                    'exibidora_nome': 'Exibidora',
+                                                    'codigo_ooh': 'Código OOH',
+                                                    'produto': 'Produto',
+                                                    'medidas': 'Medidas',
+                                                    'latitude': 'Latitude',
+                                                    'longitude': 'Longitude',
+                                                    'periodo': 'Período de Exibição',
+                                                    'periodo_comercializado': 'Período comercializado',
+                                                    'valor_locacao': 'Locação',
+                                                    'valor_papel': 'Papel',
+                                                    'valor_lona': 'Lona',
+                                                    'qtd_bi_mes': 'Qtd. Bi/Mês',
+                                                    'total_investimento': 'Investimento',
+                                                    'cpm': 'CPM',
+                                                    'impactos': 'Impactos',
+                                                    'ponto_referencia': 'Ponto de Referência',
+                                                    'observacoes': 'Observações'
+                                                };
+
+                                                const label = columnLabels[column.id] || column.id;
+
+                                                return (
                                                     <div
-                                                        key={option.value}
-                                                        className={`px-2 py-2 flex items-center gap-3 hover:bg-gray-50 rounded cursor-pointer transition-colors ${groupBy === option.value ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}
-                                                        onClick={() => {
-                                                            setGroupBy(option.value);
-                                                            setIsGroupMenuOpen(false);
-                                                            setCollapsedGroups(new Set()); // Reset collapsed groups
-                                                        }}
+                                                        key={column.id}
+                                                        className="px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors"
+                                                        onClick={column.getToggleVisibilityHandler()}
                                                     >
-                                                        <span className="text-base">{option.icon}</span>
-                                                        <span className="text-sm font-medium flex-1">{option.label}</span>
-                                                        {groupBy === option.value && (
-                                                            <Check size={14} className="text-blue-600" strokeWidth={3} />
-                                                        )}
+                                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${column.getIsVisible() ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
+                                                            {column.getIsVisible() && <Check size={10} strokeWidth={3} />}
+                                                        </div>
+                                                        <span className="text-sm text-gray-700 truncate select-none">
+                                                            {label}
+                                                        </span>
                                                     </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-
-                                {isSettingsOpen && (
-                                    <>
-                                        <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
-                                        {/* Settings Dropdown - Aligned with Grouping Dropdown */}
-                                        <div className="absolute right-0 top-0 mt-0 mr-[140px] w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2 animate-in fade-in zoom-in-95 duration-100 origin-top-right cursor-default">
-                                            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Colunas Visíveis</h4>
-                                            <div className="max-h-60 overflow-y-auto px-1">
-                                                {table.getAllLeafColumns()
-                                                    .filter(col => col.id !== 'select' && col.id !== 'actions')
-                                                    .map(column => {
-                                                        if (!column.id) return null;
-
-                                                        // Map column IDs to readable labels
-                                                        const columnLabels: Record<string, string> = {
-                                                            'uf': 'UF',
-                                                            'exibidora_nome': 'Exibidora',
-                                                            'codigo_ooh': 'Código OOH',
-                                                            'produto': 'Produto',
-                                                            'medidas': 'Medidas',
-                                                            'latitude': 'Latitude',
-                                                            'longitude': 'Longitude',
-                                                            'periodo': 'Período de Exibição',
-                                                            'periodo_comercializado': 'Período comercializado',
-                                                            'valor_locacao': 'Locação',
-                                                            'valor_papel': 'Papel',
-                                                            'valor_lona': 'Lona',
-                                                            'qtd_bi_mes': 'Qtd. Bi/Mês',
-                                                            'total_investimento': 'Investimento',
-                                                            'cpm': 'CPM',
-                                                            'impactos': 'Impactos',
-                                                            'ponto_referencia': 'Ponto de Referência',
-                                                            'observacoes': 'Observações'
-                                                        };
-
-                                                        const label = columnLabels[column.id] || column.id;
-
-                                                        return (
-                                                            <div
-                                                                key={column.id}
-                                                                className="px-2 py-1.5 flex items-center gap-2 hover:bg-gray-50 rounded cursor-pointer transition-colors"
-                                                                onClick={column.getToggleVisibilityHandler()}
-                                                            >
-                                                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${column.getIsVisible() ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
-                                                                    {column.getIsVisible() && <Check size={10} strokeWidth={3} />}
-                                                                </div>
-                                                                <span className="text-sm text-gray-700 truncate select-none">
-                                                                    {label}
-                                                                </span>
-                                                            </div>
-                                                        )
-                                                    })}
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
+                                                )
+                                            })}
+                                    </div>
+                                </div>
                             </>
                         )}
                     </div>
                 </div>
+            </div>
 
-                {/* Table Area - Hidden when collapsed and NOT embedded */}
-                <div className={`flex-1 overflow-auto relative bg-gray-50/50 ${!isOpen && !embedded ? 'hidden' : ''}`}>
-                    <div
-                        className="min-w-full inline-block align-top"
-                        style={{ width: table.getTotalSize() }}
-                    >
+            {/* Table Area - Hidden when collapsed and NOT embedded */}
+            <div className={`flex-1 overflow-auto relative bg-gray-50/50 ${!isOpen && !embedded ? 'hidden' : ''}`}>
+                <div
+                    className="min-w-full inline-block align-top"
+                    style={{ width: table.getTotalSize() }}
+                >
 
 
-                        {/* Head */}
-                        <div className="sticky top-0 z-10 bg-white font-normal text-[13px] text-gray-500 text-left flex border-b border-gray-200 group/header">
-                            {table.getHeaderGroups().map(headerGroup => (
-                                <div key={headerGroup.id} className="flex flex-row w-full">
-                                    {headerGroup.headers.map(header => (
-                                        <div
-                                            key={header.id}
-                                            className={`relative group px-3 py-2 border-r border-gray-200 last:border-r-0 flex items-center justify-between select-none hover:bg-gray-50 transition-colors 
+                    {/* Head */}
+                    <div className="sticky top-0 z-10 bg-white font-normal text-[13px] text-gray-500 text-left flex border-b border-gray-200 group/header">
+                        {table.getHeaderGroups().map(headerGroup => (
+                            <div key={headerGroup.id} className="flex flex-row w-full">
+                                {headerGroup.headers.map(header => (
+                                    <div
+                                        key={header.id}
+                                        className={`relative group px-3 py-2 border-r border-gray-200 last:border-r-0 flex items-center justify-between select-none hover:bg-gray-50 transition-colors 
                                             ${draggingColumn === header.id ? 'opacity-50 bg-gray-100' : ''}
                                             ${dragOverColumn === header.id ? 'border-l-2 border-l-blue-500 bg-blue-50' : ''}
                                         `}
-                                            style={{ width: header.getSize(), flex: `0 0 ${header.getSize()}px` }}
-                                            // Disable drag if hovering resizer to prevent conflict
-                                            draggable={!readOnly && header.column.getCanSort() && !disableDrag}
-                                            onDragStart={(e) => handleColumnDragStart(e, header.id)}
-                                            onDragOver={(e) => handleColumnDragOver(e, header.id)}
-                                            onDragLeave={handleColumnDragLeave}
-                                            onDrop={(e) => handleColumnDrop(e, header.id)}
+                                        style={{ width: header.getSize(), flex: `0 0 ${header.getSize()}px` }}
+                                        // Disable drag if hovering resizer to prevent conflict
+                                        draggable={!readOnly && header.column.getCanSort() && !disableDrag}
+                                        onDragStart={(e) => handleColumnDragStart(e, header.id)}
+                                        onDragOver={(e) => handleColumnDragOver(e, header.id)}
+                                        onDragLeave={handleColumnDragLeave}
+                                        onDrop={(e) => handleColumnDrop(e, header.id)}
+                                    >
+                                        <div
+                                            className="flex items-center gap-1.5 cursor-pointer hover:text-gray-900 truncate w-full"
+                                            onClick={header.column.getToggleSortingHandler()}
                                         >
-                                            <div
-                                                className="flex items-center gap-1.5 cursor-pointer hover:text-gray-900 truncate w-full"
-                                                onClick={header.column.getToggleSortingHandler()}
-                                            >
-                                                {flexRender(header.column.columnDef.header, header.getContext())}
-                                                {{
-                                                    asc: <ArrowUpDown size={12} className="text-gray-400 shrink-0" />,
-                                                    desc: <ArrowUpDown size={12} className="text-gray-400 rotate-180 shrink-0" />,
-                                                }[header.column.getIsSorted() as string] ?? null}
-                                            </div>
-
-                                            {header.column.getCanResize() && (
-                                                <div
-                                                    onMouseDown={(e) => {
-                                                        e.stopPropagation();
-                                                        header.getResizeHandler()(e);
-                                                    }}
-                                                    onTouchStart={(e) => {
-                                                        e.stopPropagation();
-                                                        header.getResizeHandler()(e);
-                                                    }}
-                                                    // Lock drag when hovering/interacting with resizer
-                                                    onMouseEnter={() => setDisableDrag(true)}
-                                                    onMouseLeave={() => setDisableDrag(false)}
-                                                    // Prevent resizing from initiating a drag
-                                                    onDragStart={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                    }}
-                                                    // Increased z-index for safety
-                                                    // w-3 (12px) hit area, positioned to straddle the border
-                                                    className={`absolute right-[-6px] top-0 h-full w-3 cursor-col-resize z-50 flex justify-center hover:bg-black/5 opacity-0 hover:opacity-100 transition-opacity select-none touch-none ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
-                                                    onClick={(e) => e.stopPropagation()} // Prevent sort/drag when resizing
-                                                    draggable={false} // Prevent resizing from triggering drag
-                                                >
-                                                    {/* Visual indicator (thin line) inside the hit area */}
-                                                    <div className={`w-[2px] h-full ${header.column.getIsResizing() ? 'bg-blue-500' : 'bg-gray-300'}`} />
-                                                </div>
-                                            )}
+                                            {flexRender(header.column.columnDef.header, header.getContext())}
+                                            {{
+                                                asc: <ArrowUpDown size={12} className="text-gray-400 shrink-0" />,
+                                                desc: <ArrowUpDown size={12} className="text-gray-400 rotate-180 shrink-0" />,
+                                            }[header.column.getIsSorted() as string] ?? null}
                                         </div>
-                                    ))}
-                                </div>
-                            ))}
-                        </div>
 
-                        {/* Bulk Actions - Discrete Popup at top-left */}
-                        {!readOnly && Object.keys(rowSelection).length > 0 && (
-                            <div className="absolute top-3 left-12 z-50 bg-white shadow-lg border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-3 animate-in fade-in slide-in-from-left-2">
-                                <span className="text-xs font-semibold text-gray-700">
-                                    {Object.keys(rowSelection).length} selecionado{Object.keys(rowSelection).length > 1 ? 's' : ''}
-                                </span>
-                                <div className="h-4 w-px bg-gray-300" />
-                                <button
-                                    onClick={() => {
-                                        const selectedIds = Object.keys(rowSelection).map(Number);
-                                        const updatedItens = itens.filter(item => !selectedIds.includes(item.id));
-                                        setItens(updatedItens);
-                                        setRowSelection({});
-                                        refreshProposta({ ...selectedProposta!, itens: updatedItens });
-                                        api.updateCart(selectedProposta!.id, updatedItens).catch(console.error);
-                                    }}
-                                    className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1.5"
-                                >
-                                    <Trash2 size={12} />
-                                    Remover
-                                </button>
+                                        {header.column.getCanResize() && (
+                                            <div
+                                                onMouseDown={(e) => {
+                                                    e.stopPropagation();
+                                                    header.getResizeHandler()(e);
+                                                }}
+                                                onTouchStart={(e) => {
+                                                    e.stopPropagation();
+                                                    header.getResizeHandler()(e);
+                                                }}
+                                                // Lock drag when hovering/interacting with resizer
+                                                onMouseEnter={() => setDisableDrag(true)}
+                                                onMouseLeave={() => setDisableDrag(false)}
+                                                // Prevent resizing from initiating a drag
+                                                onDragStart={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                }}
+                                                // Increased z-index for safety
+                                                // w-3 (12px) hit area, positioned to straddle the border
+                                                className={`absolute right-[-6px] top-0 h-full w-3 cursor-col-resize z-50 flex justify-center hover:bg-black/5 opacity-0 hover:opacity-100 transition-opacity select-none touch-none ${header.column.getIsResizing() ? 'bg-blue-400 opacity-100' : ''}`}
+                                                onClick={(e) => e.stopPropagation()} // Prevent sort/drag when resizing
+                                                draggable={false} // Prevent resizing from triggering drag
+                                            >
+                                                {/* Visual indicator (thin line) inside the hit area */}
+                                                <div className={`w-[2px] h-full ${header.column.getIsResizing() ? 'bg-blue-500' : 'bg-gray-300'}`} />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
-                        )}
+                        ))}
+                    </div>
 
-                        {/* Body */}
-                        <div className="bg-white text-[13px]">
-                            {/* Grouped View */}
-                            {groupedData ? (
-                                <>
-                                    {groupedData.map((group) => {
-                                        const isCollapsed = collapsedGroups.has(group.name);
-                                        const groupRows = table.getRowModel().rows.filter(row => {
-                                            const groupKey = (row.original[groupBy as keyof PropostaItem] || 'Sem categoria') as string;
-                                            return groupKey === group.name;
-                                        });
+                    {/* Bulk Actions - Discrete Popup at top-left */}
+                    {!readOnly && Object.keys(rowSelection).length > 0 && (
+                        <div className="absolute top-3 left-12 z-50 bg-white shadow-lg border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-3 animate-in fade-in slide-in-from-left-2">
+                            <span className="text-xs font-semibold text-gray-700">
+                                {Object.keys(rowSelection).length} selecionado{Object.keys(rowSelection).length > 1 ? 's' : ''}
+                            </span>
+                            <div className="h-4 w-px bg-gray-300" />
+                            <button
+                                onClick={() => {
+                                    const selectedIds = Object.keys(rowSelection).map(Number);
+                                    const updatedItens = itens.filter(item => !selectedIds.includes(item.id));
+                                    setItens(updatedItens);
+                                    setRowSelection({});
+                                    refreshProposta({ ...selectedProposta!, itens: updatedItens });
+                                    api.updateCart(selectedProposta!.id, updatedItens).catch(console.error);
+                                }}
+                                className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1.5"
+                            >
+                                <Trash2 size={12} />
+                                Remover
+                            </button>
+                        </div>
+                    )}
 
-                                        // Calculate group total
-                                        const totals = group.items.reduce((acc, item) => {
-                                            // Investimento
-                                            let qtd = 1;
-                                            let diffDays = 0;
+                    {/* Body */}
+                    <div className="bg-white text-[13px]">
+                        {/* Grouped View */}
+                        {groupedData ? (
+                            <>
+                                {groupedData.map((group) => {
+                                    const isCollapsed = collapsedGroups.has(group.name);
+                                    const groupRows = table.getRowModel().rows.filter(row => {
+                                        const groupKey = (row.original[groupBy as keyof PropostaItem] || 'Sem categoria') as string;
+                                        return groupKey === group.name;
+                                    });
 
-                                            if (item.periodo_inicio && item.periodo_fim) {
-                                                const start = new Date(item.periodo_inicio);
-                                                const end = new Date(item.periodo_fim);
-                                                const diffMs = end.getTime() - start.getTime();
-                                                diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-                                                qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                                            }
+                                    // Calculate group total
+                                    const totals = group.items.reduce((acc, item) => {
+                                        // Investimento
+                                        let qtd = 1;
+                                        let diffDays = 0;
 
-                                            const investimento = (item.valor_locacao || 0) * qtd;
-                                            const impactos = (item.fluxo_diario || 0) * diffDays;
+                                        if (item.periodo_inicio && item.periodo_fim) {
+                                            const start = new Date(item.periodo_inicio);
+                                            const end = new Date(item.periodo_fim);
+                                            const diffMs = end.getTime() - start.getTime();
+                                            diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+                                            qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+                                        }
 
-                                            return {
-                                                investimento: acc.investimento + investimento,
-                                                impactos: acc.impactos + impactos
-                                            };
-                                        }, { investimento: 0, impactos: 0 });
+                                        const investimento = (item.valor_locacao || 0) * qtd;
+                                        const impactos = (item.fluxo_diario || 0) * diffDays;
 
-                                        const cpm = totals.impactos > 0 ? (totals.investimento / totals.impactos) * 1000 : 0;
+                                        return {
+                                            investimento: acc.investimento + investimento,
+                                            impactos: acc.impactos + impactos
+                                        };
+                                    }, { investimento: 0, impactos: 0 });
 
-                                        return (
-                                            <div key={group.name} className="border-b border-gray-200">
-                                                {/* Group Header */}
-                                                <div
-                                                    className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors sticky top-[37px] z-[5] border-b border-gray-200"
-                                                    onClick={() => toggleGroupCollapse(group.name)}
-                                                >
-                                                    {isCollapsed ? (
-                                                        <ChevronRight size={14} className="text-gray-400 flex-shrink-0" />
-                                                    ) : (
-                                                        <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
-                                                    )}
-                                                    <span className="font-medium text-sm text-gray-800">{group.name}</span>
-                                                    <span className="text-xs text-gray-400 bg-white px-1.5 rounded-sm border border-gray-200">
-                                                        {group.count}
-                                                    </span>
-                                                    <div className="ml-auto flex items-center gap-4">
-                                                        <div className="flex items-center gap-1.5 text-xs">
-                                                            <span className="text-gray-400 uppercase tracking-wider text-[10px]">Impactos:</span>
-                                                            <span className="font-medium text-gray-700">{formatNumber(totals.impactos)}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5 text-xs">
-                                                            <span className="text-gray-400 uppercase tracking-wider text-[10px]">CPM:</span>
-                                                            <span className="font-medium text-blue-600">{formatCurrency(cpm)}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5 text-xs">
-                                                            <span className="text-gray-400 uppercase tracking-wider text-[10px]">Investimento:</span>
-                                                            <span className="font-medium text-emerald-700">{formatCurrency(totals.investimento)}</span>
-                                                        </div>
+                                    const cpm = totals.impactos > 0 ? (totals.investimento / totals.impactos) * 1000 : 0;
+
+                                    return (
+                                        <div key={group.name} className="border-b border-gray-200">
+                                            {/* Group Header */}
+                                            <div
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors sticky top-[37px] z-[5] border-b border-gray-200"
+                                                onClick={() => toggleGroupCollapse(group.name)}
+                                            >
+                                                {isCollapsed ? (
+                                                    <ChevronRight size={14} className="text-gray-400 flex-shrink-0" />
+                                                ) : (
+                                                    <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
+                                                )}
+                                                <span className="font-medium text-sm text-gray-800">{group.name}</span>
+                                                <span className="text-xs text-gray-400 bg-white px-1.5 rounded-sm border border-gray-200">
+                                                    {group.count}
+                                                </span>
+                                                <div className="ml-auto flex items-center gap-4">
+                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                        <span className="text-gray-400 uppercase tracking-wider text-[10px]">Impactos:</span>
+                                                        <span className="font-medium text-gray-700">{formatNumber(totals.impactos)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                        <span className="text-gray-400 uppercase tracking-wider text-[10px]">CPM:</span>
+                                                        <span className="font-medium text-blue-600">{formatCurrency(cpm)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs">
+                                                        <span className="text-gray-400 uppercase tracking-wider text-[10px]">Investimento:</span>
+                                                        <span className="font-medium text-emerald-700">{formatCurrency(totals.investimento)}</span>
                                                     </div>
                                                 </div>
+                                            </div>
 
-                                                {/* Group Rows */}
-                                                {!isCollapsed && groupRows.map(row => (
-                                                    <div
-                                                        key={row.id}
-                                                        data-row-id={row.original.id}
-                                                        className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] 
+                                            {/* Group Rows */}
+                                            {!isCollapsed && groupRows.map(row => (
+                                                <div
+                                                    key={row.id}
+                                                    data-row-id={row.original.id}
+                                                    className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] 
                                                         ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}
                                                         ${row.original.status === 'pendente_validacao' ? 'opacity-70 bg-orange-50/30' : ''}
                                                     `}
-                                                    >
-                                                        {row.getVisibleCells().map(cell => {
-                                                            const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
-                                                            return (
-                                                                <div
-                                                                    key={cell.id}
-                                                                    className={`px-3 py-1.5 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
-                                                                    style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
-                                                                >
-                                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                                    {/* Drag handle for ONLY specified editable cells */}
-                                                                    {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
-                                                                        focusedCell.rowId === row.original.id &&
-                                                                        (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
-                                                                            <div
-                                                                                className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
-                                                                                style={{ borderRadius: '0 0 2px 0' }}
-                                                                                title="Arrastar para preencher"
-                                                                                onMouseDown={(e) => {
-                                                                                    e.preventDefault();
-                                                                                    e.stopPropagation();
-                                                                                    const columnId = cell.column.id!;
-                                                                                    const currentItem = itens.find(item => item.id === row.original.id);
-                                                                                    let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
-                                                                                    if (columnId === 'periodo') {
-                                                                                        value = {
-                                                                                            periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
-                                                                                            periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
-                                                                                        };
-                                                                                    }
-                                                                                    startDragging(row.original.id, columnId, value);
-                                                                                }}
-                                                                            />
-                                                                        )}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        );
-                                    })}
-                                </>
-                            ) : (
-                                /* Flat View */
-                                <>
-                                    {table.getRowModel().rows.map(row => (
-                                        <div
-                                            key={row.id}
-                                            data-row-id={row.original.id}
-                                            className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] 
+                                                >
+                                                    {row.getVisibleCells().map(cell => {
+                                                        const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
+                                                        return (
+                                                            <div
+                                                                key={cell.id}
+                                                                className={`px-3 py-1.5 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                                                style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
+                                                            >
+                                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                                {/* Drag handle for ONLY specified editable cells */}
+                                                                {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
+                                                                    focusedCell.rowId === row.original.id &&
+                                                                    (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
+                                                                        <div
+                                                                            className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
+                                                                            style={{ borderRadius: '0 0 2px 0' }}
+                                                                            title="Arrastar para preencher"
+                                                                            onMouseDown={(e) => {
+                                                                                e.preventDefault();
+                                                                                e.stopPropagation();
+                                                                                const columnId = cell.column.id!;
+                                                                                const currentItem = itens.find(item => item.id === row.original.id);
+                                                                                let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
+                                                                                if (columnId === 'periodo') {
+                                                                                    value = {
+                                                                                        periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
+                                                                                        periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
+                                                                                    };
+                                                                                }
+                                                                                startDragging(row.original.id, columnId, value);
+                                                                            }}
+                                                                        />
+                                                                    )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                })}
+                            </>
+                        ) : (
+                            /* Flat View */
+                            <>
+                                {table.getRowModel().rows.map(row => (
+                                    <div
+                                        key={row.id}
+                                        data-row-id={row.original.id}
+                                        className={`flex items-center border-b border-gray-200 transition-colors group min-h-[44px] 
                                             ${row.getIsSelected() ? 'bg-blue-50' : 'bg-white hover:bg-gray-50'}
                                             ${row.original.status === 'pendente_validacao' ? 'opacity-70 bg-orange-50/30' : ''}
                                         `}
-                                        >
-                                            {row.getVisibleCells().map(cell => {
-                                                const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
-                                                return (
-                                                    <div
-                                                        key={cell.id}
-                                                        className={`px-3 py-1.5 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
-                                                        style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
-                                                    >
-                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                        {/* Drag handle for ONLY specified editable cells */}
-                                                        {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
-                                                            focusedCell.rowId === row.original.id &&
-                                                            (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
-                                                                <div
-                                                                    className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
-                                                                    style={{ borderRadius: '0 0 2px 0' }}
-                                                                    title="Arrastar para preencher"
-                                                                    onMouseDown={(e) => {
-                                                                        e.preventDefault();
-                                                                        e.stopPropagation();
-                                                                        const columnId = cell.column.id!;
+                                    >
+                                        {row.getVisibleCells().map(cell => {
+                                            const isEditable = ['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona', 'fluxo_diario', 'ponto_referencia', 'observacoes'].includes(cell.column.id || '');
+                                            return (
+                                                <div
+                                                    key={cell.id}
+                                                    className={`px-3 py-1.5 border-r border-gray-200 last:border-r-0 flex items-center relative ${isEditable ? 'overflow-visible' : 'overflow-hidden'} ${isInDragRange(row.original.id) && dragState.columnKey === cell.column.id ? '!bg-blue-100 shadow-[inset_0_0_0_2px_rgb(96,165,250)]' : ''}`}
+                                                    style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
+                                                >
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                    {/* Drag handle for ONLY specified editable cells */}
+                                                    {['periodo', 'periodo_comercializado', 'valor_locacao', 'valor_papel', 'valor_lona'].includes(cell.column.id || '') &&
+                                                        focusedCell.rowId === row.original.id &&
+                                                        (focusedCell.columnId === cell.column.id || (cell.column.id === 'periodo' && focusedCell.columnId === 'periodo')) && (
+                                                            <div
+                                                                className="absolute bottom-0.5 right-0.5 w-[6px] h-[6px] bg-blue-600 hover:bg-blue-700 hover:w-[8px] hover:h-[8px] border border-white cursor-crosshair transition-all z-50 shadow-md"
+                                                                style={{ borderRadius: '0 0 2px 0' }}
+                                                                title="Arrastar para preencher"
+                                                                onMouseDown={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    const columnId = cell.column.id!;
 
-                                                                        // Get current value from itens state for real-time accuracy
-                                                                        const currentItem = itens.find(item => item.id === row.original.id);
-                                                                        let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
+                                                                    // Get current value from itens state for real-time accuracy
+                                                                    const currentItem = itens.find(item => item.id === row.original.id);
+                                                                    let value = currentItem ? (currentItem as any)[columnId] : (row.original as any)[columnId];
 
-                                                                        // For período, use both values
-                                                                        if (columnId === 'periodo') {
-                                                                            value = {
-                                                                                periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
-                                                                                periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
-                                                                            };
-                                                                        }
+                                                                    // For período, use both values
+                                                                    if (columnId === 'periodo') {
+                                                                        value = {
+                                                                            periodo_inicio: currentItem?.periodo_inicio || row.original.periodo_inicio,
+                                                                            periodo_fim: currentItem?.periodo_fim || row.original.periodo_fim
+                                                                        };
+                                                                    }
 
-                                                                        console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
-                                                                        startDragging(row.original.id, columnId, value);
-                                                                    }}
-                                                                />
-                                                            )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    ))}
-                                </>
-                            )}
-
-                            {table.getRowModel().rows.length === 0 && (
-                                <div className="p-12 text-center text-gray-400 text-sm w-full flex flex-col items-center gap-3">
-                                    <div className="p-3 bg-gray-100 rounded-full">
-                                        <Settings size={24} className="text-gray-300" />
+                                                                    console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
+                                                                    startDragging(row.original.id, columnId, value);
+                                                                }}
+                                                            />
+                                                        )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                    <span>Nenhum ponto no carrinho.</span>
+                                ))}
+                            </>
+                        )}
+
+                        {table.getRowModel().rows.length === 0 && (
+                            <div className="p-12 text-center text-gray-400 text-sm w-full flex flex-col items-center gap-3">
+                                <div className="p-3 bg-gray-100 rounded-full">
+                                    <Settings size={24} className="text-gray-300" />
                                 </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Footer Summary - Always visible if open */}
-
-                <ShareModal
-                    isOpen={isShareModalOpen}
-                    onClose={() => setIsShareModalOpen(false)}
-                    proposta={selectedProposta}
-                    onUpdate={handleShareUpdate}
-                />
-
-                <ConfirmDialog
-                    isOpen={confirmDialog.isOpen}
-                    onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
-                    onConfirm={confirmDialog.onConfirm}
-                    title={confirmDialog.title}
-                    message={confirmDialog.message}
-                    type={confirmDialog.type}
-                />
-
-                {/* Approval Modals */}
-                <ApprovalSummaryModal
-                    isOpen={isApprovalSummaryOpen}
-                    onClose={() => setIsApprovalSummaryOpen(false)}
-                    proposta={selectedProposta}
-                    itens={itens}
-                    onApprove={handleApprovalConfirm}
-                />
-
-                <ApprovalSuccessModal
-                    isOpen={isApprovalSuccessOpen}
-                    onClose={() => setIsApprovalSuccessOpen(false)}
-                    proposta={selectedProposta}
-                    itens={itens}
-                    materialSelection={materialSelection}
-                />
-
-                {/* AI Chat - Conditionally rendered */}
-                {isAIChatOpen && (
-                    <div className="fixed inset-0 z-[70]">
-                        <div
-                            className="absolute inset-0 bg-black/30"
-                            onClick={() => setIsAIChatOpen(false)}
-                        />
-                        <div className="relative z-[71]">
-                            <AIChat />
-                        </div>
-                        {/* Actions Menu - Only show if strict internal access (not public) OR if we decide public users can't edit but CAN copy? For now, hide in readOnly. */}
-                        {!readOnly && (
-                            <div className="relative group">
-                                <button className="p-1 hover:bg-gray-100 rounded">
-                                    <ArrowUpDown size={14} className="text-gray-400" />
-                                </button>
-                                {/* ... (Menu impl) */}
+                                <span>Nenhum ponto no carrinho.</span>
                             </div>
                         )}
                     </div>
-                )}
-            </div >
-            );
+                </div>
+            </div>
+
+            {/* Footer Summary - Always visible if open */}
+
+            <ShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                proposta={selectedProposta}
+                onUpdate={handleShareUpdate}
+            />
+
+            <ConfirmDialog
+                isOpen={confirmDialog.isOpen}
+                onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+                onConfirm={confirmDialog.onConfirm}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                type={confirmDialog.type}
+            />
+
+            {/* Approval Modals */}
+            <ApprovalSummaryModal
+                isOpen={isApprovalSummaryOpen}
+                onClose={() => setIsApprovalSummaryOpen(false)}
+                proposta={selectedProposta}
+                itens={itens}
+                onApprove={handleApprovalConfirm}
+            />
+
+            <ApprovalSuccessModal
+                isOpen={isApprovalSuccessOpen}
+                onClose={() => setIsApprovalSuccessOpen(false)}
+                proposta={selectedProposta}
+                itens={itens}
+                materialSelection={materialSelection}
+            />
+
+            {/* AI Chat - Conditionally rendered */}
+            {isAIChatOpen && (
+                <div className="fixed inset-0 z-[70]">
+                    <div
+                        className="absolute inset-0 bg-black/30"
+                        onClick={() => setIsAIChatOpen(false)}
+                    />
+                    <div className="relative z-[71]">
+                        <AIChat />
+                    </div>
+                    {/* Actions Menu - Only show if strict internal access (not public) OR if we decide public users can't edit but CAN copy? For now, hide in readOnly. */}
+                    {!readOnly && (
+                        <div className="relative group">
+                            <button className="p-1 hover:bg-gray-100 rounded">
+                                <ArrowUpDown size={14} className="text-gray-400" />
+                            </button>
+                            {/* ... (Menu impl) */}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
 }
