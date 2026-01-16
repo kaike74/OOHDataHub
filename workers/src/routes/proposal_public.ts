@@ -33,8 +33,7 @@ export const handlePublicProposal = async (request: Request, env: Env) => {
                    pi.periodo_inicio, pi.periodo_fim, pi.selected_periods,
                    pi.status, pi.client_comment,
                    pi.valor_locacao, pi.valor_papel, pi.valor_lona,
-                   pi.vlr_total, pi.vlr_tabela,
-                   pi.fluxo_diario, pi.impactos,
+                   pi.periodo_comercializado, pi.observacoes,
                    po.id as ponto_id,
                    po.codigo_ooh, po.endereco, po.cidade, po.uf, po.bairro,
                    po.latitude, po.longitude, 
@@ -52,42 +51,53 @@ export const handlePublicProposal = async (request: Request, env: Env) => {
         const { results } = await itemsStmt.all();
 
         // Structure items to match what the frontend expects
-        const structuredItems = results.map((item: any) => ({
-            ...item,
-            // Ensure both coordinate formats are available
-            lat: item.lat || item.latitude,
-            lng: item.lng || item.longitude,
-            latitude: item.latitude || item.lat,
-            longitude: item.longitude || item.lng,
-            // Ensure valor fields are present
-            valor: item.valor_locacao || item.valor || 0,
-            valor_locacao: item.valor_locacao || 0,
-            valor_papel: item.valor_papel || 0,
-            valor_lona: item.valor_lona || 0,
-            vlr_total: item.vlr_total || (item.valor_locacao + item.valor_papel + item.valor_lona),
-            vlr_tabela: item.vlr_tabela || item.valor_locacao || 0,
-            // Ensure impact fields are present
-            fluxo_diario: item.fluxo_diario || item.impacto_estimado || 0,
-            impactos: item.impactos || ((item.fluxo_diario || item.impacto_estimado || 0) * 14),
-            // Nested ponto object for compatibility
-            ponto: {
-                id: item.ponto_id,
-                codigo_ooh: item.codigo_ooh,
-                endereco: item.endereco,
-                cidade: item.cidade,
-                uf: item.uf,
-                bairro: item.bairro,
-                latitude: item.latitude || item.lat,
-                longitude: item.longitude || item.lng,
+        const structuredItems = results.map((item: any) => {
+            // Calculate derived values
+            const valor_locacao = item.valor_locacao || 0;
+            const valor_papel = item.valor_papel || 0;
+            const valor_lona = item.valor_lona || 0;
+            const vlr_total = valor_locacao + valor_papel + valor_lona;
+            const impacto_estimado = item.impacto_estimado || 0;
+            const fluxo_diario = impacto_estimado;
+            const impactos = fluxo_diario * 14; // 14 days (bi-weekly)
+
+            return {
+                ...item,
+                // Ensure both coordinate formats are available
                 lat: item.lat || item.latitude,
                 lng: item.lng || item.longitude,
-                medidas: item.medidas,
-                tipo: item.tipo,
-                impacto_estimado: item.impacto_estimado,
-                valor: item.valor,
-                id_exibidora: item.exibidora_id
-            }
-        }));
+                latitude: item.latitude || item.lat,
+                longitude: item.longitude || item.lng,
+                // Ensure valor fields are present
+                valor: valor_locacao || item.valor || 0,
+                valor_locacao,
+                valor_papel,
+                valor_lona,
+                vlr_total,
+                vlr_tabela: valor_locacao, // Table price = rental price
+                // Ensure impact fields are present
+                fluxo_diario,
+                impactos,
+                // Nested ponto object for compatibility
+                ponto: {
+                    id: item.ponto_id,
+                    codigo_ooh: item.codigo_ooh,
+                    endereco: item.endereco,
+                    cidade: item.cidade,
+                    uf: item.uf,
+                    bairro: item.bairro,
+                    latitude: item.latitude || item.lat,
+                    longitude: item.longitude || item.lng,
+                    lat: item.lat || item.latitude,
+                    lng: item.lng || item.longitude,
+                    medidas: item.medidas,
+                    tipo: item.tipo,
+                    impacto_estimado: item.impacto_estimado,
+                    valor: item.valor,
+                    id_exibidora: item.exibidora_id
+                }
+            };
+        });
 
         return new Response(JSON.stringify({
             ...proposal,
