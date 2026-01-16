@@ -51,17 +51,31 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
     const imagens = selectedPonto?.imagens || [];
     const produtos = selectedPonto?.produtos || [];
 
+    // CONTEXT DETECTION: Are we in Proposals tab or Map tab?
+    const isInProposalContext = !!selectedProposta;
+
     // Determine permissions
     const isInternal = !!user && (user.type === 'internal' || user.role === 'admin' || user.role === 'master');
     const canEdit = isInternal && !readOnly;
 
     // Get cart items for navigation
     const cartItems = selectedProposta?.itens || [];
-    // Navigation should only be available if the modal index is valid (meaning we opened from a list context)
-    const canNavigate = cartItems.length > 1 && pointModalIndex !== -1 && pointModalIndex !== undefined;
+
+    // For Map context: track which proposals contain this point
+    const [pointProposals, setPointProposals] = useState<any[]>([]);
+
+    // Navigation logic differs by context
+    const canNavigate = isInProposalContext
+        ? (cartItems.length > 1 && pointModalIndex !== -1 && pointModalIndex !== undefined)
+        : pontos.length > 1; // In Map, navigate through all filtered points
+
     const currentIndex = pointModalIndex;
-    const hasPrevious = currentIndex > 0;
-    const hasNext = currentIndex < cartItems.length - 1;
+    const hasPrevious = isInProposalContext
+        ? currentIndex > 0
+        : pontos.findIndex(p => p.id === selectedPonto?.id) > 0;
+    const hasNext = isInProposalContext
+        ? currentIndex < cartItems.length - 1
+        : pontos.findIndex(p => p.id === selectedPonto?.id) < pontos.length - 1;
 
     // --- Mini Map Logic ---
     useEffect(() => {
@@ -119,9 +133,48 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
         };
     }, [isPointModalOpen, selectedPonto]);
 
+    // Fetch proposals containing this point (for Map context)
     useEffect(() => {
-        if (selectedPonto) setCurrentImageIndex(0);
-    }, [selectedPonto?.id]);
+        if (!selectedPonto || isInProposalContext) {
+            setPointProposals([]);
+            return;
+        }
+
+        const fetchPointProposals = async () => {
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/propostas`, {
+                    credentials: 'include'
+                });
+                const allProposals = await response.json();
+                const proposalsWithPoint = allProposals.filter((p: any) =>
+                    p.itens?.some((item: any) => item.id_ooh === selectedPonto.id)
+                );
+                setPointProposals(proposalsWithPoint);
+            } catch (error) {
+                console.error('Error fetching point proposals:', error);
+            }
+        };
+
+        fetchPointProposals();
+    }, [selectedPonto?.id, isInProposalContext]);
+
+    // Lightbox keyboard handlers (ESC to close, arrows to navigate)
+    useEffect(() => {
+        if (!isLightboxOpen) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setIsLightboxOpen(false);
+            } else if (e.key === 'ArrowLeft' && imagens.length > 1) {
+                setCurrentImageIndex((prev) => (prev - 1 + imagens.length) % imagens.length);
+            } else if (e.key === 'ArrowRight' && imagens.length > 1) {
+                setCurrentImageIndex((prev) => (prev + 1) % imagens.length);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isLightboxOpen, imagens.length]);
 
     const handleClose = useCallback(() => {
         setPointModalOpen(false);
@@ -130,25 +183,47 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
 
     const handlePrevious = useCallback(() => {
         if (!hasPrevious) return;
-        const newIndex = currentIndex - 1;
-        const item = cartItems[newIndex];
-        const ponto = useStore.getState().pontos.find(p => p.id === item.id_ooh);
-        if (ponto) {
-            setSelectedPonto(ponto);
-            setPointModalIndex(newIndex);
+
+        if (isInProposalContext) {
+            // Proposals: Navigate through cart items
+            const newIndex = currentIndex - 1;
+            const item = cartItems[newIndex];
+            const ponto = useStore.getState().pontos.find(p => p.id === item.id_ooh);
+            if (ponto) {
+                setSelectedPonto(ponto);
+                setPointModalIndex(newIndex);
+            }
+        } else {
+            // Map: Navigate through all filtered points
+            const currentPontoIndex = pontos.findIndex(p => p.id === selectedPonto?.id);
+            if (currentPontoIndex > 0) {
+                setSelectedPonto(pontos[currentPontoIndex - 1]);
+                setPointModalIndex(-1); // Reset index for map context
+            }
         }
-    }, [hasPrevious, currentIndex, cartItems, setSelectedPonto, setPointModalIndex]);
+    }, [hasPrevious, isInProposalContext, currentIndex, cartItems, pontos, selectedPonto, setSelectedPonto, setPointModalIndex]);
 
     const handleNext = useCallback(() => {
         if (!hasNext) return;
-        const newIndex = currentIndex + 1;
-        const item = cartItems[newIndex];
-        const ponto = useStore.getState().pontos.find(p => p.id === item.id_ooh);
-        if (ponto) {
-            setSelectedPonto(ponto);
-            setPointModalIndex(newIndex);
+
+        if (isInProposalContext) {
+            // Proposals: Navigate through cart items
+            const newIndex = currentIndex + 1;
+            const item = cartItems[newIndex];
+            const ponto = useStore.getState().pontos.find(p => p.id === item.id_ooh);
+            if (ponto) {
+                setSelectedPonto(ponto);
+                setPointModalIndex(newIndex);
+            }
+        } else {
+            // Map: Navigate through all filtered points
+            const currentPontoIndex = pontos.findIndex(p => p.id === selectedPonto?.id);
+            if (currentPontoIndex < pontos.length - 1) {
+                setSelectedPonto(pontos[currentPontoIndex + 1]);
+                setPointModalIndex(-1); // Reset index for map context
+            }
         }
-    }, [hasNext, currentIndex, cartItems, setSelectedPonto, setPointModalIndex]);
+    }, [hasNext, isInProposalContext, currentIndex, cartItems, pontos, selectedPonto, setSelectedPonto, setPointModalIndex]);
 
     const handleCopyAddress = useCallback(() => {
         if (selectedPonto) {
@@ -386,40 +461,27 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                         <div className="flex items-center gap-4 flex-1">
                             <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-none">{selectedPonto.codigo_ooh}</h1>
 
-                            {/* Internal Search Bar (Restricted) */}
+                            {/* Internal Search Bar - Context Aware */}
                             <div className="w-64 relative">
                                 <AddressSearch
-                                    onlyPoints={true} // Restricted Search
-                                    cartIds={cartIds}
+                                    onlyPoints={true}
+                                    cartIds={isInProposalContext ? cartIds : []}
                                     onLocationSelect={() => { }}
                                     onSelectExhibitor={(id) => { }}
                                     onSelectPoint={(ponto) => {
                                         setSelectedPonto(ponto);
-                                        // Reset index if we switch point via search
-                                        setPointModalIndex(-1);
+                                        setPointModalIndex(isInProposalContext ? cartItems.findIndex(item => item.id_ooh === ponto.id) : -1);
                                     }}
                                 />
-                                <style jsx global>{`
-                                    .finder-box-container {
-                                        position: absolute;
-                                        top: 50%;
-                                        transform: translateY(-50%);
-                                        left: 0;
-                                        height: 30px !important;
-                                    }
-                                    .finder-box-container input {
-                                        height: 30px !important;
-                                        font-size: 12px !important;
-                                        padding-left: 36px !important; 
-                                        background: #F9FAFB !important;
-                                        border: 1px solid #E5E7EB !important;
-                                    }
-                                    .finder-box-container input:focus {
-                                        background: white !important;
-                                        border-color: #8B5CF6 !important;
-                                    }
-                                `}</style>
                             </div>
+
+                            {/* Proposals Indicator (Map Context Only) */}
+                            {!isInProposalContext && pointProposals.length > 0 && (
+                                <div className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 rounded-md border border-blue-200">
+                                    <ShoppingCart size={12} className="text-blue-600" />
+                                    <span className="text-[10px] font-semibold text-blue-700">Em {pointProposals.length} proposta{pointProposals.length > 1 ? 's' : ''}</span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -469,12 +531,6 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
-                                        {canEdit && (
-                                            <>
-                                                <button onClick={handleHistory} className="p-1.5 text-gray-400 hover:text-purple-600 bg-gray-50 hover:bg-purple-50 rounded transition-all border border-gray-100" title="Histórico"><History size={16} /></button>
-                                                <button onClick={handleEdit} className="p-1.5 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded transition-all border border-gray-100" title="Editar"><Edit size={16} /></button>
-                                            </>
-                                        )}
                                         <button onClick={handleCopyAddress} className="p-1.5 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded transition-all border border-gray-100"><Copy size={16} /></button>
                                     </div>
                                 </div>
@@ -564,38 +620,53 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                         </div>
                     </div>
 
-                    {/* Footer Actions - Sticks to bottom */}
+                    {/* Footer Actions - Context Aware */}
                     <div className="p-3 border-t border-gray-100 bg-white z-20 shrink-0 flex items-center justify-between">
 
-                        {/* Navigation (Left Side) - ONLY if from list context */}
+                        {/* Left Side: Navigation OR Admin Actions */}
                         <div className="flex items-center gap-2">
                             {canNavigate ? (
                                 <div className="flex items-center bg-gray-50 rounded-lg p-1">
                                     <button onClick={handlePrevious} disabled={!hasPrevious} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md disabled:opacity-30 transition-all text-gray-600" title="Anterior"><ChevronLeft size={16} /></button>
-                                    <span className="text-[10px] font-medium text-gray-500 px-2">{currentIndex + 1} / {cartItems.length}</span>
+                                    <span className="text-[10px] font-medium text-gray-500 px-2">
+                                        {isInProposalContext
+                                            ? `${currentIndex + 1} / ${cartItems.length}`
+                                            : `${pontos.findIndex(p => p.id === selectedPonto?.id) + 1} / ${pontos.length}`
+                                        }
+                                    </span>
                                     <button onClick={handleNext} disabled={!hasNext} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md disabled:opacity-30 transition-all text-gray-600" title="Próximo"><ChevronRight size={16} /></button>
                                 </div>
                             ) : (
-                                <div /> // Spacer
+                                <div />
+                            )}
+
+                            {/* Admin Actions (Map Context Only) */}
+                            {!isInProposalContext && canEdit && (
+                                <div className="flex gap-2 ml-2">
+                                    <button onClick={handleHistory} className="p-1.5 text-gray-400 hover:text-purple-600 bg-gray-50 hover:bg-purple-50 rounded transition-all border border-gray-100" title="Histórico"><History size={16} /></button>
+                                    <button onClick={handleEdit} className="p-1.5 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded transition-all border border-gray-100" title="Editar"><Edit size={16} /></button>
+                                    {isDeleting && <button onClick={handleDelete} disabled={isDeleting} className="p-1.5 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded transition-all border border-gray-100" title="Deletar"><Trash2 size={16} /></button>}
+                                </div>
                             )}
                         </div>
 
-                        {/* Actions (Right Side) */}
+                        {/* Right Side: Context-Aware Actions */}
                         <div className="flex items-center gap-3">
-                            {/* View In List Button - Swapped Position */}
-                            {isInCart && (
+                            {/* Ver na Lista - ONLY in Proposals Context */}
+                            {isInProposalContext && isInCart && (
                                 <Button onClick={handleViewInProposal} variant="outline" size="sm" className="h-9 px-3 text-xs border-gray-200 text-gray-600" leftIcon={<ExternalLink size={14} />}>
                                     Ver na Lista
                                 </Button>
                             )}
 
-                            {!readOnly && (
+                            {/* Add/Remove Cart - ONLY in Proposals Context */}
+                            {isInProposalContext && !readOnly && (
                                 <Button
                                     onClick={handleAddToCart}
                                     disabled={isAddingToCart}
                                     title={isInCart ? "Remover do Plano" : "Adicionar ao Plano"}
                                     className={cn("h-9 w-9 p-0 rounded-full shadow-md transition-all active:scale-95 flex items-center justify-center",
-                                        isInCart ? "bg-red-500 hover:bg-red-600 text-white" : "bg-emidias-primary hover:bg-emidias-primary/90 text-white"
+                                        isInCart ? "bg-red-500 hover:bg-red-600 text-white" : "bg-green-500 hover:bg-green-600 text-white"
                                     )}
                                 >
                                     {isAddingToCart ? <Loader2 size={16} className="animate-spin" /> : isInCart ? <Trash2 size={16} /> : <ShoppingCart size={16} />}
@@ -609,17 +680,23 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
 
             {/* --- LIGHTBOX OVERLAY --- */}
             {isLightboxOpen && (
-                <div className="fixed inset-0 z-[2100] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
+                <div
+                    className="fixed inset-0 z-[2100] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200"
+                    onClick={() => setIsLightboxOpen(false)}
+                >
                     {/* Close Lightbox */}
                     <button
                         onClick={() => setIsLightboxOpen(false)}
-                        className="absolute top-6 right-6 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                        className="absolute top-6 right-6 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors z-10"
                     >
                         <X size={32} />
                     </button>
 
                     {/* Main Image */}
-                    <div className="w-full h-full max-w-7xl max-h-[90vh] p-4 flex items-center justify-center relative">
+                    <div
+                        className="w-full h-full max-w-7xl max-h-[90vh] p-4 flex items-center justify-center relative"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <SafeImage
                             src={api.getImageUrl(imagens[currentImageIndex])}
                             alt="Visualização Fullscreen"
