@@ -27,81 +27,41 @@ export const handlePublicProposal = async (request: Request, env: Env) => {
             return new Response('Proposal not found', { status: 404, headers });
         }
 
-        // Get items with all necessary fields for display
-        const itemsStmt = env.DB.prepare(`
-            SELECT pi.id, pi.id_ooh, pi.id_proposta,
-                   pi.periodo_inicio, pi.periodo_fim, pi.selected_periods,
-                   pi.status, pi.client_comment,
-                   pi.valor_locacao, pi.valor_papel, pi.valor_lona,
-                   pi.periodo_comercializado, pi.observacoes,
-                   po.id as ponto_id,
-                   po.codigo_ooh, po.endereco, po.cidade, po.uf, po.bairro,
-                   po.latitude, po.longitude, 
-                   po.lat, po.lng,
-                   po.medidas, po.tipo,
-                   po.impacto_estimado, po.valor,
-                   e.id as exibidora_id,
-                   e.nome as exibidora_nome
-            FROM proposta_itens pi
-            JOIN pontos_ooh po ON pi.id_ooh = po.id
-            JOIN exibidoras e ON po.id_exibidora = e.id
-            WHERE pi.id_proposta = ?
-        `).bind(proposal.id);
+        // Get items - USING EXACT SAME QUERY AS ADMIN VIEW
+        const { results: itens } = await env.DB.prepare(`
+        SELECT 
+            pi.id, pi.id_proposta, pi.id_ooh, pi.periodo_inicio, pi.periodo_fim, 
+            pi.valor_locacao, pi.valor_papel, pi.valor_lona, 
+            pi.periodo_comercializado, pi.observacoes, pi.fluxo_diario, pi.status,
+            pi.status_validacao, pi.approved_until, pi.last_validated_at, pi.selected_periods,
+            val_user.name as validator_name,
+            p.endereco, p.cidade, p.uf, p.pais, p.codigo_ooh, p.tipo, p.medidas, p.ponto_referencia,
+            p.latitude, p.longitude,
+            e.nome as exibidora_nome
+        FROM proposta_itens pi
+        JOIN pontos_ooh p ON pi.id_ooh = p.id
+        LEFT JOIN exibidoras e ON p.id_exibidora = e.id
+        LEFT JOIN users val_user ON pi.last_validated_by = val_user.id
+        WHERE pi.id_proposta = ?
+    `).bind(proposal.id).all();
 
-        const { results } = await itemsStmt.all();
+        // Parse selected_periods - EXACT SAME AS ADMIN VIEW
+        const parsedItens = itens.map((item: any) => ({
+            ...item,
+            selected_periods: item.selected_periods ? JSON.parse(item.selected_periods) : []
+        }));
 
-        // Structure items to match what the frontend expects
-        const structuredItems = results.map((item: any) => {
-            // Calculate derived values
-            const valor_locacao = item.valor_locacao || 0;
-            const valor_papel = item.valor_papel || 0;
-            const valor_lona = item.valor_lona || 0;
-            const vlr_total = valor_locacao + valor_papel + valor_lona;
-            const impacto_estimado = item.impacto_estimado || 0;
-            const fluxo_diario = impacto_estimado;
-            const impactos = fluxo_diario * 14; // 14 days (bi-weekly)
-
-            return {
-                ...item,
-                // Ensure both coordinate formats are available
-                lat: item.lat || item.latitude,
-                lng: item.lng || item.longitude,
-                latitude: item.latitude || item.lat,
-                longitude: item.longitude || item.lng,
-                // Ensure valor fields are present
-                valor: valor_locacao || item.valor || 0,
-                valor_locacao,
-                valor_papel,
-                valor_lona,
-                vlr_total,
-                vlr_tabela: valor_locacao, // Table price = rental price
-                // Ensure impact fields are present
-                fluxo_diario,
-                impactos,
-                // Nested ponto object for compatibility
-                ponto: {
-                    id: item.ponto_id,
-                    codigo_ooh: item.codigo_ooh,
-                    endereco: item.endereco,
-                    cidade: item.cidade,
-                    uf: item.uf,
-                    bairro: item.bairro,
-                    latitude: item.latitude || item.lat,
-                    longitude: item.longitude || item.lng,
-                    lat: item.lat || item.latitude,
-                    lng: item.lng || item.longitude,
-                    medidas: item.medidas,
-                    tipo: item.tipo,
-                    impacto_estimado: item.impacto_estimado,
-                    valor: item.valor,
-                    id_exibidora: item.exibidora_id
-                }
-            };
-        });
+        // Build cliente object from proposal data
+        const cliente = proposal.id_cliente ? {
+            id: proposal.id_cliente,
+            nome: proposal.cliente_nome,
+            logo_url: proposal.cliente_logo
+        } : null;
 
         return new Response(JSON.stringify({
             ...proposal,
-            itens: structuredItems
+            cliente,
+            itens: parsedItens
         }), {
             headers
         });
