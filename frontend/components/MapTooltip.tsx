@@ -156,7 +156,7 @@ export default function MapTooltip({
   const [adjustedStyle, setAdjustedStyle] = useState<React.CSSProperties>({
     left: `${position.x}px`,
     top: `${position.y}px`,
-    transform: 'translate(-50%, -100%) translateY(-45px)'
+    transform: 'translate(-50%, -100%) translateY(-15px)'
   });
 
   const [isFlipped, setIsFlipped] = useState(false);
@@ -168,33 +168,36 @@ export default function MapTooltip({
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    // Default above (closer to pin: -40px to clear the 15px padding of pin-container)
-    let newTransform = 'translate(-50%, -100%) translateY(-40px)';
+    // Default above (closer to pin: -15px for minimal gap)
+    let newTransform = 'translate(-50%, -100%) translateY(-15px)';
     let flipped = false;
 
-    // Check for cart table collision (typically on right side)
+    // Check for cart table collision FIRST
     const cartTable = document.querySelector('[data-cart-table]');
     if (cartTable) {
       const cartRect = cartTable.getBoundingClientRect();
-      // If tooltip would overlap with cart table, adjust position
-      if (rect.right > cartRect.left - 20 && rect.left < cartRect.right + 20) {
-        // Move tooltip to the left of the pin
-        newTransform = 'translate(-100%, -100%) translateY(-40px) translateX(-20px)';
+      // If tooltip would overlap with cart table horizontally AND vertically
+      const horizontalOverlap = rect.right > cartRect.left && rect.left < cartRect.right;
+      const verticalOverlap = rect.bottom > cartRect.top && rect.top < cartRect.bottom;
+
+      if (horizontalOverlap && verticalOverlap) {
+        // Move tooltip to the left of the pin to avoid cart table
+        newTransform = 'translate(-100%, -100%) translateY(-15px) translateX(-15px)';
       }
     }
 
-    // Check Right Edge
-    if (rect.right > viewportWidth - 20) {
-      newTransform = 'translate(-100%, -100%) translateY(-40px) translateX(-10px)';
+    // Check Right Edge (only if not already moved left for cart table)
+    if (!newTransform.includes('translateX(-15px)') && rect.right > viewportWidth - 20) {
+      newTransform = 'translate(-100%, -100%) translateY(-15px) translateX(-10px)';
     }
     // Check Left Edge
     if (rect.left < 20) {
-      newTransform = 'translate(0%, -100%) translateY(-40px) translateX(10px)';
+      newTransform = 'translate(0%, -100%) translateY(-15px) translateX(10px)';
     }
     // Check Top Edge (if too close to top, flip to bottom)
     if (rect.top < 80) {
       // Flip to bottom (clear pin downwards)
-      newTransform = newTransform.replace('-100%) translateY(-40px)', '0%) translateY(10px)');
+      newTransform = newTransform.replace('-100%) translateY(-15px)', '0%) translateY(15px)');
       flipped = true;
     }
 
@@ -262,7 +265,7 @@ export default function MapTooltip({
         }}
       />
 
-      {/* Google Maps Style Card - Compact */}
+      {/* Google Maps Style Card - Ultra Compact */}
       <div
         onClick={(e) => {
           if (props.onClick) props.onClick();
@@ -299,12 +302,50 @@ export default function MapTooltip({
           </div>
         )}
 
-        {/* Information Section - Compact */}
+        {/* Information Section - Ultra Compact with Inline Buttons */}
         <div className="p-3 flex flex-col gap-1.5">
-          {/* Address */}
-          <p className="text-xs text-gray-600 line-clamp-1">
-            {ponto.endereco}
-          </p>
+          {/* Address and Action Buttons Row */}
+          <div className="flex items-center gap-2 justify-between">
+            <p className="text-xs text-gray-600 line-clamp-1 flex-1">
+              {ponto.endereco}
+            </p>
+
+            {/* Action Buttons - Inline */}
+            <div className="flex gap-1 flex-shrink-0">
+              {/* Street View Button */}
+              {ponto.latitude && ponto.longitude && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onStreetViewClick?.(); }}
+                  className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded text-gray-700 transition-colors"
+                  title="Street View"
+                >
+                  <User size={14} />
+                </button>
+              )}
+
+              {/* Add/Remove Cart Button */}
+              {showProposalActions && !readOnly && selectedProposta && (() => {
+                const isInCart = selectedProposta.itens?.some((i: any) => i.id_ooh === ponto.id) || false;
+                return (
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={isAdding}
+                    className={`p-1.5 rounded transition-colors ${isInCart
+                        ? 'bg-red-50 hover:bg-red-100 text-red-600'
+                        : 'bg-[#FC1E75] hover:bg-[#E01A6A] text-white'
+                      }`}
+                    title={isInCart ? 'Remover do carrinho' : 'Adicionar ao carrinho'}
+                  >
+                    {isAdding ? (
+                      <div className="animate-spin h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full" />
+                    ) : (
+                      <ShoppingCart size={14} />
+                    )}
+                  </button>
+                );
+              })()}
+            </div>
+          </div>
 
           {/* Exibidora */}
           {ponto.exibidora_nome && (
@@ -327,42 +368,6 @@ export default function MapTooltip({
               </div>
             </div>
           )}
-
-          {/* Action Buttons - Icon Only */}
-          <div className="flex gap-1.5 mt-1.5">
-            {/* Street View Button */}
-            {ponto.latitude && ponto.longitude && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onStreetViewClick?.(); }}
-                className="flex-1 flex items-center justify-center py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 transition-colors"
-                title="Street View"
-              >
-                <User size={16} />
-              </button>
-            )}
-
-            {/* Add/Remove Cart Button */}
-            {showProposalActions && !readOnly && selectedProposta && (() => {
-              const isInCart = selectedProposta.itens?.some((i: any) => i.id_ooh === ponto.id) || false;
-              return (
-                <button
-                  onClick={handleAddToCart}
-                  disabled={isAdding}
-                  className={`flex-1 flex items-center justify-center py-2 rounded-lg transition-colors ${isInCart
-                      ? 'bg-red-50 hover:bg-red-100 text-red-600'
-                      : 'bg-[#FC1E75] hover:bg-[#E01A6A] text-white'
-                    }`}
-                  title={isInCart ? 'Remover do carrinho' : 'Adicionar ao carrinho'}
-                >
-                  {isAdding ? (
-                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                  ) : (
-                    <ShoppingCart size={16} />
-                  )}
-                </button>
-              );
-            })()}
-          </div>
         </div>
       </div>
 
