@@ -46,7 +46,7 @@ export default function HistoryModal({ isOpen, onClose, type, id }: HistoryModal
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-[2200] flex items-center justify-center p-4">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
                 <div className="p-4 border-b flex items-center justify-between">
                     <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -80,9 +80,9 @@ export default function HistoryModal({ isOpen, onClose, type, id }: HistoryModal
 
                                         <div className="mt-1">
                                             <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold uppercase mb-2 ${log.action === 'CREATE' ? 'bg-green-100 text-green-700' :
-                                                    log.action === 'UPDATE' ? 'bg-blue-100 text-blue-700' :
-                                                        log.action === 'DELETE' ? 'bg-red-100 text-red-700' :
-                                                            'bg-gray-100 text-gray-700'
+                                                log.action === 'UPDATE' ? 'bg-blue-100 text-blue-700' :
+                                                    log.action === 'DELETE' ? 'bg-red-100 text-red-700' :
+                                                        'bg-gray-100 text-gray-700'
                                                 }`}>
                                                 {log.action}
                                             </span>

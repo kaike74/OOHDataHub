@@ -468,15 +468,15 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
             zIndex={2000}
             hideCloseButton={true}
         >
-            {/* --- NEW SIDE-BY-SIDE LAYOUT (Reduced Height) --- */}
-            <div className="flex flex-row h-[550px] bg-white overflow-hidden shadow-2xl">
+            {/* --- REDESIGNED LAYOUT --- */}
+            <div className="flex flex-row h-[600px] bg-white overflow-hidden shadow-2xl">
 
                 {/* --- LEFT: VISUALS (40%) --- */}
-                <div className="w-[40%] h-full flex flex-col bg-black relative group border-r border-gray-100/10">
+                <div className="w-[40%] h-full flex flex-col bg-black relative border-r border-gray-100/10">
 
-                    {/* Top: Image (65%) */}
-                    <div className="h-[65%] w-full relative overflow-hidden bg-gray-900 group/image flex flex-col">
-                        <div className="flex-1 relative">{imagens.length > 0 ? (
+                    {/* Image Section (70%) */}
+                    <div className="h-[70%] w-full relative overflow-hidden bg-gray-900 group/image">
+                        {imagens.length > 0 ? (
                             <>
                                 <SafeImage
                                     src={api.getImageUrl(imagens[currentImageIndex])}
@@ -485,7 +485,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
 
-                                {/* Expand Button (Traditional Icon) */}
+                                {/* Expand Button */}
                                 <button
                                     onClick={() => setIsLightboxOpen(true)}
                                     className="absolute top-4 right-4 p-2 bg-black/40 hover:bg-black/60 text-white rounded-lg backdrop-blur-sm opacity-0 group-hover/image:opacity-100 transition-opacity z-20"
@@ -494,13 +494,19 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                     <Expand size={18} />
                                 </button>
 
-                                {/* Navigation */}
+                                {/* Navigation Arrows */}
                                 {imagens.length > 1 && (
                                     <>
-                                        <button onClick={() => setCurrentImageIndex((prev) => (prev - 1 + imagens.length) % imagens.length)} className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/30 hover:bg-black/50 text-white transition-opacity opacity-0 group-hover/image:opacity-100 z-20">
+                                        <button
+                                            onClick={() => setCurrentImageIndex((prev) => (prev - 1 + imagens.length) % imagens.length)}
+                                            className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/30 hover:bg-black/50 text-white transition-opacity opacity-0 group-hover/image:opacity-100 z-20"
+                                        >
                                             <ChevronLeft size={20} />
                                         </button>
-                                        <button onClick={() => setCurrentImageIndex((prev) => (prev + 1) % imagens.length)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/30 hover:bg-black/50 text-white transition-opacity opacity-0 group-hover/image:opacity-100 z-20">
+                                        <button
+                                            onClick={() => setCurrentImageIndex((prev) => (prev + 1) % imagens.length)}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/30 hover:bg-black/50 text-white transition-opacity opacity-0 group-hover/image:opacity-100 z-20"
+                                        >
                                             <ChevronRight size={20} />
                                         </button>
                                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
@@ -510,6 +516,13 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                         </div>
                                     </>
                                 )}
+
+                                {/* OOH Code Badge on Image */}
+                                <div className="absolute top-4 left-4 z-20">
+                                    <div className="px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/20">
+                                        <span className="text-sm font-bold text-white tracking-wide">{selectedPonto.codigo_ooh}</span>
+                                    </div>
+                                </div>
                             </>
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-gray-500 flex-col gap-2">
@@ -517,65 +530,58 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                 <p className="text-sm">Sem imagem</p>
                             </div>
                         )}
+                    </div>
 
-                            <div className="absolute top-4 left-4 z-20">
-                                <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-black/50 text-white backdrop-blur-md border border-white/10")}>
-                                    {selectedPonto.tipo}
-                                </span>
-                            </div>
-                        </div>
+                    {/* Thumbnails Row - ALWAYS SHOW when images exist */}
+                    {imagens.length > 0 && (
+                        <div className="h-16 bg-black/80 backdrop-blur-sm border-t border-white/10 px-2 py-1.5 flex items-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-white/20">
+                            {imagens.map((img, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setCurrentImageIndex(idx)}
+                                    className={cn(
+                                        "h-12 w-16 rounded overflow-hidden flex-shrink-0 border-2 transition-all",
+                                        idx === currentImageIndex ? "border-white scale-105" : "border-transparent opacity-60 hover:opacity-100"
+                                    )}
+                                >
+                                    <SafeImage
+                                        src={api.getImageUrl(img)}
+                                        alt={`Thumbnail ${idx + 1}`}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </button>
+                            ))}
 
-                        {/* Thumbnails Row */}
-                        {imagens.length > 1 && (
-                            <div className="h-16 bg-black/80 backdrop-blur-sm border-t border-white/10 px-2 py-1.5 flex items-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-white/20">
-                                {imagens.map((img, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => setCurrentImageIndex(idx)}
-                                        className={cn(
-                                            "h-12 w-16 rounded overflow-hidden flex-shrink-0 border-2 transition-all",
-                                            idx === currentImageIndex ? "border-white scale-105" : "border-transparent opacity-60 hover:opacity-100"
-                                        )}
-                                    >
-                                        <SafeImage
-                                            src={api.getImageUrl(img)}
-                                            alt={`Thumbnail ${idx + 1}`}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </button>
-                                ))}
-
-                                {/* Upload Button (Admin Only) */}
-                                {canEdit && (
-                                    <button
-                                        onClick={() => fileInputRef.current?.click()}
-                                        disabled={isUploadingImage}
-                                        className="h-12 w-16 rounded border-2 border-dashed border-white/30 hover:border-white/60 flex items-center justify-center text-white/60 hover:text-white transition-all flex-shrink-0 bg-white/5"
-                                        title="Adicionar Imagem"
-                                    >
-                                        {isUploadingImage ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
-                                    </button>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Upload Button for no images (Admin Only) */}
-                        {imagens.length === 0 && canEdit && (
-                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+                            {/* Upload Button (Admin Only) */}
+                            {canEdit && (
                                 <button
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={isUploadingImage}
-                                    className="px-4 py-2 bg-emidias-primary hover:bg-emidias-primary/90 text-white rounded-lg flex items-center gap-2 transition-all"
+                                    className="h-12 w-16 rounded border-2 border-dashed border-white/30 hover:border-white/60 flex items-center justify-center text-white/60 hover:text-white transition-all flex-shrink-0 bg-white/5"
+                                    title="Adicionar Imagem"
                                 >
-                                    {isUploadingImage ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                                    Adicionar Imagem
+                                    {isUploadingImage ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
                                 </button>
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    )}
 
-                    {/* Bottom: Map (35%) */}
-                    <div className="h-[35%] w-full relative bg-gray-100 border-t border-white/10">
+                    {/* Upload Button for no images (Admin Only) */}
+                    {imagens.length === 0 && canEdit && (
+                        <div className="h-16 bg-black/80 backdrop-blur-sm border-t border-white/10 px-2 py-1.5 flex items-center justify-center">
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploadingImage}
+                                className="h-12 px-4 bg-emidias-primary hover:bg-emidias-primary/90 text-white rounded-lg flex items-center gap-2 transition-all"
+                            >
+                                {isUploadingImage ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                                Adicionar Imagem
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Map Section (Remaining space) */}
+                    <div className="flex-1 w-full relative bg-gray-100 border-t border-white/10">
                         <div ref={mapRef} className="w-full h-full grayscale-[20%] hover:grayscale-0 transition-all duration-500" />
 
                         <div className="absolute bottom-2 right-2 flex gap-1 z-10">
@@ -602,11 +608,43 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                 {/* --- RIGHT: DATA (60%) --- */}
                 <div className="w-[60%] h-full flex flex-col bg-white relative">
 
-                    {/* Header - Redesigned */}
-                    <div className="px-5 py-3 border-b border-gray-100 shrink-0 bg-white z-20">
-                        {/* Top Row: Code + Close */}
-                        <div className="flex items-center justify-between mb-2">
-                            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{selectedPonto.codigo_ooh}</h1>
+                    {/* Header - Clean & Simple */}
+                    <div className="px-5 py-4 border-b border-gray-100 shrink-0 bg-white z-20">
+                        <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                                <h1 className="text-xl font-bold text-gray-900 tracking-tight mb-2">{selectedPonto.codigo_ooh}</h1>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    {/* Exhibitor - SINGLE INSTANCE */}
+                                    <ExhibitorPopover
+                                        exhibitorId={selectedPonto.id_exibidora || 0}
+                                        exhibitorName={selectedPonto.exibidora_nome || 'Exibidora'}
+                                        onFilter={(id) => {
+                                            setFilterExibidora([id]);
+                                            setSelectedExibidora(exibidoras.find(e => e.id === id) || null);
+                                            setCurrentView('map');
+                                            handleClose();
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emidias-primary/10 hover:bg-emidias-primary/20 rounded-md cursor-pointer transition-all border border-emidias-primary/20">
+                                            <Building2 size={14} className="text-emidias-primary" />
+                                            <span className="font-semibold text-xs text-emidias-primary">{selectedPonto.exibidora_nome || 'Exibidora'}</span>
+                                        </div>
+                                    </ExhibitorPopover>
+
+                                    {/* Type Badge - SINGLE INSTANCE */}
+                                    <div className="px-2.5 py-1 bg-gray-100 rounded-md border border-gray-200">
+                                        <span className="font-semibold text-xs text-gray-700 uppercase">{selectedPonto.tipo}</span>
+                                    </div>
+
+                                    {/* Proposals Count (Map context only) */}
+                                    {!isInProposalContext && pointProposals.length > 0 && (
+                                        <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded-md border border-blue-200">
+                                            <ShoppingCart size={12} className="text-blue-600" />
+                                            <span className="text-xs font-semibold text-blue-700">{pointProposals.length}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                             <button
                                 onClick={handleClose}
                                 className="h-8 w-8 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-500 flex items-center justify-center transition-colors border border-gray-200"
@@ -614,145 +652,81 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                 <X size={18} />
                             </button>
                         </div>
-
-                        {/* Second Row: Exhibitor + Type + Badges */}
-                        <div className="flex items-center gap-3 flex-wrap">
-                            {/* Exhibitor - Prominent */}
-                            <ExhibitorPopover
-                                exhibitorId={selectedPonto.id_exibidora || 0}
-                                exhibitorName={selectedPonto.exibidora_nome || 'Exibidora'}
-                                onFilter={(id) => {
-                                    setFilterExibidora([id]);
-                                    setSelectedExibidora(exibidoras.find(e => e.id === id) || null);
-                                    setCurrentView('map');
-                                    handleClose();
-                                }}
-                            >
-                                <div className="flex items-center gap-2 px-3 py-1.5 bg-emidias-primary/10 hover:bg-emidias-primary/20 rounded-lg cursor-pointer transition-all border border-emidias-primary/20">
-                                    <Building2 size={16} className="text-emidias-primary" />
-                                    <span className="font-semibold text-sm text-emidias-primary">{selectedPonto.exibidora_nome || 'Exibidora'}</span>
-                                </div>
-                            </ExhibitorPopover>
-
-                            {/* Type - Prominent */}
-                            <div className="px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
-                                <span className="font-bold text-sm text-white uppercase tracking-wide">{selectedPonto.tipo}</span>
-                            </div>
-
-                            {/* Proposals Badge */}
-                            {!isInProposalContext && pointProposals.length > 0 && (
-                                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 rounded-lg border border-blue-200">
-                                    <ShoppingCart size={14} className="text-blue-600" />
-                                    <span className="text-xs font-semibold text-blue-700">{pointProposals.length} proposta{pointProposals.length > 1 ? 's' : ''}</span>
-                                </div>
-                            )}
-
-                            {/* Last Update */}
-                            {!isInProposalContext && lastUpdate && (
-                                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
-                                    <Clock size={14} className="text-gray-500" />
-                                    <span className="text-xs text-gray-600">
-                                        {(() => {
-                                            const diff = Date.now() - new Date(lastUpdate.date).getTime();
-                                            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                            if (days === 0) return 'Hoje';
-                                            if (days === 1) return 'Ontem';
-                                            return `Há ${days} dias`;
-                                        })()}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
                     </div>
 
-                    {/* Content Body - Compact Grid */}
+                    {/* Content Body - Organized Grid */}
                     <div className="flex-1 p-5 overflow-y-auto custom-scrollbar">
-                        <div className="grid grid-cols-12 gap-5 h-full content-start">
+                        <div className="space-y-5">
 
-                            {/* Row 1: Address & Exhibitor (Col 12) */}
-                            <div className="col-span-12">
+                            {/* Address Section */}
+                            <div>
                                 <div className="flex justify-between items-start">
-                                    <div className="space-y-1 flex-1 pr-4">
-                                        <ExhibitorPopover
-                                            exhibitorId={selectedPonto.id_exibidora || 0}
-                                            exhibitorName={selectedPonto.exibidora_nome || 'Exibidora'}
-                                            onFilter={(id) => {
-                                                setFilterExibidora([id]);
-                                                setSelectedExibidora(exibidoras.find(e => e.id === id) || null);
-                                                setCurrentView('map');
-                                                handleClose();
-                                            }}
-                                        >
-                                            <span className="flex items-center gap-1.5 text-xs font-semibold text-emidias-primary/80 hover:text-emidias-primary cursor-pointer transition-colors mb-1 w-fit">
-                                                <Building2 size={12} />
-                                                {(selectedPonto.exibidora_nome || 'Exibidora').toUpperCase()}
-                                            </span>
-                                        </ExhibitorPopover>
-                                        <p className="text-base font-semibold text-gray-900 leading-snug">{selectedPonto.endereco}</p>
-                                        <div className="flex flex-col gap-1 text-xs text-gray-500 mt-1">
-                                            <span>{selectedPonto.cidade} - {selectedPonto.uf}</span>
-                                            {selectedPonto.ponto_referencia && (
-                                                <span className="italic text-gray-400">Ref: {selectedPonto.ponto_referencia}</span>
-                                            )}
-                                            {/* Lat / Lng Display */}
-                                            <div className="flex items-center gap-2 text-[10px] text-gray-500 font-mono mt-1 pt-1 border-t border-gray-100 w-fit font-semibold">
-                                                <span className="flex items-center gap-1"><MapPin size={10} /> {selectedPonto.latitude?.toFixed(6)}, {selectedPonto.longitude?.toFixed(6)}</span>
+                                    <div className="flex-1 pr-4">
+                                        <p className="text-base font-semibold text-gray-900 leading-snug mb-1">{selectedPonto.endereco}</p>
+                                        <p className="text-sm text-gray-600">{selectedPonto.cidade} - {selectedPonto.uf}</p>
+                                        {selectedPonto.ponto_referencia && (
+                                            <p className="text-xs text-gray-400 italic mt-1">Ref: {selectedPonto.ponto_referencia}</p>
+                                        )}
+                                        {/* Coordinates */}
+                                        <div className="flex items-center gap-1.5 text-[10px] text-gray-500 font-mono mt-2 pt-2 border-t border-gray-100 w-fit">
+                                            <MapPin size={10} />
+                                            <span>{selectedPonto.latitude?.toFixed(6)}, {selectedPonto.longitude?.toFixed(6)}</span>
+                                        </div>
+                                    </div>
+                                    <button onClick={handleCopyAddress} className="p-1.5 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded transition-all border border-gray-100">
+                                        <Copy size={16} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="h-px bg-gray-100" />
+
+                            {/* Specs & Values Grid */}
+                            <div className="grid grid-cols-2 gap-5">
+                                {/* Left: Specifications */}
+                                <div className="space-y-3">
+                                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Especificações</h3>
+
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                                            <Ruler size={14} className="text-gray-400" />
+                                            <div>
+                                                <p className="text-[9px] text-gray-400 uppercase font-medium">Medidas</p>
+                                                <p className="text-sm font-semibold text-gray-900">{selectedPonto.medidas || 'N/A'}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                                            <Users size={14} className="text-gray-400" />
+                                            <div>
+                                                <p className="text-[9px] text-gray-400 uppercase font-medium">Impacto Diário</p>
+                                                <p className="text-sm font-semibold text-gray-900">{selectedPonto.fluxo ? `${parseInt(selectedPonto.fluxo as any).toLocaleString()}` : 'N/A'}</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <button onClick={handleCopyAddress} className="p-1.5 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded transition-all border border-gray-100"><Copy size={16} /></button>
-                                    </div>
-                                </div>
-                            </div>
 
-                            {/* Divider */}
-                            <div className="col-span-12 h-px bg-gray-100" />
-
-                            {/* Row 2: Specs & Values */}
-                            <div className="col-span-12 md:col-span-5 space-y-4">
-                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Especificações</h3>
-
-                                <div className="grid grid-cols-1 gap-2">
-                                    <div className="flex items-center gap-3 p-2 transition-colors border-l-2 border-transparent hover:border-gray-200">
-                                        <Ruler size={16} className="text-gray-400" />
-                                        <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-medium leading-none mb-0.5">Medidas</p>
-                                            <p className="text-sm font-semibold text-gray-900 leading-none">{selectedPonto.medidas || 'N/A'}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 p-2 transition-colors border-l-2 border-transparent hover:border-gray-200">
-                                        <Users size={16} className="text-gray-400" />
-                                        <div>
-                                            <p className="text-[10px] text-gray-400 uppercase font-medium leading-none mb-0.5">Impacto Diário</p>
-                                            <p className="text-sm font-semibold text-gray-900 leading-none">{selectedPonto.fluxo ? `${parseInt(selectedPonto.fluxo as any).toLocaleString()}` : 'N/A'}</p>
-                                        </div>
-                                    </div>
-
-                                    {(selectedPonto.observacoes) && (
-                                        <div className="mt-2 p-3 bg-yellow-50/50 rounded-lg text-xs text-gray-600 border border-yellow-100/50">
-                                            <p className="font-bold text-yellow-700/80 mb-1 uppercase text-[10px]">Observações</p>
-                                            <p className="leading-relaxed line-clamp-4">{selectedPonto.observacoes}</p>
+                                    {selectedPonto.observacoes && (
+                                        <div className="mt-3 p-3 bg-yellow-50/50 rounded-lg text-xs text-gray-600 border border-yellow-100/50">
+                                            <p className="font-bold text-yellow-700/80 mb-1 uppercase text-[9px]">Observações</p>
+                                            <p className="leading-relaxed line-clamp-3">{selectedPonto.observacoes}</p>
                                         </div>
                                     )}
                                 </div>
-                            </div>
 
-                            <div className="col-span-12 md:col-span-7 md:pl-5 md:border-l border-gray-50">
-                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Valores & Proposta</h3>
-
+                                {/* Right: Values */}
                                 <div className="space-y-3">
+                                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Valores</h3>
+
                                     {proposalItem ? (
-                                        <div className="bg-blue-50/30 rounded-xl p-4 border border-blue-100/50">
-                                            <div className="flex justify-between items-center mb-3">
+                                        <div className="bg-blue-50/30 rounded-lg p-3 border border-blue-100/50">
+                                            <div className="flex justify-between items-center mb-2">
                                                 <span className="text-xs font-medium text-blue-800 bg-blue-100/50 px-2 py-0.5 rounded">Selecionado</span>
-                                                <span className="text-[10px] text-gray-400 uppercase tracking-wider">{proposalItem.periodo_comercializado || 'MENSAL'}</span>
+                                                <span className="text-[9px] text-gray-400 uppercase">{proposalItem.periodo_comercializado || 'MENSAL'}</span>
                                             </div>
                                             <div className="space-y-2">
                                                 <div className="flex justify-between items-end">
                                                     <span className="text-xs text-gray-500">Locação</span>
-                                                    <span className="text-xl font-bold text-gray-900">{formatCurrency(proposalItem.valor_locacao)}</span>
+                                                    <span className="text-lg font-bold text-gray-900">{formatCurrency(proposalItem.valor_locacao)}</span>
                                                 </div>
                                                 {proposalItem.valor_papel > 0 && (
                                                     <div className="flex justify-between items-end pt-2 border-t border-blue-100/50">
@@ -763,7 +737,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
                                             {produtos.length > 0 ? (
                                                 <div className="space-y-2">
                                                     {produtos.slice(0, 3).map((produto, idx) => {
@@ -771,8 +745,8 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                                         return (
                                                             <div key={idx} className="flex justify-between items-center text-sm">
                                                                 <div className="flex flex-col">
-                                                                    <span className="font-medium text-gray-700">{produto.tipo}</span>
-                                                                    {produto.periodo && <span className="text-[10px] text-gray-400">{produto.periodo}</span>}
+                                                                    <span className="font-medium text-gray-700 text-xs">{produto.tipo}</span>
+                                                                    {produto.periodo && <span className="text-[9px] text-gray-400">{produto.periodo}</span>}
                                                                 </div>
                                                                 <span className="font-semibold text-gray-900">{formatCurrency(displayValue)}</span>
                                                             </div>
@@ -780,131 +754,69 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                                     })}
                                                 </div>
                                             ) : (
-                                                <p className="text-xs text-gray-400 italic text-center">Preços sob consulta</p>
+                                                <p className="text-xs text-gray-400 italic text-center py-2">Preços sob consulta</p>
                                             )}
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Related Proposals Section (Map Context Only) */}
+                            {/* Proposals List (Map Context Only) */}
                             {!isInProposalContext && pointProposals.length > 0 && (
-                                <div className="col-span-12 mt-4">
-                                    <div className="h-px bg-gray-100 mb-4" />
-                                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Propostas Relacionadas</h3>
-                                    <div className="space-y-2">
-                                        {pointProposals.map((proposta) => (
-                                            <div key={proposta.id} className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-100 hover:shadow-sm transition-all">
-                                                <div className="flex items-start justify-between gap-3">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <h4 className="font-semibold text-sm text-gray-900 truncate">{proposta.nome}</h4>
-                                                            <span className={cn(
-                                                                "text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase",
-                                                                proposta.status === 'rascunho' && "bg-gray-200 text-gray-700",
-                                                                proposta.status === 'em validação' && "bg-yellow-200 text-yellow-800",
-                                                                proposta.status === 'aprovado' && "bg-green-200 text-green-800"
-                                                            )}>
-                                                                {proposta.status}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-[10px] text-gray-600">
-                                                            Cliente: {proposta.cliente?.nome || 'N/A'}
-                                                        </p>
-                                                        {(() => {
-                                                            const item = proposta.itens?.find(i => i.id_ooh === selectedPonto.id);
-                                                            if (!item) return null;
-                                                            return (
-                                                                <div className="mt-1 flex items-center gap-3 text-[10px] text-gray-500">
-                                                                    {item.periodo_inicio && item.periodo_fim && (
-                                                                        <span>📅 {new Date(item.periodo_inicio).toLocaleDateString()} - {new Date(item.periodo_fim).toLocaleDateString()}</span>
-                                                                    )}
-                                                                    {item.valor_locacao > 0 && (
-                                                                        <span className="font-semibold text-blue-700">💰 {formatCurrency(item.valor_locacao)}</span>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        })()}
-                                                    </div>
-                                                    <button
-                                                        onClick={() => {
-                                                            handleClose();
-                                                            window.location.href = `/propostas?id=${proposta.id}`;
-                                                        }}
-                                                        className="p-1.5 text-blue-600 hover:bg-blue-100 rounded transition-all"
-                                                        title="Abrir Proposta"
-                                                    >
-                                                        <ExternalLink size={14} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Exhibitor Info Section (Map Context Only) */}
-                            {!isInProposalContext && selectedPonto.id_exibidora && (
-                                <div className="col-span-12 mt-4">
-                                    <div className="h-px bg-gray-100 mb-4" />
-                                    <button
-                                        onClick={() => setIsExhibitorInfoExpanded(!isExhibitorInfoExpanded)}
-                                        className="w-full flex items-center justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 hover:text-gray-600 transition-colors"
-                                    >
-                                        <span>Sobre a Exibidora</span>
-                                        {isExhibitorInfoExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                                    </button>
-
-                                    {isExhibitorInfoExpanded && (
-                                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 space-y-3">
-                                            <div>
-                                                <h4 className="font-semibold text-sm text-gray-900 mb-1">{selectedPonto.exibidora_nome}</h4>
-                                                {selectedPonto.exibidora_cnpj && (
-                                                    <p className="text-[10px] text-gray-500">CNPJ: {selectedPonto.exibidora_cnpj}</p>
-                                                )}
-                                            </div>
-
-                                            {exhibitorContacts.length > 0 && (
-                                                <div>
-                                                    <p className="text-[10px] font-semibold text-gray-700 uppercase mb-2">Contatos</p>
-                                                    <div className="space-y-2">
-                                                        {exhibitorContacts.map((contact) => (
-                                                            <div key={contact.id} className="flex items-start gap-2 text-xs">
-                                                                <User size={12} className="text-gray-400 mt-0.5" />
-                                                                <div className="flex-1">
-                                                                    <p className="font-medium text-gray-900">{contact.nome}</p>
-                                                                    {contact.telefone && (
-                                                                        <p className="text-gray-600 flex items-center gap-1">
-                                                                            <Phone size={10} /> {contact.telefone}
-                                                                        </p>
-                                                                    )}
-                                                                    {contact.email && (
-                                                                        <p className="text-gray-600 flex items-center gap-1">
-                                                                            <Mail size={10} /> {contact.email}
-                                                                        </p>
-                                                                    )}
-                                                                </div>
+                                <>
+                                    <div className="h-px bg-gray-100" />
+                                    <div>
+                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Propostas ({pointProposals.length})</h3>
+                                        <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar">
+                                            {pointProposals.map((proposta) => (
+                                                <div key={proposta.id} className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-100 hover:shadow-sm transition-all">
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <h4 className="font-semibold text-sm text-gray-900 truncate">{proposta.nome}</h4>
+                                                                <span className={cn(
+                                                                    "text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase",
+                                                                    proposta.status === 'rascunho' && "bg-gray-200 text-gray-700",
+                                                                    proposta.status === 'em validação' && "bg-yellow-200 text-yellow-800",
+                                                                    proposta.status === 'aprovado' && "bg-green-200 text-green-800"
+                                                                )}>
+                                                                    {proposta.status}
+                                                                </span>
                                                             </div>
-                                                        ))}
+                                                            <p className="text-[10px] text-gray-600">
+                                                                Cliente: {proposta.cliente?.nome || 'N/A'}
+                                                            </p>
+                                                            {(() => {
+                                                                const item = proposta.itens?.find(i => i.id_ooh === selectedPonto.id);
+                                                                if (!item) return null;
+                                                                return (
+                                                                    <div className="mt-1 flex items-center gap-3 text-[10px] text-gray-500">
+                                                                        {item.periodo_inicio && item.periodo_fim && (
+                                                                            <span>📅 {new Date(item.periodo_inicio).toLocaleDateString()} - {new Date(item.periodo_fim).toLocaleDateString()}</span>
+                                                                        )}
+                                                                        {item.valor_locacao > 0 && (
+                                                                            <span className="font-semibold text-blue-700">💰 {formatCurrency(item.valor_locacao)}</span>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => {
+                                                                handleClose();
+                                                                window.location.href = `/propostas?id=${proposta.id}`;
+                                                            }}
+                                                            className="p-1.5 text-blue-600 hover:bg-blue-100 rounded transition-all"
+                                                            title="Abrir Proposta"
+                                                        >
+                                                            <ExternalLink size={14} />
+                                                        </button>
                                                     </div>
                                                 </div>
-                                            )}
-
-                                            <button
-                                                onClick={() => {
-                                                    setFilterExibidora([selectedPonto.id_exibidora!]);
-                                                    setSelectedExibidora(exibidoras.find(e => e.id === selectedPonto.id_exibidora) || null);
-                                                    setCurrentView('map');
-                                                    handleClose();
-                                                }}
-                                                className="w-full mt-2 px-3 py-2 bg-emidias-primary/10 hover:bg-emidias-primary/20 text-emidias-primary rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <Building2 size={14} />
-                                                Ver todos os pontos desta exibidora
-                                            </button>
+                                            ))}
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                </>
                             )}
 
                         </div>
@@ -913,38 +825,47 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                     {/* Footer Actions - Context Aware */}
                     <div className="p-3 border-t border-gray-100 bg-white z-20 shrink-0 flex items-center justify-between">
 
-                        {/* Left Side: Navigation OR Admin Actions */}
+                        {/* Left Side: Navigation + Admin Actions */}
                         <div className="flex items-center gap-2">
-                            {canNavigate ? (
+                            {canNavigate && (
                                 <div className="flex items-center bg-gray-50 rounded-lg p-1">
-                                    <button onClick={handlePrevious} disabled={!hasPrevious} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md disabled:opacity-30 transition-all text-gray-600" title="Anterior"><ChevronLeft size={16} /></button>
+                                    <button onClick={handlePrevious} disabled={!hasPrevious} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md disabled:opacity-30 transition-all text-gray-600" title="Anterior">
+                                        <ChevronLeft size={16} />
+                                    </button>
                                     <span className="text-[10px] font-medium text-gray-500 px-2">
                                         {isInProposalContext
                                             ? `${currentIndex + 1} / ${cartItems.length}`
                                             : `${pontos.findIndex(p => p.id === selectedPonto?.id) + 1} / ${pontos.length}`
                                         }
                                     </span>
-                                    <button onClick={handleNext} disabled={!hasNext} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md disabled:opacity-30 transition-all text-gray-600" title="Próximo"><ChevronRight size={16} /></button>
+                                    <button onClick={handleNext} disabled={!hasNext} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md disabled:opacity-30 transition-all text-gray-600" title="Próximo">
+                                        <ChevronRight size={16} />
+                                    </button>
                                 </div>
-                            ) : (
-                                <div />
                             )}
 
                             {/* Admin Actions (Map Context Only) */}
                             {!isInProposalContext && canEdit && (
                                 <div className="flex gap-2 ml-2">
-                                    <button onClick={handleHistory} className="p-1.5 text-gray-400 hover:text-purple-600 bg-gray-50 hover:bg-purple-50 rounded transition-all border border-gray-100" title="Histórico"><History size={16} /></button>
-                                    <button onClick={handleEdit} className="p-1.5 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded transition-all border border-gray-100" title="Editar"><Edit size={16} /></button>
-                                    {isDeleting && <button onClick={handleDelete} disabled={isDeleting} className="p-1.5 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded transition-all border border-gray-100" title="Deletar"><Trash2 size={16} /></button>}
+                                    <button onClick={handleHistory} className="p-1.5 text-gray-400 hover:text-purple-600 bg-gray-50 hover:bg-purple-50 rounded transition-all border border-gray-100" title="Histórico">
+                                        <History size={16} />
+                                    </button>
+                                    <button onClick={handleEdit} className="p-1.5 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded transition-all border border-gray-100" title="Editar">
+                                        <Edit size={16} />
+                                    </button>
+                                    {!isDeleting && (
+                                        <button onClick={handleDelete} disabled={isDeleting} className="p-1.5 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded transition-all border border-gray-100" title="Deletar">
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
                                 </div>
                             )}
 
-                            {/* Quick Actions (Map Context Only) */}
+                            {/* Share Button (Map Context Only) */}
                             {!isInProposalContext && (
-                                <div className="flex gap-2 ml-2">
-                                    <button onClick={handleCreateProposal} className="p-1.5 text-gray-400 hover:text-green-600 bg-gray-50 hover:bg-green-50 rounded transition-all border border-gray-100" title="Criar Proposta com este Ponto"><Plus size={16} /></button>
-                                    <button onClick={handleSharePoint} className="p-1.5 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded transition-all border border-gray-100" title="Compartilhar Ponto"><Share2 size={16} /></button>
-                                </div>
+                                <button onClick={handleSharePoint} className="p-1.5 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded transition-all border border-gray-100 ml-2" title="Compartilhar Ponto">
+                                    <Share2 size={16} />
+                                </button>
                             )}
                         </div>
 
