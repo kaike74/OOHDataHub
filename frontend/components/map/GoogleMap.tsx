@@ -76,7 +76,7 @@ export default function GoogleMap({
 
     const customLayers = useStore((state) => state.customLayers);
     const setSelectedPonto = useStore((state) => state.setSelectedPonto);
-    const setSidebarOpen = useStore((state) => state.setSidebarOpen);
+    // const setSidebarOpen = useStore((state) => state.setSidebarOpen); // Removed
     const setModalOpen = useStore((state) => state.setModalOpen);
     const setStreetViewCoordinates = useStore((state) => state.setStreetViewCoordinates);
     const streetViewRequest = useStore((state) => state.streetViewRequest);

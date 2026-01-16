@@ -6,7 +6,6 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
 import GoogleMap from '@/components/map/GoogleMap';
-import Sidebar from '@/components/Sidebar';
 import { formatCurrency } from '@/lib/utils';
 
 interface ExhibitorProposalStats {

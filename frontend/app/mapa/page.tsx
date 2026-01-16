@@ -3,7 +3,7 @@
 import { useStore } from '@/lib/store';
 import MainLayout from '@/components/layout/MainLayout';
 import GoogleMap from '@/components/map/GoogleMap';
-import Sidebar from '@/components/Sidebar';
+import PointDetailsModal from '@/components/PointDetailsModal'; // REPLACED Sidebar
 import ExibidoraSidebar from '@/components/ExibidoraSidebar';
 import MapFilters from '@/components/MapFilters';
 import { useState, useEffect } from 'react';
@@ -70,7 +70,18 @@ export default function MapaPage() {
     const actions = (
         <div className="flex items-center gap-3">
             <div className="relative z-50">
-                <AddressSearch onLocationSelect={setSearchLocation} />
+                <AddressSearch
+                    onLocationSelect={setSearchLocation}
+                    onSelectExhibitor={(id) => {
+                        const exibidora = useStore.getState().exibidoras.find(e => e.id === id);
+                        if (exibidora) {
+                            useStore.getState().setFilterExibidora([id]);
+                            useStore.getState().setSelectedExibidora(exibidora);
+                            useStore.getState().setCurrentView('map');
+                            // Optional: Clear other filters?
+                        }
+                    }}
+                />
             </div>
 
             <Button
@@ -106,7 +117,8 @@ export default function MapaPage() {
                         <div className="absolute inset-0">
                             <GoogleMap searchLocation={searchLocation} showProposalActions={false} />
                         </div>
-                        <Sidebar showProposalActions={false} />
+                        {/* New Modal instead of Sidebar */}
+                        <PointDetailsModal />
                         <ExibidoraSidebar />
                         <MapFilters isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
                         <CreatePointModal />

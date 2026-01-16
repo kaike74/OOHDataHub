@@ -229,7 +229,16 @@ export default function ProposalDetailClient() {
     const actions = (
         <div className="flex items-center gap-3">
             <div className="relative z-50 w-64 md:w-80">
-                <AddressSearch onLocationSelect={setSearchLocation} />
+                <AddressSearch
+                    onLocationSelect={setSearchLocation}
+                    onSelectExhibitor={(id) => {
+                        // Proposal view filtering logic
+                        // We need to filter the LOCAL points being viewed in this proposal/context
+                        // Unlike MapaPage which filters global store, here we use local state filters
+                        setFilterExibidora([id]);
+                        // Maybe toast or feedback?
+                    }}
+                />
             </div>
             <Button
                 onClick={() => setIsFiltersOpen(true)}
