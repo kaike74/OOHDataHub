@@ -3,7 +3,7 @@
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, cn } from '@/lib/utils';
-import { X, MapPin, Building2, Ruler, Users, FileText, DollarSign, ChevronLeft, ChevronRight, Eye, ShoppingCart, Copy, ExternalLink, Loader2, Tag, Navigation, Phone, Mail, MessageSquare, Trash2, Edit, History, Search, Minimize2, Check, Expand } from 'lucide-react';
+import { X, MapPin, Building2, Ruler, Users, FileText, DollarSign, ChevronLeft, ChevronRight, Eye, ShoppingCart, Copy, ExternalLink, Loader2, Tag, Navigation, Phone, Mail, MessageSquare, Trash2, Edit, History, Search, Minimize2, Check, Expand, Share2, Download, Plus, Clock, User, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 import { ExhibitorPopover } from '@/components/ui/ExhibitorPopover';
 import AddressSearch from '@/components/AddressSearch';
 import HistoryModal from '@/components/HistoryModal';
+import CreateProposalModal from '@/components/CreateProposalModal';
+import type { Contato, Proposta } from '@/lib/types';
 
 interface PointDetailsModalProps {
     readOnly?: boolean;
@@ -42,7 +44,15 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
     const [isAddingToCart, setIsAddingToCart] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-    const [isLightboxOpen, setIsLightboxOpen] = useState(false); // Lightbox State
+    const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+    // New states for enhancements
+    const [exhibitorContacts, setExhibitorContacts] = useState<Contato[]>([]);
+    const [lastUpdate, setLastUpdate] = useState<{ date: string; user: string; action: string } | null>(null);
+    const [isCreateProposalOpen, setIsCreateProposalOpen] = useState(false);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [isExhibitorInfoExpanded, setIsExhibitorInfoExpanded] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const mapRef = useRef<HTMLDivElement>(null);
     const googleMapRef = useRef<google.maps.Map | null>(null);
@@ -62,7 +72,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
     const cartItems = selectedProposta?.itens || [];
 
     // For Map context: track which proposals contain this point
-    const [pointProposals, setPointProposals] = useState<any[]>([]);
+    const [pointProposals, setPointProposals] = useState<Proposta[]>([]);
 
     // Navigation logic differs by context
     const canNavigate = isInProposalContext
@@ -156,6 +166,51 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
         };
 
         fetchPointProposals();
+    }, [selectedPonto?.id, isInProposalContext]);
+
+    // Fetch exhibitor contacts (Map context only)
+    useEffect(() => {
+        if (!selectedPonto?.id_exibidora || isInProposalContext) {
+            setExhibitorContacts([]);
+            return;
+        }
+
+        const fetchContacts = async () => {
+            try {
+                const contacts = await api.getContatos(selectedPonto.id_exibidora!);
+                setExhibitorContacts(contacts || []);
+            } catch (error) {
+                console.error('Error fetching exhibitor contacts:', error);
+            }
+        };
+
+        fetchContacts();
+    }, [selectedPonto?.id_exibidora, isInProposalContext]);
+
+    // Fetch last update from history (Map context only)
+    useEffect(() => {
+        if (!selectedPonto?.id || isInProposalContext) {
+            setLastUpdate(null);
+            return;
+        }
+
+        const fetchLastUpdate = async () => {
+            try {
+                const history = await api.getHistory('points', selectedPonto.id);
+                if (history && history.length > 0) {
+                    const latest = history[0];
+                    setLastUpdate({
+                        date: latest.created_at,
+                        user: latest.user_name || 'Usuário Desconhecido',
+                        action: latest.action
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching point history:', error);
+            }
+        };
+
+        fetchLastUpdate();
     }, [selectedPonto?.id, isInProposalContext]);
 
     // Lightbox keyboard handlers (ESC to close, arrows to navigate)
@@ -356,6 +411,48 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
         }
     }, [selectedPonto, setStreetViewRequest]);
 
+    // New handlers for enhancements
+    const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !selectedPonto) return;
+
+        setIsUploadingImage(true);
+        try {
+            await api.uploadImage(file, String(selectedPonto.id), imagens.length);
+            // Refresh point data
+            const updatedPonto = await api.getPonto(selectedPonto.id);
+            setSelectedPonto(updatedPonto);
+            toast.success('Imagem adicionada com sucesso!');
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            toast.error('Erro ao fazer upload da imagem');
+        } finally {
+            setIsUploadingImage(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    }, [selectedPonto, imagens.length, setSelectedPonto]);
+
+    const handleCreateProposal = useCallback(() => {
+        setIsCreateProposalOpen(true);
+    }, []);
+
+    const handleSharePoint = useCallback(() => {
+        if (!selectedPonto) return;
+        const url = `${window.location.origin}/mapa?ponto=${selectedPonto.id}`;
+        navigator.clipboard.writeText(url);
+        toast.success('Link do ponto copiado!');
+    }, [selectedPonto]);
+
+    const handleExportPDF = useCallback(() => {
+        toast.info('Exportação em PDF será implementada em breve');
+    }, []);
+
+    // Calculate CPM
+    const calculateCPM = useCallback((valor: number, fluxo: number): number | null => {
+        if (!fluxo || fluxo === 0) return null;
+        return parseFloat(((valor / fluxo) * 1000).toFixed(2));
+    }, []);
+
     if (!selectedPonto || !isPointModalOpen) return null;
 
     const proposalItem = selectedProposta?.itens?.find((i: any) => i.id_ooh === selectedPonto.id);
@@ -378,8 +475,8 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                 <div className="w-[40%] h-full flex flex-col bg-black relative group border-r border-gray-100/10">
 
                     {/* Top: Image (65%) */}
-                    <div className="h-[65%] w-full relative overflow-hidden bg-gray-900 group/image">
-                        {imagens.length > 0 ? (
+                    <div className="h-[65%] w-full relative overflow-hidden bg-gray-900 group/image flex flex-col">
+                        <div className="flex-1 relative">{imagens.length > 0 ? (
                             <>
                                 <SafeImage
                                     src={api.getImageUrl(imagens[currentImageIndex])}
@@ -421,11 +518,60 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                             </div>
                         )}
 
-                        <div className="absolute top-4 left-4 z-20">
-                            <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-black/50 text-white backdrop-blur-md border border-white/10")}>
-                                {selectedPonto.tipo}
-                            </span>
+                            <div className="absolute top-4 left-4 z-20">
+                                <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-black/50 text-white backdrop-blur-md border border-white/10")}>
+                                    {selectedPonto.tipo}
+                                </span>
+                            </div>
                         </div>
+
+                        {/* Thumbnails Row */}
+                        {imagens.length > 1 && (
+                            <div className="h-16 bg-black/80 backdrop-blur-sm border-t border-white/10 px-2 py-1.5 flex items-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-white/20">
+                                {imagens.map((img, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setCurrentImageIndex(idx)}
+                                        className={cn(
+                                            "h-12 w-16 rounded overflow-hidden flex-shrink-0 border-2 transition-all",
+                                            idx === currentImageIndex ? "border-white scale-105" : "border-transparent opacity-60 hover:opacity-100"
+                                        )}
+                                    >
+                                        <SafeImage
+                                            src={api.getImageUrl(img)}
+                                            alt={`Thumbnail ${idx + 1}`}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </button>
+                                ))}
+
+                                {/* Upload Button (Admin Only) */}
+                                {canEdit && (
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isUploadingImage}
+                                        className="h-12 w-16 rounded border-2 border-dashed border-white/30 hover:border-white/60 flex items-center justify-center text-white/60 hover:text-white transition-all flex-shrink-0 bg-white/5"
+                                        title="Adicionar Imagem"
+                                    >
+                                        {isUploadingImage ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Upload Button for no images (Admin Only) */}
+                        {imagens.length === 0 && canEdit && (
+                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isUploadingImage}
+                                    className="px-4 py-2 bg-emidias-primary hover:bg-emidias-primary/90 text-white rounded-lg flex items-center gap-2 transition-all"
+                                >
+                                    {isUploadingImage ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                                    Adicionar Imagem
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Bottom: Map (35%) */}
@@ -480,6 +626,22 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                 <div className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 rounded-md border border-blue-200">
                                     <ShoppingCart size={12} className="text-blue-600" />
                                     <span className="text-[10px] font-semibold text-blue-700">Em {pointProposals.length} proposta{pointProposals.length > 1 ? 's' : ''}</span>
+                                </div>
+                            )}
+
+                            {/* Last Update Badge (Map Context Only) */}
+                            {!isInProposalContext && lastUpdate && (
+                                <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-md border border-gray-200">
+                                    <Clock size={12} className="text-gray-500" />
+                                    <span className="text-[10px] text-gray-600">
+                                        Atualizado há {(() => {
+                                            const diff = Date.now() - new Date(lastUpdate.date).getTime();
+                                            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                            if (days === 0) return 'hoje';
+                                            if (days === 1) return '1 dia';
+                                            return `${days} dias`;
+                                        })()}
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -617,6 +779,126 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                 </div>
                             </div>
 
+                            {/* Related Proposals Section (Map Context Only) */}
+                            {!isInProposalContext && pointProposals.length > 0 && (
+                                <div className="col-span-12 mt-4">
+                                    <div className="h-px bg-gray-100 mb-4" />
+                                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Propostas Relacionadas</h3>
+                                    <div className="space-y-2">
+                                        {pointProposals.map((proposta) => (
+                                            <div key={proposta.id} className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-100 hover:shadow-sm transition-all">
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <h4 className="font-semibold text-sm text-gray-900 truncate">{proposta.nome}</h4>
+                                                            <span className={cn(
+                                                                "text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase",
+                                                                proposta.status === 'rascunho' && "bg-gray-200 text-gray-700",
+                                                                proposta.status === 'em validação' && "bg-yellow-200 text-yellow-800",
+                                                                proposta.status === 'aprovado' && "bg-green-200 text-green-800"
+                                                            )}>
+                                                                {proposta.status}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[10px] text-gray-600">
+                                                            Cliente: {proposta.cliente?.nome || 'N/A'}
+                                                        </p>
+                                                        {(() => {
+                                                            const item = proposta.itens?.find(i => i.id_ooh === selectedPonto.id);
+                                                            if (!item) return null;
+                                                            return (
+                                                                <div className="mt-1 flex items-center gap-3 text-[10px] text-gray-500">
+                                                                    {item.periodo_inicio && item.periodo_fim && (
+                                                                        <span>📅 {new Date(item.periodo_inicio).toLocaleDateString()} - {new Date(item.periodo_fim).toLocaleDateString()}</span>
+                                                                    )}
+                                                                    {item.valor_locacao > 0 && (
+                                                                        <span className="font-semibold text-blue-700">💰 {formatCurrency(item.valor_locacao)}</span>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => {
+                                                            handleClose();
+                                                            window.location.href = `/propostas?id=${proposta.id}`;
+                                                        }}
+                                                        className="p-1.5 text-blue-600 hover:bg-blue-100 rounded transition-all"
+                                                        title="Abrir Proposta"
+                                                    >
+                                                        <ExternalLink size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Exhibitor Info Section (Map Context Only) */}
+                            {!isInProposalContext && selectedPonto.id_exibidora && (
+                                <div className="col-span-12 mt-4">
+                                    <div className="h-px bg-gray-100 mb-4" />
+                                    <button
+                                        onClick={() => setIsExhibitorInfoExpanded(!isExhibitorInfoExpanded)}
+                                        className="w-full flex items-center justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 hover:text-gray-600 transition-colors"
+                                    >
+                                        <span>Sobre a Exibidora</span>
+                                        {isExhibitorInfoExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                    </button>
+
+                                    {isExhibitorInfoExpanded && (
+                                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 space-y-3">
+                                            <div>
+                                                <h4 className="font-semibold text-sm text-gray-900 mb-1">{selectedPonto.exibidora_nome}</h4>
+                                                {selectedPonto.exibidora_cnpj && (
+                                                    <p className="text-[10px] text-gray-500">CNPJ: {selectedPonto.exibidora_cnpj}</p>
+                                                )}
+                                            </div>
+
+                                            {exhibitorContacts.length > 0 && (
+                                                <div>
+                                                    <p className="text-[10px] font-semibold text-gray-700 uppercase mb-2">Contatos</p>
+                                                    <div className="space-y-2">
+                                                        {exhibitorContacts.map((contact) => (
+                                                            <div key={contact.id} className="flex items-start gap-2 text-xs">
+                                                                <User size={12} className="text-gray-400 mt-0.5" />
+                                                                <div className="flex-1">
+                                                                    <p className="font-medium text-gray-900">{contact.nome}</p>
+                                                                    {contact.telefone && (
+                                                                        <p className="text-gray-600 flex items-center gap-1">
+                                                                            <Phone size={10} /> {contact.telefone}
+                                                                        </p>
+                                                                    )}
+                                                                    {contact.email && (
+                                                                        <p className="text-gray-600 flex items-center gap-1">
+                                                                            <Mail size={10} /> {contact.email}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <button
+                                                onClick={() => {
+                                                    setFilterExibidora([selectedPonto.id_exibidora!]);
+                                                    setSelectedExibidora(exibidoras.find(e => e.id === selectedPonto.id_exibidora) || null);
+                                                    setCurrentView('map');
+                                                    handleClose();
+                                                }}
+                                                className="w-full mt-2 px-3 py-2 bg-emidias-primary/10 hover:bg-emidias-primary/20 text-emidias-primary rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <Building2 size={14} />
+                                                Ver todos os pontos desta exibidora
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                         </div>
                     </div>
 
@@ -646,6 +928,14 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                     <button onClick={handleHistory} className="p-1.5 text-gray-400 hover:text-purple-600 bg-gray-50 hover:bg-purple-50 rounded transition-all border border-gray-100" title="Histórico"><History size={16} /></button>
                                     <button onClick={handleEdit} className="p-1.5 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded transition-all border border-gray-100" title="Editar"><Edit size={16} /></button>
                                     {isDeleting && <button onClick={handleDelete} disabled={isDeleting} className="p-1.5 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded transition-all border border-gray-100" title="Deletar"><Trash2 size={16} /></button>}
+                                </div>
+                            )}
+
+                            {/* Quick Actions (Map Context Only) */}
+                            {!isInProposalContext && (
+                                <div className="flex gap-2 ml-2">
+                                    <button onClick={handleCreateProposal} className="p-1.5 text-gray-400 hover:text-green-600 bg-gray-50 hover:bg-green-50 rounded transition-all border border-gray-100" title="Criar Proposta com este Ponto"><Plus size={16} /></button>
+                                    <button onClick={handleSharePoint} className="p-1.5 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded transition-all border border-gray-100" title="Compartilhar Ponto"><Share2 size={16} /></button>
                                 </div>
                             )}
                         </div>
@@ -729,6 +1019,23 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                 type="points"
                 id={selectedPonto.id}
             />
+
+            {/* Hidden File Input for Image Upload */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+            />
+
+            {/* Create Proposal Modal */}
+            {isCreateProposalOpen && (
+                <CreateProposalModal
+                    isOpen={isCreateProposalOpen}
+                    onClose={() => setIsCreateProposalOpen(false)}
+                />
+            )}
         </Modal>
     );
 }
