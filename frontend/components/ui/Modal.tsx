@@ -13,6 +13,7 @@ interface ModalProps {
     maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
     className?: string;
     zIndex?: number;
+    hideCloseButton?: boolean;
 }
 
 export function Modal({
@@ -24,7 +25,8 @@ export function Modal({
     footer,
     maxWidth = 'md',
     className,
-    zIndex = 60
+    zIndex = 60,
+    hideCloseButton = false
 }: ModalProps) {
     const [mounted, setMounted] = useState(false);
     const [visible, setVisible] = useState(false);
@@ -90,7 +92,7 @@ export function Modal({
                         {subtitle && <p className="text-white/80 text-sm mt-1">{subtitle}</p>}
                     </div>
                 )}
-                {!title && !subtitle && (
+                {!title && !subtitle && !hideCloseButton && (
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 z-10 transition-colors"

@@ -268,7 +268,12 @@ export default function AddressSearch({ onLocationSelect, onSelectExhibitor, onS
                   <button
                     key={`db-${result.id || index}`}
                     onClick={() => handleSelectDbResult(result)}
-                    className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-emidias-blue-50 transition-colors group"
+                    className={cn(
+                      "w-full text-left px-2.5 py-2 rounded-lg transition-colors group border-l-2",
+                      result.inCart
+                        ? "bg-green-50 border-green-500 hover:bg-green-100"
+                        : "border-transparent hover:bg-emidias-blue-50"
+                    )}
                   >
                     <div className="flex items-start gap-2">
                       {result.type === 'exhibitor' ? (

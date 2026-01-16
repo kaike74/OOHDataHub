@@ -3,7 +3,7 @@
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, cn } from '@/lib/utils';
-import { X, MapPin, Building2, Ruler, Users, FileText, DollarSign, ChevronLeft, ChevronRight, Eye, ShoppingCart, Copy, ExternalLink, Loader2, Tag, Navigation, Phone, Mail, MessageSquare, Trash2, Edit, History, Search, Minimize2, Maximize2, Check } from 'lucide-react';
+import { X, MapPin, Building2, Ruler, Users, FileText, DollarSign, ChevronLeft, ChevronRight, Eye, ShoppingCart, Copy, ExternalLink, Loader2, Tag, Navigation, Phone, Mail, MessageSquare, Trash2, Edit, History, Search, Minimize2, Check, Expand } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -294,9 +294,10 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
             maxWidth="6xl"
             className="p-0 overflow-hidden"
             zIndex={2000}
+            hideCloseButton={true}
         >
             {/* --- NEW SIDE-BY-SIDE LAYOUT (Reduced Height) --- */}
-            <div className="flex flex-row h-[70vh] bg-white overflow-hidden shadow-2xl">
+            <div className="flex flex-row h-[550px] bg-white overflow-hidden shadow-2xl">
 
                 {/* --- LEFT: VISUALS (40%) --- */}
                 <div className="w-[40%] h-full flex flex-col bg-black relative group border-r border-gray-100/10">
@@ -318,7 +319,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                     className="absolute top-4 right-4 p-2 bg-black/40 hover:bg-black/60 text-white rounded-lg backdrop-blur-sm opacity-0 group-hover/image:opacity-100 transition-opacity z-20"
                                     title="Expandir Imagem"
                                 >
-                                    <Maximize2 size={18} />
+                                    <Expand size={18} />
                                 </button>
 
                                 {/* Navigation */}
@@ -387,9 +388,6 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
 
                             {/* Internal Search Bar (Restricted) */}
                             <div className="w-64 relative">
-                                <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400 z-10">
-                                    <Search size={14} />
-                                </div>
                                 <AddressSearch
                                     onlyPoints={true} // Restricted Search
                                     cartIds={cartIds}
@@ -419,9 +417,6 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                     .finder-box-container input:focus {
                                         background: white !important;
                                         border-color: #8B5CF6 !important;
-                                    }
-                                    .finder-box-container .iconButton {
-                                        display: none !important;
                                     }
                                 `}</style>
                             </div>
@@ -468,7 +463,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                                 <span className="italic text-gray-400">Ref: {selectedPonto.ponto_referencia}</span>
                                             )}
                                             {/* Lat / Lng Display */}
-                                            <div className="flex items-center gap-2 text-[10px] text-gray-400 font-mono mt-1 pt-1 border-t border-gray-100 w-fit">
+                                            <div className="flex items-center gap-2 text-[10px] text-gray-500 font-mono mt-1 pt-1 border-t border-gray-100 w-fit font-semibold">
                                                 <span className="flex items-center gap-1"><MapPin size={10} /> {selectedPonto.latitude?.toFixed(6)}, {selectedPonto.longitude?.toFixed(6)}</span>
                                             </div>
                                         </div>
@@ -603,7 +598,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                         isInCart ? "bg-red-500 hover:bg-red-600 text-white" : "bg-emidias-primary hover:bg-emidias-primary/90 text-white"
                                     )}
                                 >
-                                    {isAddingToCart ? <Loader2 size={16} className="animate-spin" /> : isInCart ? <X size={18} /> : <ShoppingCart size={16} />}
+                                    {isAddingToCart ? <Loader2 size={16} className="animate-spin" /> : isInCart ? <Trash2 size={16} /> : <ShoppingCart size={16} />}
                                 </Button>
                             )}
                         </div>
