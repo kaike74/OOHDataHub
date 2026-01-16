@@ -378,7 +378,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
             isOpen={isPointModalOpen}
             onClose={handleClose}
             maxWidth="5xl"
-            zIndex={70}
+            zIndex={2000}
         >
             <div className="flex flex-col lg:flex-row gap-6 max-h-[85vh]">
                 {/* Left Column - Images + Mini Map */}

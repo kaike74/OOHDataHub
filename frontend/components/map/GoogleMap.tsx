@@ -670,8 +670,15 @@ export default function GoogleMap({
                     readOnly={!isAuthenticated}
                     onStreetViewClick={() => handleStreetViewClick(hoveredPonto)}
                     onClick={() => {
-                        setSelectedPonto(hoveredPonto);
+                        // Logic to open modal correctly
                         setHoveredPonto(null);
+
+                        const cartItemIds = new Set(selectedProposta?.itens?.map((i: any) => i.id_ooh) || []);
+                        const cartItemIndex = cartItemIds.has(hoveredPonto.id)
+                            ? Array.from(cartItemIds).indexOf(hoveredPonto.id)
+                            : 0;
+
+                        openPointModal(hoveredPonto, cartItemIndex);
                     }}
                     onMouseEnter={() => {
                         isHoveringTooltipRef.current = true;

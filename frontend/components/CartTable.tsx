@@ -432,14 +432,17 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         // Add highlight animation class
         rowElement.classList.add('highlight-flash');
 
-        // Remove class after animation completes
+        // Remove class after animation completes and CLEAR STORE
         const timer = setTimeout(() => {
             rowElement.classList.remove('highlight-flash');
-            lastHighlightedIdRef.current = null; // Reset after animation
+            lastHighlightedIdRef.current = null; // Reset ref
+
+            // Clear global store to prevent re-animation on remount
+            useStore.getState().setHighlightedPointId(null);
         }, 3000);
 
         return () => clearTimeout(timer);
-    }, [highlightedPointId]); // Only depend on highlightedPointId, not itens
+    }, [highlightedPointId, itens]); // Depend on itens to retry if data loads later
 
     // Group items by selected field
     const groupedData = useMemo(() => {

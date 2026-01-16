@@ -218,6 +218,14 @@ export default function ProposalDetailClient() {
     const [isTableOpen, setIsTableOpen] = useState(true);
     const [tableHeight, setTableHeight] = useState(500); // Track table height
 
+    // Auto-open table when a point is highlighted
+    const highlightedPointId = useStore((state) => state.highlightedPointId);
+    useEffect(() => {
+        if (highlightedPointId) {
+            setIsTableOpen(true);
+        }
+    }, [highlightedPointId]);
+
     const actions = (
         <div className="flex items-center gap-3">
             <div className="relative z-50 w-64 md:w-80">
