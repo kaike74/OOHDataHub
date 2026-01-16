@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { Ponto } from '@/lib/types';
 import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
-import { Eye, ShoppingCart, Building2 } from 'lucide-react';
+import { User, ShoppingCart, Building2 } from 'lucide-react';
 
 interface MapTooltipProps {
   ponto: Ponto;
@@ -172,6 +172,17 @@ export default function MapTooltip({
     let newTransform = 'translate(-50%, -100%) translateY(-40px)';
     let flipped = false;
 
+    // Check for cart table collision (typically on right side)
+    const cartTable = document.querySelector('[data-cart-table]');
+    if (cartTable) {
+      const cartRect = cartTable.getBoundingClientRect();
+      // If tooltip would overlap with cart table, adjust position
+      if (rect.right > cartRect.left - 20 && rect.left < cartRect.right + 20) {
+        // Move tooltip to the left of the pin
+        newTransform = 'translate(-100%, -100%) translateY(-40px) translateX(-20px)';
+      }
+    }
+
     // Check Right Edge
     if (rect.right > viewportWidth - 20) {
       newTransform = 'translate(-100%, -100%) translateY(-40px) translateX(-10px)';
@@ -183,7 +194,6 @@ export default function MapTooltip({
     // Check Top Edge (if too close to top, flip to bottom)
     if (rect.top < 80) {
       // Flip to bottom (clear pin downwards)
-      // Pin height approx 40px + padding, so shift down by 45px is likely safe
       newTransform = newTransform.replace('-100%) translateY(-40px)', '0%) translateY(10px)');
       flipped = true;
     }
@@ -252,79 +262,82 @@ export default function MapTooltip({
         }}
       />
 
-      {/* Google Maps Style Card */}
+      {/* Google Maps Style Card - Compact */}
       <div
         onClick={(e) => {
           if (props.onClick) props.onClick();
         }}
-        className="relative w-[280px] bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer"
+        className="relative w-[240px] bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer"
       >
 
-        {/* Image Carousel Section */}
+        {/* Image Section with Código OOH Overlay */}
         {imagens.length > 0 ? (
-          <div className="relative w-full h-[160px] bg-gray-200">
+          <div className="relative w-full h-[100px] bg-gray-200">
             <img
               src={currentImageUrl}
               alt={ponto.codigo_ooh}
               className="w-full h-full object-cover"
             />
+            {/* Código OOH Overlay */}
+            <div className="absolute top-2 left-2 bg-black/50 backdrop-blur-sm text-white text-sm font-semibold px-2 py-1 rounded">
+              {ponto.codigo_ooh}
+            </div>
             {/* Image counter */}
             {imagens.length > 1 && (
-              <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+              <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
                 {currentImageIndex + 1}/{imagens.length}
               </div>
             )}
           </div>
         ) : (
-          <div className="relative w-full h-[160px] bg-gray-200 flex items-center justify-center">
-            <Building2 size={48} className="text-gray-400" />
+          <div className="relative w-full h-[100px] bg-gray-200 flex items-center justify-center">
+            <Building2 size={32} className="text-gray-400" />
+            {/* Código OOH Overlay */}
+            <div className="absolute top-2 left-2 bg-black/50 backdrop-blur-sm text-white text-sm font-semibold px-2 py-1 rounded">
+              {ponto.codigo_ooh}
+            </div>
           </div>
         )}
 
-        {/* Information Section */}
-        <div className="p-4 flex flex-col gap-2">
-          {/* Title */}
-          <h3 className="text-lg font-semibold text-gray-900 leading-tight">
-            {ponto.codigo_ooh}
-          </h3>
-
+        {/* Information Section - Compact */}
+        <div className="p-3 flex flex-col gap-1.5">
           {/* Address */}
-          <p className="text-sm text-gray-600 line-clamp-1">
+          <p className="text-xs text-gray-600 line-clamp-1">
             {ponto.endereco}
           </p>
 
           {/* Exibidora */}
           {ponto.exibidora_nome && (
-            <div className="flex items-center gap-1.5 text-gray-500">
-              <Building2 size={14} />
-              <span className="text-xs">{ponto.exibidora_nome}</span>
+            <div className="flex items-center gap-1 text-gray-500">
+              <Building2 size={11} />
+              <span className="text-[10px]">{ponto.exibidora_nome}</span>
             </div>
           )}
 
           {/* Rental Value and Period */}
           {rentalInfo && (
-            <div className="mt-1 pt-2 border-t border-gray-200">
-              <div className="flex items-baseline gap-2">
-                <span className="text-lg font-bold text-[#FC1E75]">
+            <div className="mt-0.5 pt-1.5 border-t border-gray-200">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-sm font-bold text-[#FC1E75]">
                   {formatCurrency(rentalInfo.valor)}
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="text-[10px] text-gray-500">
                   / {rentalInfo.periodo}
                 </span>
               </div>
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex gap-2 mt-2">
+          {/* Action Buttons - Icon Only */}
+          <div className="flex gap-1.5 mt-1.5">
             {/* Street View Button */}
             {ponto.latitude && ponto.longitude && (
               <button
                 onClick={(e) => { e.stopPropagation(); onStreetViewClick?.(); }}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 text-xs font-medium transition-colors"
+                className="flex-1 flex items-center justify-center py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 transition-colors"
+                title="Street View"
               >
-                <Eye size={14} />
-                Street View
+                <User size={16} />
               </button>
             )}
 
@@ -335,17 +348,17 @@ export default function MapTooltip({
                 <button
                   onClick={handleAddToCart}
                   disabled={isAdding}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-colors ${isInCart
+                  className={`flex-1 flex items-center justify-center py-2 rounded-lg transition-colors ${isInCart
                       ? 'bg-red-50 hover:bg-red-100 text-red-600'
                       : 'bg-[#FC1E75] hover:bg-[#E01A6A] text-white'
                     }`}
+                  title={isInCart ? 'Remover do carrinho' : 'Adicionar ao carrinho'}
                 >
                   {isAdding ? (
-                    <div className="animate-spin h-3 w-3 border-2 border-current border-t-transparent rounded-full" />
+                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
                   ) : (
-                    <ShoppingCart size={14} />
+                    <ShoppingCart size={16} />
                   )}
-                  {isInCart ? 'Remover' : 'Adicionar'}
                 </button>
               );
             })()}

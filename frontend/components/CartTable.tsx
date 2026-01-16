@@ -1807,6 +1807,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
     return (
         <div
+            data-cart-table
             className={embedded
                 ? "flex flex-col h-full w-full bg-white border-t border-gray-200"
                 : `fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.15)] z-40 transition-all duration-300 ease-in-out flex flex-col`
