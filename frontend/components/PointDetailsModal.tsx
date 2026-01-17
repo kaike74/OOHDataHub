@@ -14,6 +14,7 @@ import AddressSearch from '@/components/AddressSearch';
 import HistoryModal from '@/components/HistoryModal';
 import CreateProposalModal from '@/components/CreateProposalModal';
 import type { Contato, Proposta } from '@/lib/types';
+import { getNextValidBiWeeklyStartDate, getSuggestedBiWeeklyEndDate, formatDateForInput, generateMonthlyPeriodId } from '@/lib/periodUtils';
 
 interface PointDetailsModalProps {
     readOnly?: boolean;
@@ -366,17 +367,29 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
             const valorLona = lonaProduto ? parseFloat((lonaProduto.valor * 1.25).toFixed(2)) : 0;
             const valorLocacao = locacaoProduto ? calcularValorComissao(locacaoProduto.valor, selectedProposta.comissao) : 0;
 
+            // Calculate VALID default period (next full bi-week)
+            const today = new Date();
+            const nextStart = getNextValidBiWeeklyStartDate(today);
+            const nextEnd = getSuggestedBiWeeklyEndDate(nextStart);
+
+            const startStr = formatDateForInput(nextStart);
+            const endStr = nextEnd ? formatDateForInput(nextEnd) : '';
+
+            // Construct period ID for selection (start_end)
+            const periodId = nextEnd ? generateMonthlyPeriodId(nextStart, nextEnd) : '';
+
             const item = {
                 id_proposta: selectedProposta.id,
                 id_ooh: selectedPonto.id,
-                periodo_inicio: new Date().toISOString().split('T')[0],
-                periodo_fim: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                periodo_inicio: startStr,
+                periodo_fim: endStr,
                 valor_locacao: valorLocacao,
                 valor_papel: valorPapel,
                 valor_lona: valorLona,
                 periodo_comercializado: 'bissemanal',
                 observacoes: '',
-                fluxo_diario: selectedPonto.fluxo || 0
+                fluxo_diario: selectedPonto.fluxo || 0,
+                selected_periods: periodId ? [periodId] : []
             };
 
             const data = await api.getProposta(selectedProposta.id);
