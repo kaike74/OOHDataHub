@@ -182,6 +182,9 @@ export default function BiWeeklyPicker({
             const lastPeriod = selectedPeriodsArray[selectedPeriodsArray.length - 1];
 
             onSelectPeriods(firstPeriod.startStr, lastPeriod.endStr, Array.from(selectedPeriods));
+        } else {
+            // Handle empty selection - clear everything
+            onSelectPeriods('', '', []);
         }
         onClose(true); // Save
     };

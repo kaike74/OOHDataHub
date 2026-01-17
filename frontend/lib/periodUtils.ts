@@ -4,7 +4,7 @@
  */
 
 // Base date for bi-weekly calendar: 29/12/2025 (first start date of 2026 bi-weeks)
-const BI_WEEKLY_BASE_START = new Date('2025-12-29');
+const BI_WEEKLY_BASE_START = new Date(2025, 11, 29);
 
 /**
  * Calculates all valid bi-weekly start dates from a reference date
