@@ -109,6 +109,35 @@ const calculateTotalMonths = (periods: string[]): number => {
     }, 0);
 };
 
+// Helper to calculate item metrics (Investment, Impacts, Qtd)
+const calculateItemMetrics = (item: PropostaItem) => {
+    let qtd = 1;
+    let diffDays = 0;
+
+    if (item.periodo_inicio && item.periodo_fim) {
+        const start = new Date(item.periodo_inicio);
+        const end = new Date(item.periodo_fim);
+        diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+    }
+
+    if (item.selected_periods && item.selected_periods.length > 0) {
+        if (item.periodo_comercializado === 'mensal') {
+            qtd = calculateTotalMonths(item.selected_periods);
+        } else {
+            qtd = item.selected_periods.length;
+        }
+    } else if (item.qtd_bi_mes) {
+        qtd = item.qtd_bi_mes;
+    } else if (item.periodo_inicio && item.periodo_fim) {
+        qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
+    }
+
+    const investment = (item.valor_locacao || 0) * qtd;
+    const impacts = (item.fluxo_diario || 0) * diffDays;
+
+    return { investment, impacts, qtd, diffDays };
+};
+
 // Helper to handle Enter to move to next row, Tab for regular behavior
 const handleKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -1514,23 +1543,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
             ),
             size: 150,
             cell: ({ row }) => {
-                let qtd = 1;
-
-                if (row.original.selected_periods && row.original.selected_periods.length > 0) {
-                    if (row.original.periodo_comercializado === 'mensal') {
-                        qtd = calculateTotalMonths(row.original.selected_periods);
-                    } else {
-                        qtd = row.original.selected_periods.length;
-                    }
-                } else if (row.original.qtd_bi_mes) {
-                    qtd = row.original.qtd_bi_mes;
-                } else if (row.original.periodo_inicio && row.original.periodo_fim) {
-                    const dataInicio = new Date(row.original.periodo_inicio);
-                    const dataFim = new Date(row.original.periodo_fim);
-                    const diffDays = Math.ceil((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
-                    qtd = row.original.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                }
-                const total = (row.original.valor_locacao || 0) * qtd;
+                const { investment: total } = calculateItemMetrics(row.original);
                 return <div className="text-right text-[13px] text-gray-900 font-medium">{formatCurrency(total)}</div>
             }
         },
@@ -1728,15 +1741,10 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         if (!itens.length) return;
 
         const dataToExport = itens.map(item => {
-            // Calculate item totals
-            let qtd = 1;
-            if (item.periodo_inicio && item.periodo_fim) {
-                const start = new Date(item.periodo_inicio);
-                const end = new Date(item.periodo_fim);
-                const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-            }
-            const total = (item.valor_locacao || 0) * qtd;
+            // Calculate item metrics
+            const metrics = calculateItemMetrics(item);
+            const total = metrics.investment;
+            const qtd = metrics.qtd;
 
             return {
                 'Código OOH': item.codigo_ooh,
@@ -1811,16 +1819,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
         });
 
         // Add Summary
-        const totalInvest = itens.reduce((acc, item) => {
-            let qtd = 1;
-            if (item.periodo_inicio && item.periodo_fim) {
-                const start = new Date(item.periodo_inicio);
-                const end = new Date(item.periodo_fim);
-                const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-            }
-            return acc + (item.valor_locacao || 0) * qtd;
-        }, 0);
+        const totalInvest = itens.reduce((acc, item) => acc + calculateItemMetrics(item).investment, 0);
 
         const finalY = (doc as any).lastAutoTable.finalY + 10;
         doc.setFontSize(12);
@@ -1914,15 +1913,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             <div className="flex flex-col items-end px-4">
                                 <span className="text-[10px] text-gray-500 uppercase tracking-wider">Impactos</span>
                                 <span className="font-bold text-gray-700">
-                                    {formatNumber(itens.reduce((sum, item) => {
-                                        let diffDays = 0;
-                                        if (item.periodo_inicio && item.periodo_fim) {
-                                            const start = new Date(item.periodo_inicio);
-                                            const end = new Date(item.periodo_fim);
-                                            diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-                                        }
-                                        return sum + ((item.fluxo_diario || 0) * diffDays);
-                                    }, 0))}
+                                    {formatNumber(itens.reduce((sum, item) => sum + calculateItemMetrics(item).impacts, 0))}
                                 </span>
                             </div>
 
@@ -1930,16 +1921,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             <div className="flex flex-col items-end px-4">
                                 <span className="text-[10px] text-gray-500 uppercase tracking-wider">Investimento</span>
                                 <span className="font-bold text-emerald-600">
-                                    {formatCurrency(itens.reduce((sum, item) => {
-                                        let qtd = 1;
-                                        if (item.periodo_inicio && item.periodo_fim) {
-                                            const start = new Date(item.periodo_inicio);
-                                            const end = new Date(item.periodo_fim);
-                                            const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                                            qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                                        }
-                                        return sum + ((item.valor_locacao || 0) * qtd);
-                                    }, 0))}
+                                    {formatCurrency(itens.reduce((sum, item) => sum + calculateItemMetrics(item).investment, 0))}
                                 </span>
                             </div>
 
@@ -1948,28 +1930,15 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                 <span className="text-[10px] text-gray-500 uppercase tracking-wider">CPM</span>
                                 <span className="font-bold text-blue-600">
                                     {(() => {
-                                        const totalInvest = itens.reduce((sum, item) => {
-                                            let qtd = 1;
-                                            if (item.periodo_inicio && item.periodo_fim) {
-                                                const start = new Date(item.periodo_inicio);
-                                                const end = new Date(item.periodo_fim);
-                                                const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                                                qtd = item.periodo_comercializado === 'mensal' ? 1 : Math.ceil(diffDays / 14);
-                                            }
-                                            return sum + ((item.valor_locacao || 0) * qtd);
-                                        }, 0);
+                                        const metrics = itens.reduce((acc, item) => {
+                                            const m = calculateItemMetrics(item);
+                                            return {
+                                                invest: acc.invest + m.investment,
+                                                impacts: acc.impacts + m.impacts
+                                            };
+                                        }, { invest: 0, impacts: 0 });
 
-                                        const totalImpactos = itens.reduce((sum, item) => {
-                                            let diffDays = 0;
-                                            if (item.periodo_inicio && item.periodo_fim) {
-                                                const start = new Date(item.periodo_inicio);
-                                                const end = new Date(item.periodo_fim);
-                                                diffDays = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-                                            }
-                                            return sum + ((item.fluxo_diario || 0) * diffDays);
-                                        }, 0);
-
-                                        return formatCurrency(totalImpactos > 0 ? (totalInvest / totalImpactos) * 1000 : 0);
+                                        return formatCurrency(metrics.impacts > 0 ? (metrics.invest / metrics.impacts) * 1000 : 0);
                                     })()}
                                 </span>
                             </div>
