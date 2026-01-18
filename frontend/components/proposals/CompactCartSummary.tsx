@@ -1,7 +1,7 @@
 import { useProposalStore } from '@/stores/useProposalStore';
 import CartTable from '@/components/CartTable';
 import { ChevronUp, ChevronDown, ShoppingCart } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { useMemo } from 'react';
 
 export default function CompactCartSummary() {
@@ -43,7 +43,7 @@ export default function CompactCartSummary() {
                     </div>
                     <span className="w-px h-4 bg-gray-300"></span>
                     <span className="text-gray-600 font-medium">
-                        Total: <span className="text-gray-900 font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}</span>
+                        Total: <span className="text-gray-900 font-bold">{formatCurrency(totalValue)}</span>
                     </span>
                 </div>
 

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency, formatNumber, formatDecimal } from '@/lib/utils';
 import { Proposta, PropostaItem, MaterialSelection } from '@/lib/types';
 import {
     isValidBiWeeklyStartDate,
@@ -44,18 +44,18 @@ import {
     Search,
     ShoppingCart,
     CheckCircle,
-    Bot
+    Bot,
+    X
 } from 'lucide-react';
 import ShareModal from './ShareModal';
-import FloatingActionMenu from './ui/FloatingActionMenu'; // Import FloatingActionMenu
+import FloatingActionMenu from './ui/FloatingActionMenu';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import AIChat from './AIChat';
 import ApprovalSummaryModal from './proposals/ApprovalSummaryModal';
 import ApprovalSuccessModal from './proposals/ApprovalSuccessModal';
 import PeriodDatePicker from './ui/PeriodDatePicker';
 import { Button } from '@/components/ui/Button';
-import { X } from 'lucide-react'; // Import X icon
-import styles from './ui/AnimatedSearchBar.module.css'; // Import styles
+import styles from './ui/AnimatedSearchBar.module.css';
 import { Input } from '@/components/ui/Input';
 import {
     useReactTable,
@@ -77,25 +77,6 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/Tooltip';
-
-// Helper for formatted money
-const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    }).format(value);
-};
-
-const formatNumber = (value: number) => {
-    return new Intl.NumberFormat('pt-BR').format(value);
-}
-
-const formatDecimal = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(value);
-}
 
 // Helper to calculate total months from selected periods
 const calculateTotalMonths = (periods: string[]): number => {
@@ -265,6 +246,23 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
 
     const user = useStore(state => state.user);
     const isInternal = !!user && user.type === 'internal';
+
+    // Memoized totals to avoid recalculating on every render
+    const headerTotals = useMemo(() => {
+        let investimento = 0;
+        let impactos = 0;
+
+        itens.forEach(item => {
+            const m = calculateItemMetrics(item);
+            investimento += m.investment;
+            impactos += m.impacts;
+        });
+
+        const cpm = impactos > 0 ? (investimento / impactos) * 1000 : 0;
+
+        return { investimento, impactos, cpm };
+    }, [itens]);
+
     // Status Column Visibility - Show in all stages except rascunho
     const showStatusColumn = selectedProposta?.status !== 'rascunho';
     const canEditValues = !readOnly && selectedProposta?.currentUserRole === 'admin';
@@ -1895,7 +1893,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             <div className="flex flex-col items-end px-4">
                                 <span className="text-[10px] text-gray-500 uppercase tracking-wider">Impactos</span>
                                 <span className="font-bold text-gray-700">
-                                    {formatNumber(itens.reduce((sum, item) => sum + calculateItemMetrics(item).impacts, 0))}
+                                    {formatNumber(headerTotals.impactos)}
                                 </span>
                             </div>
 
@@ -1903,7 +1901,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             <div className="flex flex-col items-end px-4">
                                 <span className="text-[10px] text-gray-500 uppercase tracking-wider">Investimento</span>
                                 <span className="font-bold text-emerald-600">
-                                    {formatCurrency(itens.reduce((sum, item) => sum + calculateItemMetrics(item).investment, 0))}
+                                    {formatCurrency(headerTotals.investimento)}
                                 </span>
                             </div>
 
@@ -1911,17 +1909,7 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                             <div className="flex flex-col items-end px-4 last:pr-0">
                                 <span className="text-[10px] text-gray-500 uppercase tracking-wider">CPM</span>
                                 <span className="font-bold text-blue-600">
-                                    {(() => {
-                                        const metrics = itens.reduce((acc, item) => {
-                                            const m = calculateItemMetrics(item);
-                                            return {
-                                                invest: acc.invest + m.investment,
-                                                impacts: acc.impacts + m.impacts
-                                            };
-                                        }, { invest: 0, impacts: 0 });
-
-                                        return formatCurrency(metrics.impacts > 0 ? (metrics.invest / metrics.impacts) * 1000 : 0);
-                                    })()}
+                                    {formatCurrency(headerTotals.cpm)}
                                 </span>
                             </div>
                         </div>

@@ -135,12 +135,6 @@ export default function ProposalDetailClient() {
 
                 // 3. Load Dependencies (Points, etc)
                 // If public, we only load RELEVANT points (optimization & security)
-                // Actually, to show the MAP, do we want to show OTHER points? 
-                // User said: "apenas com os pontos selecionados" (only selected points).
-
-                // 3. Load Dependencies (Points, etc)
-                // If public, we only load RELEVANT points (optimization & security)
-                // Actually, to show the MAP, do we want to show OTHER points? 
                 // User said: "apenas com os pontos selecionados" (only selected points).
 
                 let pontosData: any[] = [];

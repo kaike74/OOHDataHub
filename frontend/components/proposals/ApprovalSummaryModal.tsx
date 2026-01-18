@@ -5,6 +5,7 @@ import { X, MapPin, Calendar, DollarSign } from 'lucide-react';
 import { Proposta, PropostaItem, MaterialSelection } from '@/lib/types';
 import { formatPeriodExtended, calculateDuration } from '@/lib/dateUtils';
 import { generateStaticMapUrl } from '@/lib/mapUtils';
+import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 
 interface ApprovalSummaryModalProps {
@@ -14,13 +15,6 @@ interface ApprovalSummaryModalProps {
     itens: PropostaItem[];
     onApprove: (materialSelection: MaterialSelection) => void;
 }
-
-const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    }).format(value);
-};
 
 export default function ApprovalSummaryModal({
     isOpen,

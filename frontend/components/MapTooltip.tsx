@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { Ponto } from '@/lib/types';
 import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
+import { formatCurrency } from '@/lib/utils';
 import { User, ShoppingCart, Building2 } from 'lucide-react';
 
 interface MapTooltipProps {
@@ -292,14 +293,6 @@ export default function MapTooltip({
   };
 
   const rentalInfo = getRentalInfo();
-
-  // Format currency
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
 
   return (
     <div
