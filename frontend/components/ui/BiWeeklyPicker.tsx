@@ -167,16 +167,10 @@ export default function BiWeeklyPicker({
 
     const handleApply = () => {
         if (selectedPeriods.size > 0) {
-            console.log('🔍 handleApply - selectedPeriods.size:', selectedPeriods.size);
-            console.log('🔍 selectedPeriods IDs:', Array.from(selectedPeriods));
-
             const selectedPeriodsArray = Array.from(selectedPeriods)
                 .map(id => biWeeklyPeriods.find(p => p.id === id)!)
                 .filter(Boolean)
                 .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-
-            console.log('🔍 selectedPeriodsArray length:', selectedPeriodsArray.length);
-            console.log('🔍 selectedPeriodsArray:', selectedPeriodsArray.map(p => `BI ${p.number}`));
 
             const firstPeriod = selectedPeriodsArray[0];
             const lastPeriod = selectedPeriodsArray[selectedPeriodsArray.length - 1];

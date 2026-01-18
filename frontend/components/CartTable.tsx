@@ -562,7 +562,6 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     // Optimistic Update Helper
     const updateItem = useCallback(async (id: number, fieldOrUpdates: string | Record<string, any>, value?: any) => {
         const updates = typeof fieldOrUpdates === 'string' ? { [fieldOrUpdates]: value } : fieldOrUpdates;
-        console.log(`📝 CartTable updateItem called:`, { id, updates });
 
         // Preserve picker state if updating period-related fields
         const isPeriodUpdate = 'periodo_inicio' in updates || 'periodo_fim' in updates || 'selected_periods' in updates;
@@ -590,7 +589,6 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                     }
                 }
 
-                console.log(`✅ Updated item:`, updatedItem);
                 return updatedItem;
             }
             return item;
@@ -644,14 +642,6 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                 const [minIdx, maxIdx] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
                 const updatedItens = [...itens];
 
-                console.log('🎯 Drag-fill applying:', {
-                    columnKey: dragState.columnKey,
-                    value: dragState.startValue,
-                    fromRow: minIdx,
-                    toRow: maxIdx,
-                    totalRows: maxIdx - minIdx + 1
-                });
-
                 // Apply the value to all rows in range
                 for (let i = minIdx; i <= maxIdx; i++) {
                     // Handle período specially (it has two date fields)
@@ -665,12 +655,6 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                         updatedItens[i] = { ...updatedItens[i], [dragState.columnKey]: dragState.startValue };
                     }
                 }
-
-                const columnKey = dragState.columnKey!;
-                console.log('✅ Drag-fill completed. Updated items:', updatedItens.slice(minIdx, maxIdx + 1).map(item => ({
-                    id: item.id,
-                    [columnKey]: (item as any)[columnKey]
-                })));
 
                 setItens(updatedItens);
                 refreshProposta({ ...selectedProposta!, itens: updatedItens });
@@ -689,8 +673,6 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
     }, [handleDragEnd]);
 
     const startDragging = useCallback((rowId: number, columnKey: string, value: any) => {
-        console.log('🎯 Starting drag from row:', rowId, 'column:', columnKey, 'value:', value);
-
         document.body.style.cursor = 'crosshair';
         document.body.style.userSelect = 'none';
 
@@ -2430,7 +2412,6 @@ export default function CartTable({ isOpen, onToggle, isClientView = false, read
                                                                         };
                                                                     }
 
-                                                                    console.log('🖱️ Drag started:', { rowId: row.original.id, columnId, value });
                                                                     startDragging(row.original.id, columnId, value);
                                                                 }}
                                                             />

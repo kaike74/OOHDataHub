@@ -371,8 +371,6 @@ export default function GoogleMap({
                     e.stopPropagation(); // Stop event from bubbling to map
                     e.preventDefault();  // Prevent default behavior
 
-                    console.log('Pin Clicked:', ponto.id);
-
                     // 1. Force Close Tooltip logic
                     if (hoverTimeoutRef.current) {
                         clearTimeout(hoverTimeoutRef.current);
