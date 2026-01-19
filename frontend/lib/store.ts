@@ -21,6 +21,7 @@ interface AppState {
     isSidebarOpen: boolean;
     isModalOpen: boolean;
     isExibidoraModalOpen: boolean;
+    exibidoraFormMode: 'full' | 'contacts';
     isMenuOpen: boolean;
     currentView: 'map' | 'exibidoras' | 'clientes' | 'propostas' | 'contas' | 'lixeira';
     selectedCliente: Cliente | null;
@@ -62,6 +63,7 @@ interface AppState {
     setSidebarOpen: (open: boolean) => void;
     setModalOpen: (open: boolean) => void;
     setExibidoraModalOpen: (open: boolean) => void;
+    setExibidoraFormMode: (mode: 'full' | 'contacts') => void;
     setMenuOpen: (open: boolean) => void;
     setCurrentView: (view: 'map' | 'exibidoras' | 'clientes' | 'propostas' | 'contas' | 'lixeira') => void;
     setStreetViewCoordinates: (coords: { lat: number; lng: number } | null) => void;
@@ -119,6 +121,7 @@ export const useStore = create<AppState>()(
             isSidebarOpen: false,
             isModalOpen: false,
             isExibidoraModalOpen: false,
+            exibidoraFormMode: 'full',
             isMenuOpen: false,
             currentView: 'map',
             streetViewCoordinates: null,
@@ -217,7 +220,9 @@ export const useStore = create<AppState>()(
                 isExibidoraModalOpen: open,
                 // Só limpa editingExibidora ao FECHAR o modal
                 editingExibidora: open ? state.editingExibidora : null,
+                exibidoraFormMode: open ? state.exibidoraFormMode : 'full', // Reset to full on close
             })),
+            setExibidoraFormMode: (mode) => set({ exibidoraFormMode: mode }),
             setMenuOpen: (open) => set({ isMenuOpen: open }),
             setCurrentView: (view) => set((state) => ({
                 currentView: view,

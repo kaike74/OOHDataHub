@@ -20,9 +20,10 @@ interface ExibidoraFormProps {
     onSuccess: (newId: number) => void;
     onCancel: () => void;
     initialData?: any;
+    mode?: 'full' | 'contacts';
 }
 
-export default function ExibidoraForm({ onSuccess, onCancel, initialData }: ExibidoraFormProps) {
+export default function ExibidoraForm({ onSuccess, onCancel, initialData, mode = 'full' }: ExibidoraFormProps) {
     const setExibidoras = useStore((state) => state.setExibidoras);
 
     const [isLoading, setIsLoading] = useState(false);
@@ -225,96 +226,101 @@ export default function ExibidoraForm({ onSuccess, onCancel, initialData }: Exib
 
     return (
         <div className="space-y-6 pb-2">
-            {/* Logo Upload */}
-            <div>
-                <label className="block text-sm font-semibold text-emidias-gray-700 mb-2">
-                    Logo da Exibidora
-                </label>
+            {/* Full Mode Fields */}
+            {mode === 'full' && (
+                <>
+                    {/* Logo Upload */}
+                    <div>
+                        <label className="block text-sm font-semibold text-emidias-gray-700 mb-2">
+                            Logo da Exibidora
+                        </label>
 
-                {logoPreview ? (
-                    <div className="relative w-full h-40 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center overflow-hidden group border border-gray-200">
-                        <img
-                            src={logoPreview}
-                            alt="Logo preview"
-                            className="w-full h-full object-contain p-4 mix-blend-multiply"
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <Button
-                                variant="danger"
-                                size="sm"
-                                onClick={removeLogo}
-                                className="rounded-full w-10 h-10 p-0"
+                        {logoPreview ? (
+                            <div className="relative w-full h-40 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center overflow-hidden group border border-gray-200">
+                                <img
+                                    src={logoPreview}
+                                    alt="Logo preview"
+                                    className="w-full h-full object-contain p-4 mix-blend-multiply"
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <Button
+                                        variant="danger"
+                                        size="sm"
+                                        onClick={removeLogo}
+                                        className="rounded-full w-10 h-10 p-0"
+                                    >
+                                        <Trash2 size={18} />
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div
+                                {...getRootProps()}
+                                className={cn(
+                                    "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 bg-gray-50/50",
+                                    isDragActive
+                                        ? "border-emidias-accent bg-pink-50/50 ring-2 ring-emidias-accent/20"
+                                        : "border-gray-200 hover:border-emidias-primary/50 hover:bg-white"
+                                )}
                             >
-                                <Trash2 size={18} />
-                            </Button>
-                        </div>
-                    </div>
-                ) : (
-                    <div
-                        {...getRootProps()}
-                        className={cn(
-                            "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 bg-gray-50/50",
-                            isDragActive
-                                ? "border-emidias-accent bg-pink-50/50 ring-2 ring-emidias-accent/20"
-                                : "border-gray-200 hover:border-emidias-primary/50 hover:bg-white"
+                                <input {...getInputProps()} />
+                                <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center mx-auto mb-3">
+                                    <Upload className="text-emidias-primary" size={24} />
+                                </div>
+                                <p className="text-emidias-primary font-medium">
+                                    {isDragActive ? 'Solte a logo aqui' : 'Arraste ou clique para enviar'}
+                                </p>
+                                <p className="text-gray-400 text-xs mt-1">
+                                    PNG, JPG, WEBP (máx. 5MB)
+                                </p>
+                            </div>
                         )}
-                    >
-                        <input {...getInputProps()} />
-                        <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center mx-auto mb-3">
-                            <Upload className="text-emidias-primary" size={24} />
-                        </div>
-                        <p className="text-emidias-primary font-medium">
-                            {isDragActive ? 'Solte a logo aqui' : 'Arraste ou clique para enviar'}
-                        </p>
-                        <p className="text-gray-400 text-xs mt-1">
-                            PNG, JPG, WEBP (máx. 5MB)
-                        </p>
                     </div>
-                )}
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                    label="Nome (Fantasia)"
-                    value={nome}
-                    onChange={(e) => setNome(e.target.value)}
-                    placeholder="Ex: Empresa de Mídia"
-                    error={errors.nome}
-                    required
-                />
-                <Input
-                    label="CNPJ"
-                    value={cnpj}
-                    onChange={handleCNPJChange}
-                    placeholder="00.000.000/0000-00"
-                    maxLength={18}
-                    error={errors.cnpj}
-                    required
-                />
-            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                            label="Nome (Fantasia)"
+                            value={nome}
+                            onChange={(e) => setNome(e.target.value)}
+                            placeholder="Ex: Empresa de Mídia"
+                            error={errors.nome}
+                            required
+                        />
+                        <Input
+                            label="CNPJ"
+                            value={cnpj}
+                            onChange={handleCNPJChange}
+                            placeholder="00.000.000/0000-00"
+                            maxLength={18}
+                            error={errors.cnpj}
+                            required
+                        />
+                    </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                    label="Razão Social"
-                    value={razaoSocial}
-                    onChange={(e) => setRazaoSocial(e.target.value)}
-                    placeholder="Razão Social Ltda"
-                />
-                <Input
-                    label="Endereço"
-                    value={endereco}
-                    onChange={(e) => setEndereco(e.target.value)}
-                    placeholder="Endereço completo"
-                />
-            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                            label="Razão Social"
+                            value={razaoSocial}
+                            onChange={(e) => setRazaoSocial(e.target.value)}
+                            placeholder="Razão Social Ltda"
+                        />
+                        <Input
+                            label="Endereço"
+                            value={endereco}
+                            onChange={(e) => setEndereco(e.target.value)}
+                            placeholder="Endereço completo"
+                        />
+                    </div>
 
-            <Textarea
-                label="Observações"
-                value={observacoes}
-                onChange={(e) => setObservacoes(e.target.value)}
-                placeholder="Informações adicionais..."
-                rows={3}
-            />
+                    <Textarea
+                        label="Observações"
+                        value={observacoes}
+                        onChange={(e) => setObservacoes(e.target.value)}
+                        placeholder="Informações adicionais..."
+                        rows={3}
+                    />
+                </>
+            )}
 
             {/* Contatos */}
             <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">

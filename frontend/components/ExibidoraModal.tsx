@@ -13,6 +13,7 @@ export default function ExibidoraModal({ zIndex }: ExibidoraModalProps) {
     const setModalOpen = useStore((state) => state.setExibidoraModalOpen);
     const editingExibidora = useStore((state) => state.editingExibidora);
     const setEditingExibidora = useStore((state) => state.setEditingExibidora);
+    const formMode = useStore((state) => state.exibidoraFormMode || 'full'); // Default to full
 
     const handleClose = () => {
         setModalOpen(false);
@@ -26,10 +27,9 @@ export default function ExibidoraModal({ zIndex }: ExibidoraModalProps) {
             title={
                 <div className="flex items-center gap-2">
                     <Building2 size={24} />
-                    {editingExibidora ? 'Editar Exibidora' : 'Nova Exibidora'}
+                    {formMode === 'contacts' ? 'Gerenciar Contatos' : (editingExibidora ? 'Editar Exibidora' : 'Nova Exibidora')}
                 </div>
             }
-            maxWidth="2xl"
             maxWidth="2xl"
             className="flex flex-col max-h-[90vh]"
             zIndex={zIndex}
@@ -38,6 +38,7 @@ export default function ExibidoraModal({ zIndex }: ExibidoraModalProps) {
                 onSuccess={() => handleClose()}
                 onCancel={handleClose}
                 initialData={editingExibidora}
+                mode={formMode}
             />
         </Modal>
     );
