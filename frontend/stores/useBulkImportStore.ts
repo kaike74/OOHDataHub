@@ -52,9 +52,13 @@ export interface BulkImportSession {
     currentPointIndex: number;
 
     // Excel data
-    excelData: any[][]; // Raw rows from Excel
+    excelData: any[][]; // Normalized rows from Excel
+    originalExcelData: any[][]; // Original raw rows (before normalization)
     columnHeaders: string[]; // First row headers
     columnMapping: Record<string, string>; // { "A": "codigo_ooh", "B": "endereco", ... }
+
+    // Cell corrections tracking: "rowIndex-colIndex" -> { original, corrected, field }
+    cellCorrections: Record<string, { original: any; corrected: any; field: string }>;
 
     // Parsed points
     pontos: BulkPoint[];
@@ -62,6 +66,7 @@ export interface BulkImportSession {
     // Saved point IDs (for resume functionality)
     pontosSalvos: number[];
 }
+
 
 interface BulkImportState {
     // Current session
@@ -120,8 +125,10 @@ export const useBulkImportStore = create<BulkImportState>()(
                     currentStep: 1,
                     currentPointIndex: 0,
                     excelData: [],
+                    originalExcelData: [],
                     columnHeaders: [],
                     columnMapping: {},
+                    cellCorrections: {},
                     pontos: [],
                     pontosSalvos: [],
                 };

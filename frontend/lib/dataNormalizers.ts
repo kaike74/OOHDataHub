@@ -1,10 +1,10 @@
 /**
- * Data normalization utilities for bulk import
- * Handles various input formats and converts to system standards
+ * ADVANCED Data normalization utilities for bulk import
+ * Handles EXTREME variety of input formats and converts to system standards
  */
 
 // ============================================================================
-// MEDIDAS (Tamanho)
+// MEDIDAS (Tamanho) - ADVANCED
 // ============================================================================
 
 export interface Medidas {
@@ -24,17 +24,17 @@ export function normalizeMedidas(input: string): Medidas {
     // Detecta unidade (padrão: M)
     const unidade = clean.includes('PX') || clean.includes('PIXEL') ? 'PX' : 'M';
 
-    // Remove unidade e texto extra
-    clean = clean.replace(/\s*(M|PX|METROS?|PIXELS?)\s*/gi, '');
+    // Remove unidade e texto extra (metros, pixels, etc)
+    clean = clean.replace(/\s*(M|PX|METROS?|PIXELS?|METRO|PIXEL)\s*/gi, '');
 
     // Normaliza separadores (vírgula → ponto)
     clean = clean.replace(/,/g, '.');
 
-    // Extrai números
+    // Extrai números (suporta formatos: 9x3, 9 x 3, 9X3, 9×3)
     const match = clean.match(/(\d+\.?\d*)\s*[xX×]\s*(\d+\.?\d*)/);
 
     if (!match) {
-        throw new Error('Formato de medida inválido. Use: "9x3" ou "9x3 M"');
+        throw new Error('Formato de medida inválido');
     }
 
     return {
@@ -49,10 +49,9 @@ export function formatMedidas(medidas: Medidas): string {
 }
 
 // ============================================================================
-// TIPOS DE MÍDIA
+// TIPOS DE MÍDIA - ADVANCED
 // ============================================================================
 
-// Tipos válidos no sistema
 export const TIPOS_VALIDOS = [
     'Outdoor',
     'Frontlight',
@@ -68,18 +67,23 @@ export const TIPOS_VALIDOS = [
     'Taxidoor'
 ] as const;
 
-// Mapa de sinônimos
+// Mapa EXPANDIDO de sinônimos
 const SINONIMOS: Record<string, string> = {
     'front light': 'Frontlight',
     'front-light': 'Frontlight',
     'frontligth': 'Frontlight',
+    'frontlite': 'Frontlight',
+    'front lite': 'Frontlight',
     'back light': 'Backlight',
     'back-light': 'Backlight',
     'backligth': 'Backlight',
+    'backlite': 'Backlight',
+    'back lite': 'Backlight',
     'painel de rodovia': 'Painel rodoviário',
     'painel rodovia': 'Painel rodoviário',
     'painel rodoviario': 'Painel rodoviário',
     'painel de estrada': 'Painel rodoviário',
+    'painel estrada': 'Painel rodoviário',
     'relogio de rua': 'Relógio de rua',
     'relogio': 'Relógio de rua',
     'relógio': 'Relógio de rua',
@@ -151,8 +155,8 @@ export function normalizeTipos(input: string): string[] {
         return [];
     }
 
-    // Split por vírgula, ponto-e-vírgula ou barra
-    const tipos = input.split(/[,;/]/).map(t => t.trim()).filter(Boolean);
+    // Split por vírgula, ponto-e-vírgula, barra, ou "e"
+    const tipos = input.split(/[,;/]|\s+e\s+/).map(t => t.trim()).filter(Boolean);
 
     return tipos.map(tipo => {
         // Normaliza: lowercase, remove acentos
@@ -163,9 +167,9 @@ export function normalizeTipos(input: string): string[] {
             return SINONIMOS[normalized];
         }
 
-        // Fuzzy match com tipos válidos
+        // Fuzzy match com tipos válidos (threshold reduzido para 0.6)
         const match = findBestMatch(tipo, TIPOS_VALIDOS);
-        if (match.score > 0.7) {
+        if (match.score > 0.6) {
             return match.value;
         }
 
@@ -175,7 +179,7 @@ export function normalizeTipos(input: string): string[] {
 }
 
 // ============================================================================
-// COORDENADAS
+// COORDENADAS - ADVANCED
 // ============================================================================
 
 export function normalizeCoordinate(input: string | number): number {
@@ -183,13 +187,22 @@ export function normalizeCoordinate(input: string | number): number {
         return input;
     }
 
-    // Converte para string
+    // Converte para string e remove espaços
     let str = String(input).trim();
 
     // Remove aspas
     str = str.replace(/["']/g, '');
 
-    // Vírgula → ponto
+    // CRÍTICO: Remove pontos de milhar ANTES de converter vírgula
+    // Detecta se tem ponto seguido de 3 dígitos (milhar) vs ponto decimal
+    // Ex: -46.655.881 → -46655881 (milhar)
+    // Ex: -46.655881 → -46.655881 (decimal)
+    if (str.match(/\.\d{3}($|\.)/)) {
+        // Tem ponto de milhar, remove TODOS os pontos
+        str = str.replace(/\./g, '');
+    }
+
+    // Agora vírgula → ponto (para decimal)
     str = str.replace(',', '.');
 
     const num = parseFloat(str);
@@ -200,14 +213,14 @@ export function normalizeCoordinate(input: string | number): number {
 
     // Valida range
     if (num < -180 || num > 180) {
-        throw new Error('Coordenada fora do range válido (-180 a 180)');
+        throw new Error('Coordenada fora do range válido');
     }
 
     return num;
 }
 
 // ============================================================================
-// FLUXO
+// FLUXO - ADVANCED
 // ============================================================================
 
 export function normalizeFluxo(input: string | number): number {
@@ -217,7 +230,7 @@ export function normalizeFluxo(input: string | number): number {
 
     let str = String(input).trim();
 
-    // Remove pontos e vírgulas de milhar
+    // Remove TODOS pontos e vírgulas (milhar)
     str = str.replace(/[.,]/g, '');
 
     const num = parseInt(str, 10);
@@ -230,7 +243,7 @@ export function normalizeFluxo(input: string | number): number {
 }
 
 // ============================================================================
-// VALORES MONETÁRIOS
+// VALORES MONETÁRIOS - ADVANCED
 // ============================================================================
 
 export function normalizeValor(input: string | number): number {
@@ -247,9 +260,17 @@ export function normalizeValor(input: string | number): number {
     if (str.includes('.') && str.includes(',')) {
         str = str.replace(/\./g, '').replace(',', '.');
     }
-    // Se só tem vírgula, assume decimal BR (5000,00)
+    // Se só tem vírgula, assume decimal BR (5000,00 ou 18000,00)
     else if (str.includes(',')) {
         str = str.replace(',', '.');
+    }
+    // Se só tem ponto, verifica se é milhar ou decimal
+    else if (str.includes('.')) {
+        // Se tem ponto seguido de 3 dígitos no final, é milhar
+        if (str.match(/\.\d{3}$/)) {
+            str = str.replace(/\./g, '');
+        }
+        // Senão, é decimal (mantém)
     }
 
     const num = parseFloat(str);
@@ -262,7 +283,7 @@ export function normalizeValor(input: string | number): number {
 }
 
 // ============================================================================
-// PERÍODO (Locação)
+// PERÍODO (Locação) - ADVANCED
 // ============================================================================
 
 export function normalizePeriodo(input: string): 'Bissemanal' | 'Mensal' | null {
@@ -272,13 +293,25 @@ export function normalizePeriodo(input: string): 'Bissemanal' | 'Mensal' | null 
 
     const normalized = input.toLowerCase().trim();
 
-    // Bissemanal variations
-    if (normalized.includes('bi') || normalized.includes('quinzen') || normalized.includes('seman')) {
+    // Bissemanal variations (EXPANDIDO)
+    if (
+        normalized.includes('bi') ||
+        normalized.includes('quinzen') ||
+        normalized.includes('seman') ||
+        normalized.includes('15 dia') ||
+        normalized.includes('15dia')
+    ) {
         return 'Bissemanal';
     }
 
-    // Mensal variations
-    if (normalized.includes('mes') || normalized.includes('mês') || normalized.includes('month')) {
+    // Mensal variations (EXPANDIDO)
+    if (
+        normalized.includes('mes') ||
+        normalized.includes('mês') ||
+        normalized.includes('month') ||
+        normalized.includes('1 mes') ||
+        normalized.includes('30 dia')
+    ) {
         return 'Mensal';
     }
 
@@ -286,7 +319,7 @@ export function normalizePeriodo(input: string): 'Bissemanal' | 'Mensal' | null 
 }
 
 // ============================================================================
-// CÓDIGO OOH
+// CÓDIGO OOH - ADVANCED
 // ============================================================================
 
 export function normalizeCodigo(input: string): string {
@@ -296,16 +329,118 @@ export function normalizeCodigo(input: string): string {
 
     let clean = input.trim().toUpperCase();
 
-    // Remove espaços extras
+    // Remove espaços extras e substitui por hífen
     clean = clean.replace(/\s+/g, '-');
+
+    // Se começa com número, adiciona OOH-
+    if (/^\d/.test(clean)) {
+        clean = 'OOH-' + clean;
+    }
 
     // Garante que começa com OOH
     if (!clean.startsWith('OOH')) {
         clean = 'OOH-' + clean;
     }
 
-    // Garante que tem hífen após OOH
+    // Garante que tem hífen após OOH (se não tiver)
     clean = clean.replace(/^OOH([^-])/, 'OOH-$1');
+
+    // Remove hífens duplicados
+    clean = clean.replace(/-+/g, '-');
+
+    return clean;
+}
+
+// ============================================================================
+// CIDADE - ADVANCED
+// ============================================================================
+
+const CIDADE_ALIASES: Record<string, string> = {
+    'sp': 'São Paulo',
+    'sampa': 'São Paulo',
+    'sao paulo': 'São Paulo',
+    'são paulo': 'São Paulo',
+};
+
+export function normalizeCidade(input: string): string {
+    if (!input || typeof input !== 'string') {
+        return '';
+    }
+
+    let clean = input.trim().toLowerCase();
+
+    // Remove estado se vier junto (ex: "sao paulo - sp")
+    clean = clean.split('-')[0].trim();
+
+    // Busca alias
+    if (CIDADE_ALIASES[clean]) {
+        return CIDADE_ALIASES[clean];
+    }
+
+    // Capitaliza primeira letra de cada palavra
+    return clean
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
+// ============================================================================
+// UF/ESTADO - ADVANCED
+// ============================================================================
+
+const UF_ALIASES: Record<string, string> = {
+    'sao paulo': 'SP',
+    'são paulo': 'SP',
+    'sp': 'SP',
+    'rio de janeiro': 'RJ',
+    'rj': 'RJ',
+    'minas gerais': 'MG',
+    'mg': 'MG',
+};
+
+export function normalizeUF(input: string): string {
+    if (!input || typeof input !== 'string') {
+        return '';
+    }
+
+    const clean = input.trim().toLowerCase();
+
+    // Busca alias
+    if (UF_ALIASES[clean]) {
+        return UF_ALIASES[clean];
+    }
+
+    // Se já é sigla (2 letras), retorna uppercase
+    if (clean.length === 2) {
+        return clean.toUpperCase();
+    }
+
+    return clean.toUpperCase();
+}
+
+// ============================================================================
+// ENDEREÇO - ADVANCED
+// ============================================================================
+
+export function normalizeEndereco(input: string): string {
+    if (!input || typeof input !== 'string') {
+        return '';
+    }
+
+    let clean = input.trim();
+
+    // Capitaliza primeira letra de cada palavra
+    clean = clean
+        .split(' ')
+        .map(word => {
+            // Mantém abreviações em maiúsculo (AV, R, etc)
+            if (word.length <= 2 && word === word.toUpperCase()) {
+                return word;
+            }
+            // Capitaliza normalmente
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        })
+        .join(' ');
 
     return clean;
 }
@@ -327,38 +462,109 @@ export function normalizeField(
 ): NormalizationResult {
     try {
         switch (fieldName) {
+            case 'codigo_ooh':
+                if (!value) return { success: false, error: 'Código obrigatório', value: null };
+                const codigo = normalizeCodigo(value);
+                return {
+                    success: true,
+                    value: codigo,
+                    warning: String(value).trim() !== codigo ? 'Código formatado' : undefined
+                };
+
+            case 'endereco':
+                if (!value) return { success: false, error: 'Endereço obrigatório', value: null };
+                const endereco = normalizeEndereco(value);
+                return {
+                    success: true,
+                    value: endereco,
+                    warning: String(value) !== endereco ? 'Endereço formatado' : undefined
+                };
+
+            case 'cidade':
+                if (!value) return { success: true, value: null };
+                const cidade = normalizeCidade(value);
+                return {
+                    success: true,
+                    value: cidade,
+                    warning: String(value).trim() !== cidade ? 'Cidade normalizada' : undefined
+                };
+
+            case 'uf':
+                if (!value) return { success: true, value: null };
+                const uf = normalizeUF(value);
+                return {
+                    success: true,
+                    value: uf,
+                    warning: String(value).trim() !== uf ? 'UF normalizada' : undefined
+                };
+
             case 'medidas':
                 if (!value) return { success: true, value: null };
                 const medidas = normalizeMedidas(value);
+                const medidasStr = formatMedidas(medidas);
                 return {
                     success: true,
-                    value: formatMedidas(medidas),
-                    warning: !value.includes('M') && !value.includes('PX') ? 'Unidade não especificada, assumindo M' : undefined
+                    value: medidasStr,
+                    warning: String(value) !== medidasStr ? 'Medida normalizada' : undefined
                 };
 
             case 'tipos':
                 if (!value) return { success: true, value: null };
                 const tipos = normalizeTipos(value);
+                const tiposStr = tipos.join(', ');
                 return {
                     success: true,
-                    value: tipos.join(', '),
-                    warning: tipos.some(t => !TIPOS_VALIDOS.includes(t as any)) ? 'Alguns tipos não foram reconhecidos' : undefined
+                    value: tiposStr,
+                    warning: String(value) !== tiposStr ? 'Tipos normalizados' : undefined
                 };
 
             case 'latitude':
             case 'longitude':
-                if (!value) return { success: false, error: 'Coordenada obrigatória' };
+                if (!value) return { success: false, error: 'Coordenada obrigatória', value: null };
                 const coord = normalizeCoordinate(value);
-                return { success: true, value: coord };
+                return {
+                    success: true,
+                    value: coord,
+                    warning: String(value).trim() !== String(coord) ? 'Coordenada normalizada' : undefined
+                };
 
             case 'fluxo':
                 if (!value) return { success: true, value: null };
                 const fluxo = normalizeFluxo(value);
-                return { success: true, value: fluxo };
+                return {
+                    success: true,
+                    value: fluxo,
+                    warning: String(value).trim() !== String(fluxo) ? 'Fluxo normalizado' : undefined
+                };
+
+            case 'valor_locacao':
+            case 'valor_papel':
+            case 'valor_lona':
+                if (!value) return { success: true, value: null };
+                const valor = normalizeValor(value);
+                return {
+                    success: true,
+                    value: valor,
+                    warning: String(value).trim() !== String(valor) ? 'Valor normalizado' : undefined
+                };
+
+            case 'periodo_locacao':
+                if (!value) return { success: true, value: null };
+                const periodo = normalizePeriodo(value);
+                return {
+                    success: true,
+                    value: periodo,
+                    warning: periodo && String(value) !== periodo ? 'Período normalizado' : !periodo ? 'Período não reconhecido' : undefined
+                };
 
             default:
                 // Campos de texto simples
-                return { success: true, value: value ? String(value).trim() : null };
+                const trimmed = value ? String(value).trim() : null;
+                return {
+                    success: true,
+                    value: trimmed,
+                    warning: value && String(value) !== trimmed ? 'Espaços removidos' : undefined
+                };
         }
     } catch (error: any) {
         return {
@@ -367,4 +573,36 @@ export function normalizeField(
             value: value
         };
     }
+}
+
+// ============================================================================
+// NORMALIZATION WITH DIFF TRACKING
+// ============================================================================
+
+export interface NormalizationDiffResult extends NormalizationResult {
+    original: any;
+    hasChange: boolean;
+    fieldType: string;
+}
+
+/**
+ * Normalizes a field and returns diff information for visual display
+ */
+export function normalizeFieldWithDiff(
+    fieldName: string,
+    value: any
+): NormalizationDiffResult {
+    const result = normalizeField(fieldName, value);
+    const original = value;
+    const normalized = result.value;
+
+    // Determine if there's a meaningful change
+    const hasChange = original != null && normalized != null && String(original).trim() !== String(normalized);
+
+    return {
+        ...result,
+        original,
+        hasChange,
+        fieldType: fieldName
+    };
 }

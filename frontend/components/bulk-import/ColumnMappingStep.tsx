@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import { normalizeField } from '@/lib/dataNormalizers';
+import { CellDiff } from './CorrectionDiff';
 
 // Field options for column mapping
 const FIELD_OPTIONS = [
@@ -35,42 +36,101 @@ function detectColumnMapping(header: string): string {
     const normalized = header.toLowerCase().trim();
 
     const mappings: Record<string, string> = {
+        // Código
         'codigo': 'codigo_ooh',
         'código': 'codigo_ooh',
         'cod': 'codigo_ooh',
+        'code': 'codigo_ooh',
+
+        // Endereço
         'endereco': 'endereco',
         'endereço': 'endereco',
+        'end': 'endereco',
         'address': 'endereco',
+        'addr': 'endereco',
+
+        // Coordenadas
         'lat': 'latitude',
         'latitude': 'latitude',
         'lng': 'longitude',
         'lon': 'longitude',
+        'long': 'longitude',
         'longitude': 'longitude',
+
+        // Cidade
         'cidade': 'cidade',
         'city': 'cidade',
+        'cid': 'cidade',
+
+        // UF/Estado
         'uf': 'uf',
         'estado': 'uf',
+        'state': 'uf',
+
+        // País
         'pais': 'pais',
         'país': 'pais',
+        'country': 'pais',
+
+        // Medidas/Tamanho
         'medida': 'medidas',
         'medidas': 'medidas',
         'tamanho': 'medidas',
+        'tam': 'medidas',
+        'size': 'medidas',
+        'dimensao': 'medidas',
+        'dimensão': 'medidas',
+
+        // Fluxo
         'fluxo': 'fluxo',
+        'flux': 'fluxo',
+        'flow': 'fluxo',
+        'trafego': 'fluxo',
+        'tráfego': 'fluxo',
+
+        // Tipos
         'tipo': 'tipos',
         'tipos': 'tipos',
+        'tip': 'tipos',
+        'type': 'tipos',
+        'midia': 'tipos',
+        'mídia': 'tipos',
+
+        // Observações
         'obs': 'observacoes',
         'observacao': 'observacoes',
         'observacoes': 'observacoes',
         'observações': 'observacoes',
+        'notes': 'observacoes',
+
+        // Ponto de Referência
         'referencia': 'ponto_referencia',
         'referência': 'ponto_referencia',
+        'ref': 'ponto_referencia',
+        'reference': 'ponto_referencia',
+
+        // Locação
         'locacao': 'valor_locacao',
         'locação': 'valor_locacao',
+        'loc': 'valor_locacao',
         'aluguel': 'valor_locacao',
+        'rent': 'valor_locacao',
+        'valor locacao': 'valor_locacao',
+        'valor locação': 'valor_locacao',
+
+        // Período
         'periodo': 'periodo_locacao',
         'período': 'periodo_locacao',
+        'per': 'periodo_locacao',
+        'period': 'periodo_locacao',
+
+        // Papel
         'papel': 'valor_papel',
+        'paper': 'valor_papel',
+
+        // Lona
         'lona': 'valor_lona',
+        'canvas': 'valor_lona',
     };
 
     for (const [key, value] of Object.entries(mappings)) {
@@ -116,9 +176,68 @@ export default function ColumnMappingStep() {
                 }
 
                 const columnHeaders = jsonData[0].map(h => String(h || ''));
-                const excelData = jsonData.slice(1);
+                const rawData = jsonData.slice(1);
 
-                setExcelData(columnHeaders, excelData);
+                // Auto-detect column mapping
+                const autoMapping: Record<string, string> = {};
+                columnHeaders.forEach((header, idx) => {
+                    autoMapping[idx.toString()] = detectColumnMapping(header);
+                });
+
+                // Normalize all data automatically
+                const normalizedData: any[][] = [];
+                const corrections: Record<string, { original: any; corrected: any; field: string }> = {};
+
+                rawData.forEach((row, rowIdx) => {
+                    const normalizedRow: any[] = [];
+
+                    row.forEach((cell, colIdx) => {
+                        const fieldName = autoMapping[colIdx.toString()];
+
+                        if (fieldName && fieldName !== 'ignore') {
+                            // Normalize the cell value
+                            const result = normalizeField(fieldName, cell);
+                            const normalizedValue = result.value;
+
+                            normalizedRow.push(normalizedValue);
+
+                            // Track corrections for diff display
+                            if (cell != null && normalizedValue != null && String(cell).trim() !== String(normalizedValue)) {
+                                const key = `${rowIdx}-${colIdx}`;
+                                corrections[key] = {
+                                    original: cell,
+                                    corrected: normalizedValue,
+                                    field: fieldName
+                                };
+                            }
+                        } else {
+                            // Keep original value for ignored columns
+                            normalizedRow.push(cell);
+                        }
+                    });
+
+                    normalizedData.push(normalizedRow);
+                });
+
+                // Store both original and normalized data
+                const { session } = useBulkImportStore.getState();
+                if (session) {
+                    useBulkImportStore.setState({
+                        session: {
+                            ...session,
+                            columnHeaders,
+                            excelData: normalizedData,
+                            originalExcelData: rawData,
+                            columnMapping: autoMapping,
+                            cellCorrections: corrections
+                        }
+                    });
+                } else {
+                    setExcelData(columnHeaders, normalizedData);
+                }
+
+                // Set initial mapping
+                setMapping(autoMapping);
             } catch (error) {
                 console.error('Error parsing file:', error);
                 alert('Erro ao ler arquivo');
@@ -370,6 +489,14 @@ export default function ColumnMappingStep() {
                     Erros ({summary.errors})
                 </button>
 
+                {/* Correction Summary */}
+                {session?.cellCorrections && Object.keys(session.cellCorrections).length > 0 && (
+                    <div className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
+                        <CheckCircle2 size={14} />
+                        {Object.keys(session.cellCorrections).length} correções automáticas
+                    </div>
+                )}
+
                 {isValidating && (
                     <div className="ml-auto flex items-center gap-2 text-sm text-emidias-primary">
                         <Loader2 size={14} className="animate-spin" />
@@ -466,6 +593,8 @@ export default function ColumnMappingStep() {
                                         </td>
                                         {row.map((cell: any, cellIdx: number) => {
                                             const isEditing = editingCell?.row === idx && editingCell?.col === cellIdx;
+                                            const correctionKey = `${idx}-${cellIdx}`;
+                                            const correction = session?.cellCorrections?.[correctionKey];
 
                                             return (
                                                 <td
@@ -485,6 +614,12 @@ export default function ColumnMappingStep() {
                                                             }}
                                                             className="w-full px-2 py-1 border border-emidias-primary rounded focus:outline-none"
                                                             autoFocus
+                                                        />
+                                                    ) : correction ? (
+                                                        <CellDiff
+                                                            original={correction.original}
+                                                            corrected={correction.corrected}
+                                                            isEditing={false}
                                                         />
                                                     ) : (
                                                         cell || <span className="text-gray-300 italic">vazio</span>
