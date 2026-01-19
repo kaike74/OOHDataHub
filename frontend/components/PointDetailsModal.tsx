@@ -3,7 +3,7 @@
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, cn } from '@/lib/utils';
-import { X, MapPin, Building2, Ruler, Users, FileText, DollarSign, ChevronLeft, ChevronRight, Eye, ShoppingCart, Copy, ExternalLink, Loader2, Tag, Navigation, Phone, Mail, MessageSquare, Trash2, Edit, History, Search, Minimize2, Check, Expand, Share2, Download, Plus, Clock, User, TrendingUp, ChevronDown, ChevronUp, Crosshair, Edit2 } from 'lucide-react';
+import { X, MapPin, Building2, Ruler, Users, FileText, DollarSign, ChevronLeft, ChevronRight, Eye, ShoppingCart, Copy, ExternalLink, Loader2, Tag, Navigation, Phone, Mail, MessageSquare, Trash2, Edit, History, Search, Minimize2, Check, Expand, Share2, Download, Plus, Clock, User, TrendingUp, ChevronDown, ChevronUp, Crosshair, Edit2, Maximize2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
 
 
@@ -522,6 +522,31 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                 <p className="text-sm">Sem imagem</p>
                             </div>
                         )}
+
+                        {/* Bottom Overlay for Size & Zoom */}
+                        {imagens.length > 0 && (
+                            <div className="absolute bottom-0 left-0 right-0 p-4 z-20 flex justify-between items-end bg-gradient-to-t from-black/80 to-transparent">
+                                {/* Left: Size */}
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-0.5">Tamanho</span>
+                                    <span className="text-lg font-black text-white tracking-widest uppercase leading-none shadow-black drop-shadow-md">
+                                        {selectedPonto.medidas || 'N/A'} <span className="text-xs align-top opacity-70">m</span>
+                                    </span>
+                                </div>
+
+                                {/* Right: Zoom Button */}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsLightboxOpen(true);
+                                    }}
+                                    className="h-8 w-8 rounded-lg bg-white/20 hover:bg-white/40 text-white backdrop-blur-md flex items-center justify-center transition-all border border-white/30 hover:border-white/50"
+                                    title="Expandir Imagem"
+                                >
+                                    <Maximize2 size={16} />
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Thumbnails Row - ALWAYS SHOW when images exist */}
@@ -630,12 +655,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                         <Crosshair size={10} />
                                         {selectedPonto.latitude?.toFixed(6)}, {selectedPonto.longitude?.toFixed(6)}
                                     </div>
-                                    {selectedPonto.medidas && (
-                                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-50 rounded-lg border border-gray-100 text-[10px] font-mono text-gray-400">
-                                            <Ruler size={10} />
-                                            {selectedPonto.medidas}
-                                        </div>
-                                    )}
+
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -654,9 +674,9 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
 
                     {/* Content Body - Organized Grid 2x2 */}
                     <div className="flex-1 p-5 overflow-y-auto custom-scrollbar relative">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 grid-rows-2 gap-4 h-full">
                             {/* Card 1: Valores */}
-                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-full min-h-[160px]">
+                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-full">
                                 <div className="flex items-center gap-2 mb-3">
                                     <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
                                         <DollarSign size={16} />
@@ -718,7 +738,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                             </div>
 
                             {/* Card 2: Performance */}
-                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-full min-h-[160px]">
+                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-full">
                                 <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
                                     <TrendingUp size={14} className="text-emidias-primary" />
                                     Performance
@@ -749,7 +769,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                             </div>
 
                             {/* Card 3: Exibidora */}
-                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-[180px] group overflow-hidden">
+                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-full group overflow-hidden">
                                 <div className="flex items-center gap-2 mb-2 shrink-0">
                                     <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
                                         <Building2 size={16} />
@@ -851,30 +871,14 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                     </div>
 
                                     {/* Regions Section */}
-                                    <div className="pt-2 border-t border-gray-50">
-                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mb-1">Regiões de Atuação</p>
-                                        <div className="flex flex-wrap gap-1">
-                                            {(() => {
-                                                const extData = exibidoras.find(e => e.id === selectedPonto.id_exibidora) as any;
-                                                const cidades = extData?.cidades || [];
-                                                return cidades.length > 0 ? (
-                                                    <>
-                                                        {cidades.slice(0, 2).map((cidade: string, i: number) => (
-                                                            <span key={i} className="px-1.5 py-0.5 bg-gray-50 text-gray-500 rounded text-[9px] border border-gray-100 font-medium">{cidade}</span>
-                                                        ))}
-                                                        {cidades.length > 2 && <span className="text-[9px] text-gray-400 font-bold">+{cidades.length - 2}</span>}
-                                                    </>
-                                                ) : <span className="text-[9px] text-gray-400 italic">Local</span>;
-                                            })()}
-                                        </div>
-                                    </div>
+
                                 </div>
 
 
                             </div>
 
                             {/* Card 4: Propostas */}
-                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-[180px]">
+                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-full">
                                 <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] flex items-center gap-2 mb-3 truncate leading-none">
                                     <ShoppingCart size={14} className="text-blue-500" />
                                     Propostas
@@ -951,33 +955,39 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                 </div>
                             )}
 
-                            {/* Admin Actions (Map Context Only) */}
-                            {!isInProposalContext && canEdit && (
-                                <div className="flex gap-2 ml-2">
-                                    <button onClick={handleHistory} className="p-1.5 text-gray-400 hover:text-purple-600 bg-gray-50 hover:bg-purple-50 rounded transition-all border border-gray-100" title="Histórico">
-                                        <History size={16} />
-                                    </button>
-                                    <button onClick={handleEdit} className="p-1.5 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded transition-all border border-gray-100" title="Editar">
-                                        <Edit size={16} />
-                                    </button>
-                                    {!isDeleting && (
-                                        <button onClick={handleDelete} disabled={isDeleting} className="p-1.5 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded transition-all border border-gray-100" title="Deletar">
-                                            <Trash2 size={16} />
-                                        </button>
-                                    )}
-                                </div>
-                            )}
 
-                            {/* Share Button (Map Context Only) */}
-                            {!isInProposalContext && (
-                                <button onClick={handleSharePoint} className="p-1.5 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded transition-all border border-gray-100 ml-2" title="Compartilhar Ponto">
-                                    <Share2 size={16} />
-                                </button>
-                            )}
                         </div>
 
                         {/* Right Side: Context-Aware Actions */}
                         <div className="flex items-center gap-3">
+                            {/* Admin & Share Actions (Moved from Left) */}
+                            {!isInProposalContext && (
+                                <div className="flex items-center gap-2 mr-2">
+                                    {canEdit && (
+                                        <button onClick={handleHistory} className="p-2 text-gray-400 hover:text-purple-600 bg-gray-50 hover:bg-purple-50 rounded-lg transition-all border border-gray-100" title="Histórico">
+                                            <History size={16} />
+                                        </button>
+                                    )}
+
+                                    <button onClick={handleSharePoint} className="p-2 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded-lg transition-all border border-gray-100" title="Compartilhar">
+                                        <Share2 size={16} />
+                                    </button>
+
+                                    {canEdit && (
+                                        <>
+                                            <button onClick={handleEdit} className="p-2 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded-lg transition-all border border-gray-100" title="Editar">
+                                                <Edit size={16} />
+                                            </button>
+                                            {!isDeleting && (
+                                                <button onClick={handleDelete} disabled={isDeleting} className="p-2 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded-lg transition-all border border-gray-100" title="Excluir">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
                             {/* Observações/Notas Button */}
                             {selectedPonto.observacoes && (
                                 <Button
