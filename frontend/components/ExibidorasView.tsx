@@ -26,11 +26,7 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
     // State for Sidebar
     const [selectedExibidoraId, setSelectedExibidoraId] = useState<number | null>(null);
 
-    // Derive selected exhibitor from fresh data
-    const selectedExibidoraDetails = useMemo(() => {
-        if (!selectedExibidoraId) return null;
-        return exibidorasComStats.find(e => e.id === selectedExibidoraId) || null;
-    }, [selectedExibidoraId, exibidorasComStats]);
+
 
     // Sync prop with internal/store modal state
     useEffect(() => {
@@ -145,6 +141,12 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
             }
         }
     };
+
+    // Derive selected exhibitor from fresh data
+    const selectedExibidoraDetails = useMemo(() => {
+        if (!selectedExibidoraId) return null;
+        return exibidorasComStats.find(e => e.id === selectedExibidoraId) || null;
+    }, [selectedExibidoraId, exibidorasComStats]);
 
     return (
         <div className="h-full bg-gray-50 flex flex-col overflow-hidden relative">
