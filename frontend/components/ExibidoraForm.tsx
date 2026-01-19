@@ -39,6 +39,7 @@ export default function ExibidoraForm({ onSuccess, onCancel, onDelete, initialDa
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string>('');
     const [contatos, setContatos] = useState<Contato[]>([]);
+    const [deletedContactIds, setDeletedContactIds] = useState<number[]>([]);
 
     // Preencher formulário ao editar
     useEffect(() => {
@@ -120,6 +121,10 @@ export default function ExibidoraForm({ onSuccess, onCancel, onDelete, initialDa
     };
 
     const removeContato = (index: number) => {
+        const contactToRemove = contatos[index];
+        if (contactToRemove.id) {
+            setDeletedContactIds([...deletedContactIds, contactToRemove.id]);
+        }
         setContatos(contatos.filter((_, i) => i !== index));
     };
 
@@ -182,6 +187,13 @@ export default function ExibidoraForm({ onSuccess, onCancel, onDelete, initialDa
             // Upload de logo se houver
             if (logoFile) {
                 await api.uploadExibidoraLogo(logoFile, exibidoraId.toString());
+            }
+
+            // Deletar contatos removidos
+            if (deletedContactIds.length > 0) {
+                await Promise.all(
+                    deletedContactIds.map(id => api.deleteContato(id))
+                );
             }
 
             // Salvar contatos

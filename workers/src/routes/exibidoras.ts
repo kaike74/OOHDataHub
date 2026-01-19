@@ -104,15 +104,25 @@ export async function handleExibidoras(request: Request, env: Env, path: string)
         const id = parseInt(path.split('/')[3]);
 
         try {
-            // Deletar contatos associados
+            // 1. Deletar itens de proposta associados aos pontos desta exibidora
+            // Primeiro buscamos os IDs dos pontos da exibidora
+            const pontos = await env.DB.prepare('SELECT id FROM pontos_ooh WHERE id_exibidora = ?').bind(id).all();
+
+            if (pontos.results && pontos.results.length > 0) {
+                const pontosIds = pontos.results.map((p: any) => p.id).join(',');
+                // SQLite não suporta array binding direto no IN clause facilmente sem hack, mas IDs são seguros se forem números.
+                // Como validamos que são números vindo do banco, ok.
+                await env.DB.prepare(`DELETE FROM proposta_itens WHERE id_ooh IN (${pontosIds})`).run();
+            }
+
+            // 2. Deletar contatos associados
             await env.DB.prepare('DELETE FROM contatos WHERE id_exibidora = ?').bind(id).run();
 
-            // Deletar pontos associados (cascade manual para garantir)
-            // Nota: Se houver imagens associadas aos pontos, elas podem ficar orfãs no R2 se não tratadas aqui.
-            // Por simplicidade e segurança imediata, deletamos os registros do banco.
+            // 3. Deletar pontos associados (cascade manual para garantir)
+            // OBS: Imagens e outros relacionados devem ter ON DELETE CASCADE configurado no esquema, senão precisariam ser deletados aqui também.
             await env.DB.prepare('DELETE FROM pontos_ooh WHERE id_exibidora = ?').bind(id).run();
 
-            // Deletar a exibidora
+            // 4. Deletar a exibidora
             await env.DB.prepare('DELETE FROM exibidoras WHERE id = ?').bind(id).run();
 
             return new Response(JSON.stringify({ success: true }), { headers });
