@@ -13,7 +13,7 @@ interface ExhibitorsTableProps {
     onDelete: (exibidora: Exibidora, e: React.MouseEvent) => void;
 }
 
-export default function ExhibitorsTable({ exibidoras, isLoading, onRowClick, onEdit }: ExhibitorsTableProps) {
+export default function ExhibitorsTable({ exibidoras, isLoading, onRowClick, onEdit, onDelete }: ExhibitorsTableProps) {
     if (isLoading) {
         return (
             <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex justify-center">

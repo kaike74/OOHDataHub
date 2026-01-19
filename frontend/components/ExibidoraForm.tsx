@@ -358,16 +358,15 @@ export default function ExibidoraForm({ onSuccess, onCancel, onDelete, initialDa
                                     <Trash2 size={16} />
                                 </button>
 
-                                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                                    <div className="md:col-span-5">
+                                <div className="space-y-3">
+                                    {/* 1st Row: Name and Phone */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <Input
                                             placeholder="Nome"
                                             value={contato.nome}
                                             onChange={(e) => updateContato(index, 'nome', e.target.value)}
                                             className="bg-gray-50/50 border-gray-200"
                                         />
-                                    </div>
-                                    <div className="md:col-span-3">
                                         <Input
                                             placeholder="Telefone"
                                             value={contato.telefone}
@@ -375,22 +374,24 @@ export default function ExibidoraForm({ onSuccess, onCancel, onDelete, initialDa
                                             className="bg-gray-50/50 border-gray-200"
                                         />
                                     </div>
-                                    <div className="md:col-span-4">
-                                        <Input
-                                            placeholder="Email"
-                                            value={contato.email}
-                                            onChange={(e) => updateContato(index, 'email', e.target.value)}
-                                            className="bg-gray-50/50 border-gray-200"
-                                        />
-                                    </div>
+
+                                    {/* 2nd Row: Email */}
+                                    <Input
+                                        placeholder="Email"
+                                        value={contato.email}
+                                        onChange={(e) => updateContato(index, 'email', e.target.value)}
+                                        className="bg-gray-50/50 border-gray-200"
+                                    />
+
+                                    {/* 3rd Row: Observations */}
+                                    <Textarea
+                                        placeholder="Observações do contato..."
+                                        value={contato.observacoes}
+                                        onChange={(e) => updateContato(index, 'observacoes', e.target.value)}
+                                        rows={2}
+                                        className="min-h-[60px] bg-gray-50/50 border-gray-200 resize-none text-xs"
+                                    />
                                 </div>
-                                <Textarea
-                                    placeholder="Observações do contato..."
-                                    value={contato.observacoes}
-                                    onChange={(e) => updateContato(index, 'observacoes', e.target.value)}
-                                    rows={1}
-                                    className="min-h-[40px] bg-gray-50/50 border-gray-200 resize-none text-xs"
-                                />
                             </div>
                         ))}
                     </div>
@@ -404,7 +405,7 @@ export default function ExibidoraForm({ onSuccess, onCancel, onDelete, initialDa
             )}
 
             <div className="flex items-center justify-between gap-3 w-full pt-4 border-t border-gray-100">
-                {initialData && onDelete && (
+                {initialData && onDelete && mode === 'full' && (
                     <Button
                         type="button"
                         variant="danger" // Assuming danger variant exists or use generic style

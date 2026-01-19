@@ -850,46 +850,46 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
 
                                     </div>
 
-                                    {/* Footer Actions for Exhibitor Card */}
-                                    {canEdit && (
-                                        <div className="pt-2 mt-auto border-t border-gray-50">
-                                            <button
-                                                onClick={() => {
-                                                    const exhibitorData = exibidoras.find(e => e.id === selectedPonto.id_exibidora);
-                                                    if (exhibitorData) {
-                                                        const pontosExibidora = pontos.filter((p) => p.id_exibidora === exhibitorData.id);
-                                                        const cidades = [...new Set(pontosExibidora.map((p) => p.cidade).filter(Boolean))];
-                                                        const ufs = [...new Set(pontosExibidora.map((p) => p.uf).filter(Boolean))];
-
-                                                        const enrichedExhibitor = {
-                                                            ...exhibitorData,
-                                                            totalPontos: pontosExibidora.length,
-                                                            cidades: cidades,
-                                                            ufs: ufs,
-                                                            contatos: exhibitorContacts,
-                                                            pontos: pontosExibidora
-                                                        };
-
-                                                        setEditingExibidora(enrichedExhibitor); // Set for editing
-                                                        setExibidoraFormMode('contacts'); // Only contacts
-                                                        setIsExhibitorModalOpen(false); // Make sure details is closed or handled? Wait user wants details modal -> manage.
-                                                        // Actually from PointDetails we usually open ExhibitorDetailsModal OR ExibidoraModal?
-                                                        // User said "Button managed in contacts card of exhibitor details modal" AND "Button manage in exhibitor card of point details modal".
-                                                        // So this button opens ExibidoraModal directly in contacts mode?
-                                                        // Yes, user said "same as managing contacts in exhibitor details".
-                                                        // So it should open the Form Modal.
-                                                        useStore.getState().setExibidoraModalOpen(true);
-                                                    }
-                                                }}
-                                                className="w-full py-1.5 text-[10px] font-bold text-emidias-primary bg-emidias-primary/5 hover:bg-emidias-primary/10 rounded-lg transition-colors flex items-center justify-center gap-1.5"
-                                            >
-                                                <Edit2 size={10} />
-                                                Gerenciar Contatos
-                                            </button>
-                                        </div>
-                                    )}
-
                                 </div>
+
+                                {/* Footer Actions for Exhibitor Card */}
+                                {canEdit && (
+                                    <div className="pt-2 mt-auto border-t border-gray-50 shrink-0">
+                                        <button
+                                            onClick={() => {
+                                                const exhibitorData = exibidoras.find(e => e.id === selectedPonto.id_exibidora);
+                                                if (exhibitorData) {
+                                                    const pontosExibidora = pontos.filter((p) => p.id_exibidora === exhibitorData.id);
+                                                    const cidades = [...new Set(pontosExibidora.map((p) => p.cidade).filter(Boolean))];
+                                                    const ufs = [...new Set(pontosExibidora.map((p) => p.uf).filter(Boolean))];
+
+                                                    const enrichedExhibitor = {
+                                                        ...exhibitorData,
+                                                        totalPontos: pontosExibidora.length,
+                                                        cidades: cidades,
+                                                        ufs: ufs,
+                                                        contatos: exhibitorContacts,
+                                                        pontos: pontosExibidora
+                                                    };
+
+                                                    setEditingExibidora(enrichedExhibitor); // Set for editing
+                                                    setExibidoraFormMode('contacts'); // Only contacts
+                                                    setIsExhibitorModalOpen(false); // Make sure details is closed or handled? Wait user wants details modal -> manage.
+                                                    // Actually from PointDetails we usually open ExhibitorDetailsModal OR ExibidoraModal?
+                                                    // User said "Button managed in contacts card of exhibitor details modal" AND "Button manage in exhibitor card of point details modal".
+                                                    // So this button opens ExibidoraModal directly in contacts mode?
+                                                    // Yes, user said "same as managing contacts in exhibitor details".
+                                                    // So it should open the Form Modal.
+                                                    useStore.getState().setExibidoraModalOpen(true);
+                                                }
+                                            }}
+                                            className="w-full py-1.5 text-[10px] font-bold text-emidias-primary bg-emidias-primary/5 hover:bg-emidias-primary/10 rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                                        >
+                                            <Edit2 size={10} />
+                                            Gerenciar Contatos
+                                        </button>
+                                    </div>
+                                )}
 
                                 {/* Regions Section */}
 

@@ -53,7 +53,7 @@ export default function ExibidoraModal({ zIndex }: ExibidoraModalProps) {
             }
             maxWidth="2xl"
             className="flex flex-col max-h-[90vh]"
-            zIndex={zIndex}
+            zIndex={zIndex || 2100}
         >
             <ExibidoraForm
                 onSuccess={() => handleClose()}
