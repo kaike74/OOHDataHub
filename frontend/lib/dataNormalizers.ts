@@ -262,6 +262,55 @@ export function normalizeValor(input: string | number): number {
 }
 
 // ============================================================================
+// PERÍODO (Locação)
+// ============================================================================
+
+export function normalizePeriodo(input: string): 'Bissemanal' | 'Mensal' | null {
+    if (!input || typeof input !== 'string') {
+        return null;
+    }
+
+    const normalized = input.toLowerCase().trim();
+
+    // Bissemanal variations
+    if (normalized.includes('bi') || normalized.includes('quinzen') || normalized.includes('seman')) {
+        return 'Bissemanal';
+    }
+
+    // Mensal variations
+    if (normalized.includes('mes') || normalized.includes('mês') || normalized.includes('month')) {
+        return 'Mensal';
+    }
+
+    return null;
+}
+
+// ============================================================================
+// CÓDIGO OOH
+// ============================================================================
+
+export function normalizeCodigo(input: string): string {
+    if (!input || typeof input !== 'string') {
+        throw new Error('Código obrigatório');
+    }
+
+    let clean = input.trim().toUpperCase();
+
+    // Remove espaços extras
+    clean = clean.replace(/\s+/g, '-');
+
+    // Garante que começa com OOH
+    if (!clean.startsWith('OOH')) {
+        clean = 'OOH-' + clean;
+    }
+
+    // Garante que tem hífen após OOH
+    clean = clean.replace(/^OOH([^-])/, 'OOH-$1');
+
+    return clean;
+}
+
+// ============================================================================
 // NORMALIZAÇÃO COMPLETA DE PONTO
 // ============================================================================
 
