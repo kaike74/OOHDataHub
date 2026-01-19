@@ -1001,6 +1001,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                     </div>
                                 </div>
                             </div>
+                        )}
                     </div>
 
                     {/* Footer Actions - Context Aware */}
