@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api';
 import { useBulkImportStore } from '@/stores/useBulkImportStore';
+import BulkImportModal from '@/components/bulk-import/BulkImportModal';
 import { formatCurrency, cn } from '@/lib/utils';
 import GoogleMap from '@/components/map/GoogleMap';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
@@ -371,6 +372,9 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                     </div>
                 </div>
             </div>
+
+            {/* Bulk Import Modal */}
+            <BulkImportModal />
         </Modal>
     );
 }
