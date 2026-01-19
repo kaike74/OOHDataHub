@@ -2,12 +2,14 @@
 
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { X, Building2, FileText, MapPin, Phone, Mail, Pencil, Tag, Calendar } from 'lucide-react';
+import { X, Building2, FileText, MapPin, Phone, Mail, Pencil, Tag, Calendar, Upload } from 'lucide-react';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import type { Contato } from '@/lib/types';
 import { formatDate, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { SafeImage } from '@/components/ui/SafeImage';
+import { useBulkImportStore } from '@/stores/useBulkImportStore';
+import BulkImportModal from '@/components/bulk-import/BulkImportModal';
 
 // Componente para exibir contatos da exibidora
 function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undefined }) {
@@ -108,6 +110,12 @@ export default function ExibidoraSidebar() {
         setEditingExibidora(selectedExibidora);
         setExibidoraModalOpen(true);
     }, [selectedExibidora, setEditingExibidora, setExibidoraModalOpen]);
+
+    const startImport = useBulkImportStore((state) => state.startImport);
+    const handleBulkImport = useCallback(() => {
+        if (!selectedExibidora) return;
+        startImport(selectedExibidora.id, selectedExibidora.nome);
+    }, [selectedExibidora, startImport]);
 
     // Só mostra se tiver exibidora selecionada e NÃO tiver ponto selecionado
     if (!selectedExibidora || !isSidebarOpen || selectedPonto) return null;
@@ -255,15 +263,28 @@ export default function ExibidoraSidebar() {
 
                 {/* Actions Footer - Glassmorphic */}
                 <div className="flex-shrink-0 p-3 border-t border-gray-100 bg-white/80 backdrop-blur-md">
-                    <Button
-                        onClick={handleEdit}
-                        variant="primary"
-                        className="w-full shadow-md hover:shadow-lg transition-all rounded-xl"
-                        leftIcon={<Pencil size={18} />}
-                    >
-                        Editar Exibidora
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={handleBulkImport}
+                            variant="outline"
+                            className="flex-1 shadow-sm hover:shadow-md transition-all rounded-xl"
+                            leftIcon={<Upload size={18} />}
+                        >
+                            Cadastro em Massa
+                        </Button>
+                        <Button
+                            onClick={handleEdit}
+                            variant="primary"
+                            className="flex-1 shadow-md hover:shadow-lg transition-all rounded-xl"
+                            leftIcon={<Pencil size={18} />}
+                        >
+                            Editar
+                        </Button>
+                    </div>
                 </div>
+
+                {/* Bulk Import Modal */}
+                <BulkImportModal />
             </div>
         </>
     );

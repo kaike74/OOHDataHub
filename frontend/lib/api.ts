@@ -392,4 +392,15 @@ export const api = {
 
     approveProposal: (id: number) =>
         fetchAPI(`/api/propostas/${id}/approve`, { method: 'POST' }),
+
+    // Bulk Import
+    validateBulkCodes: (codes: string[]) => fetchAPI('/api/bulk-import/validate-codes', {
+        method: 'POST',
+        body: JSON.stringify({ codes }),
+    }),
+
+    saveBulkImport: (data: { id_exibidora: number; pontos: any[] }) => fetchAPI('/api/bulk-import/save', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
 };

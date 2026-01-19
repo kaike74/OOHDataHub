@@ -24,6 +24,7 @@ import { handleClients } from './routes/client_users';
 import { handlePortal } from './routes/portal';
 import { handleTrash } from './routes/trash';
 import { handleNotifications } from './routes/notifications';
+import { handleBulkImport } from './routes/bulk-import';
 import { corsHeaders, handleOptions } from './utils/cors';
 
 export default {
@@ -111,6 +112,10 @@ export default {
 
             if (path.startsWith('/api/trash')) {
                 return await handleTrash(request, env, path);
+            }
+
+            if (path.startsWith('/api/bulk-import')) {
+                return await handleBulkImport(request, env, path);
             }
 
             if (path.startsWith('/api/notifications')) {
