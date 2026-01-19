@@ -17,6 +17,7 @@ import AddressSearch from '@/components/AddressSearch';
 import HistoryModal from '@/components/HistoryModal';
 import CreateProposalModal from '@/components/CreateProposalModal';
 import ExhibitorDetailsModal from '@/components/exhibitors/ExhibitorDetailsModal';
+import ExibidoraModal from '@/components/ExibidoraModal';
 import type { Contato, Proposta } from '@/lib/types';
 import { getNextValidBiWeeklyStartDate, getSuggestedBiWeeklyEndDate, formatDateForInput, generateMonthlyPeriodId } from '@/lib/periodUtils';
 
@@ -1109,6 +1110,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                 exibidoras={selectedExhibitorForModal}
                 canEdit={canEdit}
             />
+            <ExibidoraModal zIndex={2200} />
         </Modal >
     );
 }

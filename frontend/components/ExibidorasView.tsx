@@ -160,6 +160,7 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
                 isOpen={!!selectedExibidoraDetails}
                 exibidoras={selectedExibidoraDetails}
                 onClose={() => setSelectedExibidoraDetails(null)}
+                canEdit={true}
             />
             <ExibidoraModal />
         </div>
