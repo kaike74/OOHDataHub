@@ -1,17 +1,20 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useBulkImportStore } from '@/stores/useBulkImportStore';
-import { CheckCircle2, AlertTriangle, XCircle, Filter, Loader2 } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Filter, Upload, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { useDropzone } from 'react-dropzone';
+import * as XLSX from 'xlsx';
+import { normalizeField } from '@/lib/dataNormalizers';
 
 // Field options for column mapping
 const FIELD_OPTIONS = [
-    { value: 'codigo_ooh', label: 'Código OOH *', required: true },
-    { value: 'endereco', label: 'Endereço *', required: true },
-    { value: 'latitude', label: 'Latitude *', required: true },
-    { value: 'longitude', label: 'Longitude *', required: true },
+    { value: 'codigo_ooh', label: 'Código OOH', required: true },
+    { value: 'endereco', label: 'Endereço', required: true },
+    { value: 'latitude', label: 'Latitude', required: true },
+    { value: 'longitude', label: 'Longitude', required: true },
     { value: 'cidade', label: 'Cidade', required: false },
     { value: 'uf', label: 'UF', required: false },
     { value: 'pais', label: 'País', required: false },
@@ -35,7 +38,6 @@ function detectColumnMapping(header: string): string {
         'codigo': 'codigo_ooh',
         'código': 'codigo_ooh',
         'cod': 'codigo_ooh',
-        'code': 'codigo_ooh',
         'endereco': 'endereco',
         'endereço': 'endereco',
         'address': 'endereco',
@@ -43,24 +45,19 @@ function detectColumnMapping(header: string): string {
         'latitude': 'latitude',
         'lng': 'longitude',
         'lon': 'longitude',
-        'long': 'longitude',
         'longitude': 'longitude',
         'cidade': 'cidade',
         'city': 'cidade',
         'uf': 'uf',
         'estado': 'uf',
-        'state': 'uf',
         'pais': 'pais',
         'país': 'pais',
-        'country': 'pais',
         'medida': 'medidas',
         'medidas': 'medidas',
         'tamanho': 'medidas',
         'fluxo': 'fluxo',
-        'flow': 'fluxo',
         'tipo': 'tipos',
         'tipos': 'tipos',
-        'type': 'tipos',
         'obs': 'observacoes',
         'observacao': 'observacoes',
         'observacoes': 'observacoes',
@@ -83,95 +80,65 @@ function detectColumnMapping(header: string): string {
     return 'ignore';
 }
 
-// Validate a single point
-function validatePoint(
-    row: any[],
-    mapping: Record<string, string>,
-    rowIndex: number,
-    allCodes: string[],
-    existingCodes: string[]
-): { field: string; message: string; severity: 'error' | 'warning' }[] {
-    const errors: { field: string; message: string; severity: 'error' | 'warning' }[] = [];
-
-    // Helper to get value by field name
-    const getValue = (fieldName: string): string => {
-        const colIndex = Object.entries(mapping).find(([_, val]) => val === fieldName)?.[0];
-        if (!colIndex) return '';
-        return String(row[parseInt(colIndex)] || '').trim();
-    };
-
-    // Required fields validation
-    const codigoOoh = getValue('codigo_ooh');
-    const endereco = getValue('endereco');
-    const latitude = getValue('latitude');
-    const longitude = getValue('longitude');
-
-    if (!codigoOoh) {
-        errors.push({ field: 'codigo_ooh', message: 'Código OOH é obrigatório', severity: 'error' });
-    }
-    if (!endereco) {
-        errors.push({ field: 'endereco', message: 'Endereço é obrigatório', severity: 'error' });
-    }
-    if (!latitude) {
-        errors.push({ field: 'latitude', message: 'Latitude é obrigatória', severity: 'error' });
-    }
-    if (!longitude) {
-        errors.push({ field: 'longitude', message: 'Longitude é obrigatória', severity: 'error' });
-    }
-
-    // Duplicate código in Excel
-    if (codigoOoh) {
-        const duplicateCount = allCodes.filter(c => c === codigoOoh).length;
-        if (duplicateCount > 1) {
-            errors.push({ field: 'codigo_ooh', message: 'Código duplicado no arquivo', severity: 'error' });
-        }
-    }
-
-    // Código already exists in database
-    if (codigoOoh && existingCodes.includes(codigoOoh)) {
-        errors.push({ field: 'codigo_ooh', message: 'Código já existe no sistema', severity: 'error' });
-    }
-
-    // Coordinate validation
-    if (latitude) {
-        const lat = parseFloat(latitude.replace(',', '.'));
-        if (isNaN(lat) || lat < -90 || lat > 90) {
-            errors.push({ field: 'latitude', message: 'Latitude inválida (deve estar entre -90 e 90)', severity: 'error' });
-        }
-    }
-
-    if (longitude) {
-        const lng = parseFloat(longitude.replace(',', '.'));
-        if (isNaN(lng) || lng < -180 || lng > 180) {
-            errors.push({ field: 'longitude', message: 'Longitude inválida (deve estar entre -180 e 180)', severity: 'error' });
-        }
-    }
-
-    // Warnings for optional fields
-    if (!getValue('cidade')) {
-        errors.push({ field: 'cidade', message: 'Cidade não informada', severity: 'warning' });
-    }
-    if (!getValue('uf')) {
-        errors.push({ field: 'uf', message: 'UF não informada', severity: 'warning' });
-    }
-
-    return errors;
-}
-
 export default function ColumnMappingStep() {
     const session = useBulkImportStore((state) => state.session);
+    const setExcelData = useBulkImportStore((state) => state.setExcelData);
     const setColumnMapping = useBulkImportStore((state) => state.setColumnMapping);
-    const setPontos = useBulkImportStore((state) => state.setPontos);
+    const updateCellValue = useBulkImportStore((state) => state.updateCellValue);
 
     const [mapping, setMapping] = useState<Record<string, string>>({});
     const [isValidating, setIsValidating] = useState(false);
     const [validationResults, setValidationResults] = useState<any[]>([]);
     const [filter, setFilter] = useState<'all' | 'valid' | 'errors' | 'warnings'>('all');
+    const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null);
+    const [editValue, setEditValue] = useState('');
 
     const headers = session?.columnHeaders || [];
     const rows = session?.excelData || [];
 
-    // Auto-detect mappings on mount
+    // File upload handler
+    const onDrop = useCallback((acceptedFiles: File[]) => {
+        const file = acceptedFiles[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = e.target?.result;
+                const workbook = XLSX.read(data, { type: 'binary' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                if (jsonData.length === 0) {
+                    alert('Arquivo vazio');
+                    return;
+                }
+
+                const columnHeaders = jsonData[0].map(h => String(h || ''));
+                const excelData = jsonData.slice(1);
+
+                setExcelData(columnHeaders, excelData);
+            } catch (error) {
+                console.error('Error parsing file:', error);
+                alert('Erro ao ler arquivo');
+            }
+        };
+        reader.readAsBinaryString(file);
+    }, [setExcelData]);
+
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        onDrop,
+        accept: {
+            'application/vnd.ms-excel': ['.xls'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+            'text/csv': ['.csv'],
+        },
+        maxFiles: 1,
+        maxSize: 5 * 1024 * 1024, // 5MB
+    });
+
+    // Auto-detect mappings on mount or when headers change
     useEffect(() => {
         if (headers.length > 0 && Object.keys(mapping).length === 0) {
             const autoMapping: Record<string, string> = {};
@@ -184,7 +151,7 @@ export default function ColumnMappingStep() {
 
     // Validate all points when mapping changes
     useEffect(() => {
-        if (Object.keys(mapping).length === 0) return;
+        if (Object.keys(mapping).length === 0 || rows.length === 0) return;
 
         const validateAll = async () => {
             setIsValidating(true);
@@ -207,21 +174,58 @@ export default function ColumnMappingStep() {
                     }
                 }
 
-                // Validate each row
+                // Validate each row with normalization
                 const results = rows.map((row, idx) => {
-                    const errors = validatePoint(row, mapping, idx, allCodes, existingCodes);
+                    const errors: { field: string; message: string; severity: 'error' | 'warning' }[] = [];
+                    const normalizedRow: any = {};
+
+                    // Process each mapped column
+                    Object.entries(mapping).forEach(([colIdx, fieldName]) => {
+                        if (fieldName === 'ignore') return;
+
+                        const value = row[parseInt(colIdx)];
+                        const result = normalizeField(fieldName, value);
+
+                        normalizedRow[fieldName] = result.value;
+
+                        if (!result.success && result.error) {
+                            errors.push({ field: fieldName, message: result.error, severity: 'error' });
+                        } else if (result.warning) {
+                            errors.push({ field: fieldName, message: result.warning, severity: 'warning' });
+                        }
+                    });
+
+                    // Check required fields
+                    const requiredFields = ['codigo_ooh', 'endereco', 'latitude', 'longitude'];
+                    requiredFields.forEach(field => {
+                        if (!normalizedRow[field]) {
+                            errors.push({ field, message: `${field} é obrigatório`, severity: 'error' });
+                        }
+                    });
+
+                    // Check duplicates
+                    const codigo = normalizedRow.codigo_ooh;
+                    if (codigo) {
+                        const duplicateCount = allCodes.filter(c => c === codigo).length;
+                        if (duplicateCount > 1) {
+                            errors.push({ field: 'codigo_ooh', message: 'Código duplicado no arquivo', severity: 'error' });
+                        }
+                        if (existingCodes.includes(codigo)) {
+                            errors.push({ field: 'codigo_ooh', message: 'Código já existe no sistema', severity: 'error' });
+                        }
+                    }
+
                     const hasErrors = errors.some(e => e.severity === 'error');
                     const hasWarnings = errors.some(e => e.severity === 'warning');
 
                     return {
                         status: hasErrors ? 'error' : hasWarnings ? 'warning' : 'valid',
                         errors,
+                        normalizedRow
                     };
                 });
 
                 setValidationResults(results);
-
-                // Update store with column mapping
                 setColumnMapping(mapping);
             } finally {
                 setIsValidating(false);
@@ -231,20 +235,12 @@ export default function ColumnMappingStep() {
         validateAll();
     }, [mapping, rows]);
 
-    // Check if all required fields are mapped
-    const requiredFieldsMapped = useMemo(() => {
-        const requiredFields = FIELD_OPTIONS.filter(f => f.required).map(f => f.value);
-        const mappedFields = Object.values(mapping);
-        return requiredFields.every(field => mappedFields.includes(field));
-    }, [mapping]);
-
-    // Validation summary
+    // Summary
     const summary = useMemo(() => {
         const total = validationResults.length;
         const valid = validationResults.filter(r => r.status === 'valid').length;
         const warnings = validationResults.filter(r => r.status === 'warning').length;
         const errors = validationResults.filter(r => r.status === 'error').length;
-
         return { total, valid, warnings, errors };
     }, [validationResults]);
 
@@ -270,238 +266,250 @@ export default function ColumnMappingStep() {
         }));
     };
 
+    const handleCellDoubleClick = (rowIdx: number, colIdx: number) => {
+        setEditingCell({ row: rowIdx, col: colIdx });
+        setEditValue(String(rows[rowIdx][colIdx] || ''));
+    };
+
+    const handleCellSave = () => {
+        if (!editingCell) return;
+        updateCellValue(editingCell.row, editingCell.col, editValue);
+        setEditingCell(null);
+    };
+
+    const handleCellCancel = () => {
+        setEditingCell(null);
+    };
+
     const StatusIcon = ({ status }: { status: 'valid' | 'warning' | 'error' }) => {
-        if (status === 'valid') {
-            return <CheckCircle2 size={16} className="text-green-500" />;
-        }
-        if (status === 'warning') {
-            return <AlertTriangle size={16} className="text-yellow-500" />;
-        }
+        if (status === 'valid') return <CheckCircle2 size={16} className="text-green-500" />;
+        if (status === 'warning') return <AlertTriangle size={16} className="text-yellow-500" />;
         return <XCircle size={16} className="text-red-500" />;
     };
 
-    return (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {/* Left: Preview Table (60%) */}
-            <div className="lg:col-span-3 space-y-4">
-                {/* Filter Buttons */}
-                <div className="flex items-center gap-2 flex-wrap">
-                    <Filter size={16} className="text-gray-400" />
-                    <button
-                        onClick={() => setFilter('all')}
-                        className={cn(
-                            'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                            filter === 'all'
-                                ? 'bg-emidias-primary text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        )}
-                    >
-                        Todos ({summary.total})
-                    </button>
-                    <button
-                        onClick={() => setFilter('valid')}
-                        className={cn(
-                            'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                            filter === 'valid'
-                                ? 'bg-green-500 text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        )}
-                    >
-                        Válidos ({summary.valid})
-                    </button>
-                    <button
-                        onClick={() => setFilter('warnings')}
-                        className={cn(
-                            'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                            filter === 'warnings'
-                                ? 'bg-yellow-500 text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        )}
-                    >
-                        Avisos ({summary.warnings})
-                    </button>
-                    <button
-                        onClick={() => setFilter('errors')}
-                        className={cn(
-                            'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                            filter === 'errors'
-                                ? 'bg-red-500 text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        )}
-                    >
-                        Erros ({summary.errors})
-                    </button>
+    // Show upload if no data
+    if (headers.length === 0) {
+        return (
+            <div className="flex items-center justify-center min-h-[500px]">
+                <div
+                    {...getRootProps()}
+                    className={cn(
+                        'w-full max-w-2xl p-12 border-2 border-dashed rounded-2xl cursor-pointer transition-all',
+                        isDragActive
+                            ? 'border-emidias-primary bg-emidias-primary/5'
+                            : 'border-gray-300 hover:border-emidias-primary hover:bg-gray-50'
+                    )}
+                >
+                    <input {...getInputProps()} />
+                    <div className="text-center space-y-4">
+                        <Upload size={48} className="mx-auto text-gray-400" />
+                        <div>
+                            <p className="text-lg font-semibold text-gray-900">
+                                {isDragActive ? 'Solte o arquivo aqui' : 'Arraste o arquivo Excel/CSV'}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
+                                ou clique para selecionar
+                            </p>
+                        </div>
+                        <p className="text-xs text-gray-400">
+                            Formatos aceitos: .xlsx, .xls, .csv (máx. 5MB)
+                        </p>
+                    </div>
                 </div>
+            </div>
+        );
+    }
 
-                {/* Preview Table */}
-                <div className="border border-gray-200 rounded-xl overflow-hidden">
-                    <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
-                        <table className="w-full text-sm">
-                            <thead className="bg-gray-100 border-b border-gray-200 sticky top-0 z-10">
-                                <tr>
-                                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase w-12">
-                                        Status
-                                    </th>
-                                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase w-12">
-                                        #
-                                    </th>
-                                    {headers.map((header, idx) => (
-                                        <th
-                                            key={idx}
-                                            className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-l border-gray-200 min-w-[150px]"
-                                        >
-                                            <div className="flex flex-col gap-1">
-                                                <span className="text-gray-400">Col {String.fromCharCode(65 + idx)}</span>
-                                                <span className="font-medium text-gray-900">{header || '(vazio)'}</span>
-                                            </div>
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-100">
-                                {filteredRows.slice(0, 6).map(({ row, idx }) => {
-                                    const result = validationResults[idx];
-                                    const status = result?.status || 'valid';
+    return (
+        <div className="space-y-4">
+            {/* Filter Buttons */}
+            <div className="flex items-center gap-2 flex-wrap">
+                <Filter size={16} className="text-gray-400" />
+                <button
+                    onClick={() => setFilter('all')}
+                    className={cn(
+                        'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                        filter === 'all'
+                            ? 'bg-emidias-primary text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    )}
+                >
+                    Todos ({summary.total})
+                </button>
+                <button
+                    onClick={() => setFilter('valid')}
+                    className={cn(
+                        'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                        filter === 'valid'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    )}
+                >
+                    Válidos ({summary.valid})
+                </button>
+                <button
+                    onClick={() => setFilter('warnings')}
+                    className={cn(
+                        'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                        filter === 'warnings'
+                            ? 'bg-yellow-500 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    )}
+                >
+                    Avisos ({summary.warnings})
+                </button>
+                <button
+                    onClick={() => setFilter('errors')}
+                    className={cn(
+                        'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                        filter === 'errors'
+                            ? 'bg-red-500 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    )}
+                >
+                    Erros ({summary.errors})
+                </button>
+
+                {isValidating && (
+                    <div className="ml-auto flex items-center gap-2 text-sm text-emidias-primary">
+                        <Loader2 size={14} className="animate-spin" />
+                        Validando...
+                    </div>
+                )}
+            </div>
+
+            {/* Table with inline mapping */}
+            <div className="border border-gray-200 rounded-xl overflow-hidden">
+                <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+                    <table className="w-full text-sm">
+                        <thead className="bg-gray-100 border-b border-gray-200 sticky top-0 z-10">
+                            <tr>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase w-12">
+                                    Status
+                                </th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase w-12">
+                                    #
+                                </th>
+                                {headers.map((header, idx) => {
+                                    const mappedField = mapping[idx.toString()] || 'ignore';
+                                    const fieldOption = FIELD_OPTIONS.find(f => f.value === mappedField);
 
                                     return (
-                                        <tr
+                                        <th
                                             key={idx}
-                                            className={cn(
-                                                'hover:bg-gray-50 transition-colors',
-                                                status === 'error' && 'bg-red-50/50',
-                                                status === 'warning' && 'bg-yellow-50/50',
-                                                status === 'valid' && 'bg-green-50/30'
-                                            )}
+                                            className="px-3 py-2 text-left border-l border-gray-200 min-w-[180px]"
                                         >
-                                            <td className="px-3 py-2">
-                                                <div className="group relative">
-                                                    <StatusIcon status={status} />
-                                                    {result?.errors.length > 0 && (
-                                                        <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-20 w-64 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg">
-                                                            {result.errors.map((err: any, errIdx: number) => (
-                                                                <div key={errIdx} className="mb-1 last:mb-0">
-                                                                    <span className={cn(
-                                                                        'font-semibold',
-                                                                        err.severity === 'error' ? 'text-red-300' : 'text-yellow-300'
-                                                                    )}>
-                                                                        {err.severity === 'error' ? '❌' : '⚠️'}
-                                                                    </span> {err.message}
-                                                                </div>
-                                                            ))}
-                                                        </div>
+                                            <div className="flex flex-col gap-1.5">
+                                                {/* Dropdown for mapping */}
+                                                <select
+                                                    value={mappedField}
+                                                    onChange={(e) => handleMappingChange(idx, e.target.value)}
+                                                    className={cn(
+                                                        'text-xs font-semibold px-2 py-1 rounded border focus:outline-none focus:ring-2 focus:ring-emidias-primary/20',
+                                                        fieldOption?.required
+                                                            ? 'bg-pink-50 border-emidias-accent text-emidias-accent'
+                                                            : 'bg-white border-gray-300 text-gray-700'
                                                     )}
-                                                </div>
-                                            </td>
-                                            <td className="px-3 py-2 text-gray-400 font-mono text-xs">
-                                                {idx + 1}
-                                            </td>
-                                            {row.map((cell: any, cellIdx: number) => (
-                                                <td
-                                                    key={cellIdx}
-                                                    className="px-3 py-2 text-gray-700 border-l border-gray-100"
                                                 >
-                                                    {cell || <span className="text-gray-300 italic">vazio</span>}
-                                                </td>
-                                            ))}
-                                        </tr>
+                                                    {FIELD_OPTIONS.map(opt => (
+                                                        <option key={opt.value} value={opt.value}>
+                                                            {opt.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {/* Excel column name */}
+                                                <span className="text-xs text-gray-400 truncate">
+                                                    ↓ {header || '(vazio)'}
+                                                </span>
+                                            </div>
+                                        </th>
                                     );
                                 })}
-                            </tbody>
-                        </table>
-                    </div>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-100">
+                            {filteredRows.map(({ row, idx }) => {
+                                const result = validationResults[idx];
+                                const status = result?.status || 'valid';
 
-                    {filteredRows.length > 6 && (
-                        <div className="bg-gray-50 px-4 py-2 text-xs text-gray-500 text-center border-t border-gray-200">
-                            Mostrando 6 de {filteredRows.length} linhas
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Right: Mapping Panel (40%) */}
-            <div className="lg:col-span-2 space-y-4">
-                <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-4 sticky top-4">
-                    <h3 className="font-bold text-gray-900">Mapeamento de Colunas</h3>
-
-                    {isValidating && (
-                        <div className="flex items-center gap-2 text-sm text-emidias-primary">
-                            <Loader2 size={14} className="animate-spin" />
-                            Validando dados...
-                        </div>
-                    )}
-
-                    <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar">
-                        {headers.map((header, idx) => {
-                            const selectedValue = mapping[idx.toString()] || 'ignore';
-                            const selectedOption = FIELD_OPTIONS.find(opt => opt.value === selectedValue);
-
-                            return (
-                                <div key={idx} className="space-y-1">
-                                    <label className="text-xs font-medium text-gray-600">
-                                        Coluna {String.fromCharCode(65 + idx)}: <span className="text-gray-900">{header}</span>
-                                    </label>
-                                    <select
-                                        value={selectedValue}
-                                        onChange={(e) => handleMappingChange(idx, e.target.value)}
+                                return (
+                                    <tr
+                                        key={idx}
                                         className={cn(
-                                            'w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emidias-primary/20',
-                                            selectedOption?.required ? 'border-emidias-accent bg-pink-50' : 'border-gray-200'
+                                            'hover:bg-gray-50 transition-colors',
+                                            status === 'error' && 'bg-red-50/50',
+                                            status === 'warning' && 'bg-yellow-50/50',
+                                            status === 'valid' && 'bg-green-50/30'
                                         )}
                                     >
-                                        {FIELD_OPTIONS.map(opt => (
-                                            <option key={opt.value} value={opt.value}>
-                                                {opt.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                        <td className="px-3 py-2">
+                                            <div className="group relative">
+                                                <StatusIcon status={status} />
+                                                {result?.errors.length > 0 && (
+                                                    <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-20 w-64 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg">
+                                                        {result.errors.map((err: any, errIdx: number) => (
+                                                            <div key={errIdx} className="mb-1 last:mb-0">
+                                                                <span className={cn(
+                                                                    'font-semibold',
+                                                                    err.severity === 'error' ? 'text-red-300' : 'text-yellow-300'
+                                                                )}>
+                                                                    {err.severity === 'error' ? '❌' : '⚠️'}
+                                                                </span> {err.message}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-2 text-gray-400 font-mono text-xs">
+                                            {idx + 1}
+                                        </td>
+                                        {row.map((cell: any, cellIdx: number) => {
+                                            const isEditing = editingCell?.row === idx && editingCell?.col === cellIdx;
 
-                    {/* Validation Summary */}
-                    <div className="pt-4 border-t border-gray-200 space-y-3">
-                        <h4 className="font-semibold text-sm text-gray-900">Resumo da Validação</h4>
-
-                        {!requiredFieldsMapped && (
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-900">
-                                <strong>⚠️ Campos obrigatórios faltando</strong>
-                                <p className="text-xs mt-1">
-                                    Mapeie: Código OOH, Endereço, Latitude e Longitude
-                                </p>
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div className="bg-gray-50 rounded-lg p-2">
-                                <div className="text-gray-500 text-xs">Total</div>
-                                <div className="font-bold text-gray-900">{summary.total}</div>
-                            </div>
-                            <div className="bg-green-50 rounded-lg p-2">
-                                <div className="text-green-600 text-xs">Válidos</div>
-                                <div className="font-bold text-green-700">{summary.valid}</div>
-                            </div>
-                            <div className="bg-yellow-50 rounded-lg p-2">
-                                <div className="text-yellow-600 text-xs">Avisos</div>
-                                <div className="font-bold text-yellow-700">{summary.warnings}</div>
-                            </div>
-                            <div className="bg-red-50 rounded-lg p-2">
-                                <div className="text-red-600 text-xs">Erros</div>
-                                <div className="font-bold text-red-700">{summary.errors}</div>
-                            </div>
-                        </div>
-
-                        {summary.errors === 0 && requiredFieldsMapped && (
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-900">
-                                <strong>✅ Pronto para continuar!</strong>
-                                <p className="text-xs mt-1">
-                                    Todos os pontos estão válidos ou com avisos apenas.
-                                </p>
-                            </div>
-                        )}
-                    </div>
+                                            return (
+                                                <td
+                                                    key={cellIdx}
+                                                    className="px-3 py-2 text-gray-700 border-l border-gray-100 cursor-pointer hover:bg-blue-50/50"
+                                                    onDoubleClick={() => handleCellDoubleClick(idx, cellIdx)}
+                                                >
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="text"
+                                                            value={editValue}
+                                                            onChange={(e) => setEditValue(e.target.value)}
+                                                            onBlur={handleCellSave}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') handleCellSave();
+                                                                if (e.key === 'Escape') handleCellCancel();
+                                                            }}
+                                                            className="w-full px-2 py-1 border border-emidias-primary rounded focus:outline-none"
+                                                            autoFocus
+                                                        />
+                                                    ) : (
+                                                        cell || <span className="text-gray-300 italic">vazio</span>
+                                                    )}
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
                 </div>
+
+                {filteredRows.length > 10 && (
+                    <div className="bg-gray-50 px-4 py-2 text-xs text-gray-500 text-center border-t border-gray-200">
+                        Mostrando {Math.min(filteredRows.length, 10)} de {filteredRows.length} linhas
+                    </div>
+                )}
             </div>
+
+            {/* Hint */}
+            <p className="text-xs text-gray-500 text-center">
+                💡 Dica: Clique duplo em uma célula para editar
+            </p>
         </div>
     );
 }

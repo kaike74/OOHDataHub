@@ -73,11 +73,12 @@ interface BulkImportState {
     // Actions
     startImport: (idExibidora: number, exibidoraNome: string) => void;
     setModalOpen: (open: boolean) => void;
-    setExcelData: (data: any[][], headers: string[]) => void;
+    setExcelData: (columnHeaders: string[], data: any[][]) => void;
     setColumnMapping: (mapping: Record<string, string>) => void;
     setCurrentStep: (step: 1 | 2 | 3 | 4 | 5) => void;
     setPontos: (pontos: BulkPoint[]) => void;
     updatePoint: (index: number, data: Partial<BulkPoint>) => void;
+    updateCellValue: (rowIndex: number, colIndex: number, value: any) => void;
     navigateToPoint: (index: number) => void;
     toggleSkipImport: (index: number) => void;
     addPointImage: (pointIndex: number, file: File, preview: string) => void;
@@ -133,7 +134,7 @@ export const useBulkImportStore = create<BulkImportState>()(
                 // If closing modal, don't clear session (for "continue where you left off")
             },
 
-            setExcelData: (data, headers) => {
+            setExcelData: (columnHeaders, data) => {
                 const { session } = get();
                 if (!session) return;
 
@@ -141,7 +142,25 @@ export const useBulkImportStore = create<BulkImportState>()(
                     session: {
                         ...session,
                         excelData: data,
-                        columnHeaders: headers,
+                        columnHeaders: columnHeaders,
+                    },
+                });
+            },
+
+            updateCellValue: (rowIndex, colIndex, value) => {
+                const { session } = get();
+                if (!session) return;
+
+                const updatedData = [...session.excelData];
+                if (!updatedData[rowIndex]) return;
+
+                updatedData[rowIndex] = [...updatedData[rowIndex]];
+                updatedData[rowIndex][colIndex] = value;
+
+                set({
+                    session: {
+                        ...session,
+                        excelData: updatedData,
                     },
                 });
             },
