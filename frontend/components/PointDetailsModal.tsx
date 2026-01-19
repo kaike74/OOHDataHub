@@ -844,12 +844,16 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                         ) : (
                                             <p className="text-[9px] text-gray-400 italic">Sem contatos diretos</p>
                                         )}
-                                        {exhibitorContacts.length > 1 && (
+                                        )}
+                                    </div>
+
+                                    {/* Footer Actions for Exhibitor Card */}
+                                    {canEdit && (
+                                        <div className="pt-2 mt-auto border-t border-gray-50">
                                             <button
                                                 onClick={() => {
                                                     const exhibitorData = exibidoras.find(e => e.id === selectedPonto.id_exibidora);
                                                     if (exhibitorData) {
-                                                        // Enrich data to match ExhibitorDetailsModal expectations
                                                         const pontosExibidora = pontos.filter((p) => p.id_exibidora === exhibitorData.id);
                                                         const cidades = [...new Set(pontosExibidora.map((p) => p.cidade).filter(Boolean))];
                                                         const ufs = [...new Set(pontosExibidora.map((p) => p.uf).filter(Boolean))];
@@ -863,246 +867,279 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                                             pontos: pontosExibidora
                                                         };
 
-                                                        setSelectedExhibitorForModal(enrichedExhibitor);
-                                                        setIsExhibitorModalOpen(true);
+                                                        setEditingExibidora(enrichedExhibitor); // Set for editing
+                                                        setExibidoraFormMode('contacts'); // Only contacts
+                                                        setIsExhibitorModalOpen(false); // Make sure details is closed or handled? Wait user wants details modal -> manage.
+                                                        // Actually from PointDetails we usually open ExhibitorDetailsModal OR ExibidoraModal?
+                                                        // User said "Button managed in contacts card of exhibitor details modal" AND "Button manage in exhibitor card of point details modal".
+                                                        // So this button opens ExibidoraModal directly in contacts mode?
+                                                        // Yes, user said "same as managing contacts in exhibitor details".
+                                                        // So it should open the Form Modal.
+                                                        useStore.getState().setExibidoraModalOpen(true);
                                                     }
                                                 }}
-                                                className="text-[9px] font-bold text-emidias-primary hover:underline px-1 w-full text-left"
+                                                className="w-full py-1.5 text-[10px] font-bold text-emidias-primary bg-emidias-primary/5 hover:bg-emidias-primary/10 rounded-lg transition-colors flex items-center justify-center gap-1.5"
                                             >
-                                                Ver +{exhibitorContacts.length - 1} contatos
+                                                <Edit2 size={10} />
+                                                Gerenciar Contatos
                                             </button>
-                                        )}
-                                    </div>
-
-                                    {/* Regions Section */}
-
-                                </div>
-
-
-                            </div>
-
-                            {/* Card 4: Propostas */}
-                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-full">
-                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] flex items-center gap-2 mb-3 truncate leading-none">
-                                    <ShoppingCart size={14} className="text-blue-500" />
-                                    Propostas
-                                    {pointProposals.length > 0 && <span className="bg-blue-600 text-white px-1.5 py-0.5 rounded-full text-[9px] font-black">{pointProposals.length}</span>}
-                                </h3>
-
-                                <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2">
-                                    {pointProposals.length > 0 ? (
-                                        pointProposals.map((proposta) => (
-                                            <div key={proposta.id} className="group bg-gray-50/50 hover:bg-gray-50 border border-gray-100 rounded-xl p-2 transition-all duration-200">
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-1.5 mb-0.5">
-                                                            <div className={cn(
-                                                                "w-1 h-1 rounded-full",
-                                                                proposta.status === 'aprovado' ? "bg-green-500" :
-                                                                    proposta.status === 'em validação' ? "bg-yellow-500" : "bg-gray-300"
-                                                            )} />
-                                                            <h4 className="font-black text-[9px] text-gray-900 truncate uppercase tracking-tight" title={proposta.nome}>{proposta.nome}</h4>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-[8px] text-gray-500 font-medium">
-                                                            {(() => {
-                                                                const item = proposta.itens?.find(i => String(i.id_ooh) === String(selectedPonto.id));
-                                                                if (item?.periodo_inicio) {
-                                                                    return <span className="truncate italic">Até {new Date(item.periodo_fim!).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>;
-                                                                }
-                                                                return <span className="italic">Ver Detalhes</span>;
-                                                            })()}
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleClose();
-                                                            window.location.href = `/propostas?id=${proposta.id}`;
-                                                        }}
-                                                        className="h-6 w-6 flex items-center justify-center text-gray-300 hover:text-emidias-primary transition-all shrink-0"
-                                                        title="Acessar Proposta"
-                                                    >
-                                                        <ExternalLink size={10} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="h-full border border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-1 opacity-50">
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase">Disponível</p>
                                         </div>
                                     )}
-                                </div>
+                                    if (exhibitorData) {
+                                                        // Enrich data to match ExhibitorDetailsModal expectations
+                                                        const pontosExibidora = pontos.filter((p) => p.id_exibidora === exhibitorData.id);
+                                                        const cidades = [...new Set(pontosExibidora.map((p) => p.cidade).filter(Boolean))];
+                                                        const ufs = [...new Set(pontosExibidora.map((p) => p.uf).filter(Boolean))];
+
+                                    const enrichedExhibitor = {
+                                        ...exhibitorData,
+                                        totalPontos: pontosExibidora.length,
+                                    cidades: cidades,
+                                    ufs: ufs,
+                                    contatos: exhibitorContacts,
+                                    pontos: pontosExibidora
+                                                        };
+
+                                    setSelectedExhibitorForModal(enrichedExhibitor);
+                                    setIsExhibitorModalOpen(true);
+                                                    }
+                                                }}
+                                    className="text-[9px] font-bold text-emidias-primary hover:underline px-1 w-full text-left"
+                                            >
+                                    Ver +{exhibitorContacts.length - 1} contatos
+                                </button>
+                                        )}
                             </div>
+
+                            {/* Regions Section */}
+
                         </div>
+
+
                     </div>
 
-                    {/* Footer Actions - Context Aware */}
-                    <div className="p-3 border-t border-gray-100 bg-white z-20 shrink-0 flex items-center justify-between">
+                    {/* Card 4: Propostas */}
+                    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-full">
+                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] flex items-center gap-2 mb-3 truncate leading-none">
+                            <ShoppingCart size={14} className="text-blue-500" />
+                            Propostas
+                            {pointProposals.length > 0 && <span className="bg-blue-600 text-white px-1.5 py-0.5 rounded-full text-[9px] font-black">{pointProposals.length}</span>}
+                        </h3>
 
-                        {/* Left Side: Navigation + Admin Actions */}
-                        <div className="flex items-center gap-2">
-                            {canNavigate && (
-                                <div className="flex items-center bg-gray-50 rounded-lg p-1">
-                                    <button onClick={handlePrevious} disabled={!hasPrevious} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md disabled:opacity-30 transition-all text-gray-600" title="Anterior">
-                                        <ChevronLeft size={16} />
-                                    </button>
-                                    <span className="text-[10px] font-medium text-gray-500 px-2">
-                                        {isInProposalContext
-                                            ? `${currentIndex + 1} / ${cartItems.length}`
-                                            : `${pontos.findIndex(p => p.id === selectedPonto?.id) + 1} / ${pontos.length}`
-                                        }
-                                    </span>
-                                    <button onClick={handleNext} disabled={!hasNext} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md disabled:opacity-30 transition-all text-gray-600" title="Próximo">
-                                        <ChevronRight size={16} />
-                                    </button>
-                                </div>
-                            )}
-
-
-                        </div>
-
-                        {/* Right Side: Context-Aware Actions */}
-                        <div className="flex items-center gap-3">
-                            {/* Admin & Share Actions (Moved from Left) */}
-                            {!isInProposalContext && (
-                                <div className="flex items-center gap-2 mr-2">
-                                    {canEdit && (
-                                        <button onClick={handleHistory} className="p-2 text-gray-400 hover:text-purple-600 bg-gray-50 hover:bg-purple-50 rounded-lg transition-all border border-gray-100" title="Histórico">
-                                            <History size={16} />
-                                        </button>
-                                    )}
-
-                                    <button onClick={handleSharePoint} className="p-2 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded-lg transition-all border border-gray-100" title="Compartilhar">
-                                        <Share2 size={16} />
-                                    </button>
-
-                                    {canEdit && (
-                                        <>
-                                            <button onClick={handleEdit} className="p-2 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded-lg transition-all border border-gray-100" title="Editar">
-                                                <Edit size={16} />
+                        <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2">
+                            {pointProposals.length > 0 ? (
+                                pointProposals.map((proposta) => (
+                                    <div key={proposta.id} className="group bg-gray-50/50 hover:bg-gray-50 border border-gray-100 rounded-xl p-2 transition-all duration-200">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-1.5 mb-0.5">
+                                                    <div className={cn(
+                                                        "w-1 h-1 rounded-full",
+                                                        proposta.status === 'aprovado' ? "bg-green-500" :
+                                                            proposta.status === 'em validação' ? "bg-yellow-500" : "bg-gray-300"
+                                                    )} />
+                                                    <h4 className="font-black text-[9px] text-gray-900 truncate uppercase tracking-tight" title={proposta.nome}>{proposta.nome}</h4>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-[8px] text-gray-500 font-medium">
+                                                    {(() => {
+                                                        const item = proposta.itens?.find(i => String(i.id_ooh) === String(selectedPonto.id));
+                                                        if (item?.periodo_inicio) {
+                                                            return <span className="truncate italic">Até {new Date(item.periodo_fim!).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>;
+                                                        }
+                                                        return <span className="italic">Ver Detalhes</span>;
+                                                    })()}
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleClose();
+                                                    window.location.href = `/propostas?id=${proposta.id}`;
+                                                }}
+                                                className="h-6 w-6 flex items-center justify-center text-gray-300 hover:text-emidias-primary transition-all shrink-0"
+                                                title="Acessar Proposta"
+                                            >
+                                                <ExternalLink size={10} />
                                             </button>
-                                            {!isDeleting && (
-                                                <button onClick={handleDelete} disabled={isDeleting} className="p-2 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded-lg transition-all border border-gray-100" title="Excluir">
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            )}
-                                        </>
-                                    )}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="h-full border border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-1 opacity-50">
+                                    <p className="text-[9px] font-bold text-gray-400 uppercase">Disponível</p>
                                 </div>
-                            )}
-
-                            {/* Observações/Notas Button */}
-                            {selectedPonto.observacoes && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9 px-4 text-xs font-bold border-yellow-200 text-yellow-700 bg-yellow-50/50 hover:bg-yellow-50"
-                                    leftIcon={<FileText size={14} />}
-                                    onClick={() => alert(`Observações do Ponto:\n\n${selectedPonto.observacoes}`)}
-                                >
-                                    Ver Notas
-                                </Button>
-                            )}
-
-                            {/* Ver na Lista - ONLY in Proposals Context */}
-                            {isInProposalContext && isInCart && (
-                                <Button onClick={handleViewInProposal} variant="outline" size="sm" className="h-9 px-3 text-xs border-gray-200 text-gray-600" leftIcon={<ExternalLink size={14} />}>
-                                    Ver na Lista
-                                </Button>
-                            )}
-
-                            {/* Add/Remove Cart - ONLY in Proposals Context */}
-                            {isInProposalContext && !readOnly && (
-                                <Button
-                                    onClick={handleAddToCart}
-                                    disabled={isAddingToCart}
-                                    title={isInCart ? "Remover do Plano" : "Adicionar ao Plano"}
-                                    className={cn("h-9 w-9 p-0 rounded-full shadow-md transition-all active:scale-95 flex items-center justify-center",
-                                        isInCart ? "bg-red-500 hover:bg-red-600 text-white" : "bg-green-500 hover:bg-green-600 text-white"
-                                    )}
-                                >
-                                    {isAddingToCart ? <Loader2 size={16} className="animate-spin" /> : isInCart ? <Trash2 size={16} /> : <ShoppingCart size={16} />}
-                                </Button>
                             )}
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* Footer Actions - Context Aware */}
+            <div className="p-3 border-t border-gray-100 bg-white z-20 shrink-0 flex items-center justify-between">
+
+                {/* Left Side: Navigation + Admin Actions */}
+                <div className="flex items-center gap-2">
+                    {canNavigate && (
+                        <div className="flex items-center bg-gray-50 rounded-lg p-1">
+                            <button onClick={handlePrevious} disabled={!hasPrevious} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md disabled:opacity-30 transition-all text-gray-600" title="Anterior">
+                                <ChevronLeft size={16} />
+                            </button>
+                            <span className="text-[10px] font-medium text-gray-500 px-2">
+                                {isInProposalContext
+                                    ? `${currentIndex + 1} / ${cartItems.length}`
+                                    : `${pontos.findIndex(p => p.id === selectedPonto?.id) + 1} / ${pontos.length}`
+                                }
+                            </span>
+                            <button onClick={handleNext} disabled={!hasNext} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md disabled:opacity-30 transition-all text-gray-600" title="Próximo">
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    )}
+
 
                 </div>
+
+                {/* Right Side: Context-Aware Actions */}
+                <div className="flex items-center gap-3">
+                    {/* Admin & Share Actions (Moved from Left) */}
+                    {!isInProposalContext && (
+                        <div className="flex items-center gap-2 mr-2">
+                            {canEdit && (
+                                <button onClick={handleHistory} className="p-2 text-gray-400 hover:text-purple-600 bg-gray-50 hover:bg-purple-50 rounded-lg transition-all border border-gray-100" title="Histórico">
+                                    <History size={16} />
+                                </button>
+                            )}
+
+                            <button onClick={handleSharePoint} className="p-2 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded-lg transition-all border border-gray-100" title="Compartilhar">
+                                <Share2 size={16} />
+                            </button>
+
+                            {canEdit && (
+                                <>
+                                    <button onClick={handleEdit} className="p-2 text-gray-400 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 rounded-lg transition-all border border-gray-100" title="Editar">
+                                        <Edit size={16} />
+                                    </button>
+                                    {!isDeleting && (
+                                        <button onClick={handleDelete} disabled={isDeleting} className="p-2 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded-lg transition-all border border-gray-100" title="Excluir">
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Observações/Notas Button */}
+                    {selectedPonto.observacoes && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 px-4 text-xs font-bold border-yellow-200 text-yellow-700 bg-yellow-50/50 hover:bg-yellow-50"
+                            leftIcon={<FileText size={14} />}
+                            onClick={() => alert(`Observações do Ponto:\n\n${selectedPonto.observacoes}`)}
+                        >
+                            Ver Notas
+                        </Button>
+                    )}
+
+                    {/* Ver na Lista - ONLY in Proposals Context */}
+                    {isInProposalContext && isInCart && (
+                        <Button onClick={handleViewInProposal} variant="outline" size="sm" className="h-9 px-3 text-xs border-gray-200 text-gray-600" leftIcon={<ExternalLink size={14} />}>
+                            Ver na Lista
+                        </Button>
+                    )}
+
+                    {/* Add/Remove Cart - ONLY in Proposals Context */}
+                    {isInProposalContext && !readOnly && (
+                        <Button
+                            onClick={handleAddToCart}
+                            disabled={isAddingToCart}
+                            title={isInCart ? "Remover do Plano" : "Adicionar ao Plano"}
+                            className={cn("h-9 w-9 p-0 rounded-full shadow-md transition-all active:scale-95 flex items-center justify-center",
+                                isInCart ? "bg-red-500 hover:bg-red-600 text-white" : "bg-green-500 hover:bg-green-600 text-white"
+                            )}
+                        >
+                            {isAddingToCart ? <Loader2 size={16} className="animate-spin" /> : isInCart ? <Trash2 size={16} /> : <ShoppingCart size={16} />}
+                        </Button>
+                    )}
+                </div>
+            </div>
+
+        </div>
             </div >
 
-            {/* --- LIGHTBOX OVERLAY --- */}
-            {
-                isLightboxOpen && (
-                    <div
-                        className="fixed inset-0 z-[2100] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200"
-                        onClick={() => setIsLightboxOpen(false)}
-                    >
-                        {/* Close Lightbox */}
-                        <button
-                            onClick={() => setIsLightboxOpen(false)}
-                            className="absolute top-6 right-6 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors z-10"
-                        >
-                            <X size={32} />
+        {/* --- LIGHTBOX OVERLAY --- */ }
+    {
+        isLightboxOpen && (
+            <div
+                className="fixed inset-0 z-[2100] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200"
+                onClick={() => setIsLightboxOpen(false)}
+            >
+                {/* Close Lightbox */}
+                <button
+                    onClick={() => setIsLightboxOpen(false)}
+                    className="absolute top-6 right-6 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors z-10"
+                >
+                    <X size={32} />
+                </button>
+
+                {/* Main Image */}
+                <div
+                    className="w-full h-full max-w-7xl max-h-[90vh] p-4 flex items-center justify-center relative"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <SafeImage
+                        src={api.getImageUrl(imagens[currentImageIndex])}
+                        alt="Visualização Fullscreen"
+                        className="max-w-full max-h-full object-contain shadow-2xl"
+                    />
+                </div>
+
+                {/* Lightbox Navigation */}
+                {imagens.length > 1 && (
+                    <>
+                        <button onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev - 1 + imagens.length) % imagens.length); }} className="absolute left-6 top-1/2 -translate-y-1/2 p-4 text-white/50 hover:text-white transition-colors">
+                            <ChevronLeft size={48} />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev + 1) % imagens.length); }} className="absolute right-6 top-1/2 -translate-y-1/2 p-4 text-white/50 hover:text-white transition-colors">
+                            <ChevronRight size={48} />
                         </button>
 
-                        {/* Main Image */}
-                        <div
-                            className="w-full h-full max-w-7xl max-h-[90vh] p-4 flex items-center justify-center relative"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <SafeImage
-                                src={api.getImageUrl(imagens[currentImageIndex])}
-                                alt="Visualização Fullscreen"
-                                className="max-w-full max-h-full object-contain shadow-2xl"
-                            />
+                        {/* Counter */}
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-1 bg-black/50 rounded-full text-white/90 text-sm font-medium border border-white/10">
+                            {currentImageIndex + 1} / {imagens.length}
                         </div>
+                    </>
+                )}
+            </div>
+        )
+    }
 
-                        {/* Lightbox Navigation */}
-                        {imagens.length > 1 && (
-                            <>
-                                <button onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev - 1 + imagens.length) % imagens.length); }} className="absolute left-6 top-1/2 -translate-y-1/2 p-4 text-white/50 hover:text-white transition-colors">
-                                    <ChevronLeft size={48} />
-                                </button>
-                                <button onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev + 1) % imagens.length); }} className="absolute right-6 top-1/2 -translate-y-1/2 p-4 text-white/50 hover:text-white transition-colors">
-                                    <ChevronRight size={48} />
-                                </button>
+    <HistoryModal
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        type="points"
+        id={selectedPonto.id}
+    />
 
-                                {/* Counter */}
-                                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-1 bg-black/50 rounded-full text-white/90 text-sm font-medium border border-white/10">
-                                    {currentImageIndex + 1} / {imagens.length}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )
-            }
+    {/* Hidden File Input for Image Upload */ }
+    <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleImageUpload}
+    />
 
-            <HistoryModal
-                isOpen={isHistoryOpen}
-                onClose={() => setIsHistoryOpen(false)}
-                type="points"
-                id={selectedPonto.id}
+    {/* Create Proposal Modal */ }
+    {
+        isCreateProposalOpen && (
+            <CreateProposalModal
+                isOpen={isCreateProposalOpen}
+                onClose={() => setIsCreateProposalOpen(false)}
             />
-
-            {/* Hidden File Input for Image Upload */}
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageUpload}
-            />
-
-            {/* Create Proposal Modal */}
-            {
-                isCreateProposalOpen && (
-                    <CreateProposalModal
-                        isOpen={isCreateProposalOpen}
-                        onClose={() => setIsCreateProposalOpen(false)}
-                    />
-                )
-            }
+        )
+    }
 
             <ExhibitorDetailsModal
                 isOpen={isExhibitorModalOpen}

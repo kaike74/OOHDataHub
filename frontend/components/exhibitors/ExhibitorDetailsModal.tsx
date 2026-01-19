@@ -32,6 +32,7 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
     const [localContacts, setLocalContacts] = useState<any[]>([]);
     const setExibidoraModalOpen = useStore((state) => state.setExibidoraModalOpen);
     const setEditingExibidora = useStore((state) => state.setEditingExibidora);
+    const setExibidoraFormMode = useStore((state) => state.setExibidoraFormMode);
     const router = useRouter();
 
     useEffect(() => {
@@ -259,6 +260,7 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                                             leftIcon={<Edit2 size={10} />}
                                             onClick={() => {
                                                 setEditingExibidora(exibidoras);
+                                                setExibidoraFormMode('contacts');
                                                 setExibidoraModalOpen(true);
                                             }}
                                         >
