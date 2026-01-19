@@ -100,6 +100,7 @@ export default function BulkImportModal() {
             }
             maxWidth="6xl"
             hideCloseButton={true}
+            zIndex={3000}
             footer={
                 <div className="flex items-center justify-between w-full">
                     {/* Step Indicator */}
