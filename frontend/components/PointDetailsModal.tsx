@@ -760,7 +760,21 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                             onClick={() => {
                                                 const exhibitorData = exibidoras.find(e => e.id === selectedPonto.id_exibidora);
                                                 if (exhibitorData) {
-                                                    setSelectedExhibitorForModal(exhibitorData);
+                                                    // Enrich data to match ExhibitorDetailsModal expectations
+                                                    const pontosExibidora = pontos.filter((p) => p.id_exibidora === exhibitorData.id);
+                                                    const cidades = [...new Set(pontosExibidora.map((p) => p.cidade).filter(Boolean))];
+                                                    const ufs = [...new Set(pontosExibidora.map((p) => p.uf).filter(Boolean))];
+
+                                                    const enrichedExhibitor = {
+                                                        ...exhibitorData,
+                                                        totalPontos: pontosExibidora.length,
+                                                        cidades: cidades,
+                                                        ufs: ufs,
+                                                        contatos: exhibitorContacts,
+                                                        pontos: pontosExibidora
+                                                    };
+
+                                                    setSelectedExhibitorForModal(enrichedExhibitor);
                                                     setIsExhibitorModalOpen(true);
                                                 }
                                             }}
@@ -779,7 +793,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                                 <div key={idx} className="bg-gray-50/50 rounded-xl p-2 border border-gray-100/50 relative group/contact">
                                                     <div className="flex justify-between items-center mb-0.5">
                                                         <div className="flex items-center gap-1.5 min-w-0">
-                                                            <span className="text-[10px] font-bold text-gray-700 truncate">{contact.nome || 'Contato'}</span>
+                                                            <span className="text-xs font-bold text-gray-700 truncate">{contact.nome || 'Contato'}</span>
                                                             {contact.observacoes && (
                                                                 <TooltipProvider>
                                                                     <Tooltip>
@@ -793,18 +807,12 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                                                 </TooltipProvider>
                                                             )}
                                                         </div>
-                                                        <div className="flex items-center gap-1 opacity-0 group-hover/contact:opacity-100 transition-opacity absolute right-2 top-2">
-                                                            {canEdit && (
-                                                                <button className="text-gray-400 hover:text-emidias-primary" title="Editar Contato">
-                                                                    <Edit2 size={10} />
-                                                                </button>
-                                                            )}
-                                                        </div>
+
                                                     </div>
                                                     <div className="flex justify-between items-end">
                                                         <div className="min-w-0">
-                                                            <span className="text-[9px] font-mono text-gray-500 block truncate">{contact.telefone}</span>
-                                                            <p className="text-[9px] text-gray-400 truncate">{contact.email}</p>
+                                                            <span className="text-[10px] font-mono text-gray-500 block truncate">{contact.telefone}</span>
+                                                            <p className="text-[10px] text-gray-400 truncate">{contact.email}</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -817,7 +825,21 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                                 onClick={() => {
                                                     const exhibitorData = exibidoras.find(e => e.id === selectedPonto.id_exibidora);
                                                     if (exhibitorData) {
-                                                        setSelectedExhibitorForModal(exhibitorData);
+                                                        // Enrich data to match ExhibitorDetailsModal expectations
+                                                        const pontosExibidora = pontos.filter((p) => p.id_exibidora === exhibitorData.id);
+                                                        const cidades = [...new Set(pontosExibidora.map((p) => p.cidade).filter(Boolean))];
+                                                        const ufs = [...new Set(pontosExibidora.map((p) => p.uf).filter(Boolean))];
+
+                                                        const enrichedExhibitor = {
+                                                            ...exhibitorData,
+                                                            totalPontos: pontosExibidora.length,
+                                                            cidades: cidades,
+                                                            ufs: ufs,
+                                                            contatos: exhibitorContacts,
+                                                            pontos: pontosExibidora
+                                                        };
+
+                                                        setSelectedExhibitorForModal(enrichedExhibitor);
                                                         setIsExhibitorModalOpen(true);
                                                     }
                                                 }}
@@ -848,19 +870,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                     </div>
                                 </div>
 
-                                <div className="mt-2 shrink-0 flex items-center justify-end">
-                                    <button
-                                        onClick={() => {
-                                            // Add contact logic
-                                            toast.info("Funcionalidade de cadastrar contato em breve");
-                                        }}
-                                        className="py-1 px-3 bg-emidias-primary hover:bg-emidias-primary/90 text-white rounded-lg text-[9px] font-bold transition-all shadow-sm flex items-center gap-1.5"
-                                        title="Cadastrar Contato"
-                                    >
-                                        <Plus size={10} />
-                                        Cadastrar Contato
-                                    </button>
-                                </div>
+
                             </div>
 
                             {/* Card 4: Propostas */}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, MapPin, Building2, Phone, Mail, MessageSquare, ExternalLink, Users, Edit2, TrendingUp } from 'lucide-react';
+import { X, MapPin, Building2, Phone, Mail, MessageSquare, ExternalLink, Users, Edit2, TrendingUp, Edit } from 'lucide-react';
+import { useStore } from '@/lib/store';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api';
@@ -26,15 +27,44 @@ interface ExhibitorDetailsModalProps {
 export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, canEdit = false }: ExhibitorDetailsModalProps) {
     const [proposals, setProposals] = useState<ExhibitorProposalStats[]>([]);
     const [isLoadingProposals, setIsLoadingProposals] = useState(false);
+    const [localContacts, setLocalContacts] = useState<any[]>([]);
+    const setExibidoraModalOpen = useStore((state) => state.setExibidoraModalOpen);
+    const setEditingExibidora = useStore((state) => state.setEditingExibidora);
     const router = useRouter();
 
     useEffect(() => {
         if (isOpen && exibidoras?.id) {
             loadProposals(exibidoras.id);
+
+            // If contacts are provided in prop, use them. Otherwise fetch.
+            if (exibidoras.contatos && Array.isArray(exibidoras.contatos) && exibidoras.contatos.length > 0) {
+                setLocalContacts(exibidoras.contatos);
+            } else if (exibidoras.contatos && Array.isArray(exibidoras.contatos) && exibidoras.contatos.length === 0) {
+                // Provided but empty (could be really empty, or just initialized empty)
+                // We check if we should fetch. If the parent explicitly passed empty, maybe we shouldn't?
+                // But for safety against "NA" issues, let's fetch if empty array. 
+                // Wait, ExibidorasView passes empty array if no contacts. We don't want to double fetch.
+                // But PointDetailsModal passes 'exhibitorContacts' which might be empty [] because of context.
+                // It is safer to try fetching if empty.
+                loadContacts(exibidoras.id);
+            } else {
+                // Not provided at all
+                loadContacts(exibidoras.id);
+            }
         } else {
             setProposals([]);
+            setLocalContacts([]);
         }
     }, [isOpen, exibidoras]);
+
+    const loadContacts = async (id: number) => {
+        try {
+            const data = await api.getContatos(id);
+            setLocalContacts(data || []);
+        } catch (error) {
+            console.error("Failed to load contacts", error);
+        }
+    };
 
     const loadProposals = async (id: number) => {
         setIsLoadingProposals(true);
@@ -171,6 +201,18 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                         >
                             <X size={18} />
                         </button>
+                        {canEdit && (
+                            <button
+                                onClick={() => {
+                                    setEditingExibidora(exibidoras);
+                                    setExibidoraModalOpen(true);
+                                }}
+                                className="h-8 w-8 ml-2 rounded-xl bg-gray-50 hover:bg-emidias-primary/10 hover:text-emidias-primary text-gray-500 flex items-center justify-center transition-all border border-gray-200"
+                                title="Editar Exibidora"
+                            >
+                                <Edit size={16} />
+                            </button>
+                        )}
                     </div>
 
                     {/* Content Body */}
@@ -202,14 +244,23 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                                         Contatos
                                     </h3>
                                     {canEdit && (
-                                        <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" leftIcon={<Edit2 size={10} />}>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 text-[10px] px-2"
+                                            leftIcon={<Edit2 size={10} />}
+                                            onClick={() => {
+                                                setEditingExibidora(exibidoras);
+                                                setExibidoraModalOpen(true);
+                                            }}
+                                        >
                                             Gerenciar
                                         </Button>
                                     )}
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
-                                    {exibidoras.contatos && exibidoras.contatos.length > 0 ? (
-                                        exibidoras.contatos.map((contact: any, idx: number) => (
+                                    {localContacts && localContacts.length > 0 ? (
+                                        localContacts.map((contact: any, idx: number) => (
                                             <div key={idx} className="bg-gray-50/50 rounded-xl p-3 border border-gray-100/50 hover:border-emidias-primary/20 transition-colors group/contact">
                                                 <div className="flex justify-between items-start mb-1">
                                                     <div className="flex items-center gap-1.5">
