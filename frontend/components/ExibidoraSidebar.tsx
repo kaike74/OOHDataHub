@@ -135,7 +135,7 @@ export default function ExibidoraSidebar() {
                 <div className="relative h-44 bg-gray-100 flex-shrink-0 group">
                     <button
                         onClick={handleClose}
-                        className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-md opacity-0 group-hover:opacity-100"
+                        className="absolute top-3 right-3 z-20 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-md opacity-100"
                         title="Fechar"
                     >
                         <X size={18} strokeWidth={2.5} />
@@ -265,20 +265,20 @@ export default function ExibidoraSidebar() {
                 <div className="flex-shrink-0 p-3 border-t border-gray-100 bg-white/80 backdrop-blur-md">
                     <div className="flex gap-2">
                         <Button
-                            onClick={handleBulkImport}
-                            variant="outline"
-                            className="flex-1 shadow-sm hover:shadow-md transition-all rounded-xl"
-                            leftIcon={<Upload size={18} />}
-                        >
-                            Cadastro em Massa
-                        </Button>
-                        <Button
                             onClick={handleEdit}
                             variant="primary"
                             className="flex-1 shadow-md hover:shadow-lg transition-all rounded-xl"
                             leftIcon={<Pencil size={18} />}
                         >
                             Editar
+                        </Button>
+                        <Button
+                            onClick={handleBulkImport}
+                            variant="outline"
+                            className="flex-1 shadow-sm hover:shadow-md transition-all rounded-xl"
+                            leftIcon={<Upload size={18} />}
+                        >
+                            Cadastro em Massa
                         </Button>
                     </div>
                 </div>
