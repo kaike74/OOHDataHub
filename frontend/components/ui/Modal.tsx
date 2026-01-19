@@ -14,7 +14,7 @@ interface ModalProps {
     className?: string;
     zIndex?: number;
     hideCloseButton?: boolean;
-    contentPadding?: boolean;
+    noPadding?: boolean;
 }
 
 export function Modal({
@@ -28,7 +28,7 @@ export function Modal({
     className,
     zIndex = 60,
     hideCloseButton = false,
-    contentPadding = true
+    noPadding = false
 }: ModalProps) {
     const [mounted, setMounted] = useState(false);
     const [visible, setVisible] = useState(false);
@@ -106,7 +106,7 @@ export function Modal({
                 {/* Content */}
                 <div className={cn(
                     "overflow-y-auto custom-scrollbar flex-1",
-                    contentPadding ? "p-6" : "p-0"
+                    noPadding ? "p-0" : "p-6"
                 )}>
                     {children}
                 </div>
