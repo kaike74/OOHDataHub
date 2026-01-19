@@ -29,7 +29,13 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
             }
 
             const masterEmail = 'kaike@hubradios.com';
-            const masterPassword = 'Teste123';
+            const masterPassword = (env as any).INITIAL_MASTER_PASSWORD;
+
+            if (!masterPassword) {
+                return new Response(JSON.stringify({
+                    error: 'Configuração incompleta: INITIAL_MASTER_PASSWORD não definida no Cloudflare.'
+                }), { status: 500, headers });
+            }
             const passwordHash = await hashPassword(masterPassword);
 
             await env.DB.prepare(
@@ -73,7 +79,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
                     name: user.name,
                     role: user.role, // master, admin, viewer, client
                     type: user.type   // internal, external
-                });
+                }, env);
 
                 return new Response(JSON.stringify({
                     token,
@@ -168,7 +174,7 @@ export async function handleUsers(request: Request, env: Env, path: string): Pro
                 name: user.name as string,
                 role: user.role as string,
                 type: user.type as 'internal' | 'external'
-            });
+            }, env);
 
             return new Response(JSON.stringify({
                 success: true,

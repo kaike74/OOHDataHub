@@ -1,10 +1,15 @@
 import * as jose from 'jose';
 import { Env } from '../index';
 
-// JWT Secret - In production, use environment variable
-// JWT Secret - In production, use environment variable
-const JWT_SECRET = new TextEncoder().encode('your-secret-key-change-in-production');
+// JWT configuration
 const JWT_EXPIRES_IN = '7d';
+const DEV_JWT_SECRET = 'dev-fallback-key-do-not-use-in-production';
+
+// Helper to get JWT secret - uses env if available, fallback for dev
+function getJWTSecret(env?: Env): Uint8Array {
+    const secret = (env as any)?.JWT_SECRET || DEV_JWT_SECRET;
+    return new TextEncoder().encode(secret);
+}
 
 export interface User {
     id: number;
@@ -47,7 +52,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 /**
  * Generate a JWT token for a user
  */
-export async function generateToken(user: User): Promise<string> {
+export async function generateToken(user: User, env?: Env): Promise<string> {
     const payload = {
         userId: user.id,
         email: user.email,
@@ -59,22 +64,22 @@ export async function generateToken(user: User): Promise<string> {
     return await new jose.SignJWT(payload as any)
         .setProtectedHeader({ alg: 'HS256' })
         .setExpirationTime(JWT_EXPIRES_IN)
-        .sign(JWT_SECRET);
+        .sign(getJWTSecret(env));
 }
 
 /**
  * Generate a JWT token for a Client User (Wrapper for backward compat or specific logic)
  */
-export async function generateClientToken(user: User): Promise<string> {
-    return generateToken(user);
+export async function generateClientToken(user: User, env?: Env): Promise<string> {
+    return generateToken(user, env);
 }
 
 /**
  * Verify and decode a JWT token
  */
-export async function verifyToken(token: string): Promise<CustomJWTPayload | null> {
+export async function verifyToken(token: string, env?: Env): Promise<CustomJWTPayload | null> {
     try {
-        const { payload } = await jose.jwtVerify(token, JWT_SECRET);
+        const { payload } = await jose.jwtVerify(token, getJWTSecret(env));
         return payload as unknown as CustomJWTPayload;
     } catch (error) {
         return null;
@@ -387,7 +392,7 @@ export async function sendWelcomeEmail(
     const frontendUrl = (env as any).FRONTEND_URL || 'http://localhost:3000';
 
     if (!gmailClientEmail || !gmailPrivateKey) {
-        console.warn('Email not configured. User created with password:', temporaryPassword);
+        console.warn('Email not configured. User created - check admin panel for setup.');
         console.warn('Login URL:', `${frontendUrl}/login`);
         return;
     }
@@ -538,7 +543,7 @@ export async function sendWelcomeEmail(
             name: (error as any).name,
             message: (error as any).message
         });
-        console.error('[WELCOME EMAIL] User credentials (manual):', email, temporaryPassword);
+        console.error('[WELCOME EMAIL] Error sending - user created but email failed for:', email);
     }
 }
 
@@ -555,7 +560,7 @@ export async function sendClientWelcomeEmail(
     const frontendUrl = (env as any).FRONTEND_URL || 'http://localhost:3000';
 
     if (!gmailClientEmail || !gmailPrivateKey) {
-        console.warn('Email not configured. Client User created with password:', temporaryPassword);
+        console.warn('Email not configured. Client user created - check admin panel.');
         console.warn('Portal Login URL:', `${frontendUrl}/login`);
         return;
     }
@@ -688,7 +693,7 @@ export async function sendClientWelcomeEmail(
         console.log('[CLIENT EMAIL] ✅ Email sent successfully to:', email);
     } catch (error) {
         console.error('[CLIENT EMAIL] ❌ Error:', error);
-        console.error('[CLIENT EMAIL] User credentials (manual):', email, temporaryPassword);
+        console.error('[CLIENT EMAIL] Error sending - user created but email failed for:', email);
     }
 }
 
