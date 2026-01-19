@@ -3,7 +3,8 @@
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, cn } from '@/lib/utils';
-import { X, MapPin, Building2, Ruler, Users, FileText, DollarSign, ChevronLeft, ChevronRight, Eye, ShoppingCart, Copy, ExternalLink, Loader2, Tag, Navigation, Phone, Mail, MessageSquare, Trash2, Edit, History, Search, Minimize2, Check, Expand, Share2, Download, Plus, Clock, User, TrendingUp, ChevronDown, ChevronUp, Crosshair } from 'lucide-react';
+import { X, MapPin, Building2, Ruler, Users, FileText, DollarSign, ChevronLeft, ChevronRight, Eye, ShoppingCart, Copy, ExternalLink, Loader2, Tag, Navigation, Phone, Mail, MessageSquare, Trash2, Edit, History, Search, Minimize2, Check, Expand, Share2, Download, Plus, Clock, User, TrendingUp, ChevronDown, ChevronUp, Crosshair, Edit2, ArrowLeft } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -56,6 +57,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
     // Na verdade, vou remover o estado se não for mais usado.
     // Mas para evitar quebra se houver referencia oculta, vou apenas remover o bloco JSX por enquanto.
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [viewMode, setViewMode] = useState<'details' | 'exhibitor'>('details'); // New view mode state
 
     const mapRef = useRef<HTMLDivElement>(null);
     const googleMapRef = useRef<google.maps.Map | null>(null);
@@ -476,12 +478,12 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
             isOpen={isPointModalOpen}
             onClose={handleClose}
             maxWidth="6xl"
-            className="p-0 overflow-hidden"
+            className="p-0 overflow-hidden rounded-3xl" // Visually consistent rounding
             zIndex={2000}
             hideCloseButton={true}
         >
             {/* --- REDESIGNED LAYOUT --- */}
-            <div className="flex flex-row h-[600px] bg-white overflow-hidden shadow-2xl">
+            <div className="flex flex-row h-[600px] bg-white overflow-hidden shadow-2xl rounded-3xl">
 
                 {/* --- LEFT: VISUALS (40%) --- */}
                 <div className="w-[40%] h-full flex flex-col bg-black relative border-r border-gray-100/10">
@@ -497,16 +499,18 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
 
-                                {/* Glass Badges with Infinite Blur Effect */}
-                                <div className="absolute top-4 inset-x-4 flex justify-between items-start z-20">
+                                {/* Header Overlay for Info */}
+                                <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 via-black/40 to-transparent z-20 flex justify-between items-start">
                                     {/* Left: OOH Code */}
-                                    <div className="px-3 py-1.5 rounded-xl bg-black/30 backdrop-blur-md border border-white/10 shadow-lg ring-1 ring-white/5">
-                                        <span className="text-xs font-black text-white tracking-widest uppercase">{selectedPonto.codigo_ooh}</span>
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-0.5">Código</span>
+                                        <span className="text-lg font-black text-white tracking-widest uppercase leading-none shadow-black drop-shadow-md">{selectedPonto.codigo_ooh}</span>
                                     </div>
 
                                     {/* Right: Type Badge */}
-                                    <div className="px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 shadow-lg ring-1 ring-white/5">
-                                        <span className="text-[10px] font-bold text-white tracking-wide uppercase">{selectedPonto.tipo}</span>
+                                    <div className="flex flex-col items-end">
+                                        <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-0.5">Tipo</span>
+                                        <span className="text-sm font-bold text-white tracking-wide uppercase leading-none shadow-black drop-shadow-md">{selectedPonto.tipo}</span>
                                     </div>
                                 </div>
                             </>
@@ -607,12 +611,29 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                         {selectedPonto.cidade} - {selectedPonto.uf}
                                     </p>
                                     {selectedPonto.ponto_referencia && (
-                                        <span className="text-gray-300 italic truncate text-xs">• {selectedPonto.ponto_referencia}</span>
+                                        <TooltipProvider>
+                                            <Tooltip delayDuration={300}>
+                                                <TooltipTrigger asChild>
+                                                    <span className="text-gray-300 italic truncate text-xs max-w-[200px] cursor-help border-b border-dotted border-gray-300 hover:border-gray-400 transition-colors">
+                                                        • {selectedPonto.ponto_referencia}
+                                                    </span>
+                                                </TooltipTrigger>
+                                                <TooltipContent className="max-w-[300px] text-xs bg-gray-900 text-white border-gray-800">
+                                                    <p>{selectedPonto.ponto_referencia}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                     )}
                                     <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-50 rounded-lg border border-gray-100 text-[10px] font-mono text-gray-400">
                                         <Crosshair size={10} />
                                         {selectedPonto.latitude?.toFixed(6)}, {selectedPonto.longitude?.toFixed(6)}
                                     </div>
+                                    {selectedPonto.medidas && (
+                                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-50 rounded-lg border border-gray-100 text-[10px] font-mono text-gray-400">
+                                            <Ruler size={10} />
+                                            {selectedPonto.medidas}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -629,231 +650,357 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                         </div>
                     </div>
 
-                    {/* Content Body - Organized Grid 2x2 */}
-                    <div className="flex-1 p-5 overflow-y-auto custom-scrollbar">
-                        <div className="grid grid-cols-2 gap-4">
-                            {/* Card 1: Valores */}
-                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-full min-h-[160px]">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
-                                        <DollarSign size={16} />
-                                    </div>
+                    {/* Content Body - Organized Grid 2x2 OR Inline View */}
+                    <div className="flex-1 p-5 overflow-y-auto custom-scrollbar relative">
+                        {viewMode === 'exhibitor' ? (
+                            <div className="animate-in slide-in-from-right-4 duration-300 absolute inset-0 bg-white p-5 overflow-y-auto">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <button
+                                        onClick={() => setViewMode('details')}
+                                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
+                                    >
+                                        <ArrowLeft size={20} />
+                                    </button>
                                     <div>
-                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Valores</h3>
-                                        <p className="text-[9px] text-gray-400 tracking-tight leading-none font-bold">V1</p>
+                                        <h2 className="text-xl font-bold text-gray-900 leading-none">{selectedPonto.exibidora_nome}</h2>
+                                        <p className="text-sm text-gray-400 font-medium">Detalhes da Exibidora</p>
                                     </div>
                                 </div>
 
-                                {proposalItem ? (
-                                    <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-100/50 flex-1 flex flex-col justify-center">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="text-[9px] font-black text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full uppercase tracking-tighter ring-1 ring-blue-200">ITEM DO PLANO</span>
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <div className="flex justify-between items-end">
-                                                <span className="text-[11px] text-gray-500 font-medium font-mono uppercase">Locação</span>
-                                                <span className="text-base font-black text-gray-900">{formatCurrency(proposalItem.valor_locacao)}</span>
-                                            </div>
-                                            {proposalItem.valor_papel > 0 && (
-                                                <div className="flex justify-between items-end pt-1.5 border-t border-blue-100">
-                                                    <span className="text-[11px] text-gray-500 font-medium font-mono uppercase">Produção</span>
-                                                    <span className="text-xs font-bold text-gray-700">{formatCurrency(proposalItem.valor_papel)}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2 flex-1 flex flex-col justify-center">
-                                        {produtos.length > 0 ? (
-                                            produtos.length === 1 ? (
-                                                <div className="space-y-0.5">
-                                                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">{produtos[0].tipo}</p>
-                                                    <p className="text-2xl font-black text-gray-900 tracking-tighter leading-none">
-                                                        {formatCurrency(user?.type === 'external' ? produtos[0].valor * 2 : produtos[0].valor)}
-                                                    </p>
-                                                    {produtos[0].periodo && <p className="text-[9px] text-gray-400 uppercase font-medium">{produtos[0].periodo}</p>}
-                                                </div>
-                                            ) : (
-                                                produtos.slice(0, 3).map((produto, idx) => {
-                                                    const displayValue = user?.type === 'external' ? produto.valor * 2 : produto.valor;
-                                                    return (
-                                                        <div key={idx} className="flex justify-between items-center py-1.5 border-b border-gray-50 last:border-0 last:pb-0">
-                                                            <div className="flex flex-col">
-                                                                <span className="font-bold text-gray-700 text-[10px] uppercase tracking-tighter">{produto.tipo}</span>
-                                                                {produto.periodo && <span className="text-[9px] text-gray-400 uppercase font-medium">{produto.periodo}</span>}
-                                                            </div>
-                                                            <span className="font-black text-gray-900 text-xs">{formatCurrency(displayValue)}</span>
-                                                        </div>
-                                                    );
-                                                })
-                                            )
-                                        ) : (
-                                            <p className="text-xs text-gray-400 italic text-center py-4">Consulte o comercial</p>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Card 2: Performance */}
-                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-full min-h-[160px]">
-                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
-                                    <TrendingUp size={14} className="text-emidias-primary" />
-                                    Performance
-                                </h3>
-
-                                <div className="space-y-4 flex-1 justify-center flex flex-col">
-                                    <div className="space-y-0.5">
-                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">Impacto Diário</p>
-                                        <p className="text-2xl font-black text-gray-900 tracking-tighter leading-none">
-                                            {selectedPonto.fluxo ? parseInt(selectedPonto.fluxo as any).toLocaleString() : 'N/A'}
-                                            <span className="text-xs font-medium text-gray-400 ml-1">pessoas</span>
+                                {/* Quick Stats */}
+                                <div className="grid grid-cols-2 gap-4 mb-6">
+                                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                        <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Regiões</span>
+                                        <p className="text-sm text-gray-800 mt-1 font-medium">
+                                            {(() => {
+                                                const extData = exibidoras.find(e => e.id === selectedPonto.id_exibidora) as any;
+                                                return extData?.ufs?.join(', ') || 'N/A';
+                                            })()}
                                         </p>
                                     </div>
-                                    <div className="space-y-0.5">
-                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">CPM Estimado</p>
-                                        <div className="flex items-baseline gap-1">
-                                            <p className="text-2xl font-black text-emidias-primary tracking-tighter leading-none">
-                                                {(() => {
-                                                    const locacaoProd = produtos.find(p => p.tipo.toLowerCase().includes('locação') || p.tipo.toLowerCase().includes('locacao') || p.tipo.toLowerCase().includes('bissemanal') || p.tipo.toLowerCase().includes('mensal'));
-                                                    const valor = locacaoProd ? (user?.type === 'external' ? locacaoProd.valor * 2 : locacaoProd.valor) : 0;
-                                                    const cpm = calculateCPM(valor, Number(selectedPonto.fluxo));
-                                                    return cpm ? formatCurrency(cpm) : 'N/A';
-                                                })()}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Card 3: Exibidora */}
-                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-[180px] group overflow-hidden">
-                                <div className="flex items-center gap-2 mb-2 shrink-0">
-                                    <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
-                                        <Building2 size={16} />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Exibidora</h3>
-                                        <p className="text-xs font-bold text-gray-900 leading-tight truncate">{selectedPonto.exibidora_nome}</p>
+                                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                        <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Total de Pontos</span>
+                                        <p className="text-sm text-gray-800 mt-1 font-medium">
+                                            {(() => {
+                                                const extData = exibidoras.find(e => e.id === selectedPonto.id_exibidora) as any;
+                                                return extData?.totalPontos || extData?.pontos_count || 'N/A';
+                                            })()}
+                                        </p>
                                     </div>
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1">
-                                    {/* Contacts Section */}
-                                    <div className="space-y-1.5">
+                                {/* Full Contacts List */}
+                                <div className="mb-6">
+                                    <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                        <Users size={16} className="text-emidias-primary" />
+                                        Contatos
+                                    </h3>
+                                    <div className="space-y-3">
                                         {exhibitorContacts.length > 0 ? (
-                                            exhibitorContacts.slice(0, 1).map((contact, idx) => (
-                                                <div key={idx} className="bg-gray-50/50 rounded-xl p-2 border border-gray-100/50">
-                                                    <div className="flex justify-between items-center mb-0.5">
-                                                        <span className="text-[10px] font-bold text-gray-700 truncate">{contact.nome || 'Contato'}</span>
-                                                        <span className="text-[9px] font-mono text-gray-500">{contact.telefone}</span>
+                                            exhibitorContacts.map((contact, idx) => (
+                                                <div key={idx} className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm flex items-start justify-between group">
+                                                    <div>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="font-bold text-gray-800">{contact.nome || 'Contato'}</span>
+                                                            {contact.observacoes && (
+                                                                <TooltipProvider>
+                                                                    <Tooltip>
+                                                                        <TooltipTrigger>
+                                                                            <MessageSquare size={14} className="text-yellow-500 fill-yellow-500/20" />
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent className="max-w-[200px] text-xs">
+                                                                            {contact.observacoes}
+                                                                        </TooltipContent>
+                                                                    </Tooltip>
+                                                                </TooltipProvider>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500 space-y-0.5">
+                                                            {contact.telefone && <div className="flex items-center gap-1.5"><Phone size={12} /> {contact.telefone}</div>}
+                                                            {contact.email && <div className="flex items-center gap-1.5"><Mail size={12} /> {contact.email}</div>}
+                                                        </div>
                                                     </div>
-                                                    <p className="text-[9px] text-gray-400 truncate">{contact.email}</p>
+                                                    {canEdit && (
+                                                        <button className="p-1.5 text-gray-300 hover:text-emidias-primary hover:bg-emidias-primary/5 rounded transition-colors opacity-0 group-hover:opacity-100">
+                                                            <Edit2 size={14} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             ))
                                         ) : (
-                                            <p className="text-[9px] text-gray-400 italic">Sem contatos diretos</p>
+                                            <p className="text-sm text-gray-400 italic">Nenhum contato cadastrado.</p>
                                         )}
-                                        {exhibitorContacts.length > 1 && (
-                                            <ExhibitorPopover
-                                                exhibitorId={selectedPonto.id_exibidora || 0}
-                                                exhibitorName={selectedPonto.exibidora_nome || ''}
-                                                onFilter={() => { }}
-                                            >
-                                                <button className="text-[9px] font-bold text-emidias-primary hover:underline px-1">Ver +{exhibitorContacts.length - 1} contatos</button>
-                                            </ExhibitorPopover>
-                                        )}
-                                    </div>
-
-                                    {/* Regions Section */}
-                                    <div className="pt-2 border-t border-gray-50">
-                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mb-1">Regiões de Atuação</p>
-                                        <div className="flex flex-wrap gap-1">
-                                            {(() => {
-                                                const extData = exibidoras.find(e => e.id === selectedPonto.id_exibidora) as any;
-                                                const cidades = extData?.cidades || [];
-                                                return cidades.length > 0 ? (
-                                                    <>
-                                                        {cidades.slice(0, 2).map((cidade: string, i: number) => (
-                                                            <span key={i} className="px-1.5 py-0.5 bg-gray-50 text-gray-500 rounded text-[9px] border border-gray-100 font-medium">{cidade}</span>
-                                                        ))}
-                                                        {cidades.length > 2 && <span className="text-[9px] text-gray-400 font-bold">+{cidades.length - 2}</span>}
-                                                    </>
-                                                ) : <span className="text-[9px] text-gray-400 italic">Local</span>;
-                                            })()}
-                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="mt-2 shrink-0">
-                                    <button
+                                {/* Placeholder for more details if needed */}
+                                <div className="flex justify-end pt-4 border-t border-gray-100">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
                                         onClick={() => {
-                                            setFilterExibidora([selectedPonto.id_exibidora!]);
-                                            setSelectedExibidora(exibidoras.find(e => e.id === selectedPonto.id_exibidora) || null);
-                                            setCurrentView('map');
-                                            handleClose();
+                                            // Handle navigate to full page if really needed, but user asked for inline.
+                                            // Just keep it simple for now.
+                                            toast.info("Visualização completa disponível em Exibidoras");
                                         }}
-                                        className="w-full py-1.5 bg-gray-50 hover:bg-emidias-primary/10 text-gray-500 hover:text-emidias-primary rounded-lg text-[9px] font-bold transition-all border border-gray-100 flex items-center justify-center gap-1.5 uppercase"
+                                        rightIcon={<ExternalLink size={14} />}
                                     >
-                                        <Users size={12} />
-                                        Filtrar Pontos
-                                    </button>
+                                        Ver cadastro completo
+                                    </Button>
                                 </div>
                             </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Card 1: Valores */}
+                                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-full min-h-[160px]">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
+                                            <DollarSign size={16} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Valores</h3>
+                                            <p className="text-[9px] text-gray-400 tracking-tight leading-none font-bold">V1</p>
+                                        </div>
+                                    </div>
 
-                            {/* Card 4: Propostas */}
-                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-[180px]">
-                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] flex items-center gap-2 mb-3 truncate leading-none">
-                                    <ShoppingCart size={14} className="text-blue-500" />
-                                    Propostas
-                                    {pointProposals.length > 0 && <span className="bg-blue-600 text-white px-1.5 py-0.5 rounded-full text-[9px] font-black">{pointProposals.length}</span>}
-                                </h3>
-
-                                <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2">
-                                    {pointProposals.length > 0 ? (
-                                        pointProposals.map((proposta) => (
-                                            <div key={proposta.id} className="group bg-gray-50/50 hover:bg-gray-50 border border-gray-100 rounded-xl p-2 transition-all duration-200">
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-1.5 mb-0.5">
-                                                            <div className={cn(
-                                                                "w-1 h-1 rounded-full",
-                                                                proposta.status === 'aprovado' ? "bg-green-500" :
-                                                                    proposta.status === 'em validação' ? "bg-yellow-500" : "bg-gray-300"
-                                                            )} />
-                                                            <h4 className="font-black text-[9px] text-gray-900 truncate uppercase tracking-tight" title={proposta.nome}>{proposta.nome}</h4>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-[8px] text-gray-500 font-medium">
-                                                            {(() => {
-                                                                const item = proposta.itens?.find(i => String(i.id_ooh) === String(selectedPonto.id));
-                                                                if (item?.periodo_inicio) {
-                                                                    return <span className="truncate italic">Até {new Date(item.periodo_fim!).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>;
-                                                                }
-                                                                return <span className="italic">Ver Detalhes</span>;
-                                                            })()}
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleClose();
-                                                            window.location.href = `/propostas?id=${proposta.id}`;
-                                                        }}
-                                                        className="h-6 w-6 flex items-center justify-center text-gray-300 hover:text-emidias-primary transition-all shrink-0"
-                                                        title="Acessar Proposta"
-                                                    >
-                                                        <ExternalLink size={10} />
-                                                    </button>
-                                                </div>
+                                    {proposalItem ? (
+                                        <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-100/50 flex-1 flex flex-col justify-center">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-[9px] font-black text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full uppercase tracking-tighter ring-1 ring-blue-200">ITEM DO PLANO</span>
                                             </div>
-                                        ))
+                                            <div className="space-y-1.5">
+                                                <div className="flex justify-between items-end">
+                                                    <span className="text-[11px] text-gray-500 font-medium font-mono uppercase">Locação</span>
+                                                    <span className="text-base font-black text-gray-900">{formatCurrency(proposalItem.valor_locacao)}</span>
+                                                </div>
+                                                {proposalItem.valor_papel > 0 && (
+                                                    <div className="flex justify-between items-end pt-1.5 border-t border-blue-100">
+                                                        <span className="text-[11px] text-gray-500 font-medium font-mono uppercase">Produção</span>
+                                                        <span className="text-xs font-bold text-gray-700">{formatCurrency(proposalItem.valor_papel)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     ) : (
-                                        <div className="h-full border border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-1 opacity-50">
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase">Disponível</p>
+                                        <div className="space-y-2 flex-1 flex flex-col justify-center">
+                                            {produtos.length > 0 ? (
+                                                produtos.length === 1 ? (
+                                                    <div className="space-y-0.5">
+                                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">{produtos[0].tipo}</p>
+                                                        <p className="text-2xl font-black text-gray-900 tracking-tighter leading-none">
+                                                            {formatCurrency(user?.type === 'external' ? produtos[0].valor * 2 : produtos[0].valor)}
+                                                        </p>
+                                                        {produtos[0].periodo && <p className="text-[9px] text-gray-400 uppercase font-medium">{produtos[0].periodo}</p>}
+                                                    </div>
+                                                ) : (
+                                                    produtos.slice(0, 3).map((produto, idx) => {
+                                                        const displayValue = user?.type === 'external' ? produto.valor * 2 : produto.valor;
+                                                        return (
+                                                            <div key={idx} className="flex justify-between items-center py-1.5 border-b border-gray-50 last:border-0 last:pb-0">
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-bold text-gray-700 text-[10px] uppercase tracking-tighter">{produto.tipo}</span>
+                                                                    {produto.periodo && <span className="text-[9px] text-gray-400 uppercase font-medium">{produto.periodo}</span>}
+                                                                </div>
+                                                                <span className="font-black text-gray-900 text-xs">{formatCurrency(displayValue)}</span>
+                                                            </div>
+                                                        );
+                                                    })
+                                                )
+                                            ) : (
+                                                <p className="text-xs text-gray-400 italic text-center py-4">Consulte o comercial</p>
+                                            )}
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Card 2: Performance */}
+                                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-full min-h-[160px]">
+                                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
+                                        <TrendingUp size={14} className="text-emidias-primary" />
+                                        Performance
+                                    </h3>
+
+                                    <div className="space-y-4 flex-1 justify-center flex flex-col">
+                                        <div className="space-y-0.5">
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">Impacto Diário</p>
+                                            <p className="text-2xl font-black text-gray-900 tracking-tighter leading-none">
+                                                {selectedPonto.fluxo ? parseInt(selectedPonto.fluxo as any).toLocaleString() : 'N/A'}
+                                                <span className="text-xs font-medium text-gray-400 ml-1">pessoas</span>
+                                            </p>
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">CPM Estimado</p>
+                                            <div className="flex items-baseline gap-1">
+                                                <p className="text-2xl font-black text-emidias-primary tracking-tighter leading-none">
+                                                    {(() => {
+                                                        const locacaoProd = produtos.find(p => p.tipo.toLowerCase().includes('locação') || p.tipo.toLowerCase().includes('locacao') || p.tipo.toLowerCase().includes('bissemanal') || p.tipo.toLowerCase().includes('mensal'));
+                                                        const valor = locacaoProd ? (user?.type === 'external' ? locacaoProd.valor * 2 : locacaoProd.valor) : 0;
+                                                        const cpm = calculateCPM(valor, Number(selectedPonto.fluxo));
+                                                        return cpm ? formatCurrency(cpm) : 'N/A';
+                                                    })()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Card 3: Exibidora */}
+                                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-[180px] group overflow-hidden">
+                                    <div className="flex items-center gap-2 mb-2 shrink-0">
+                                        <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
+                                            <Building2 size={16} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Exibidora</h3>
+                                            <button
+                                                onClick={() => setViewMode('exhibitor')}
+                                                className="text-xs font-bold text-gray-900 leading-tight truncate hover:text-emidias-primary hover:underline transition-all text-left"
+                                            >
+                                                {selectedPonto.exibidora_nome}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1">
+                                        {/* Contacts Section */}
+                                        <div className="space-y-1.5">
+                                            {exhibitorContacts.length > 0 ? (
+                                                exhibitorContacts.slice(0, 1).map((contact, idx) => (
+                                                    <div key={idx} className="bg-gray-50/50 rounded-xl p-2 border border-gray-100/50 relative group/contact">
+                                                        <div className="flex justify-between items-center mb-0.5">
+                                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                                <span className="text-[10px] font-bold text-gray-700 truncate">{contact.nome || 'Contato'}</span>
+                                                                {contact.observacoes && (
+                                                                    <TooltipProvider>
+                                                                        <Tooltip>
+                                                                            <TooltipTrigger>
+                                                                                <MessageSquare size={10} className="text-yellow-500 fill-yellow-500/20 shrink-0" />
+                                                                            </TooltipTrigger>
+                                                                            <TooltipContent className="text-xs">
+                                                                                {contact.observacoes}
+                                                                            </TooltipContent>
+                                                                        </Tooltip>
+                                                                    </TooltipProvider>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-1 opacity-0 group-hover/contact:opacity-100 transition-opacity absolute right-2 top-2">
+                                                                {canEdit && (
+                                                                    <button className="text-gray-400 hover:text-emidias-primary" title="Editar Contato">
+                                                                        <Edit2 size={10} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex justify-between items-end">
+                                                            <div className="min-w-0">
+                                                                <span className="text-[9px] font-mono text-gray-500 block truncate">{contact.telefone}</span>
+                                                                <p className="text-[9px] text-gray-400 truncate">{contact.email}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="text-[9px] text-gray-400 italic">Sem contatos diretos</p>
+                                            )}
+                                            {exhibitorContacts.length > 1 && (
+                                                <button
+                                                    onClick={() => setViewMode('exhibitor')}
+                                                    className="text-[9px] font-bold text-emidias-primary hover:underline px-1 w-full text-left"
+                                                >
+                                                    Ver +{exhibitorContacts.length - 1} contatos
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Regions Section */}
+                                        <div className="pt-2 border-t border-gray-50">
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mb-1">Regiões de Atuação</p>
+                                            <div className="flex flex-wrap gap-1">
+                                                {(() => {
+                                                    const extData = exibidoras.find(e => e.id === selectedPonto.id_exibidora) as any;
+                                                    const cidades = extData?.cidades || [];
+                                                    return cidades.length > 0 ? (
+                                                        <>
+                                                            {cidades.slice(0, 2).map((cidade: string, i: number) => (
+                                                                <span key={i} className="px-1.5 py-0.5 bg-gray-50 text-gray-500 rounded text-[9px] border border-gray-100 font-medium">{cidade}</span>
+                                                            ))}
+                                                            {cidades.length > 2 && <span className="text-[9px] text-gray-400 font-bold">+{cidades.length - 2}</span>}
+                                                        </>
+                                                    ) : <span className="text-[9px] text-gray-400 italic">Local</span>;
+                                                })()}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-2 shrink-0 flex items-center justify-end">
+                                        <button
+                                            onClick={() => {
+                                                // Add contact logic
+                                                toast.info("Funcionalidade de cadastrar contato em breve");
+                                            }}
+                                            className="py-1 px-3 bg-emidias-primary hover:bg-emidias-primary/90 text-white rounded-lg text-[9px] font-bold transition-all shadow-sm flex items-center gap-1.5"
+                                            title="Cadastrar Contato"
+                                        >
+                                            <Plus size={10} />
+                                            Cadastrar Contato
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Card 4: Propostas */}
+                                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col h-[180px]">
+                                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] flex items-center gap-2 mb-3 truncate leading-none">
+                                        <ShoppingCart size={14} className="text-blue-500" />
+                                        Propostas
+                                        {pointProposals.length > 0 && <span className="bg-blue-600 text-white px-1.5 py-0.5 rounded-full text-[9px] font-black">{pointProposals.length}</span>}
+                                    </h3>
+
+                                    <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2">
+                                        {pointProposals.length > 0 ? (
+                                            pointProposals.map((proposta) => (
+                                                <div key={proposta.id} className="group bg-gray-50/50 hover:bg-gray-50 border border-gray-100 rounded-xl p-2 transition-all duration-200">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-1.5 mb-0.5">
+                                                                <div className={cn(
+                                                                    "w-1 h-1 rounded-full",
+                                                                    proposta.status === 'aprovado' ? "bg-green-500" :
+                                                                        proposta.status === 'em validação' ? "bg-yellow-500" : "bg-gray-300"
+                                                                )} />
+                                                                <h4 className="font-black text-[9px] text-gray-900 truncate uppercase tracking-tight" title={proposta.nome}>{proposta.nome}</h4>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-[8px] text-gray-500 font-medium">
+                                                                {(() => {
+                                                                    const item = proposta.itens?.find(i => String(i.id_ooh) === String(selectedPonto.id));
+                                                                    if (item?.periodo_inicio) {
+                                                                        return <span className="truncate italic">Até {new Date(item.periodo_fim!).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>;
+                                                                    }
+                                                                    return <span className="italic">Ver Detalhes</span>;
+                                                                })()}
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleClose();
+                                                                window.location.href = `/propostas?id=${proposta.id}`;
+                                                            }}
+                                                            className="h-6 w-6 flex items-center justify-center text-gray-300 hover:text-emidias-primary transition-all shrink-0"
+                                                            title="Acessar Proposta"
+                                                        >
+                                                            <ExternalLink size={10} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="h-full border border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-1 opacity-50">
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase">Disponível</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
                     </div>
 
                     {/* Footer Actions - Context Aware */}
