@@ -19,11 +19,12 @@ interface Contato {
 interface ExibidoraFormProps {
     onSuccess: (newId: number) => void;
     onCancel: () => void;
+    onDelete?: () => void;
     initialData?: any;
     mode?: 'full' | 'contacts';
 }
 
-export default function ExibidoraForm({ onSuccess, onCancel, initialData, mode = 'full' }: ExibidoraFormProps) {
+export default function ExibidoraForm({ onSuccess, onCancel, onDelete, initialData, mode = 'full' }: ExibidoraFormProps) {
     const setExibidoras = useStore((state) => state.setExibidoras);
 
     const [isLoading, setIsLoading] = useState(false);
@@ -357,20 +358,24 @@ export default function ExibidoraForm({ onSuccess, onCancel, initialData, mode =
                                     <Trash2 size={16} />
                                 </button>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <Input
-                                        placeholder="Nome"
-                                        value={contato.nome}
-                                        onChange={(e) => updateContato(index, 'nome', e.target.value)}
-                                        className="bg-gray-50/50 border-gray-200"
-                                    />
-                                    <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                                    <div className="md:col-span-5">
+                                        <Input
+                                            placeholder="Nome"
+                                            value={contato.nome}
+                                            onChange={(e) => updateContato(index, 'nome', e.target.value)}
+                                            className="bg-gray-50/50 border-gray-200"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-3">
                                         <Input
                                             placeholder="Telefone"
                                             value={contato.telefone}
                                             onChange={(e) => updateContato(index, 'telefone', e.target.value)}
                                             className="bg-gray-50/50 border-gray-200"
                                         />
+                                    </div>
+                                    <div className="md:col-span-4">
                                         <Input
                                             placeholder="Email"
                                             value={contato.email}
@@ -398,13 +403,30 @@ export default function ExibidoraForm({ onSuccess, onCancel, initialData, mode =
                 </div>
             )}
 
-            <div className="flex items-center justify-end gap-3 w-full pt-4 border-t border-gray-100">
-                <Button variant="ghost" onClick={onCancel}>
-                    Cancelar
-                </Button>
-                <Button onClick={handleSubmit} isLoading={isLoading}>
-                    {initialData ? 'Salvar Alterações' : 'Criar Exibidora'}
-                </Button>
+            <div className="flex items-center justify-between gap-3 w-full pt-4 border-t border-gray-100">
+                {initialData && onDelete && (
+                    <Button
+                        type="button"
+                        variant="danger" // Assuming danger variant exists or use generic style
+                        onClick={() => {
+                            if (window.confirm('Tem certeza que deseja excluir esta exibidora? Todos os pontos associados também serão excluídos.')) {
+                                onDelete();
+                            }
+                        }}
+                        className="bg-red-50 text-red-600 hover:bg-red-100 border-red-100"
+                        leftIcon={<Trash2 size={16} />}
+                    >
+                        Excluir
+                    </Button>
+                )}
+                <div className="flex items-center gap-3 ml-auto">
+                    <Button variant="ghost" onClick={onCancel}>
+                        Cancelar
+                    </Button>
+                    <Button onClick={handleSubmit} isLoading={isLoading}>
+                        {initialData ? 'Salvar Alterações' : 'Criar Exibidora'}
+                    </Button>
+                </div>
             </div>
         </div>
     );

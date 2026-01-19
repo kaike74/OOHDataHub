@@ -1,6 +1,7 @@
 // ... imports
 import { Modal } from '@/components/ui/Modal';
 import { useStore } from '@/lib/store';
+import { api } from '@/lib/api';
 import { Building2 } from 'lucide-react';
 import ExibidoraForm from './ExibidoraForm';
 
@@ -18,6 +19,26 @@ export default function ExibidoraModal({ zIndex }: ExibidoraModalProps) {
     const handleClose = () => {
         setModalOpen(false);
         setEditingExibidora(null);
+    };
+
+    const handleDelete = async () => {
+        if (!editingExibidora?.id) return;
+        try {
+            await api.deleteExibidora(editingExibidora.id);
+
+            // Refresh stores
+            const updatedExibidoras = await api.getExibidoras();
+            useStore.getState().setExibidoras(updatedExibidoras);
+
+            // Refresh points as they might be cascade deleted
+            const updatedPontos = await api.getPontos();
+            useStore.getState().setPontos(updatedPontos);
+
+            handleClose();
+        } catch (error) {
+            console.error('Failed to delete exhibitor:', error);
+            alert('Erro ao excluir exibidora. Tente novamente.');
+        }
     };
 
     return (
@@ -39,6 +60,7 @@ export default function ExibidoraModal({ zIndex }: ExibidoraModalProps) {
                 onCancel={handleClose}
                 initialData={editingExibidora}
                 mode={formMode}
+                onDelete={editingExibidora ? handleDelete : undefined}
             />
         </Modal>
     );

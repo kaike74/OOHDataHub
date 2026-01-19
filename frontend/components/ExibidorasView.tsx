@@ -121,6 +121,25 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
         setExibidoraModalOpen(true);
     };
 
+    const handleDeleteExibidora = async (exibidora: any, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (window.confirm(`Tem certeza que deseja excluir a exibidora "${exibidora.nome}"? Todos os pontos associados serão excluídos.`)) {
+            try {
+                await api.deleteExibidora(exibidora.id);
+
+                // Atualizar listas
+                const updatedExibidoras = await api.getExibidoras();
+                setExibidoras(updatedExibidoras);
+
+                const updatedPontos = await api.getPontos();
+                setPontos(updatedPontos);
+            } catch (error) {
+                console.error('Erro ao excluir exibidora:', error);
+                alert('Erro ao excluir exibidora');
+            }
+        }
+    };
+
     return (
         <div className="h-full bg-gray-50 flex flex-col overflow-hidden relative">
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin">
@@ -130,6 +149,7 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
                         isLoading={false}
                         onRowClick={handleRowClick}
                         onEdit={handleEdit}
+                        onDelete={handleDeleteExibidora}
                     />
 
                     {exibidoras.length === 0 && (

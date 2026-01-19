@@ -116,6 +116,9 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(data),
     }),
+    deleteExibidora: (id: number) => fetchAPI(`/api/exibidoras/${id}`, {
+        method: 'DELETE',
+    }),
     getExhibitorProposals: (id: number) => fetchAPI(`/api/exibidoras/${id}/propostas`),
 
 

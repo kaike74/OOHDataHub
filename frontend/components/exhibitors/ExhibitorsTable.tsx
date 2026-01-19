@@ -10,11 +10,7 @@ interface ExhibitorsTableProps {
     isLoading: boolean;
     onRowClick: (exibidora: Exibidora) => void;
     onEdit: (exibidora: Exibidora, e: React.MouseEvent) => void;
-    // onDelete: (exibidora: Exibidora, e: React.MouseEvent) => void; 
-    // Commented out delete as it wasn't explicitly requested/visible in previous grid view actions? 
-    // Actually previous view didn't show delete button on card? Let's check ExibidorasView. 
-    // It didn't seem to have delete button in the card. Just click to filter/view.
-    // I will add Edit if available, otherwise just View.
+    onDelete: (exibidora: Exibidora, e: React.MouseEvent) => void;
 }
 
 export default function ExhibitorsTable({ exibidoras, isLoading, onRowClick, onEdit }: ExhibitorsTableProps) {
@@ -119,6 +115,16 @@ export default function ExhibitorsTable({ exibidoras, isLoading, onRowClick, onE
                                             title="Editar"
                                         >
                                             <Edit2 size={16} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDelete && onDelete(exibidora, e);
+                                            }}
+                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Excluir"
+                                        >
+                                            <Trash2 size={16} />
                                         </button>
                                     </div>
                                 </td>
