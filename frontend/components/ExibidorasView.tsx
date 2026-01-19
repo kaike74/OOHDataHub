@@ -6,7 +6,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Plus } from 'lucide-react';
 import ExhibitorsTable from '@/components/exhibitors/ExhibitorsTable';
-import ExhibitorDetailsSidebar from '@/components/exhibitors/ExhibitorDetailsSidebar';
+import ExhibitorDetailsModal from '@/components/exhibitors/ExhibitorDetailsModal';
 import ExibidoraModal from '@/components/ExibidoraModal';
 
 interface ExibidorasViewProps {
@@ -156,7 +156,7 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
                 </div>
             </div>
 
-            <ExhibitorDetailsSidebar
+            <ExhibitorDetailsModal
                 isOpen={!!selectedExibidoraDetails}
                 exibidoras={selectedExibidoraDetails}
                 onClose={() => setSelectedExibidoraDetails(null)}
