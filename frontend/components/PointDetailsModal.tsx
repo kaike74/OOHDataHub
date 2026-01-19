@@ -529,8 +529,11 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                                 {/* Left: Size */}
                                 <div className="flex flex-col">
                                     <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-0.5">Tamanho</span>
-                                    <span className="text-lg font-black text-white tracking-widest uppercase leading-none shadow-black drop-shadow-md">
-                                        {selectedPonto.medidas || 'N/A'} <span className="text-xs align-top opacity-70">m</span>
+                                    <span className="text-sm font-black text-white tracking-widest uppercase leading-none shadow-black drop-shadow-md">
+                                        {selectedPonto.medidas || 'N/A'}
+                                        {!(selectedPonto.medidas?.toLowerCase().includes('m') || selectedPonto.medidas?.toLowerCase().includes('px')) && (
+                                            <span className="text-xs align-top opacity-70 ml-0.5">m</span>
+                                        )}
                                     </span>
                                 </div>
 

@@ -9,6 +9,8 @@ import GoogleMap from '@/components/map/GoogleMap';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
 import { useRouter } from 'next/navigation';
 
+import { SafeImage } from '@/components/ui/SafeImage';
+
 interface ExhibitorProposalStats {
     id: number;
     nome: string;
@@ -180,8 +182,12 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                     <div className="px-6 py-5 border-b border-gray-100 shrink-0 bg-white z-20 flex justify-between items-start">
                         <div className="flex items-center gap-4">
                             <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center p-2 relative overflow-hidden group">
-                                {exibidoras.logo_url ? (
-                                    <img src={exibidoras.logo_url} alt={exibidoras.nome} className="w-full h-full object-contain" />
+                                {exibidoras.logo_r2_key || exibidoras.logo_url ? (
+                                    <SafeImage
+                                        src={exibidoras.logo_r2_key ? api.getImageUrl(exibidoras.logo_r2_key) : exibidoras.logo_url}
+                                        alt={exibidoras.nome}
+                                        className="w-full h-full object-contain"
+                                    />
                                 ) : (
                                     <span className="text-2xl font-bold text-gray-300">{exibidoras.nome.charAt(0)}</span>
                                 )}
@@ -195,34 +201,36 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                                 </div>
                             </div>
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="h-8 w-8 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-500 flex items-center justify-center transition-all border border-gray-200"
-                        >
-                            <X size={18} />
-                        </button>
-                        {canEdit && (
+                        <div className="flex items-center gap-2">
+                            {canEdit && (
+                                <button
+                                    onClick={() => {
+                                        setEditingExibidora(exibidoras);
+                                        setExibidoraModalOpen(true);
+                                    }}
+                                    className="h-8 w-8 rounded-xl bg-gray-50 hover:bg-emidias-primary/10 hover:text-emidias-primary text-gray-500 flex items-center justify-center transition-all border border-gray-200"
+                                    title="Editar Exibidora"
+                                >
+                                    <Edit size={16} />
+                                </button>
+                            )}
                             <button
-                                onClick={() => {
-                                    setEditingExibidora(exibidoras);
-                                    setExibidoraModalOpen(true);
-                                }}
-                                className="h-8 w-8 ml-2 rounded-xl bg-gray-50 hover:bg-emidias-primary/10 hover:text-emidias-primary text-gray-500 flex items-center justify-center transition-all border border-gray-200"
-                                title="Editar Exibidora"
+                                onClick={onClose}
+                                className="h-8 w-8 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-500 flex items-center justify-center transition-all border border-gray-200"
                             >
-                                <Edit size={16} />
+                                <X size={18} />
                             </button>
-                        )}
+                        </div>
                     </div>
 
-                    {/* Content Body */}
-                    <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
-                        <div className="grid grid-cols-2 gap-4 h-full content-start">
+                    {/* Content Body - No Global Scroll */}
+                    <div className="flex-1 p-6 flex flex-col min-h-0 overflow-hidden">
+                        <div className="grid grid-cols-2 gap-4 shrink-0 mb-4">
                             {/* Stats Cards */}
                             <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex flex-col">
                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Regiões Atendidas</span>
                                 <div className="flex-1">
-                                    <p className="text-sm font-medium text-gray-800 leading-relaxed" title={exibidoras.ufs?.join(', ')}>
+                                    <p className="text-xs font-medium text-gray-800 leading-relaxed" title={exibidoras.ufs?.join(', ')}>
                                         {exibidoras.ufs?.length > 0 ? exibidoras.ufs.join(', ') : 'N/A'}
                                     </p>
                                 </div>
@@ -230,15 +238,15 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                             <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex flex-col">
                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Cidades</span>
                                 <div className="flex-1">
-                                    <p className="text-sm font-medium text-gray-800 leading-relaxed max-h-[60px] overflow-hidden text-ellipsis line-clamp-3" title={exibidoras.cidades?.join(', ')}>
+                                    <p className="text-xs font-medium text-gray-800 leading-relaxed max-h-[40px] overflow-hidden text-ellipsis line-clamp-2" title={exibidoras.cidades?.join(', ')}>
                                         {exibidoras.cidades?.length > 0 ? exibidoras.cidades.join(', ') : 'N/A'}
                                     </p>
                                 </div>
                             </div>
 
                             {/* Contacts Card */}
-                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm col-span-2 min-h-[160px]">
-                                <div className="flex justify-between items-center mb-4">
+                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm col-span-2">
+                                <div className="flex justify-between items-center mb-3">
                                     <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
                                         <Users size={14} className="text-emidias-primary" />
                                         Contatos
@@ -260,16 +268,16 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     {localContacts && localContacts.length > 0 ? (
-                                        localContacts.map((contact: any, idx: number) => (
-                                            <div key={idx} className="bg-gray-50/50 rounded-xl p-3 border border-gray-100/50 hover:border-emidias-primary/20 transition-colors group/contact">
-                                                <div className="flex justify-between items-start mb-1">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className="text-xs font-bold text-gray-700">{contact.nome}</span>
+                                        localContacts.slice(0, 4).map((contact: any, idx: number) => (
+                                            <div key={idx} className="bg-gray-50/50 rounded-xl p-2.5 border border-gray-100/50 hover:border-emidias-primary/20 transition-colors group/contact">
+                                                <div className="flex justify-between items-start mb-0.5">
+                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                        <span className="text-[11px] font-bold text-gray-700 truncate">{contact.nome}</span>
                                                         {contact.observacoes && (
                                                             <TooltipProvider>
                                                                 <Tooltip>
                                                                     <TooltipTrigger>
-                                                                        <MessageSquare size={12} className="text-yellow-500 fill-yellow-500/20" />
+                                                                        <MessageSquare size={10} className="text-yellow-500 fill-yellow-500/20" />
                                                                     </TooltipTrigger>
                                                                     <TooltipContent className="text-xs max-w-[200px]">
                                                                         {contact.observacoes}
@@ -281,13 +289,13 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                                                 </div>
                                                 <div className="space-y-0.5">
                                                     {contact.telefone && (
-                                                        <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
-                                                            <Phone size={10} /> {contact.telefone}
+                                                        <div className="flex items-center gap-1.5 text-[9px] text-gray-500">
+                                                            <Phone size={9} /> {contact.telefone}
                                                         </div>
                                                     )}
                                                     {contact.email && (
-                                                        <div className="flex items-center gap-1.5 text-[10px] text-gray-500 truncate" title={contact.email}>
-                                                            <Mail size={10} /> {contact.email}
+                                                        <div className="flex items-center gap-1.5 text-[9px] text-gray-500 truncate" title={contact.email}>
+                                                            <Mail size={9} /> {contact.email}
                                                         </div>
                                                     )}
                                                 </div>
@@ -298,15 +306,23 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                                             Nenhum contato cadastrado
                                         </p>
                                     )}
+                                    {localContacts.length > 4 && (
+                                        <div className="col-span-2 flex justify-center sticky bottom-0 z-10">
+                                            <span className="text-[9px] text-gray-400 font-medium">+ {localContacts.length - 4} contatos</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Proposals Card */}
-                            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm col-span-2">
-                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
-                                    <TrendingUp size={14} className="text-emidias-primary" />
-                                    Histórico de Propostas
-                                </h3>
+                        {/* Proposals Card - Flexible & Scrollable */}
+                        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex-1 flex flex-col min-h-0">
+                            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-3 shrink-0">
+                                <TrendingUp size={14} className="text-emidias-primary" />
+                                Histórico de Propostas
+                            </h3>
+
+                            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 relative">
                                 {isLoadingProposals ? (
                                     <div className="space-y-2 animate-pulse">
                                         <div className="h-10 bg-gray-50 rounded-lg" />
@@ -314,7 +330,7 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                                         <div className="h-10 bg-gray-50 rounded-lg" />
                                     </div>
                                 ) : proposals.length > 0 ? (
-                                    <div className="space-y-2 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
+                                    <div className="space-y-2">
                                         {proposals.map((prop, idx) => (
                                             <div
                                                 key={prop.id}
@@ -332,7 +348,7 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                    <div className="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200 h-full flex flex-col items-center justify-center">
                                         <p className="text-gray-400 text-xs">Nenhuma proposta encontrada.</p>
                                     </div>
                                 )}
