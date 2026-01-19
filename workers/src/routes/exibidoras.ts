@@ -99,6 +99,32 @@ export async function handleExibidoras(request: Request, env: Env, path: string)
         }
     }
 
+    // DELETE /api/exibidoras/:id - Deletar exibidora (e seus pontos/contatos)
+    if (request.method === 'DELETE' && path.match(/^\/api\/exibidoras\/\d+$/)) {
+        const id = parseInt(path.split('/')[3]);
+
+        try {
+            // Deletar contatos associados
+            await env.DB.prepare('DELETE FROM contatos WHERE id_exibidora = ?').bind(id).run();
+
+            // Deletar pontos associados (cascade manual para garantir)
+            // Nota: Se houver imagens associadas aos pontos, elas podem ficar orfãs no R2 se não tratadas aqui.
+            // Por simplicidade e segurança imediata, deletamos os registros do banco.
+            await env.DB.prepare('DELETE FROM pontos_ooh WHERE id_exibidora = ?').bind(id).run();
+
+            // Deletar a exibidora
+            await env.DB.prepare('DELETE FROM exibidoras WHERE id = ?').bind(id).run();
+
+            return new Response(JSON.stringify({ success: true }), { headers });
+        } catch (e: any) {
+            console.error('Erro ao deletar exibidora:', e);
+            return new Response(JSON.stringify({ error: e.message }), {
+                status: 500,
+                headers,
+            });
+        }
+    }
+
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
         headers,

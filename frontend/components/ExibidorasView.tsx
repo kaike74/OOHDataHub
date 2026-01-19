@@ -24,7 +24,13 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
     const setEditingExibidora = useStore((state) => state.setEditingExibidora);
 
     // State for Sidebar
-    const [selectedExibidoraDetails, setSelectedExibidoraDetails] = useState<any | null>(null);
+    const [selectedExibidoraId, setSelectedExibidoraId] = useState<number | null>(null);
+
+    // Derive selected exhibitor from fresh data
+    const selectedExibidoraDetails = useMemo(() => {
+        if (!selectedExibidoraId) return null;
+        return exibidorasComStats.find(e => e.id === selectedExibidoraId) || null;
+    }, [selectedExibidoraId, exibidorasComStats]);
 
     // Sync prop with internal/store modal state
     useEffect(() => {
@@ -113,7 +119,7 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
     }, [exibidorasComStats, searchTerm]);
 
     const handleRowClick = (exibidora: any) => {
-        setSelectedExibidoraDetails(exibidora);
+        setSelectedExibidoraId(exibidora.id);
     };
 
     const handleEdit = (exibidora: any, e: React.MouseEvent) => {
@@ -179,7 +185,7 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
             <ExhibitorDetailsModal
                 isOpen={!!selectedExibidoraDetails}
                 exibidoras={selectedExibidoraDetails}
-                onClose={() => setSelectedExibidoraDetails(null)}
+                onClose={() => setSelectedExibidoraId(null)}
                 canEdit={true}
             />
             <ExibidoraModal />
