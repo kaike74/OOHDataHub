@@ -9,7 +9,7 @@ export const handleTrash = async (request: Request, env: Env, path: string) => {
     try {
         await requireAuth(request, env);
         const token = extractToken(request);
-        const payload = await verifyToken(token!);
+        const payload = await verifyToken(token!, env);
         const userId = payload!.userId;
 
         // GET /api/trash/:type - List deleted items

@@ -10,7 +10,7 @@ export async function handleClientes(request: Request, env: Env, path: string): 
     const getUser = async (req: Request) => {
         const token = extractToken(req);
         if (!token) return null;
-        return await verifyToken(token);
+        return await verifyToken(token, env);
     };
 
     // GET /api/clientes - Lista clientes (Filtrado por user role)

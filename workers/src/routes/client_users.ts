@@ -30,7 +30,7 @@ export const handleClients = async (request: Request, env: Env, path: string) =>
                 // Try Client Auth if Agency failed
                 const token = request.headers.get('Authorization')?.replace('Bearer ', '');
                 if (token) {
-                    const payload = await verifyToken(token);
+                    const payload = await verifyToken(token, env);
                     if (payload && payload.role === 'client') {
                         currentClientUser = await env.DB.prepare('SELECT * FROM users WHERE id = ? AND type = "external"').bind(payload.userId).first();
                         if (!currentClientUser) throw new Error('User not found');

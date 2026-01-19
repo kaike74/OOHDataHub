@@ -108,7 +108,7 @@ export async function requireAuth(request: Request, env: Env): Promise<User> {
         throw new Error('No token provided');
     }
 
-    const payload = await verifyToken(token);
+    const payload = await verifyToken(token, env);
     if (!payload) {
         throw new Error('Invalid token');
     }

@@ -8,7 +8,7 @@ async function requireClientAuth(request: Request, env: Env) {
     const token = extractToken(request);
     if (!token) throw new Error('No token provided');
 
-    const payload = await verifyToken(token);
+    const payload = await verifyToken(token, env);
     if (!payload) throw new Error('Invalid token');
 
     if (payload.role !== 'client') throw new Error('Unauthorized');

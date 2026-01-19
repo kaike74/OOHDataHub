@@ -54,7 +54,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         // 2. Auth & Permission Check
         const token = extractToken(request);
         let payload = null;
-        if (token) payload = await verifyToken(token);
+        if (token) payload = await verifyToken(token, env);
 
         const { role: currentRole, userType } = await getProposalRole(id, payload?.userId || null, payload?.role || null, proposal.public_access_level);
 
@@ -133,7 +133,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
         try {
             const token = extractToken(request);
             if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-            const payload = await verifyToken(token);
+            const payload = await verifyToken(token, env);
             if (!payload) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers });
 
             const data = await request.json() as any;
@@ -183,7 +183,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const id = path.split('/').pop()!;
             const token = extractToken(request);
             if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-            const payload = await verifyToken(token);
+            const payload = await verifyToken(token, env);
 
             const proposal = await env.DB.prepare('SELECT public_access_level, created_by FROM propostas WHERE id = ?').bind(id).first();
             if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
@@ -264,7 +264,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const id = path.split('/')[3];
             const token = extractToken(request);
             if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-            const payload = await verifyToken(token);
+            const payload = await verifyToken(token, env);
 
             // Fetch Permissions
             const proposal = await env.DB.prepare('SELECT public_access_level FROM propostas WHERE id = ?').bind(id).first();
@@ -387,7 +387,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const id = path.split('/')[3];
             const token = extractToken(request);
             if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-            const payload = await verifyToken(token);
+            const payload = await verifyToken(token, env);
 
             // Fetch Permissions
             const proposal = await env.DB.prepare('SELECT public_access_level FROM propostas WHERE id = ?').bind(id).first();
@@ -682,7 +682,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const id = path.split('/').pop();
             await requireAuth(request, env);
             const token = extractToken(request);
-            const payload = await verifyToken(token!);
+            const payload = await verifyToken(token!, env);
 
             await env.DB.prepare('UPDATE propostas SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?').bind(id).run();
 
@@ -708,7 +708,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const id = path.split('/')[3];
             const token = extractToken(request);
             if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-            const payload = await verifyToken(token);
+            const payload = await verifyToken(token, env);
             if (!payload) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers });
 
             // Check if already has access
@@ -797,7 +797,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const id = path.split('/')[3];
             const token = extractToken(request);
             if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-            const payload = await verifyToken(token);
+            const payload = await verifyToken(token, env);
 
             const proposal = await env.DB.prepare('SELECT public_access_level FROM propostas WHERE id = ?').bind(id).first();
             if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
@@ -831,7 +831,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const id = path.split('/')[3];
             const token = extractToken(request);
             if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-            const payload = await verifyToken(token);
+            const payload = await verifyToken(token, env);
 
             const proposal = await env.DB.prepare('SELECT public_access_level, created_by, nome FROM propostas WHERE id = ?').bind(id).first();
             if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
@@ -937,7 +937,7 @@ export async function handlePropostas(request: Request, env: Env, path: string):
             const id = path.split('/')[3];
             const token = extractToken(request);
             if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-            const payload = await verifyToken(token);
+            const payload = await verifyToken(token, env);
 
             const proposal = await env.DB.prepare('SELECT public_access_level, validation_status, nome FROM propostas WHERE id = ?').bind(id).first();
             if (!proposal) return new Response(JSON.stringify({ error: 'Proposta não encontrada' }), { status: 404, headers });
