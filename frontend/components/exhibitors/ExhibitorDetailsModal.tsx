@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, MapPin, Building2, Phone, Mail, MessageSquare, ExternalLink, Users, Edit2, TrendingUp, Edit } from 'lucide-react';
+import { X, MapPin, Building2, Phone, Mail, MessageSquare, ExternalLink, Users, Edit2, TrendingUp, Edit, Upload } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api';
+import { useBulkImportStore } from '@/stores/useBulkImportStore';
 import { formatCurrency, cn } from '@/lib/utils';
 import GoogleMap from '@/components/map/GoogleMap';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
@@ -216,8 +217,19 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                                 </button>
                             )}
                             <button
+                                onClick={() => {
+                                    const startImport = useBulkImportStore.getState().startImport;
+                                    startImport(exibidoras.id, exibidoras.nome);
+                                }}
+                                className="h-8 px-3 rounded-xl bg-emidias-primary hover:bg-emidias-primary/90 text-white flex items-center gap-2 transition-all text-xs font-medium"
+                                title="Cadastro em Massa"
+                            >
+                                <Upload size={14} />
+                                Cadastro em Massa
+                            </button>
+                            <button
                                 onClick={onClose}
-                                className="h-8 w-8 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-500 flex items-center justify-center transition-all border border-gray-200"
+                                className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all border border-red-600"
                             >
                                 <X size={18} />
                             </button>
