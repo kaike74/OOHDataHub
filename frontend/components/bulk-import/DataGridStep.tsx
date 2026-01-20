@@ -531,11 +531,9 @@ export default function DataGridStep() {
         );
     };
 
-    // Cell renderer with diff and validation colors
+    // Cell renderer with validation colors
     const CellRenderer = ({ row, column }: RenderCellProps<GridRow>) => {
         const colIdx = parseInt(column.key.replace('col_', ''));
-        const correctionKey = `${row.id}-${colIdx}`;
-        const correction = session?.cellCorrections?.[correctionKey];
         const value = row[column.key];
 
         // Get validation from validationResults
@@ -551,24 +549,6 @@ export default function DataGridStep() {
             } else if (cellError.severity === 'warning') {
                 cellClassName += " bg-yellow-50 border-l-2 border-yellow-400";
             }
-        }
-
-        if (correction) {
-            return (
-                <div className={cellClassName} title={cellError?.message}>
-                    <CellDiff
-                        original={correction.original}
-                        corrected={correction.corrected}
-                        isEditing={false}
-                    />
-                    {cellError && cellError.severity === 'error' && (
-                        <span className="ml-auto text-red-600 text-xs">❌</span>
-                    )}
-                    {cellError && cellError.severity === 'warning' && (
-                        <span className="ml-auto text-yellow-600 text-xs">⚠️</span>
-                    )}
-                </div>
-            );
         }
 
         return (
@@ -703,7 +683,7 @@ export default function DataGridStep() {
         });
 
         return cols;
-    }, [headers, mapping, session?.cellCorrections, validationResults]);
+    }, [headers, mapping, validationResults]);
 
     // Row class name
     const rowClassName = (row: GridRow) => {
