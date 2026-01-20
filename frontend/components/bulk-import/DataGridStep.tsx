@@ -556,35 +556,42 @@ export default function DataGridStep() {
             }
         }
 
+        // Build tooltip text safely
+        let tooltipText: string | undefined = undefined;
+        if (validation && validation.message) {
+            const icon = validation.severity === 'error' ? '❌' : '⚠️';
+            tooltipText = `${icon} ${String(validation.message)}`;
+            if (validation.suggestion) {
+                tooltipText += `\n💡 Sugestão: ${String(validation.suggestion)}`;
+            }
+        }
+
         if (correction) {
             return (
-                <div className={cellClassName} title={validation?.message}>
+                <div className={cellClassName} title={tooltipText}>
                     <CellDiff
                         original={correction.original}
                         corrected={correction.corrected}
                         isEditing={false}
                     />
-                    {validation && (
-                        <div className="ml-auto flex items-center gap-1">
-                            {validation.severity === 'error' ? <span className="text-red-600 text-xs">❌</span> : null}
-                            {validation.severity === 'warning' ? <span className="text-yellow-600 text-xs">⚠️</span> : null}
-                        </div>
+                    {validation && validation.severity === 'error' && (
+                        <span className="ml-auto text-red-600 text-xs">❌</span>
+                    )}
+                    {validation && validation.severity === 'warning' && (
+                        <span className="ml-auto text-yellow-600 text-xs">⚠️</span>
                     )}
                 </div>
             );
         }
 
         return (
-            <div
-                className={cellClassName}
-                title={validation ? `${validation.severity === 'error' ? '❌' : '⚠️'} ${validation.message}${validation.suggestion ? `\n💡 Sugestão: ${validation.suggestion}` : ''}` : undefined}
-            >
+            <div className={cellClassName} title={tooltipText}>
                 {value != null ? String(value) : <span className="text-gray-300 italic">vazio</span>}
-                {validation && (
-                    <div className="ml-auto flex items-center gap-1">
-                        {validation.severity === 'error' ? <span className="text-red-600 text-xs font-bold">❌</span> : null}
-                        {validation.severity === 'warning' ? <span className="text-yellow-600 text-xs font-bold">⚠️</span> : null}
-                    </div>
+                {validation && validation.severity === 'error' && (
+                    <span className="ml-auto text-red-600 text-xs font-bold">❌</span>
+                )}
+                {validation && validation.severity === 'warning' && (
+                    <span className="ml-auto text-yellow-600 text-xs font-bold">⚠️</span>
                 )}
             </div>
         );
