@@ -590,14 +590,14 @@ export default function DataGridStep() {
                     onRowChange({ ...row, [column.key]: result.value });
                 }
             }
-            onClose();
+            onClose(true);
         };
 
         const handleKeyDown = (e: React.KeyboardEvent) => {
             if (e.key === 'Enter') {
                 handleBlurAndNormalize();
             } else if (e.key === 'Escape') {
-                onClose();
+                onClose(false); // Cancel on Escape
             }
         };
 
@@ -608,7 +608,7 @@ export default function DataGridStep() {
                     <TiposMultiSelectEditor
                         value={String(localValue || '')}
                         onChange={handleChange}
-                        onClose={onClose}
+                        onClose={() => onClose(true)}
                     />
                 );
 
@@ -619,7 +619,7 @@ export default function DataGridStep() {
                         value={String(localValue || 'Bissemanal')}
                         onChange={(e) => {
                             handleChange(e.target.value);
-                            onClose();
+                            onClose(true);
                         }}
                         onKeyDown={handleKeyDown}
                         autoFocus
