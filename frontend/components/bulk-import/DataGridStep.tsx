@@ -398,9 +398,9 @@ export default function DataGridStep() {
         const originalHeader = headers[colIdx];
 
         return (
-            <div className="flex flex-col gap-1.5 py-1">
+            <div className="flex flex-col gap-1.5 py-2 px-1 h-full justify-center">
                 {/* Original header - PROMINENT */}
-                <div className="text-sm font-bold text-gray-900 truncate" title={originalHeader}>
+                <div className="text-sm font-bold text-gray-900 truncate leading-tight" title={originalHeader}>
                     {originalHeader || '(sem nome)'}
                 </div>
                 {/* Mapping dropdown - secondary */}
@@ -408,7 +408,7 @@ export default function DataGridStep() {
                     value={mappedField}
                     onChange={(e) => handleMappingChange(colIdx, e.target.value)}
                     className={cn(
-                        'text-xs font-medium px-2 py-0.5 rounded border focus:outline-none focus:ring-1 focus:ring-emidias-primary/30',
+                        'text-xs font-medium px-2 py-1 rounded border focus:outline-none focus:ring-1 focus:ring-emidias-primary/30',
                         fieldOption?.required
                             ? 'bg-pink-50 border-emidias-accent text-emidias-accent'
                             : 'bg-gray-50 border-gray-200 text-gray-600'
@@ -656,6 +656,8 @@ export default function DataGridStep() {
                     onRowsChange={handleRowsChange}
                     rowKeyGetter={(row) => row.id}
                     rowClass={rowClassName}
+                    headerRowHeight={80}
+                    rowHeight={35}
                     style={{ height: 500 }}
                     className="rdg-light"
                     fillHandle={{

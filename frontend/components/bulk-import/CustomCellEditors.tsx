@@ -18,7 +18,6 @@ export function TiposEditor({ value, onChange, onClose }: TiposEditorProps) {
         if (!value) return [];
         return value.split(',').map(t => t.trim()).filter(Boolean);
     });
-    const [isOpen, setIsOpen] = useState(true);
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -41,13 +40,16 @@ export function TiposEditor({ value, onChange, onClose }: TiposEditorProps) {
 
     const handleSave = () => {
         onChange(selectedTipos.join(', '));
-        setIsOpen(false);
         onClose();
     };
 
     return (
-        <div ref={ref} className="relative w-full h-full">
-            <div className="absolute top-0 left-0 w-80 max-h-96 bg-white border-2 border-emidias-primary rounded-lg shadow-xl z-50 overflow-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20" onClick={handleSave}>
+            <div
+                ref={ref}
+                className="w-80 max-h-96 bg-white border-2 border-emidias-primary rounded-lg shadow-2xl overflow-auto"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <div className="p-3 space-y-2">
                     <div className="font-semibold text-sm text-gray-700 mb-2">
                         Selecione os tipos de mídia:
@@ -125,56 +127,62 @@ export function MedidasEditor({ value, onChange, onClose }: MedidasEditorProps) 
     }, [largura, altura, unidade]);
 
     return (
-        <div ref={ref} className="absolute top-0 left-0 w-72 bg-white border-2 border-emidias-primary rounded-lg shadow-xl z-50 p-3">
-            <div className="space-y-3">
-                <div className="font-semibold text-sm text-gray-700">Medidas:</div>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20" onClick={handleSave}>
+            <div
+                ref={ref}
+                className="w-72 bg-white border-2 border-emidias-primary rounded-lg shadow-2xl p-3"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="space-y-3">
+                    <div className="font-semibold text-sm text-gray-700">Medidas:</div>
 
-                <div className="flex gap-2 items-center">
-                    <input
-                        type="number"
-                        value={largura}
-                        onChange={(e) => setLargura(e.target.value)}
-                        placeholder="Largura"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emidias-primary"
-                        autoFocus
-                    />
-                    <span className="text-gray-400">×</span>
-                    <input
-                        type="number"
-                        value={altura}
-                        onChange={(e) => setAltura(e.target.value)}
-                        placeholder="Altura"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emidias-primary"
-                    />
-                </div>
+                    <div className="flex gap-2 items-center">
+                        <input
+                            type="number"
+                            value={largura}
+                            onChange={(e) => setLargura(e.target.value)}
+                            placeholder="Largura"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emidias-primary"
+                            autoFocus
+                        />
+                        <span className="text-gray-400">×</span>
+                        <input
+                            type="number"
+                            value={altura}
+                            onChange={(e) => setAltura(e.target.value)}
+                            placeholder="Altura"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emidias-primary"
+                        />
+                    </div>
 
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => setUnidade('M')}
-                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${unidade === 'M'
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setUnidade('M')}
+                            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${unidade === 'M'
                                 ? 'bg-emidias-primary text-white'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                    >
-                        Metros (M)
-                    </button>
-                    <button
-                        onClick={() => setUnidade('PX')}
-                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${unidade === 'PX'
+                                }`}
+                        >
+                            Metros (M)
+                        </button>
+                        <button
+                            onClick={() => setUnidade('PX')}
+                            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${unidade === 'PX'
                                 ? 'bg-emidias-primary text-white'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
+                                }`}
+                        >
+                            Pixels (PX)
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={handleSave}
+                        className="w-full px-3 py-2 bg-emidias-primary text-white rounded-lg text-sm font-medium hover:bg-emidias-primary/90"
                     >
-                        Pixels (PX)
+                        Confirmar
                     </button>
                 </div>
-
-                <button
-                    onClick={handleSave}
-                    className="w-full px-3 py-2 bg-emidias-primary text-white rounded-lg text-sm font-medium hover:bg-emidias-primary/90"
-                >
-                    Confirmar
-                </button>
             </div>
         </div>
     );
@@ -211,25 +219,31 @@ export function PeriodoEditor({ value, onChange, onClose }: PeriodoEditorProps) 
     }, []);
 
     return (
-        <div ref={ref} className="absolute top-0 left-0 w-48 bg-white border-2 border-emidias-primary rounded-lg shadow-xl z-50 p-2">
-            <button
-                onClick={() => handleSelect('Bissemanal')}
-                className={`w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors ${selected === 'Bissemanal'
-                        ? 'bg-emidias-primary text-white'
-                        : 'hover:bg-gray-100'
-                    }`}
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20" onClick={onClose}>
+            <div
+                ref={ref}
+                className="w-48 bg-white border-2 border-emidias-primary rounded-lg shadow-2xl p-2"
+                onClick={(e) => e.stopPropagation()}
             >
-                Bissemanal
-            </button>
-            <button
-                onClick={() => handleSelect('Mensal')}
-                className={`w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors ${selected === 'Mensal'
-                        ? 'bg-emidias-primary text-white'
-                        : 'hover:bg-gray-100'
-                    }`}
-            >
-                Mensal
-            </button>
+                <button
+                    onClick={() => handleSelect('Bissemanal')}
+                    className={`w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors ${selected === 'Bissemanal'
+                            ? 'bg-emidias-primary text-white'
+                            : 'hover:bg-gray-100'
+                        }`}
+                >
+                    Bissemanal
+                </button>
+                <button
+                    onClick={() => handleSelect('Mensal')}
+                    className={`w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors ${selected === 'Mensal'
+                            ? 'bg-emidias-primary text-white'
+                            : 'hover:bg-gray-100'
+                        }`}
+                >
+                    Mensal
+                </button>
+            </div>
         </div>
     );
 }
@@ -304,8 +318,8 @@ export function CoordinateEditor({ value, onChange, onClose, type }: CoordinateE
                 onBlur={handleBlur}
                 onKeyDown={handleKeyDown}
                 className={`w-full h-full px-2 text-sm border-2 focus:outline-none ${error
-                        ? 'border-red-500'
-                        : 'border-emidias-primary'
+                    ? 'border-red-500'
+                    : 'border-emidias-primary'
                     }`}
                 placeholder={type === 'latitude' ? 'Ex: -23.5615' : 'Ex: -46.6558'}
                 autoFocus
