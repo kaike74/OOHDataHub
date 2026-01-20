@@ -566,8 +566,8 @@ export default function DataGridStep() {
                     />
                     {validation && (
                         <div className="ml-auto flex items-center gap-1">
-                            {validation.severity === 'error' && <span className="text-red-600 text-xs">❌</span>}
-                            {validation.severity === 'warning' && <span className="text-yellow-600 text-xs">⚠️</span>}
+                            {validation.severity === 'error' ? <span className="text-red-600 text-xs">❌</span> : null}
+                            {validation.severity === 'warning' ? <span className="text-yellow-600 text-xs">⚠️</span> : null}
                         </div>
                     )}
                 </div>
@@ -582,8 +582,8 @@ export default function DataGridStep() {
                 {value != null ? String(value) : <span className="text-gray-300 italic">vazio</span>}
                 {validation && (
                     <div className="ml-auto flex items-center gap-1">
-                        {validation.severity === 'error' && <span className="text-red-600 text-xs font-bold">❌</span>}
-                        {validation.severity === 'warning' && <span className="text-yellow-600 text-xs font-bold">⚠️</span>}
+                        {validation.severity === 'error' ? <span className="text-red-600 text-xs font-bold">❌</span> : null}
+                        {validation.severity === 'warning' ? <span className="text-yellow-600 text-xs font-bold">⚠️</span> : null}
                     </div>
                 )}
             </div>
