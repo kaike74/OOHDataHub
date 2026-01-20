@@ -1294,3 +1294,28 @@
 .signal-flow {
   filter: drop-shadow(0 0 3px rgba(252, 30, 117, 0.8)) drop-shadow(0 0 6px rgba(252, 30, 117, 0.4));
 }
+/* 
+   REACT DATA GRID - DRAG FILL HANDLE
+    */
+
+/* Make fill handle visible and styled */
+.rdg-cell[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--emidias-primary);
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: crosshair;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.rdg-cell[aria-selected='true']::after:hover {
+  background-color: var(--emidias-accent);
+  transform: scale(1.2);
+}
+
