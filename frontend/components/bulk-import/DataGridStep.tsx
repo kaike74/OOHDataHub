@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
-import { normalizeField } from '@/lib/dataNormalizers';
+import { normalizeField, analyzeColumnContent, validateColumnMapping } from '@/lib/dataNormalizers';
 import { CellDiff } from './CorrectionDiff';
 import { TiposEditor, MedidasEditor, PeriodoEditor, CoordinateEditor } from './CustomCellEditors';
 import { TiposMultiSelectEditor } from './TiposMultiSelectEditor';
@@ -39,8 +39,8 @@ const FIELD_OPTIONS = [
 // Fields that should NOT be normalized (user-defined, keep as-is)
 const NO_NORMALIZE_FIELDS = ['codigo_ooh', 'endereco', 'observacoes'];
 
-// Auto-detect column mapping based on header name
-function detectColumnMapping(header: string): string {
+// Auto-detect column mapping based on header name AND content
+function detectColumnMapping(header: string, columnValues?: any[]): string {
     const normalized = header.toLowerCase().trim();
 
     const mappings: Record<string, string> = {
@@ -61,8 +61,48 @@ function detectColumnMapping(header: string): string {
         'papel': 'valor_papel', 'lona': 'valor_lona',
     };
 
+    // First try header name matching
+    let headerScore = 0;
+    let headerMatch = 'ignore';
+
     for (const [key, value] of Object.entries(mappings)) {
-        if (normalized.includes(key)) return value;
+        if (normalized.includes(key)) {
+            headerScore = 0.8; // High confidence from header
+            headerMatch = value;
+            break;
+        }
+    }
+
+    // If we have column values, analyze content
+    if (columnValues && columnValues.length > 0) {
+        const contentAnalysis = analyzeColumnContent(columnValues);
+
+        // Combine scores: header (0.8 weight) + content (1.0 weight)
+        // If both agree, very high confidence
+        // If only one matches, use the one with higher confidence
+
+        if (headerMatch !== 'ignore' && contentAnalysis.fieldType !== 'ignore') {
+            // Both have suggestions
+            if (headerMatch === contentAnalysis.fieldType) {
+                // Perfect match - use it
+                return headerMatch;
+            } else if (contentAnalysis.confidence > 0.7) {
+                // Content analysis is very confident, prefer it
+                return contentAnalysis.fieldType;
+            } else {
+                // Header wins
+                return headerMatch;
+            }
+        } else if (contentAnalysis.fieldType !== 'ignore' && contentAnalysis.confidence >= 0.5) {
+            // Only content analysis has a suggestion
+            return contentAnalysis.fieldType;
+        } else if (headerMatch !== 'ignore') {
+            // Only header has a suggestion
+            return headerMatch;
+        }
+    } else if (headerMatch !== 'ignore') {
+        // No content available, use header only
+        return headerMatch;
     }
 
     return 'ignore';
@@ -110,10 +150,12 @@ export default function DataGridStep() {
                 const columnHeaders = jsonData[0].map(h => String(h || ''));
                 const rawData = jsonData.slice(1);
 
-                // Auto-detect column mapping
+                // Auto-detect column mapping with content analysis
                 const autoMapping: Record<string, string> = {};
                 columnHeaders.forEach((header, idx) => {
-                    autoMapping[idx.toString()] = detectColumnMapping(header);
+                    // Extract column values for content analysis
+                    const columnValues = rawData.map(row => row[idx]);
+                    autoMapping[idx.toString()] = detectColumnMapping(header, columnValues);
                 });
 
                 // Normalize data SELECTIVELY (skip codigo_ooh, endereco, observacoes)
@@ -213,16 +255,17 @@ export default function DataGridStep() {
         }
     }, [rawRows, headers]);
 
-    // Auto-detect mappings
+    // Auto-detect mappings with content analysis
     useEffect(() => {
-        if (headers.length > 0 && Object.keys(mapping).length === 0) {
+        if (headers.length > 0 && Object.keys(mapping).length === 0 && rawRows.length > 0) {
             const autoMapping: Record<string, string> = {};
             headers.forEach((header, idx) => {
-                autoMapping[idx.toString()] = detectColumnMapping(header);
+                const columnValues = rawRows.map(row => row[idx]);
+                autoMapping[idx.toString()] = detectColumnMapping(header, columnValues);
             });
             setMapping(autoMapping);
         }
-    }, [headers]);
+    }, [headers, rawRows]);
 
     // Validate all points
     useEffect(() => {
@@ -247,7 +290,10 @@ export default function DataGridStep() {
                     }
                 }
 
-                const results = rawRows.map((row, idx) => {
+                // NEW: Track cell-level validations
+                const cellValidations: Record<string, { severity: 'error' | 'warning' | 'valid'; message: string; suggestion?: string }> = {};
+
+                const results = rawRows.map((row, rowIdx) => {
                     const errors: { field: string; message: string; severity: 'error' | 'warning' }[] = [];
                     const normalizedRow: any = {};
 
@@ -255,6 +301,7 @@ export default function DataGridStep() {
                         if (fieldName === 'ignore') return;
 
                         const value = row[parseInt(colIdx)];
+                        const cellKey = `${rowIdx}-${colIdx}`;
 
                         // Skip normalization for user-defined fields
                         if (NO_NORMALIZE_FIELDS.includes(fieldName)) {
@@ -265,8 +312,20 @@ export default function DataGridStep() {
 
                             if (!result.success && result.error) {
                                 errors.push({ field: fieldName, message: result.error, severity: 'error' });
+                                // Store cell-level error
+                                cellValidations[cellKey] = {
+                                    severity: 'error',
+                                    message: result.error,
+                                    suggestion: result.suggestion
+                                };
                             } else if (result.warning) {
                                 errors.push({ field: fieldName, message: result.warning, severity: 'warning' });
+                                // Store cell-level warning
+                                cellValidations[cellKey] = {
+                                    severity: 'warning',
+                                    message: result.warning,
+                                    suggestion: result.suggestion
+                                };
                             }
                         }
                     });
@@ -276,8 +335,32 @@ export default function DataGridStep() {
                     requiredFields.forEach(field => {
                         if (!normalizedRow[field]) {
                             errors.push({ field, message: `${field} é obrigatório`, severity: 'error' });
+                            // Find column index for this field
+                            const colIdx = Object.entries(mapping).find(([_, f]) => f === field)?.[0];
+                            if (colIdx) {
+                                const cellKey = `${rowIdx}-${colIdx}`;
+                                cellValidations[cellKey] = {
+                                    severity: 'error',
+                                    message: `Campo obrigatório`,
+                                    suggestion: undefined
+                                };
+                            }
                         }
                     });
+
+                    // Check valor_locacao requires periodo_locacao
+                    if (normalizedRow.valor_locacao && !normalizedRow.periodo_locacao) {
+                        errors.push({ field: 'periodo_locacao', message: 'Período obrigatório quando há valor de locação', severity: 'error' });
+                        const colIdx = Object.entries(mapping).find(([_, f]) => f === 'periodo_locacao')?.[0];
+                        if (colIdx) {
+                            const cellKey = `${rowIdx}-${colIdx}`;
+                            cellValidations[cellKey] = {
+                                severity: 'error',
+                                message: 'Período obrigatório quando há valor de locação',
+                                suggestion: 'Bissemanal'
+                            };
+                        }
+                    }
 
                     // Check duplicates
                     const codigo = normalizedRow.codigo_ooh;
@@ -285,9 +368,27 @@ export default function DataGridStep() {
                         const duplicateCount = allCodes.filter(c => c === codigo).length;
                         if (duplicateCount > 1) {
                             errors.push({ field: 'codigo_ooh', message: 'Código duplicado no arquivo', severity: 'error' });
+                            const colIdx = Object.entries(mapping).find(([_, f]) => f === 'codigo_ooh')?.[0];
+                            if (colIdx) {
+                                const cellKey = `${rowIdx}-${colIdx}`;
+                                cellValidations[cellKey] = {
+                                    severity: 'error',
+                                    message: 'Código duplicado no arquivo',
+                                    suggestion: undefined
+                                };
+                            }
                         }
                         if (existingCodes.includes(codigo)) {
                             errors.push({ field: 'codigo_ooh', message: 'Código já existe no sistema', severity: 'error' });
+                            const colIdx = Object.entries(mapping).find(([_, f]) => f === 'codigo_ooh')?.[0];
+                            if (colIdx) {
+                                const cellKey = `${rowIdx}-${colIdx}`;
+                                cellValidations[cellKey] = {
+                                    severity: 'error',
+                                    message: 'Código já existe no sistema',
+                                    suggestion: undefined
+                                };
+                            }
                         }
                     }
 
@@ -304,6 +405,16 @@ export default function DataGridStep() {
                 setValidationResults(results);
                 setColumnMapping(mapping);
 
+                // Store cell validations in session
+                if (session) {
+                    useBulkImportStore.setState({
+                        session: {
+                            ...session,
+                            cellValidations
+                        }
+                    });
+                }
+
                 setRows(prevRows => prevRows.map((row, idx) => ({
                     ...row,
                     status: (results[idx]?.status || 'valid') as 'valid' | 'warning' | 'error'
@@ -314,7 +425,7 @@ export default function DataGridStep() {
         };
 
         validateAll();
-    }, [mapping, rawRows, setColumnMapping]);
+    }, [mapping, rawRows, setColumnMapping, session]);
 
     // Summary
     const summary = useMemo(() => {
@@ -427,28 +538,54 @@ export default function DataGridStep() {
         );
     };
 
-    // Cell renderer with diff
+    // Cell renderer with diff and validation colors
     const CellRenderer = ({ row, column }: RenderCellProps<GridRow>) => {
         const colIdx = parseInt(column.key.replace('col_', ''));
         const correctionKey = `${row.id}-${colIdx}`;
         const correction = session?.cellCorrections?.[correctionKey];
+        const validation = session?.cellValidations?.[correctionKey];
         const value = row[column.key];
+
+        // Determine cell styling based on validation
+        let cellClassName = "w-full h-full flex items-center px-2";
+        if (validation) {
+            if (validation.severity === 'error') {
+                cellClassName += " bg-red-100 border-l-2 border-red-400";
+            } else if (validation.severity === 'warning') {
+                cellClassName += " bg-yellow-100 border-l-2 border-yellow-400";
+            }
+        }
 
         if (correction) {
             return (
-                <div className="w-full h-full flex items-center px-2">
+                <div className={cellClassName} title={validation?.message}>
                     <CellDiff
                         original={correction.original}
                         corrected={correction.corrected}
                         isEditing={false}
                     />
+                    {validation && (
+                        <div className="ml-auto flex items-center gap-1">
+                            {validation.severity === 'error' && <span className="text-red-600 text-xs">❌</span>}
+                            {validation.severity === 'warning' && <span className="text-yellow-600 text-xs">⚠️</span>}
+                        </div>
+                    )}
                 </div>
             );
         }
 
         return (
-            <div className="w-full h-full flex items-center px-2">
+            <div
+                className={cellClassName}
+                title={validation ? `${validation.severity === 'error' ? '❌' : '⚠️'} ${validation.message}${validation.suggestion ? `\n💡 Sugestão: ${validation.suggestion}` : ''}` : undefined}
+            >
                 {value != null ? String(value) : <span className="text-gray-300 italic">vazio</span>}
+                {validation && (
+                    <div className="ml-auto flex items-center gap-1">
+                        {validation.severity === 'error' && <span className="text-red-600 text-xs font-bold">❌</span>}
+                        {validation.severity === 'warning' && <span className="text-yellow-600 text-xs font-bold">⚠️</span>}
+                    </div>
+                )}
             </div>
         );
     };

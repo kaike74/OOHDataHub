@@ -230,12 +230,13 @@ export function normalizeCoordinate(input: string | number): number {
 
 export function normalizeFluxo(input: string | number): number {
     if (typeof input === 'number') {
-        return input;
+        // Ensure integer only (round down if has decimals)
+        return Math.floor(input);
     }
 
     let str = String(input).trim();
 
-    // Remove TODOS pontos e vírgulas (milhar)
+    // Remove TODOS pontos e vírgulas (milhar e decimais)
     str = str.replace(/[.,]/g, '');
 
     const num = parseInt(str, 10);
@@ -253,7 +254,8 @@ export function normalizeFluxo(input: string | number): number {
 
 export function normalizeValor(input: string | number): number {
     if (typeof input === 'number') {
-        return input;
+        // Ensure exactly 2 decimal places
+        return parseFloat(input.toFixed(2));
     }
 
     let str = String(input).trim();
@@ -284,7 +286,8 @@ export function normalizeValor(input: string | number): number {
         throw new Error('Valor inválido');
     }
 
-    return num;
+    // Return with exactly 2 decimal places
+    return parseFloat(num.toFixed(2));
 }
 
 // ============================================================================
@@ -427,6 +430,7 @@ export interface NormalizationResult {
     value: any;
     warning?: string;
     error?: string;
+    suggestion?: string; // Suggested correction for user
 }
 
 export function normalizeField(
@@ -577,5 +581,220 @@ export function normalizeFieldWithDiff(
         original,
         hasChange,
         fieldType: fieldName
+    };
+}
+
+// ============================================================================
+// INTELLIGENT COLUMN MAPPING - CONTENT ANALYSIS
+// ============================================================================
+
+export interface ColumnAnalysisResult {
+    fieldType: string;
+    confidence: number; // 0-1
+    reason: string;
+}
+
+/**
+ * Analyzes column content to detect field type
+ * Examines first 5-10 non-empty values to identify patterns
+ */
+export function analyzeColumnContent(values: any[]): ColumnAnalysisResult {
+    // Get first 10 non-empty values for analysis
+    const sampleValues = values
+        .filter(v => v != null && String(v).trim() !== '')
+        .slice(0, 10);
+
+    if (sampleValues.length === 0) {
+        return { fieldType: 'ignore', confidence: 0, reason: 'Coluna vazia' };
+    }
+
+    // Pattern detection scores
+    const scores: Record<string, { score: number; reason: string }> = {};
+
+    // Check for coordinates (latitude/longitude)
+    const coordPattern = /^-?\d+[.,\-]\d+$/;
+    const coordCount = sampleValues.filter(v => coordPattern.test(String(v).trim())).length;
+    if (coordCount > 0) {
+        const avgValue = sampleValues
+            .map(v => {
+                const str = String(v).replace(/,/g, '.').replace(/-/g, '.');
+                return parseFloat(str);
+            })
+            .filter(n => !isNaN(n))
+            .reduce((sum, n) => sum + n, 0) / sampleValues.length;
+
+        // Latitude range: -90 to 0 (Brazil is negative)
+        if (avgValue >= -90 && avgValue <= 0) {
+            scores['latitude'] = {
+                score: coordCount / sampleValues.length,
+                reason: 'Padrão de coordenada (latitude)'
+            };
+        }
+        // Longitude range: -75 to -30 (Brazil)
+        if (avgValue >= -75 && avgValue <= -30) {
+            scores['longitude'] = {
+                score: coordCount / sampleValues.length,
+                reason: 'Padrão de coordenada (longitude)'
+            };
+        }
+    }
+
+    // Check for addresses (contains street indicators)
+    const addressKeywords = ['rua', 'r.', 'av.', 'avenida', 'alameda', 'al.', 'travessa', 'tv.', 'estrada'];
+    const addressCount = sampleValues.filter(v => {
+        const lower = String(v).toLowerCase();
+        return addressKeywords.some(kw => lower.includes(kw)) || /\d+/.test(lower);
+    }).length;
+    if (addressCount > 0) {
+        scores['endereco'] = {
+            score: addressCount / sampleValues.length,
+            reason: 'Contém indicadores de endereço'
+        };
+    }
+
+    // Check for monetary values
+    const moneyPattern = /^R?\$?\s*\d+[.,]?\d*$/;
+    const moneyCount = sampleValues.filter(v => moneyPattern.test(String(v).trim())).length;
+    if (moneyCount > 0) {
+        scores['valor_locacao'] = {
+            score: moneyCount / sampleValues.length * 0.8, // Lower confidence, could be other valor
+            reason: 'Padrão de valor monetário'
+        };
+    }
+
+    // Check for measurements (NxN format)
+    const medidaPattern = /\d+\s*[xX×]\s*\d+/;
+    const medidaCount = sampleValues.filter(v => medidaPattern.test(String(v))).length;
+    if (medidaCount > 0) {
+        scores['medidas'] = {
+            score: medidaCount / sampleValues.length,
+            reason: 'Padrão de medidas (NxN)'
+        };
+    }
+
+    // Check for flow (large integers)
+    const fluxoPattern = /^\d{3,}$/;
+    const fluxoCount = sampleValues.filter(v => fluxoPattern.test(String(v).replace(/[.,]/g, ''))).length;
+    if (fluxoCount > 0) {
+        scores['fluxo'] = {
+            score: fluxoCount / sampleValues.length * 0.7,
+            reason: 'Números grandes (possível fluxo)'
+        };
+    }
+
+    // Check for period (bissemanal/mensal)
+    const periodoKeywords = ['bi', 'semanal', 'mensal', 'quinzen', 'mes', 'mês'];
+    const periodoCount = sampleValues.filter(v => {
+        const lower = String(v).toLowerCase();
+        return periodoKeywords.some(kw => lower.includes(kw));
+    }).length;
+    if (periodoCount > 0) {
+        scores['periodo_locacao'] = {
+            score: periodoCount / sampleValues.length,
+            reason: 'Contém termos de período'
+        };
+    }
+
+    // Check for tipos (media types)
+    const tiposKeywords = ['outdoor', 'front', 'back', 'led', 'digital', 'painel', 'totem', 'busdoor'];
+    const tiposCount = sampleValues.filter(v => {
+        const lower = String(v).toLowerCase();
+        return tiposKeywords.some(kw => lower.includes(kw));
+    }).length;
+    if (tiposCount > 0) {
+        scores['tipos'] = {
+            score: tiposCount / sampleValues.length,
+            reason: 'Contém tipos de mídia OOH'
+        };
+    }
+
+    // Check for UF (2-letter state codes)
+    const ufPattern = /^[A-Z]{2}$/;
+    const ufCount = sampleValues.filter(v => ufPattern.test(String(v).trim().toUpperCase())).length;
+    if (ufCount > 0) {
+        scores['uf'] = {
+            score: ufCount / sampleValues.length,
+            reason: 'Padrão de UF (2 letras)'
+        };
+    }
+
+    // Find best match
+    let bestField = 'ignore';
+    let bestScore = 0;
+    let bestReason = 'Não identificado';
+
+    for (const [field, { score, reason }] of Object.entries(scores)) {
+        if (score > bestScore) {
+            bestScore = score;
+            bestField = field;
+            bestReason = reason;
+        }
+    }
+
+    // Require minimum confidence of 0.5
+    if (bestScore < 0.5) {
+        return { fieldType: 'ignore', confidence: bestScore, reason: 'Confiança baixa' };
+    }
+
+    return { fieldType: bestField, confidence: bestScore, reason: bestReason };
+}
+
+export interface ColumnMappingValidation {
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+    duplicates: Record<string, number[]>; // fieldType -> column indices
+}
+
+/**
+ * Validates column mapping to ensure required fields are present and no duplicates
+ */
+export function validateColumnMapping(mapping: Record<string, string>): ColumnMappingValidation {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    const duplicates: Record<string, number[]> = {};
+
+    // Required fields
+    const requiredFields = ['codigo_ooh', 'endereco', 'latitude', 'longitude'];
+    const mappedFields = Object.values(mapping).filter(v => v !== 'ignore');
+
+    // Check for missing required fields
+    for (const field of requiredFields) {
+        if (!mappedFields.includes(field)) {
+            errors.push(`Campo obrigatório não mapeado: ${field}`);
+        }
+    }
+
+    // Check for duplicates
+    const fieldCounts: Record<string, number[]> = {};
+    for (const [colIdx, fieldType] of Object.entries(mapping)) {
+        if (fieldType === 'ignore') continue;
+
+        if (!fieldCounts[fieldType]) {
+            fieldCounts[fieldType] = [];
+        }
+        fieldCounts[fieldType].push(parseInt(colIdx));
+    }
+
+    for (const [fieldType, colIndices] of Object.entries(fieldCounts)) {
+        if (colIndices.length > 1) {
+            duplicates[fieldType] = colIndices;
+            errors.push(`Campo "${fieldType}" mapeado em múltiplas colunas`);
+        }
+    }
+
+    // Warnings for recommended fields
+    const recommendedFields = ['cidade', 'uf', 'medidas', 'tipos'];
+    for (const field of recommendedFields) {
+        if (!mappedFields.includes(field)) {
+            warnings.push(`Campo recomendado não mapeado: ${field}`);
+        }
+    }
+
+    return {
+        isValid: errors.length === 0,
+        errors,
+        warnings,
+        duplicates
     };
 }
