@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useBulkImportStore } from '@/stores/useBulkImportStore';
-import { DataGrid, Column, RenderCellProps, RenderHeaderCellProps, FillEvent } from 'react-data-grid';
+import { DataGrid, Column, RenderCellProps, RenderHeaderCellProps, RenderEditCellProps, FillEvent } from 'react-data-grid';
 import { CheckCircle2, AlertTriangle, XCircle, Filter, Upload, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
@@ -10,6 +10,7 @@ import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import { normalizeField } from '@/lib/dataNormalizers';
 import { CellDiff } from './CorrectionDiff';
+import { TiposEditor, MedidasEditor, PeriodoEditor, CoordinateEditor } from './CustomCellEditors';
 import 'react-data-grid/lib/styles.css';
 
 // Field options for column mapping
@@ -464,14 +465,19 @@ export default function DataGridStep() {
 
         return (
             <div className="flex flex-col gap-1 py-1">
+                {/* Original Excel header - PROMINENT */}
+                <div className="text-xs font-bold text-gray-900 truncate" title={originalHeader}>
+                    {originalHeader || '(sem nome)'}
+                </div>
+                {/* Mapped field - secondary */}
                 <select
                     value={mappedField}
                     onChange={(e) => handleMappingChange(colIdx, e.target.value)}
                     className={cn(
-                        'text-xs font-semibold px-2 py-1 rounded border focus:outline-none focus:ring-2 focus:ring-emidias-primary/20',
+                        'text-xs font-medium px-2 py-0.5 rounded border focus:outline-none focus:ring-1 focus:ring-emidias-primary/30',
                         fieldOption?.required
                             ? 'bg-pink-50 border-emidias-accent text-emidias-accent'
-                            : 'bg-white border-gray-300 text-gray-700'
+                            : 'bg-gray-50 border-gray-200 text-gray-600'
                     )}
                     onClick={(e) => e.stopPropagation()}
                 >
@@ -481,9 +487,6 @@ export default function DataGridStep() {
                         </option>
                     ))}
                 </select>
-                <span className="text-xs text-gray-400 truncate">
-                    ↓ {originalHeader || '(vazio)'}
-                </span>
             </div>
         );
     };
@@ -521,6 +524,47 @@ export default function DataGridStep() {
         return <XCircle size={16} className="text-red-500" />;
     };
 
+    // Custom edit cell renderer based on field type
+    const EditCellRenderer = ({ row, column, onRowChange, onClose }: RenderEditCellProps<GridRow>) => {
+        const colIdx = parseInt(column.key.replace('col_', ''));
+        const fieldName = mapping[colIdx.toString()];
+        const value = row[column.key];
+
+        const handleChange = (newValue: any) => {
+            onRowChange({ ...row, [column.key]: newValue });
+        };
+
+        // Custom editors for specific field types
+        switch (fieldName) {
+            case 'tipos':
+                return <TiposEditor value={String(value || '')} onChange={handleChange} onClose={onClose} />;
+
+            case 'medidas':
+                return <MedidasEditor value={String(value || '')} onChange={handleChange} onClose={onClose} />;
+
+            case 'periodo_locacao':
+                return <PeriodoEditor value={String(value || '')} onChange={handleChange} onClose={onClose} />;
+
+            case 'latitude':
+                return <CoordinateEditor value={value} onChange={handleChange} onClose={onClose} type="latitude" />;
+
+            case 'longitude':
+                return <CoordinateEditor value={value} onChange={handleChange} onClose={onClose} type="longitude" />;
+
+            default:
+                // Default text input for all other fields
+                return (
+                    <input
+                        className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
+                        value={String(value || '')}
+                        onChange={(e) => handleChange(e.target.value)}
+                        onBlur={() => onClose()}
+                        autoFocus
+                    />
+                );
+        }
+    };
+
     // Create columns
     const columns: Column<GridRow>[] = useMemo(() => {
         const cols: Column<GridRow>[] = [
@@ -554,8 +598,10 @@ export default function DataGridStep() {
                 name: header,
                 width: 180,
                 resizable: true,
+                editable: true, // Make all cells editable
                 renderHeaderCell: HeaderRenderer,
                 renderCell: CellRenderer,
+                renderEditCell: EditCellRenderer,
             });
         });
 
@@ -678,9 +724,6 @@ export default function DataGridStep() {
                     rowClass={rowClassName}
                     style={{ height: 500 }}
                     className="rdg-light"
-                    fillHandle={{
-                        onFill: handleFill,
-                    }}
                 />
             </div>
 

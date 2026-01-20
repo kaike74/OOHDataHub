@@ -18,18 +18,7 @@ interface Custo {
   periodo: string;
 }
 
-const TIPOS_OOH = [
-  'Outdoor',
-  'Indoor',
-  'Frontlight',
-  'Led',
-  'Vertical',
-  'Iluminado',
-  'Empena',
-  'Mub',
-  'Painel rodoviário',
-  'Abrigo'
-];
+import { TIPOS_OOH } from '@/constants/oohTypes';
 
 interface GooglePrediction {
   description: string;

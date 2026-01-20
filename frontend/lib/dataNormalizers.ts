@@ -190,6 +190,11 @@ export function normalizeCoordinate(input: string | number): number {
     // Converte para string e remove espaços
     let str = String(input).trim();
 
+    // Se for vazio ou apenas hífen/traço, é inválido
+    if (!str || str === '-' || str === '–' || str === '—') {
+        throw new Error('Coordenada inválida');
+    }
+
     // Remove aspas
     str = str.replace(/["']/g, '');
 
@@ -203,7 +208,7 @@ export function normalizeCoordinate(input: string | number): number {
     }
 
     // Agora vírgula → ponto (para decimal)
-    str = str.replace(',', '.');
+    str = str.replace(/,/g, '.');
 
     const num = parseFloat(str);
 
@@ -327,28 +332,9 @@ export function normalizeCodigo(input: string): string {
         throw new Error('Código obrigatório');
     }
 
-    let clean = input.trim().toUpperCase();
-
-    // Remove espaços extras e substitui por hífen
-    clean = clean.replace(/\s+/g, '-');
-
-    // Se começa com número, adiciona OOH-
-    if (/^\d/.test(clean)) {
-        clean = 'OOH-' + clean;
-    }
-
-    // Garante que começa com OOH
-    if (!clean.startsWith('OOH')) {
-        clean = 'OOH-' + clean;
-    }
-
-    // Garante que tem hífen após OOH (se não tiver)
-    clean = clean.replace(/^OOH([^-])/, 'OOH-$1');
-
-    // Remove hífens duplicados
-    clean = clean.replace(/-+/g, '-');
-
-    return clean;
+    // USER-DEFINED: Return as-is, only trim whitespace
+    // No auto-prefixing, no uppercase conversion
+    return input.trim();
 }
 
 // ============================================================================
@@ -427,22 +413,9 @@ export function normalizeEndereco(input: string): string {
         return '';
     }
 
-    let clean = input.trim();
-
-    // Capitaliza primeira letra de cada palavra
-    clean = clean
-        .split(' ')
-        .map(word => {
-            // Mantém abreviações em maiúsculo (AV, R, etc)
-            if (word.length <= 2 && word === word.toUpperCase()) {
-                return word;
-            }
-            // Capitaliza normalmente
-            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-        })
-        .join(' ');
-
-    return clean;
+    // USER-DEFINED: Return as-is, only trim whitespace
+    // No capitalization changes
+    return input.trim();
 }
 
 // ============================================================================
