@@ -1323,13 +1323,7 @@
    REACT DATA GRID - CUSTOM STYLES
     */
 
-/* Prevent text selection during drag-fill */
-.rdg {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
+
 
 /* Make fill handle visible and styled */
 .rdg-cell[aria-selected='true']::after {
