@@ -6,16 +6,13 @@
 export const TIPOS_OOH = [
     'Outdoor',
     'Frontlight',
-    'Backlight',
-    'Painel rodoviário',
     'Led',
+    'Vertical',
     'Iluminado',
-    'Digital',
-    'Relógio de rua',
     'Empena',
-    'Totem',
-    'Busdoor',
-    'Taxidoor'
+    'Mub',
+    'Painel rodoviário',
+    'Abrigo e passarela'
 ] as const;
 
 export type TipoOOH = typeof TIPOS_OOH[number];

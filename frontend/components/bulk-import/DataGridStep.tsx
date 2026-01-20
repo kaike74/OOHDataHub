@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useBulkImportStore } from '@/stores/useBulkImportStore';
 import { DataGrid, Column, RenderCellProps, RenderHeaderCellProps, RenderEditCellProps, FillEvent } from 'react-data-grid';
 import { CheckCircle2, AlertTriangle, XCircle, Filter, Upload, Loader2 } from 'lucide-react';
@@ -457,17 +457,26 @@ export default function DataGridStep() {
     const EditCellRenderer = ({ row, column, onRowChange, onClose }: RenderEditCellProps<GridRow>) => {
         const colIdx = parseInt(column.key.replace('col_', ''));
         const fieldName = mapping[colIdx.toString()];
-        const value = row[column.key];
+        const initialValue = row[column.key];
+
+        // Use ref to track current value to avoid stale closures
+        const currentValueRef = useRef(initialValue);
+        const [localValue, setLocalValue] = useState(initialValue);
 
         const handleChange = (newValue: any) => {
+            currentValueRef.current = newValue;
+            setLocalValue(newValue);
             onRowChange({ ...row, [column.key]: newValue });
         };
 
         const handleBlurAndNormalize = () => {
+            // Use the ref value to ensure we have the latest value
+            const valueToNormalize = currentValueRef.current;
+
             // Normalize on blur for specific fields
             if (fieldName && fieldName !== 'ignore' && !NO_NORMALIZE_FIELDS.includes(fieldName)) {
-                const result = normalizeField(fieldName, value);
-                if (result.success && result.value !== value) {
+                const result = normalizeField(fieldName, valueToNormalize);
+                if (result.success && result.value !== valueToNormalize) {
                     onRowChange({ ...row, [column.key]: result.value });
                 }
             }
@@ -487,7 +496,7 @@ export default function DataGridStep() {
             case 'tipos':
                 return (
                     <TiposMultiSelectEditor
-                        value={String(value || '')}
+                        value={String(localValue || '')}
                         onChange={handleChange}
                         onClose={onClose}
                     />
@@ -497,7 +506,7 @@ export default function DataGridStep() {
                 return (
                     <select
                         className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
-                        value={String(value || 'Bissemanal')}
+                        value={String(localValue || 'Bissemanal')}
                         onChange={(e) => {
                             handleChange(e.target.value);
                             onClose();
@@ -513,14 +522,17 @@ export default function DataGridStep() {
 
             case 'latitude':
             case 'longitude':
-                return <CoordinateEditor value={value} onChange={handleChange} onClose={onClose} type={fieldName as 'latitude' | 'longitude'} />;
+                return <CoordinateEditor value={localValue} onChange={handleChange} onClose={onClose} type={fieldName as 'latitude' | 'longitude'} />;
+
+            case 'medidas':
+                return <MedidasEditor value={String(localValue || '')} onChange={handleChange} onClose={onClose} />;
 
             default:
                 // Default text input with normalization on blur
                 return (
                     <input
                         className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
-                        value={String(value || '')}
+                        value={String(localValue || '')}
                         onChange={(e) => handleChange(e.target.value)}
                         onBlur={handleBlurAndNormalize}
                         onKeyDown={handleKeyDown}
