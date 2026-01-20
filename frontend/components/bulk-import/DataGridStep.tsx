@@ -531,28 +531,55 @@ export default function DataGridStep() {
         );
     };
 
-    // Cell renderer with diff (validation display temporarily disabled)
+    // Cell renderer with diff and validation colors
     const CellRenderer = ({ row, column }: RenderCellProps<GridRow>) => {
         const colIdx = parseInt(column.key.replace('col_', ''));
         const correctionKey = `${row.id}-${colIdx}`;
         const correction = session?.cellCorrections?.[correctionKey];
         const value = row[column.key];
 
+        // Get validation from validationResults
+        const rowValidation = validationResults[row.id];
+        const fieldName = mapping[colIdx.toString()];
+        const cellError = rowValidation?.errors?.find(e => e.field === fieldName);
+
+        // Determine cell styling
+        let cellClassName = "w-full h-full flex items-center px-2";
+        if (cellError) {
+            if (cellError.severity === 'error') {
+                cellClassName += " bg-red-50 border-l-2 border-red-400";
+            } else if (cellError.severity === 'warning') {
+                cellClassName += " bg-yellow-50 border-l-2 border-yellow-400";
+            }
+        }
+
         if (correction) {
             return (
-                <div className="w-full h-full flex items-center px-2">
+                <div className={cellClassName} title={cellError?.message}>
                     <CellDiff
                         original={correction.original}
                         corrected={correction.corrected}
                         isEditing={false}
                     />
+                    {cellError && cellError.severity === 'error' && (
+                        <span className="ml-auto text-red-600 text-xs">❌</span>
+                    )}
+                    {cellError && cellError.severity === 'warning' && (
+                        <span className="ml-auto text-yellow-600 text-xs">⚠️</span>
+                    )}
                 </div>
             );
         }
 
         return (
-            <div className="w-full h-full flex items-center px-2">
+            <div className={cellClassName} title={cellError?.message}>
                 {value != null ? String(value) : <span className="text-gray-300 italic">vazio</span>}
+                {cellError && cellError.severity === 'error' && (
+                    <span className="ml-auto text-red-600 text-xs font-bold">❌</span>
+                )}
+                {cellError && cellError.severity === 'warning' && (
+                    <span className="ml-auto text-yellow-600 text-xs font-bold">⚠️</span>
+                )}
             </div>
         );
     };

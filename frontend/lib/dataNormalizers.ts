@@ -639,11 +639,14 @@ export function analyzeColumnContent(values: any[]): ColumnAnalysisResult {
         }
     }
 
-    // Check for addresses (contains street indicators)
-    const addressKeywords = ['rua', 'r.', 'av.', 'avenida', 'alameda', 'al.', 'travessa', 'tv.', 'estrada'];
+    // Check for addresses (must have street indicators AND numbers)
+    const addressKeywords = ['rua', 'r ', 'av.', 'av ', 'avenida', 'alameda', 'al.', 'travessa', 'tv.', 'estrada', 'rod.', 'rodovia'];
     const addressCount = sampleValues.filter(v => {
         const lower = String(v).toLowerCase();
-        return addressKeywords.some(kw => lower.includes(kw)) || /\d+/.test(lower);
+        const hasKeyword = addressKeywords.some(kw => lower.includes(kw));
+        const hasNumber = /\d+/.test(lower);
+        // Must have BOTH keyword and number to be considered address
+        return hasKeyword && hasNumber;
     }).length;
     if (addressCount > 0) {
         scores['endereco'] = {
