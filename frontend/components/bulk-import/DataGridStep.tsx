@@ -9,9 +9,7 @@ import { api } from '@/lib/api';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import { normalizeField, analyzeColumnContent, validateColumnMapping } from '@/lib/dataNormalizers';
-import { CellDiff } from './CorrectionDiff';
 import { TiposEditor, MedidasEditor, PeriodoEditor, CoordinateEditor } from './CustomCellEditors';
-import { TiposMultiSelectEditor } from './TiposMultiSelectEditor';
 import { TIPOS_OOH, PERIODO_LOCACAO } from '@/constants/oohTypes';
 import 'react-data-grid/lib/styles.css';
 
@@ -606,10 +604,14 @@ export default function DataGridStep() {
         switch (fieldName) {
             case 'tipos':
                 return (
-                    <TiposMultiSelectEditor
+                    <input
+                        className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
                         value={String(localValue || '')}
-                        onChange={handleChange}
-                        onClose={onClose}
+                        onChange={(e) => handleChange(e.target.value)}
+                        onBlur={handleBlurAndNormalize}
+                        onKeyDown={handleKeyDown}
+                        autoFocus
+                        placeholder="Ex: Outdoor, Frontlight"
                     />
                 );
 
