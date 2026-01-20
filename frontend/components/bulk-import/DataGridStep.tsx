@@ -16,7 +16,6 @@ const FIELD_OPTIONS = [
     { value: 'endereco', label: 'Endereço', required: true },
     { value: 'latitude', label: 'Latitude', required: true },
     { value: 'longitude', label: 'Longitude', required: true },
-    { value: 'pais', label: 'País', required: false },
     { value: 'medidas', label: 'Medidas', required: false },
     { value: 'fluxo', label: 'Fluxo', required: false },
     { value: 'tipos', label: 'Tipos', required: false },
@@ -297,25 +296,28 @@ export default function DataGridStep() {
                     value={mappedField}
                     onChange={(e) => handleMappingChange(colIdx, e.target.value)}
                     className={cn(
-                        'text-xs font-medium px-2 py-1 rounded border focus:outline-none focus:ring-1 focus:ring-emidias-primary/30',
+                        'text-xs font-medium px-2 py-1 rounded border focus:outline-none focus:ring-1 focus:ring-emidias-primary/30 transition-colors',
                         fieldOption?.required
                             ? 'bg-pink-50 border-emidias-accent text-emidias-accent'
                             : 'bg-gray-50 border-gray-200 text-gray-600'
                     )}
                     onClick={(e) => e.stopPropagation()}
+                    title={mappedField !== 'ignore' ? `Mapeado como: ${fieldOption?.label}` : 'Selecione um campo'}
                 >
                     {FIELD_OPTIONS.map(opt => {
                         const isSelectedElsewhere = Object.entries(mapping).some(([key, val]) => {
                             return val === opt.value && key !== colIdx.toString();
                         });
+                        const isDisabled = isSelectedElsewhere && opt.value !== 'ignore';
 
                         return (
                             <option
                                 key={opt.value}
                                 value={opt.value}
-                                disabled={isSelectedElsewhere && opt.value !== 'ignore'}
+                                disabled={isDisabled}
+                                style={isDisabled ? { color: '#ef4444', fontWeight: 'bold' } : {}}
                             >
-                                {opt.label} {isSelectedElsewhere && opt.value !== 'ignore' ? '(já selecionado)' : ''}
+                                {opt.label}{isDisabled ? ' ⛔' : ''}
                             </option>
                         );
                     })}
@@ -324,13 +326,35 @@ export default function DataGridStep() {
         );
     };
 
-    // Cell renderer - simple, read-only
+    // Cell renderer - simple, read-only with formatting
     const CellRenderer = ({ row, column }: RenderCellProps<GridRow>) => {
+        const colIdx = parseInt(column.key.replace('col_', ''));
+        const fieldName = mapping[colIdx.toString()];
         const value = row[column.key];
+
+        // Format display based on field type
+        let displayValue = value != null ? String(value) : null;
+
+        if (displayValue && fieldName) {
+            // Format monetary values with R$
+            if (['valor_locacao', 'valor_papel', 'valor_lona'].includes(fieldName)) {
+                const numValue = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
+                if (!isNaN(numValue)) {
+                    displayValue = numValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                }
+            }
+            // Format fluxo with thousand separator
+            else if (fieldName === 'fluxo') {
+                const numValue = parseInt(String(value).replace(/[^0-9]/g, ''));
+                if (!isNaN(numValue)) {
+                    displayValue = numValue.toLocaleString('pt-BR');
+                }
+            }
+        }
 
         return (
             <div className="w-full h-full flex items-center px-2">
-                {value != null ? String(value) : <span className="text-gray-300 italic">vazio</span>}
+                {displayValue != null ? displayValue : <span className="text-gray-300 italic">vazio</span>}
             </div>
         );
     };
@@ -388,37 +412,6 @@ export default function DataGridStep() {
 
     return (
         <div className="space-y-4">
-            {/* Summary */}
-            <div className="flex items-center gap-4 flex-wrap">
-                <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
-                    <CheckCircle2 size={16} />
-                    {summary.total} linhas detectadas
-                </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm font-medium">
-                    <CheckCircle2 size={16} />
-                    {summary.mappedCount} colunas mapeadas
-                </div>
-                {summary.allRequiredMapped && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium">
-                        <CheckCircle2 size={16} />
-                        Todos os campos obrigatórios mapeados
-                    </div>
-                )}
-                {!summary.allRequiredMapped && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg text-sm font-medium">
-                        ⚠️ Campos obrigatórios: Código OOH, Endereço, Latitude, Longitude
-                    </div>
-                )}
-
-                {/* Correction Summary */}
-                {session?.cellCorrections && Object.keys(session.cellCorrections).length > 0 && (
-                    <div className="ml-auto flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
-                        <CheckCircle2 size={16} />
-                        {Object.keys(session.cellCorrections).length} normalizações automáticas
-                    </div>
-                )}
-            </div>
-
             {/* Data Grid - READ ONLY */}
             <div className="border border-gray-200 rounded-xl overflow-hidden">
                 <DataGrid
@@ -430,13 +423,6 @@ export default function DataGridStep() {
                     style={{ height: 500 }}
                     className="rdg-light"
                 />
-            </div>
-
-            {/* Hint */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-900">
-                    💡 <strong>Dica:</strong> Revise o mapeamento das colunas acima. Os dados foram normalizados automaticamente e serão validados completamente na próxima etapa, onde você poderá editar cada ponto individualmente.
-                </p>
             </div>
         </div>
     );
