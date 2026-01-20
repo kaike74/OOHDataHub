@@ -660,9 +660,7 @@ export default function DataGridStep() {
                     rowHeight={35}
                     style={{ height: 500 }}
                     className="rdg-light"
-                    fillHandle={{
-                        onFill: handleFill,
-                    }}
+                    onFill={handleFill}
                 />
             </div>
 
