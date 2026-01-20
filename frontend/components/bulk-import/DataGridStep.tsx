@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useBulkImportStore } from '@/stores/useBulkImportStore';
-import DataGrid, { Column, RenderCellProps, RenderHeaderCellProps, FillEvent } from 'react-data-grid';
+import { DataGrid, Column, RenderCellProps, RenderHeaderCellProps, FillEvent } from 'react-data-grid';
 import { CheckCircle2, AlertTriangle, XCircle, Filter, Upload, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
@@ -266,7 +266,7 @@ export default function DataGridStep() {
     // Convert raw rows to grid rows
     useEffect(() => {
         if (rawRows.length > 0 && headers.length > 0) {
-            const gridRows: GridRow[] = rawRows.map((row, idx) => {
+            const gridRows: GridRow[] = rawRows.map((row: any, idx: number) => {
                 const gridRow: GridRow = {
                     id: idx,
                     status: 'valid', // Will be updated by validation
@@ -376,7 +376,7 @@ export default function DataGridStep() {
                 // Update row statuses
                 setRows(prevRows => prevRows.map((row, idx) => ({
                     ...row,
-                    status: results[idx]?.status || 'valid'
+                    status: (results[idx]?.status || 'valid') as 'valid' | 'warning' | 'error'
                 })));
             } finally {
                 setIsValidating(false);
