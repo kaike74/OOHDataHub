@@ -569,9 +569,15 @@ export default function DataGridStep() {
         const fieldName = mapping[colIdx.toString()];
         const initialValue = row[column.key];
 
+        // Determine effective initial value (handle defaults for specific fields)
+        let effectiveInitialValue = initialValue;
+        if (fieldName === 'periodo_locacao' && !initialValue) {
+            effectiveInitialValue = 'Bissemanal';
+        }
+
         // Use ref to track current value to avoid stale closures
-        const currentValueRef = useRef(initialValue);
-        const [localValue, setLocalValue] = useState(initialValue);
+        const currentValueRef = useRef(effectiveInitialValue);
+        const [localValue, setLocalValue] = useState(effectiveInitialValue);
 
         const handleChange = (newValue: any) => {
             currentValueRef.current = newValue;
