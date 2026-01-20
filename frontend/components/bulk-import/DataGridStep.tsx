@@ -520,13 +520,6 @@ export default function DataGridStep() {
                     </select>
                 );
 
-            case 'latitude':
-            case 'longitude':
-                return <CoordinateEditor value={localValue} onChange={handleChange} onClose={onClose} type={fieldName as 'latitude' | 'longitude'} />;
-
-            case 'medidas':
-                return <MedidasEditor value={String(localValue || '')} onChange={handleChange} onClose={onClose} />;
-
             default:
                 // Default text input with normalization on blur
                 return (

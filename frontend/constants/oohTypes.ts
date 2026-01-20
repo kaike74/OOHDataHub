@@ -12,7 +12,8 @@ export const TIPOS_OOH = [
     'Empena',
     'Mub',
     'Painel rodoviário',
-    'Abrigo e passarela'
+    'Abrigo',
+    'Passarela'
 ] as const;
 
 export type TipoOOH = typeof TIPOS_OOH[number];
