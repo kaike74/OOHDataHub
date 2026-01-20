@@ -617,10 +617,8 @@ export default function DataGridStep() {
                     <select
                         className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
                         value={String(localValue || 'Bissemanal')}
-                        onChange={(e) => {
-                            handleChange(e.target.value);
-                            onClose(true);
-                        }}
+                        onChange={(e) => handleChange(e.target.value)}
+                        onBlur={handleBlurAndNormalize}
                         onKeyDown={handleKeyDown}
                         autoFocus
                     >

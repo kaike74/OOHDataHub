@@ -55,11 +55,12 @@ export function TiposMultiSelectEditor({ value, onChange, onClose }: TiposMultiS
     };
 
     const toggleTipo = (tipo: string) => {
-        setSelected(prev =>
-            prev.includes(tipo)
-                ? prev.filter(t => t !== tipo)
-                : [...prev, tipo]
-        );
+        const newSelected = selected.includes(tipo)
+            ? selected.filter(t => t !== tipo)
+            : [...selected, tipo];
+
+        setSelected(newSelected);
+        onChange(newSelected.join(', '));
     };
 
     if (!isOpen) return null;
