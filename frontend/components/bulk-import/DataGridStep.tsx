@@ -34,106 +34,29 @@ const FIELD_OPTIONS = [
     { value: 'ignore', label: '--- Não usar ---', required: false },
 ];
 
+// Fields that should NOT be normalized (user-defined, keep as-is)
+const NO_NORMALIZE_FIELDS = ['codigo_ooh', 'endereco', 'observacoes'];
+
 // Auto-detect column mapping based on header name
 function detectColumnMapping(header: string): string {
     const normalized = header.toLowerCase().trim();
 
     const mappings: Record<string, string> = {
-        // Código
-        'codigo': 'codigo_ooh',
-        'código': 'codigo_ooh',
-        'cod': 'codigo_ooh',
-        'code': 'codigo_ooh',
-
-        // Endereço
-        'endereco': 'endereco',
-        'endereço': 'endereco',
-        'end': 'endereco',
-        'address': 'endereco',
-        'addr': 'endereco',
-
-        // Coordenadas
-        'lat': 'latitude',
-        'latitude': 'latitude',
-        'lng': 'longitude',
-        'lon': 'longitude',
-        'long': 'longitude',
-        'longitude': 'longitude',
-
-        // Cidade
-        'cidade': 'cidade',
-        'city': 'cidade',
-        'cid': 'cidade',
-
-        // UF/Estado
-        'uf': 'uf',
-        'estado': 'uf',
-        'state': 'uf',
-
-        // País
-        'pais': 'pais',
-        'país': 'pais',
-        'country': 'pais',
-
-        // Medidas/Tamanho
-        'medida': 'medidas',
-        'medidas': 'medidas',
-        'tamanho': 'medidas',
-        'tam': 'medidas',
-        'size': 'medidas',
-        'dimensao': 'medidas',
-        'dimensão': 'medidas',
-
-        // Fluxo
-        'fluxo': 'fluxo',
-        'flux': 'fluxo',
-        'flow': 'fluxo',
-        'trafego': 'fluxo',
-        'tráfego': 'fluxo',
-
-        // Tipos
-        'tipo': 'tipos',
-        'tipos': 'tipos',
-        'tip': 'tipos',
-        'type': 'tipos',
-        'midia': 'tipos',
-        'mídia': 'tipos',
-
-        // Observações
-        'obs': 'observacoes',
-        'observacao': 'observacoes',
-        'observacoes': 'observacoes',
-        'observações': 'observacoes',
-        'notes': 'observacoes',
-
-        // Ponto de Referência
-        'referencia': 'ponto_referencia',
-        'referência': 'ponto_referencia',
-        'ref': 'ponto_referencia',
-        'reference': 'ponto_referencia',
-
-        // Locação
-        'locacao': 'valor_locacao',
-        'locação': 'valor_locacao',
-        'loc': 'valor_locacao',
-        'aluguel': 'valor_locacao',
-        'rent': 'valor_locacao',
-        'valor locacao': 'valor_locacao',
-        'valor locação': 'valor_locacao',
-
-        // Período
-        'periodo': 'periodo_locacao',
-        'período': 'periodo_locacao',
-        'per': 'periodo_locacao',
-        'period': 'periodo_locacao',
-
-        // Papel
-        'papel': 'valor_papel',
-        'paper': 'valor_papel',
-
-        // Lona
-        'lona': 'valor_lona',
-        'canvas': 'valor_lona',
+        'codigo': 'codigo_ooh', 'código': 'codigo_ooh', 'cod': 'codigo_ooh', 'code': 'codigo_ooh',
+        'endereco': 'endereco', 'endereço': 'endereco', 'end': 'endereco', 'address': 'endereco', 'addr': 'endereco',
+        'lat': 'latitude', 'latitude': 'latitude',
+        'lng': 'longitude', 'lon': 'longitude', 'long': 'longitude', 'longitude': 'longitude',
+        'cidade': 'cidade', 'city': 'cidade', 'cid': 'cidade',
+        'uf': 'uf', 'estado': 'uf', 'state': 'uf',
+        'pais': 'pais', 'país': 'pais', 'country': 'pais',
+        'medida': 'medidas', 'medidas': 'medidas', 'tamanho': 'medidas', 'tam': 'medidas', 'size': 'medidas',
+        'fluxo': 'fluxo', 'flux': 'fluxo', 'flow': 'fluxo',
+        'tipo': 'tipos', 'tipos': 'tipos', 'tip': 'tipos', 'type': 'tipos',
+        'obs': 'observacoes', 'observacao': 'observacoes', 'observacoes': 'observacoes', 'observações': 'observacoes',
+        'referencia': 'ponto_referencia', 'referência': 'ponto_referencia', 'ref': 'ponto_referencia',
+        'locacao': 'valor_locacao', 'locação': 'valor_locacao', 'loc': 'valor_locacao', 'aluguel': 'valor_locacao',
+        'periodo': 'periodo_locacao', 'período': 'periodo_locacao', 'per': 'periodo_locacao',
+        'papel': 'valor_papel', 'lona': 'valor_lona',
     };
 
     for (const [key, value] of Object.entries(mappings)) {
@@ -163,7 +86,7 @@ export default function DataGridStep() {
     const headers = session?.columnHeaders || [];
     const rawRows = session?.excelData || [];
 
-    // File upload handler
+    // File upload handler with selective normalization
     const onDrop = useCallback((acceptedFiles: File[]) => {
         const file = acceptedFiles[0];
         if (!file) return;
@@ -191,7 +114,7 @@ export default function DataGridStep() {
                     autoMapping[idx.toString()] = detectColumnMapping(header);
                 });
 
-                // Normalize all data automatically
+                // Normalize data SELECTIVELY (skip codigo_ooh, endereco, observacoes)
                 const normalizedData: any[][] = [];
                 const corrections: Record<string, { original: any; corrected: any; field: string }> = {};
 
@@ -202,23 +125,28 @@ export default function DataGridStep() {
                         const fieldName = autoMapping[colIdx.toString()];
 
                         if (fieldName && fieldName !== 'ignore') {
-                            // Normalize the cell value
-                            const result = normalizeField(fieldName, cell);
-                            const normalizedValue = result.value;
+                            // Skip normalization for user-defined fields
+                            if (NO_NORMALIZE_FIELDS.includes(fieldName)) {
+                                const trimmed = cell ? String(cell).trim() : cell;
+                                normalizedRow.push(trimmed);
+                            } else {
+                                // Normalize other fields
+                                const result = normalizeField(fieldName, cell);
+                                const normalizedValue = result.value;
 
-                            normalizedRow.push(normalizedValue);
+                                normalizedRow.push(normalizedValue);
 
-                            // Track corrections for diff display
-                            if (cell != null && normalizedValue != null && String(cell).trim() !== String(normalizedValue)) {
-                                const key = `${rowIdx}-${colIdx}`;
-                                corrections[key] = {
-                                    original: cell,
-                                    corrected: normalizedValue,
-                                    field: fieldName
-                                };
+                                // Track corrections for diff display
+                                if (cell != null && normalizedValue != null && String(cell).trim() !== String(normalizedValue)) {
+                                    const key = `${rowIdx}-${colIdx}`;
+                                    corrections[key] = {
+                                        original: cell,
+                                        corrected: normalizedValue,
+                                        field: fieldName
+                                    };
+                                }
                             }
                         } else {
-                            // Keep original value for ignored columns
                             normalizedRow.push(cell);
                         }
                     });
@@ -226,7 +154,7 @@ export default function DataGridStep() {
                     normalizedData.push(normalizedRow);
                 });
 
-                // Store both original and normalized data
+                // Store data
                 const { session } = useBulkImportStore.getState();
                 if (session) {
                     useBulkImportStore.setState({
@@ -243,7 +171,6 @@ export default function DataGridStep() {
                     setExcelData(columnHeaders, normalizedData);
                 }
 
-                // Set initial mapping
                 setMapping(autoMapping);
             } catch (error) {
                 console.error('Error parsing file:', error);
@@ -261,7 +188,7 @@ export default function DataGridStep() {
             'text/csv': ['.csv'],
         },
         maxFiles: 1,
-        maxSize: 5 * 1024 * 1024, // 5MB
+        maxSize: 5 * 1024 * 1024,
     });
 
     // Convert raw rows to grid rows
@@ -270,7 +197,7 @@ export default function DataGridStep() {
             const gridRows: GridRow[] = rawRows.map((row: any, idx: number) => {
                 const gridRow: GridRow = {
                     id: idx,
-                    status: 'valid', // Will be updated by validation
+                    status: 'valid',
                 };
 
                 headers.forEach((header, colIdx) => {
@@ -284,7 +211,7 @@ export default function DataGridStep() {
         }
     }, [rawRows, headers]);
 
-    // Auto-detect mappings on mount or when headers change
+    // Auto-detect mappings
     useEffect(() => {
         if (headers.length > 0 && Object.keys(mapping).length === 0) {
             const autoMapping: Record<string, string> = {};
@@ -295,7 +222,7 @@ export default function DataGridStep() {
         }
     }, [headers]);
 
-    // Validate all points when mapping changes
+    // Validate all points
     useEffect(() => {
         if (Object.keys(mapping).length === 0 || rawRows.length === 0) return;
 
@@ -303,13 +230,11 @@ export default function DataGridStep() {
             setIsValidating(true);
 
             try {
-                // Get all códigos for duplicate check
                 const codigoColIndex = Object.entries(mapping).find(([_, val]) => val === 'codigo_ooh')?.[0];
                 const allCodes = codigoColIndex
                     ? rawRows.map(row => String(row[parseInt(codigoColIndex)] || '').trim()).filter(Boolean)
                     : [];
 
-                // Check database for existing códigos
                 let existingCodes: string[] = [];
                 if (allCodes.length > 0) {
                     try {
@@ -320,28 +245,31 @@ export default function DataGridStep() {
                     }
                 }
 
-                // Validate each row with normalization
                 const results = rawRows.map((row, idx) => {
                     const errors: { field: string; message: string; severity: 'error' | 'warning' }[] = [];
                     const normalizedRow: any = {};
 
-                    // Process each mapped column
                     Object.entries(mapping).forEach(([colIdx, fieldName]) => {
                         if (fieldName === 'ignore') return;
 
                         const value = row[parseInt(colIdx)];
-                        const result = normalizeField(fieldName, value);
 
-                        normalizedRow[fieldName] = result.value;
+                        // Skip normalization for user-defined fields
+                        if (NO_NORMALIZE_FIELDS.includes(fieldName)) {
+                            normalizedRow[fieldName] = value ? String(value).trim() : value;
+                        } else {
+                            const result = normalizeField(fieldName, value);
+                            normalizedRow[fieldName] = result.value;
 
-                        if (!result.success && result.error) {
-                            errors.push({ field: fieldName, message: result.error, severity: 'error' });
-                        } else if (result.warning) {
-                            errors.push({ field: fieldName, message: result.warning, severity: 'warning' });
+                            if (!result.success && result.error) {
+                                errors.push({ field: fieldName, message: result.error, severity: 'error' });
+                            } else if (result.warning) {
+                                errors.push({ field: fieldName, message: result.warning, severity: 'warning' });
+                            }
                         }
                     });
 
-                    // Check required fields
+                    // Check required fields (only codigo_ooh, endereco, lat, long)
                     const requiredFields = ['codigo_ooh', 'endereco', 'latitude', 'longitude'];
                     requiredFields.forEach(field => {
                         if (!normalizedRow[field]) {
@@ -374,7 +302,6 @@ export default function DataGridStep() {
                 setValidationResults(results);
                 setColumnMapping(mapping);
 
-                // Update row statuses
                 setRows(prevRows => prevRows.map((row, idx) => ({
                     ...row,
                     status: (results[idx]?.status || 'valid') as 'valid' | 'warning' | 'error'
@@ -411,7 +338,6 @@ export default function DataGridStep() {
     const handleRowsChange = (newRows: GridRow[]) => {
         setRows(newRows);
 
-        // Update store
         const updatedData = newRows.map(row => {
             return headers.map((_, colIdx) => row[`col_${colIdx}`]);
         });
@@ -432,10 +358,18 @@ export default function DataGridStep() {
         const fieldName = mapping[colIdx.toString()];
 
         if (fieldName && fieldName !== 'ignore') {
-            // Normalize the filled value
             const sourceValue = sourceRow[columnKey];
-            const result = normalizeField(fieldName, sourceValue);
 
+            // Skip normalization for user-defined fields
+            if (NO_NORMALIZE_FIELDS.includes(fieldName)) {
+                return {
+                    ...targetRow,
+                    [columnKey]: sourceValue
+                };
+            }
+
+            // Normalize for other fields
+            const result = normalizeField(fieldName, sourceValue);
             return {
                 ...targetRow,
                 [columnKey]: result.value
@@ -456,7 +390,7 @@ export default function DataGridStep() {
         }));
     };
 
-    // Custom header renderer with mapping dropdown
+    // Header renderer - ORIGINAL NAME PROMINENT
     const HeaderRenderer = ({ column }: RenderHeaderCellProps<GridRow>) => {
         const colIdx = parseInt(column.key.replace('col_', ''));
         const mappedField = mapping[colIdx.toString()] || 'ignore';
@@ -464,12 +398,12 @@ export default function DataGridStep() {
         const originalHeader = headers[colIdx];
 
         return (
-            <div className="flex flex-col gap-1 py-1">
-                {/* Original Excel header - PROMINENT */}
-                <div className="text-xs font-bold text-gray-900 truncate" title={originalHeader}>
+            <div className="flex flex-col gap-1.5 py-1">
+                {/* Original header - PROMINENT */}
+                <div className="text-sm font-bold text-gray-900 truncate" title={originalHeader}>
                     {originalHeader || '(sem nome)'}
                 </div>
-                {/* Mapped field - secondary */}
+                {/* Mapping dropdown - secondary */}
                 <select
                     value={mappedField}
                     onChange={(e) => handleMappingChange(colIdx, e.target.value)}
@@ -491,7 +425,7 @@ export default function DataGridStep() {
         );
     };
 
-    // Custom cell renderer with diff
+    // Cell renderer with diff
     const CellRenderer = ({ row, column }: RenderCellProps<GridRow>) => {
         const colIdx = parseInt(column.key.replace('col_', ''));
         const correctionKey = `${row.id}-${colIdx}`;
@@ -517,14 +451,7 @@ export default function DataGridStep() {
         );
     };
 
-    // Status icon renderer
-    const StatusIcon = ({ status }: { status: 'valid' | 'warning' | 'error' }) => {
-        if (status === 'valid') return <CheckCircle2 size={16} className="text-green-500" />;
-        if (status === 'warning') return <AlertTriangle size={16} className="text-yellow-500" />;
-        return <XCircle size={16} className="text-red-500" />;
-    };
-
-    // Custom edit cell renderer based on field type
+    // Custom edit cell renderer
     const EditCellRenderer = ({ row, column, onRowChange, onClose }: RenderEditCellProps<GridRow>) => {
         const colIdx = parseInt(column.key.replace('col_', ''));
         const fieldName = mapping[colIdx.toString()];
@@ -552,7 +479,7 @@ export default function DataGridStep() {
                 return <CoordinateEditor value={value} onChange={handleChange} onClose={onClose} type="longitude" />;
 
             default:
-                // Default text input for all other fields
+                // Default text input
                 return (
                     <input
                         className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
@@ -563,6 +490,13 @@ export default function DataGridStep() {
                     />
                 );
         }
+    };
+
+    // Status icon
+    const StatusIcon = ({ status }: { status: 'valid' | 'warning' | 'error' }) => {
+        if (status === 'valid') return <CheckCircle2 size={16} className="text-green-500" />;
+        if (status === 'warning') return <AlertTriangle size={16} className="text-yellow-500" />;
+        return <XCircle size={16} className="text-red-500" />;
     };
 
     // Create columns
@@ -598,7 +532,7 @@ export default function DataGridStep() {
                 name: header,
                 width: 180,
                 resizable: true,
-                editable: true, // Make all cells editable
+                editable: true,
                 renderHeaderCell: HeaderRenderer,
                 renderCell: CellRenderer,
                 renderEditCell: EditCellRenderer,
@@ -608,7 +542,7 @@ export default function DataGridStep() {
         return cols;
     }, [headers, mapping, session?.cellCorrections]);
 
-    // Row class name for styling
+    // Row class name
     const rowClassName = (row: GridRow) => {
         if (row.status === 'error') return 'bg-red-50/50';
         if (row.status === 'warning') return 'bg-yellow-50/50';
@@ -724,6 +658,9 @@ export default function DataGridStep() {
                     rowClass={rowClassName}
                     style={{ height: 500 }}
                     className="rdg-light"
+                    fillHandle={{
+                        onFill: handleFill,
+                    }}
                 />
             </div>
 

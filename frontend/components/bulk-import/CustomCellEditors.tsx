@@ -1,16 +1,14 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { TIPOS_OOH, PERIODO_LOCACAO } from '@/constants/oohTypes';
-import { cn } from '@/lib/utils';
-import { Check, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { TIPOS_VALIDOS } from '@/lib/dataNormalizers';
 
 // ============================================================================
-// TIPOS MULTI-SELECT EDITOR
+// TIPOS EDITOR - Multiselect
 // ============================================================================
 
 interface TiposEditorProps {
-    value: string; // Comma-separated string
+    value: string;
     onChange: (value: string) => void;
     onClose: () => void;
 }
@@ -21,20 +19,19 @@ export function TiposEditor({ value, onChange, onClose }: TiposEditorProps) {
         return value.split(',').map(t => t.trim()).filter(Boolean);
     });
     const [isOpen, setIsOpen] = useState(true);
-    const containerRef = useRef<HTMLDivElement>(null);
+    const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+            if (ref.current && !ref.current.contains(e.target as Node)) {
                 handleSave();
             }
         };
-
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [selectedTipos]);
 
-    const toggleTipo = (tipo: string) => {
+    const handleToggle = (tipo: string) => {
         setSelectedTipos(prev =>
             prev.includes(tipo)
                 ? prev.filter(t => t !== tipo)
@@ -44,41 +41,34 @@ export function TiposEditor({ value, onChange, onClose }: TiposEditorProps) {
 
     const handleSave = () => {
         onChange(selectedTipos.join(', '));
+        setIsOpen(false);
         onClose();
     };
 
     return (
-        <div ref={containerRef} className="relative w-full h-full">
-            <div className="absolute top-0 left-0 right-0 z-50 bg-white border border-emidias-primary rounded-lg shadow-xl p-3 max-h-[300px] overflow-y-auto">
-                <div className="text-xs font-semibold text-gray-500 mb-2">
-                    Selecione os tipos (clique fora para salvar)
-                </div>
-                <div className="space-y-1">
-                    {TIPOS_OOH.map(tipo => (
-                        <button
-                            key={tipo}
-                            type="button"
-                            onClick={() => toggleTipo(tipo)}
-                            className={cn(
-                                'w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2',
-                                selectedTipos.includes(tipo)
-                                    ? 'bg-emidias-primary text-white'
-                                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                            )}
-                        >
-                            <div className={cn(
-                                'w-4 h-4 rounded border-2 flex items-center justify-center',
-                                selectedTipos.includes(tipo)
-                                    ? 'border-white bg-white'
-                                    : 'border-gray-300'
-                            )}>
-                                {selectedTipos.includes(tipo) && (
-                                    <Check size={12} className="text-emidias-primary" />
-                                )}
-                            </div>
-                            {tipo}
-                        </button>
+        <div ref={ref} className="relative w-full h-full">
+            <div className="absolute top-0 left-0 w-80 max-h-96 bg-white border-2 border-emidias-primary rounded-lg shadow-xl z-50 overflow-auto">
+                <div className="p-3 space-y-2">
+                    <div className="font-semibold text-sm text-gray-700 mb-2">
+                        Selecione os tipos de mídia:
+                    </div>
+                    {TIPOS_VALIDOS.map(tipo => (
+                        <label key={tipo} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={selectedTipos.includes(tipo)}
+                                onChange={() => handleToggle(tipo)}
+                                className="w-4 h-4 text-emidias-primary rounded focus:ring-emidias-primary"
+                            />
+                            <span className="text-sm">{tipo}</span>
+                        </label>
                     ))}
+                    <button
+                        onClick={handleSave}
+                        className="w-full mt-3 px-3 py-2 bg-emidias-primary text-white rounded-lg text-sm font-medium hover:bg-emidias-primary/90"
+                    >
+                        Confirmar ({selectedTipos.length})
+                    </button>
                 </div>
             </div>
         </div>
@@ -86,135 +76,112 @@ export function TiposEditor({ value, onChange, onClose }: TiposEditorProps) {
 }
 
 // ============================================================================
-// MEDIDAS SPLIT EDITOR (Largura x Altura + Unit)
+// MEDIDAS EDITOR - Largura x Altura + Unidade
 // ============================================================================
 
 interface MedidasEditorProps {
-    value: string; // Format: "9 x 3 M" or "1920 x 1080 PX"
+    value: string;
     onChange: (value: string) => void;
     onClose: () => void;
 }
 
 export function MedidasEditor({ value, onChange, onClose }: MedidasEditorProps) {
-    const parseValue = (): { largura: string; altura: string; unidade: 'M' | 'PX' } => {
-        if (!value) return { largura: '', altura: '', unidade: 'M' };
+    // Parse existing value "9 x 3 M" or "9x3"
+    const parseValue = (val: string) => {
+        if (!val) return { largura: '', altura: '', unidade: 'M' };
 
-        const match = value.match(/([\d.]+)\s*[xX×]\s*([\d.]+)\s*(M|PX|Px)?/i);
+        const match = val.match(/([\d.]+)\s*[xX×]\s*([\d.]+)\s*(M|PX)?/);
         if (match) {
-            const unit = match[3]?.toUpperCase();
             return {
                 largura: match[1],
                 altura: match[2],
-                unidade: (unit === 'PX' ? 'PX' : 'M') as 'M' | 'PX'
+                unidade: match[3] || 'M'
             };
         }
         return { largura: '', altura: '', unidade: 'M' };
     };
 
-    const [largura, setLargura] = useState(parseValue().largura);
-    const [altura, setAltura] = useState(parseValue().altura);
-    const [unidade, setUnidade] = useState<'M' | 'PX'>(parseValue().unidade);
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                handleSave();
-            }
-        };
-
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSave();
-            } else if (e.key === 'Escape') {
-                onClose();
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [largura, altura, unidade]);
+    const parsed = parseValue(value);
+    const [largura, setLargura] = useState(parsed.largura);
+    const [altura, setAltura] = useState(parsed.altura);
+    const [unidade, setUnidade] = useState<'M' | 'PX'>(parsed.unidade as 'M' | 'PX');
+    const ref = useRef<HTMLDivElement>(null);
 
     const handleSave = () => {
         if (largura && altura) {
             onChange(`${largura} x ${altura} ${unidade}`);
-        } else {
-            onChange('');
         }
         onClose();
     };
 
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) {
+                handleSave();
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [largura, altura, unidade]);
+
     return (
-        <div ref={containerRef} className="relative w-full h-full">
-            <div className="absolute top-0 left-0 right-0 z-50 bg-white border border-emidias-primary rounded-lg shadow-xl p-3 min-w-[300px]">
-                <div className="text-xs font-semibold text-gray-500 mb-2">
-                    Medidas
+        <div ref={ref} className="absolute top-0 left-0 w-72 bg-white border-2 border-emidias-primary rounded-lg shadow-xl z-50 p-3">
+            <div className="space-y-3">
+                <div className="font-semibold text-sm text-gray-700">Medidas:</div>
+
+                <div className="flex gap-2 items-center">
+                    <input
+                        type="number"
+                        value={largura}
+                        onChange={(e) => setLargura(e.target.value)}
+                        placeholder="Largura"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emidias-primary"
+                        autoFocus
+                    />
+                    <span className="text-gray-400">×</span>
+                    <input
+                        type="number"
+                        value={altura}
+                        onChange={(e) => setAltura(e.target.value)}
+                        placeholder="Altura"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emidias-primary"
+                    />
                 </div>
 
-                {/* Unit Toggle */}
-                <div className="bg-gray-100 p-0.5 rounded-lg flex text-xs font-semibold mb-2">
+                <div className="flex gap-2">
                     <button
-                        type="button"
                         onClick={() => setUnidade('M')}
-                        className={cn(
-                            'flex-1 px-3 py-1.5 rounded-md transition-all',
-                            unidade === 'M' ? 'bg-white shadow-sm text-emidias-primary' : 'text-gray-500 hover:text-gray-700'
-                        )}
+                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${unidade === 'M'
+                                ? 'bg-emidias-primary text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
                     >
-                        Metros
+                        Metros (M)
                     </button>
                     <button
-                        type="button"
                         onClick={() => setUnidade('PX')}
-                        className={cn(
-                            'flex-1 px-3 py-1.5 rounded-md transition-all',
-                            unidade === 'PX' ? 'bg-white shadow-sm text-emidias-primary' : 'text-gray-500 hover:text-gray-700'
-                        )}
+                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${unidade === 'PX'
+                                ? 'bg-emidias-primary text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
                     >
-                        Pixels
+                        Pixels (PX)
                     </button>
                 </div>
 
-                {/* Inputs */}
-                <div className="grid grid-cols-2 gap-2">
-                    <div>
-                        <input
-                            type="text"
-                            value={largura}
-                            onChange={(e) => setLargura(unidade === 'PX' ? e.target.value.replace(/\D/g, '') : e.target.value)}
-                            placeholder="Largura"
-                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emidias-primary/20 focus:border-emidias-primary"
-                            autoFocus
-                        />
-                        <div className="text-xs text-gray-400 mt-1">L ({unidade})</div>
-                    </div>
-                    <div>
-                        <input
-                            type="text"
-                            value={altura}
-                            onChange={(e) => setAltura(unidade === 'PX' ? e.target.value.replace(/\D/g, '') : e.target.value)}
-                            placeholder="Altura"
-                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emidias-primary/20 focus:border-emidias-primary"
-                        />
-                        <div className="text-xs text-gray-400 mt-1">A ({unidade})</div>
-                    </div>
-                </div>
-
-                <div className="text-xs text-gray-400 mt-2 text-center">
-                    Enter para salvar • Esc para cancelar
-                </div>
+                <button
+                    onClick={handleSave}
+                    className="w-full px-3 py-2 bg-emidias-primary text-white rounded-lg text-sm font-medium hover:bg-emidias-primary/90"
+                >
+                    Confirmar
+                </button>
             </div>
         </div>
     );
 }
 
 // ============================================================================
-// PERÍODO SELECT EDITOR
+// PERÍODO EDITOR - Select Bissemanal/Mensal
 // ============================================================================
 
 interface PeriodoEditorProps {
@@ -224,63 +191,56 @@ interface PeriodoEditorProps {
 }
 
 export function PeriodoEditor({ value, onChange, onClose }: PeriodoEditorProps) {
-    const [isOpen, setIsOpen] = useState(true);
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                onClose();
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    const [selected, setSelected] = useState(value || 'Bissemanal');
+    const ref = useRef<HTMLDivElement>(null);
 
     const handleSelect = (periodo: string) => {
+        setSelected(periodo);
         onChange(periodo);
         onClose();
     };
 
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) {
+                onClose();
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     return (
-        <div ref={containerRef} className="relative w-full h-full">
-            <div className="absolute top-0 left-0 right-0 z-50 bg-white border border-emidias-primary rounded-lg shadow-xl overflow-hidden min-w-[180px]">
-                <div className="text-xs font-semibold text-gray-500 px-3 py-2 border-b border-gray-100">
-                    Período de Locação
-                </div>
-                {PERIODO_LOCACAO.map(periodo => (
-                    <button
-                        key={periodo}
-                        type="button"
-                        onClick={() => handleSelect(periodo)}
-                        className={cn(
-                            'w-full text-left px-3 py-2 text-sm font-medium transition-colors hover:bg-emidias-primary/5',
-                            value === periodo && 'bg-emidias-primary/10 text-emidias-primary'
-                        )}
-                    >
-                        {periodo}
-                    </button>
-                ))}
-                <button
-                    type="button"
-                    onClick={() => handleSelect('')}
-                    className="w-full text-left px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-50 border-t border-gray-100"
-                >
-                    (vazio)
-                </button>
-            </div>
+        <div ref={ref} className="absolute top-0 left-0 w-48 bg-white border-2 border-emidias-primary rounded-lg shadow-xl z-50 p-2">
+            <button
+                onClick={() => handleSelect('Bissemanal')}
+                className={`w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors ${selected === 'Bissemanal'
+                        ? 'bg-emidias-primary text-white'
+                        : 'hover:bg-gray-100'
+                    }`}
+            >
+                Bissemanal
+            </button>
+            <button
+                onClick={() => handleSelect('Mensal')}
+                className={`w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors ${selected === 'Mensal'
+                        ? 'bg-emidias-primary text-white'
+                        : 'hover:bg-gray-100'
+                    }`}
+            >
+                Mensal
+            </button>
         </div>
     );
 }
 
 // ============================================================================
-// COORDINATE EDITOR (with validation)
+// COORDINATE EDITOR - Input with validation
 // ============================================================================
 
 interface CoordinateEditorProps {
-    value: number | string;
-    onChange: (value: number | string) => void;
+    value: any;
+    onChange: (value: any) => void;
     onClose: () => void;
     type: 'latitude' | 'longitude';
 }
@@ -288,50 +248,29 @@ interface CoordinateEditorProps {
 export function CoordinateEditor({ value, onChange, onClose, type }: CoordinateEditorProps) {
     const [inputValue, setInputValue] = useState(String(value || ''));
     const [error, setError] = useState('');
-    const inputRef = useRef<HTMLInputElement>(null);
+    const ref = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-    }, []);
+    const handleBlur = () => {
+        // Normalize: accept -, comma, dot
+        let normalized = inputValue.trim();
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSave();
-            } else if (e.key === 'Escape') {
-                onClose();
+        // Replace comma with dot
+        normalized = normalized.replace(/,/g, '.');
+
+        // Remove thousand separators (dots followed by 3 digits)
+        if (normalized.match(/\.\d{3}($|\.)/)) {
+            normalized = normalized.replace(/\./g, '');
+            // Add back decimal point if needed
+            const parts = normalized.match(/^(-?\d+)(\d{6,})$/);
+            if (parts) {
+                normalized = `${parts[1]}.${parts[2]}`;
             }
-        };
-
-        const handleClickOutside = (e: MouseEvent) => {
-            if (inputRef.current && !inputRef.current.contains(e.target as Node)) {
-                handleSave();
-            }
-        };
-
-        document.addEventListener('keydown', handleKeyDown);
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [inputValue]);
-
-    const handleSave = () => {
-        if (!inputValue.trim()) {
-            onChange('');
-            onClose();
-            return;
         }
 
-        // Normalize: replace comma with dot
-        const normalized = inputValue.replace(/,/g, '.');
         const num = parseFloat(normalized);
 
         if (isNaN(num)) {
-            setError('Número inválido');
+            setError('Coordenada inválida');
             return;
         }
 
@@ -344,24 +283,35 @@ export function CoordinateEditor({ value, onChange, onClose, type }: CoordinateE
         onClose();
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleBlur();
+        } else if (e.key === 'Escape') {
+            onClose();
+        }
+    };
+
     return (
-        <div className="relative w-full h-full">
+        <div className="w-full h-full">
             <input
-                ref={inputRef}
+                ref={ref}
                 type="text"
                 value={inputValue}
                 onChange={(e) => {
                     setInputValue(e.target.value);
                     setError('');
                 }}
-                className={cn(
-                    'w-full h-full px-2 text-sm border-2 focus:outline-none',
-                    error ? 'border-red-500 bg-red-50' : 'border-emidias-primary bg-white'
-                )}
-                placeholder={type === 'latitude' ? '-23.5505' : '-46.6333'}
+                onBlur={handleBlur}
+                onKeyDown={handleKeyDown}
+                className={`w-full h-full px-2 text-sm border-2 focus:outline-none ${error
+                        ? 'border-red-500'
+                        : 'border-emidias-primary'
+                    }`}
+                placeholder={type === 'latitude' ? 'Ex: -23.5615' : 'Ex: -46.6558'}
+                autoFocus
             />
             {error && (
-                <div className="absolute top-full left-0 mt-1 text-xs text-red-500 bg-white px-2 py-1 rounded shadow-lg z-50 whitespace-nowrap">
+                <div className="absolute top-full left-0 mt-1 px-2 py-1 bg-red-500 text-white text-xs rounded shadow-lg whitespace-nowrap z-50">
                     {error}
                 </div>
             )}
