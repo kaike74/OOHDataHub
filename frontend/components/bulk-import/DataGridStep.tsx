@@ -20,8 +20,6 @@ const FIELD_OPTIONS = [
     { value: 'endereco', label: 'Endereço', required: true },
     { value: 'latitude', label: 'Latitude', required: true },
     { value: 'longitude', label: 'Longitude', required: true },
-    { value: 'cidade', label: 'Cidade', required: false },
-    { value: 'uf', label: 'UF', required: false },
     { value: 'pais', label: 'País', required: false },
     { value: 'medidas', label: 'Medidas', required: false },
     { value: 'fluxo', label: 'Fluxo', required: false },
@@ -520,11 +518,21 @@ export default function DataGridStep() {
                     )}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {FIELD_OPTIONS.map(opt => (
-                        <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                        </option>
-                    ))}
+                    {FIELD_OPTIONS.map(opt => {
+                        const isSelectedElsewhere = Object.entries(mapping).some(([key, val]) => {
+                            return val === opt.value && key !== colIdx.toString();
+                        });
+
+                        return (
+                            <option
+                                key={opt.value}
+                                value={opt.value}
+                                disabled={isSelectedElsewhere && opt.value !== 'ignore'}
+                            >
+                                {opt.label} {isSelectedElsewhere && opt.value !== 'ignore' ? '(já selecionado)' : ''}
+                            </option>
+                        );
+                    })}
                 </select>
             </div>
         );
