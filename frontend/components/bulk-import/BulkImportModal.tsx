@@ -91,12 +91,6 @@ export default function BulkImportModal() {
                             {exibidoraNome}
                         </p>
                     </div>
-                    <button
-                        onClick={handleClose}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                        <X size={20} className="text-gray-400" />
-                    </button>
                 </div>
             }
             maxWidth="7xl"
