@@ -541,7 +541,7 @@ export default function DataGridStep() {
         // Get validation from validationResults
         const rowValidation = validationResults[row.id];
         const fieldName = mapping[colIdx.toString()];
-        const cellError = rowValidation?.errors?.find(e => e.field === fieldName);
+        const cellError = rowValidation?.errors?.find((e: { field: string; message: string; severity: 'error' | 'warning' }) => e.field === fieldName);
 
         // Determine cell styling
         let cellClassName = "w-full h-full flex items-center px-2";
@@ -687,17 +687,6 @@ export default function DataGridStep() {
                     </div>
                 ),
             },
-            {
-                key: 'id',
-                name: '#',
-                width: 50,
-                frozen: true,
-                renderCell: ({ row }) => (
-                    <div className="flex items-center justify-center h-full text-gray-400 font-mono text-xs">
-                        {row.id + 1}
-                    </div>
-                ),
-            },
         ];
 
         headers.forEach((header, idx) => {
@@ -714,7 +703,7 @@ export default function DataGridStep() {
         });
 
         return cols;
-    }, [headers, mapping, session?.cellCorrections]);
+    }, [headers, mapping, session?.cellCorrections, validationResults]);
 
     // Row class name
     const rowClassName = (row: GridRow) => {
