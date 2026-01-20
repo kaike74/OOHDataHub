@@ -10,6 +10,7 @@ import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import { normalizeField, analyzeColumnContent, validateColumnMapping } from '@/lib/dataNormalizers';
 import { TiposEditor, MedidasEditor, PeriodoEditor, CoordinateEditor } from './CustomCellEditors';
+import { TiposMultiSelectEditor } from './TiposMultiSelectEditor';
 import { TIPOS_OOH, PERIODO_LOCACAO } from '@/constants/oohTypes';
 import 'react-data-grid/lib/styles.css';
 
@@ -233,9 +234,9 @@ export default function DataGridStep() {
         maxSize: 5 * 1024 * 1024,
     });
 
-    // Convert raw rows to grid rows
+    // Convert raw rows to grid rows (only on initial load)
     useEffect(() => {
-        if (rawRows.length > 0 && headers.length > 0) {
+        if (rawRows.length > 0 && headers.length > 0 && rows.length === 0) {
             const gridRows: GridRow[] = rawRows.map((row: any, idx: number) => {
                 const gridRow: GridRow = {
                     id: idx,
@@ -251,7 +252,7 @@ export default function DataGridStep() {
 
             setRows(gridRows);
         }
-    }, [rawRows, headers]);
+    }, [rawRows, headers, rows.length]);
 
     // Auto-detect mappings with content analysis
     useEffect(() => {
@@ -604,14 +605,10 @@ export default function DataGridStep() {
         switch (fieldName) {
             case 'tipos':
                 return (
-                    <input
-                        className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
+                    <TiposMultiSelectEditor
                         value={String(localValue || '')}
-                        onChange={(e) => handleChange(e.target.value)}
-                        onBlur={handleBlurAndNormalize}
-                        onKeyDown={handleKeyDown}
-                        autoFocus
-                        placeholder="Ex: Outdoor, Frontlight"
+                        onChange={handleChange}
+                        onClose={onClose}
                     />
                 );
 
