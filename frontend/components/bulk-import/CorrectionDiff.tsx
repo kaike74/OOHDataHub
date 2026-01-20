@@ -92,6 +92,7 @@ interface CellDiffProps {
 }
 
 export function CellDiff({ original, corrected, isEditing }: CellDiffProps) {
+    const [isHovered, setIsHovered] = useState(false);
     const hasChange = original !== corrected && original != null && corrected != null;
 
     if (!hasChange || isEditing) {
@@ -99,20 +100,30 @@ export function CellDiff({ original, corrected, isEditing }: CellDiffProps) {
     }
 
     return (
-        <div className="group relative">
+        <div
+            className="relative inline-block"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
             <span className="border-b-2 border-dashed border-blue-400 cursor-help">
                 {corrected}
             </span>
 
-            {/* Inline diff tooltip */}
-            <div className="absolute left-0 bottom-full mb-1 hidden group-hover:block z-20 bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap shadow-lg">
-                <div className="line-through text-red-300 opacity-75 text-[10px]">
-                    {String(original)}
+            {/* Tooltip positioned above */}
+            {isHovered && (
+                <div className="absolute left-1/2 bottom-full mb-2 -translate-x-1/2 z-[9999] bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-2xl pointer-events-none whitespace-nowrap">
+                    <div className="line-through text-red-300 opacity-75 text-[10px]">
+                        {String(original)}
+                    </div>
+                    <div className="text-green-300 font-medium">
+                        → {String(corrected)}
+                    </div>
+                    {/* Arrow */}
+                    <div className="absolute left-1/2 top-full -translate-x-1/2 -mt-px">
+                        <div className="border-4 border-transparent border-t-gray-900"></div>
+                    </div>
                 </div>
-                <div className="text-green-300 font-medium">
-                    → {String(corrected)}
-                </div>
-            </div>
+            )}
         </div>
     );
 }
