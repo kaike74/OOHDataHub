@@ -52,13 +52,9 @@ export default function BulkImportModal() {
     const canProceed = () => {
         switch (currentStep) {
             case 1:
-                // Can proceed if Excel data is loaded and mapped
-                const hasData = session.excelData.length > 0 && session.columnHeaders.length > 0;
-                const mapping = session.columnMapping || {};
-                const mappedFields = Object.values(mapping);
-                const requiredFields = ['codigo_ooh', 'endereco', 'latitude', 'longitude'];
-                const allRequiredMapped = requiredFields.every(field => mappedFields.includes(field));
-                return hasData && allRequiredMapped;
+                // Check DataGridStep validation status
+                const canProceedFromGrid = (window as any).__bulkImportCanProceed;
+                return canProceedFromGrid === true;
             case 2:
                 // Can proceed from review step
                 return true;
