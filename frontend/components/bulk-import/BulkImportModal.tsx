@@ -5,7 +5,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { X, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import ColumnMappingStep from '@/components/bulk-import/ColumnMappingStep';
+import DataGridStep from '@/components/bulk-import/DataGridStep';
 import BulkPointReviewStep from '@/components/bulk-import/BulkPointReviewStep';
 import BulkProcessingStep from '@/components/bulk-import/BulkProcessingStep';
 import BulkSummaryStep from '@/components/bulk-import/BulkSummaryStep';
@@ -99,7 +99,7 @@ export default function BulkImportModal() {
                     </button>
                 </div>
             }
-            maxWidth="6xl"
+            maxWidth="7xl"
             hideCloseButton={true}
             zIndex={3000}
             footer={
@@ -173,8 +173,8 @@ export default function BulkImportModal() {
                 </div>
 
                 {/* Step Content */}
-                <div className="min-h-[500px]">
-                    {currentStep === 1 && <ColumnMappingStep />}
+                <div className="min-h-[600px]">
+                    {currentStep === 1 && <DataGridStep />}
                     {currentStep === 2 && <BulkPointReviewStep />}
                     {currentStep === 3 && <BulkProcessingStep />}
                     {currentStep === 4 && <BulkSummaryStep />}
