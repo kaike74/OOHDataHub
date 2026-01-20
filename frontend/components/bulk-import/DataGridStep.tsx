@@ -1,17 +1,13 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useBulkImportStore } from '@/stores/useBulkImportStore';
-import { DataGrid, Column, RenderCellProps, RenderHeaderCellProps, RenderEditCellProps, FillEvent } from 'react-data-grid';
-import { CheckCircle2, AlertTriangle, XCircle, Filter, Upload, Loader2 } from 'lucide-react';
+import { DataGrid, Column, RenderHeaderCellProps, RenderCellProps } from 'react-data-grid';
+import { Upload, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { api } from '@/lib/api';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
-import { normalizeField, analyzeColumnContent, validateColumnMapping } from '@/lib/dataNormalizers';
-import { TiposEditor, MedidasEditor, PeriodoEditor, CoordinateEditor } from './CustomCellEditors';
-import { TiposMultiSelectEditor } from './TiposMultiSelectEditor';
-import { TIPOS_OOH, PERIODO_LOCACAO } from '@/constants/oohTypes';
+import { normalizeField, analyzeColumnContent } from '@/lib/dataNormalizers';
 import 'react-data-grid/lib/styles.css';
 
 // Field options for column mapping
@@ -107,7 +103,6 @@ function detectColumnMapping(header: string, columnValues?: any[]): string {
 
 interface GridRow {
     id: number;
-    status: 'valid' | 'warning' | 'error';
     [key: string]: any;
 }
 
@@ -117,9 +112,6 @@ export default function DataGridStep() {
     const setColumnMapping = useBulkImportStore((state) => state.setColumnMapping);
 
     const [mapping, setMapping] = useState<Record<string, string>>({});
-    const [isValidating, setIsValidating] = useState(false);
-    const [validationResults, setValidationResults] = useState<any[]>([]);
-    const [filter, setFilter] = useState<'all' | 'valid' | 'errors' | 'warnings'>('all');
     const [rows, setRows] = useState<GridRow[]>([]);
 
     const headers = session?.columnHeaders || [];
@@ -238,7 +230,6 @@ export default function DataGridStep() {
             const gridRows: GridRow[] = rawRows.map((row: any, idx: number) => {
                 const gridRow: GridRow = {
                     id: idx,
-                    status: 'valid',
                 };
 
                 headers.forEach((header, colIdx) => {
@@ -264,226 +255,21 @@ export default function DataGridStep() {
         }
     }, [headers, rawRows]);
 
-    // Validate all points
+    // Update store mapping when local mapping changes
     useEffect(() => {
-        if (Object.keys(mapping).length === 0 || rawRows.length === 0) return;
+        if (Object.keys(mapping).length > 0) {
+            setColumnMapping(mapping);
+        }
+    }, [mapping, setColumnMapping]);
 
-        const validateAll = async () => {
-            setIsValidating(true);
-
-            try {
-                const codigoColIndex = Object.entries(mapping).find(([_, val]) => val === 'codigo_ooh')?.[0];
-                const allCodes = codigoColIndex
-                    ? rawRows.map(row => String(row[parseInt(codigoColIndex)] || '').trim()).filter(Boolean)
-                    : [];
-
-                let existingCodes: string[] = [];
-                if (allCodes.length > 0) {
-                    try {
-                        const result = await api.validateBulkCodes(allCodes);
-                        existingCodes = result.existingCodes || [];
-                    } catch (error) {
-                        console.error('Error validating codes:', error);
-                    }
-                }
-
-                // NEW: Track cell-level validations
-                const cellValidations: Record<string, { severity: 'error' | 'warning' | 'valid'; message: string; suggestion?: string }> = {};
-
-                const results = rawRows.map((row, rowIdx) => {
-                    const errors: { field: string; message: string; severity: 'error' | 'warning' }[] = [];
-                    const normalizedRow: any = {};
-
-                    Object.entries(mapping).forEach(([colIdx, fieldName]) => {
-                        if (fieldName === 'ignore') return;
-
-                        const value = row[parseInt(colIdx)];
-                        const cellKey = `${rowIdx}-${colIdx}`;
-
-                        // Skip normalization for user-defined fields
-                        if (NO_NORMALIZE_FIELDS.includes(fieldName)) {
-                            normalizedRow[fieldName] = value ? String(value).trim() : value;
-                        } else {
-                            const result = normalizeField(fieldName, value);
-                            normalizedRow[fieldName] = result.value;
-
-                            if (!result.success && result.error) {
-                                errors.push({ field: fieldName, message: result.error, severity: 'error' });
-                                // Store cell-level error
-                                cellValidations[cellKey] = {
-                                    severity: 'error',
-                                    message: result.error,
-                                    suggestion: result.suggestion
-                                };
-                            } else if (result.warning) {
-                                errors.push({ field: fieldName, message: result.warning, severity: 'warning' });
-                                // Store cell-level warning
-                                cellValidations[cellKey] = {
-                                    severity: 'warning',
-                                    message: result.warning,
-                                    suggestion: result.suggestion
-                                };
-                            }
-                        }
-                    });
-
-                    // Check required fields (only codigo_ooh, endereco, lat, long)
-                    const requiredFields = ['codigo_ooh', 'endereco', 'latitude', 'longitude'];
-                    requiredFields.forEach(field => {
-                        if (!normalizedRow[field]) {
-                            errors.push({ field, message: `${field} é obrigatório`, severity: 'error' });
-                            // Find column index for this field
-                            const colIdx = Object.entries(mapping).find(([_, f]) => f === field)?.[0];
-                            if (colIdx) {
-                                const cellKey = `${rowIdx}-${colIdx}`;
-                                cellValidations[cellKey] = {
-                                    severity: 'error',
-                                    message: `Campo obrigatório`,
-                                    suggestion: undefined
-                                };
-                            }
-                        }
-                    });
-
-                    // Check valor_locacao requires periodo_locacao
-                    if (normalizedRow.valor_locacao && !normalizedRow.periodo_locacao) {
-                        errors.push({ field: 'periodo_locacao', message: 'Período obrigatório quando há valor de locação', severity: 'error' });
-                        const colIdx = Object.entries(mapping).find(([_, f]) => f === 'periodo_locacao')?.[0];
-                        if (colIdx) {
-                            const cellKey = `${rowIdx}-${colIdx}`;
-                            cellValidations[cellKey] = {
-                                severity: 'error',
-                                message: 'Período obrigatório quando há valor de locação',
-                                suggestion: 'Bissemanal'
-                            };
-                        }
-                    }
-
-                    // Check duplicates
-                    const codigo = normalizedRow.codigo_ooh;
-                    if (codigo) {
-                        const duplicateCount = allCodes.filter(c => c === codigo).length;
-                        if (duplicateCount > 1) {
-                            errors.push({ field: 'codigo_ooh', message: 'Código duplicado no arquivo', severity: 'error' });
-                            const colIdx = Object.entries(mapping).find(([_, f]) => f === 'codigo_ooh')?.[0];
-                            if (colIdx) {
-                                const cellKey = `${rowIdx}-${colIdx}`;
-                                cellValidations[cellKey] = {
-                                    severity: 'error',
-                                    message: 'Código duplicado no arquivo',
-                                    suggestion: undefined
-                                };
-                            }
-                        }
-                        if (existingCodes.includes(codigo)) {
-                            errors.push({ field: 'codigo_ooh', message: 'Código já existe no sistema', severity: 'error' });
-                            const colIdx = Object.entries(mapping).find(([_, f]) => f === 'codigo_ooh')?.[0];
-                            if (colIdx) {
-                                const cellKey = `${rowIdx}-${colIdx}`;
-                                cellValidations[cellKey] = {
-                                    severity: 'error',
-                                    message: 'Código já existe no sistema',
-                                    suggestion: undefined
-                                };
-                            }
-                        }
-                    }
-
-                    const hasErrors = errors.some(e => e.severity === 'error');
-                    const hasWarnings = errors.some(e => e.severity === 'warning');
-
-                    return {
-                        status: hasErrors ? 'error' : hasWarnings ? 'warning' : 'valid',
-                        errors,
-                        normalizedRow
-                    };
-                });
-
-                setValidationResults(results);
-                setColumnMapping(mapping);
-
-                // Note: cellValidations are computed but not stored in session for now
-                // This avoids React rendering issues
-
-                setRows(prevRows => prevRows.map((row, idx) => ({
-                    ...row,
-                    status: (results[idx]?.status || 'valid') as 'valid' | 'warning' | 'error'
-                })));
-            } finally {
-                setIsValidating(false);
-            }
-        };
-
-        validateAll();
-    }, [mapping, rawRows, setColumnMapping]);
-
-    // Summary
+    // Summary of mapping
     const summary = useMemo(() => {
-        const total = validationResults.length;
-        const valid = validationResults.filter(r => r.status === 'valid').length;
-        const warnings = validationResults.filter(r => r.status === 'warning').length;
-        const errors = validationResults.filter(r => r.status === 'error').length;
-        return { total, valid, warnings, errors };
-    }, [validationResults]);
-
-    // Filtered rows
-    const filteredRows = useMemo(() => {
-        if (filter === 'all') return rows;
-        return rows.filter(row => {
-            if (filter === 'valid') return row.status === 'valid';
-            if (filter === 'errors') return row.status === 'error';
-            if (filter === 'warnings') return row.status === 'warning';
-            return true;
-        });
-    }, [rows, filter]);
-
-    // Handle cell edit
-    const handleRowsChange = (newRows: GridRow[]) => {
-        setRows(newRows);
-
-        const updatedData = newRows.map(row => {
-            return headers.map((_, colIdx) => row[`col_${colIdx}`]);
-        });
-
-        if (session) {
-            useBulkImportStore.setState({
-                session: {
-                    ...session,
-                    excelData: updatedData
-                }
-            });
-        }
-    };
-
-    // Handle fill (drag-fill)
-    const handleFill = ({ columnKey, sourceRow, targetRow }: FillEvent<GridRow>): GridRow => {
-        const colIdx = parseInt(columnKey.replace('col_', ''));
-        const fieldName = mapping[colIdx.toString()];
-
-        if (fieldName && fieldName !== 'ignore') {
-            const sourceValue = sourceRow[columnKey];
-
-            // Skip normalization for user-defined fields
-            if (NO_NORMALIZE_FIELDS.includes(fieldName)) {
-                return {
-                    ...targetRow,
-                    [columnKey]: sourceValue
-                };
-            }
-
-            // Normalize for other fields
-            const result = normalizeField(fieldName, sourceValue);
-            return {
-                ...targetRow,
-                [columnKey]: result.value
-            };
-        }
-
-        return {
-            ...targetRow,
-            [columnKey]: sourceRow[columnKey]
-        };
-    };
+        const total = rawRows.length;
+        const mappedFields = Object.values(mapping).filter(v => v !== 'ignore');
+        const requiredFields = ['codigo_ooh', 'endereco', 'latitude', 'longitude'];
+        const allRequiredMapped = requiredFields.every(field => mappedFields.includes(field));
+        return { total, mappedCount: mappedFields.length, allRequiredMapped };
+    }, [rawRows.length, mapping]);
 
     // Handle mapping change
     const handleMappingChange = (colIndex: number, value: string) => {
@@ -538,142 +324,20 @@ export default function DataGridStep() {
         );
     };
 
-    // Cell renderer with validation colors
+    // Cell renderer - simple, read-only
     const CellRenderer = ({ row, column }: RenderCellProps<GridRow>) => {
-        const colIdx = parseInt(column.key.replace('col_', ''));
         const value = row[column.key];
 
-        // Get validation from validationResults
-        const rowValidation = validationResults[row.id];
-        const fieldName = mapping[colIdx.toString()];
-        const cellError = rowValidation?.errors?.find((e: { field: string; message: string; severity: 'error' | 'warning' }) => e.field === fieldName);
-
-        // Determine cell styling
-        let cellClassName = "w-full h-full flex items-center px-2";
-        if (cellError) {
-            if (cellError.severity === 'error') {
-                cellClassName += " bg-red-50 border-l-2 border-red-400";
-            } else if (cellError.severity === 'warning') {
-                cellClassName += " bg-yellow-50 border-l-2 border-yellow-400";
-            }
-        }
-
         return (
-            <div className={cellClassName} title={cellError?.message}>
+            <div className="w-full h-full flex items-center px-2">
                 {value != null ? String(value) : <span className="text-gray-300 italic">vazio</span>}
-                {cellError && cellError.severity === 'error' && (
-                    <span className="ml-auto text-red-600 text-xs font-bold">❌</span>
-                )}
-                {cellError && cellError.severity === 'warning' && (
-                    <span className="ml-auto text-yellow-600 text-xs font-bold">⚠️</span>
-                )}
             </div>
         );
     };
 
-    // Custom edit cell renderer
-    const EditCellRenderer = ({ row, column, onRowChange, onClose }: RenderEditCellProps<GridRow>) => {
-        const colIdx = parseInt(column.key.replace('col_', ''));
-        const fieldName = mapping[colIdx.toString()];
-        const initialValue = row[column.key];
-
-        // Use ref to track current value to avoid stale closures
-        const currentValueRef = useRef(initialValue);
-        const [localValue, setLocalValue] = useState(initialValue);
-
-        const handleChange = (newValue: any) => {
-            currentValueRef.current = newValue;
-            setLocalValue(newValue);
-            onRowChange({ ...row, [column.key]: newValue });
-        };
-
-        const handleBlurAndNormalize = () => {
-            // Use the ref value to ensure we have the latest value
-            const valueToNormalize = currentValueRef.current;
-
-            // Normalize on blur for specific fields
-            if (fieldName && fieldName !== 'ignore' && !NO_NORMALIZE_FIELDS.includes(fieldName)) {
-                const result = normalizeField(fieldName, valueToNormalize);
-                if (result.success && result.value !== valueToNormalize) {
-                    onRowChange({ ...row, [column.key]: result.value });
-                }
-            }
-            onClose(true);
-        };
-
-        const handleKeyDown = (e: React.KeyboardEvent) => {
-            if (e.key === 'Enter') {
-                handleBlurAndNormalize();
-            } else if (e.key === 'Escape') {
-                onClose(false); // Cancel on Escape
-            }
-        };
-
-        // Custom editors for specific field types
-        switch (fieldName) {
-            case 'tipos':
-                return (
-                    <TiposMultiSelectEditor
-                        value={String(localValue || '')}
-                        onChange={handleChange}
-                        onClose={() => onClose(true)}
-                    />
-                );
-
-            case 'periodo_locacao':
-                return (
-                    <select
-                        className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
-                        value={String(localValue || '')}
-                        onChange={(e) => handleChange(e.target.value)}
-                        onBlur={handleBlurAndNormalize}
-                        onKeyDown={handleKeyDown}
-                        autoFocus
-                    >
-                        <option value="">Selecione...</option>
-                        {PERIODO_LOCACAO.map(periodo => (
-                            <option key={periodo} value={periodo}>{periodo}</option>
-                        ))}
-                    </select>
-                );
-
-            default:
-                // Default text input with normalization on blur
-                return (
-                    <input
-                        className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
-                        value={String(localValue || '')}
-                        onChange={(e) => handleChange(e.target.value)}
-                        onBlur={handleBlurAndNormalize}
-                        onKeyDown={handleKeyDown}
-                        autoFocus
-                    />
-                );
-        }
-    };
-
-    // Status icon
-    const StatusIcon = ({ status }: { status: 'valid' | 'warning' | 'error' }) => {
-        if (status === 'valid') return <CheckCircle2 size={16} className="text-green-500" />;
-        if (status === 'warning') return <AlertTriangle size={16} className="text-yellow-500" />;
-        return <XCircle size={16} className="text-red-500" />;
-    };
-
     // Create columns
     const columns: Column<GridRow>[] = useMemo(() => {
-        const cols: Column<GridRow>[] = [
-            {
-                key: 'status',
-                name: 'Status',
-                width: 60,
-                frozen: true,
-                renderCell: ({ row }) => (
-                    <div className="flex items-center justify-center h-full">
-                        <StatusIcon status={row.status} />
-                    </div>
-                ),
-            },
-        ];
+        const cols: Column<GridRow>[] = [];
 
         headers.forEach((header, idx) => {
             cols.push({
@@ -681,22 +345,13 @@ export default function DataGridStep() {
                 name: header,
                 width: 180,
                 resizable: true,
-                editable: true,
                 renderHeaderCell: HeaderRenderer,
                 renderCell: CellRenderer,
-                renderEditCell: EditCellRenderer,
             });
         });
 
         return cols;
-    }, [headers, mapping, validationResults]);
-
-    // Row class name
-    const rowClassName = (row: GridRow) => {
-        if (row.status === 'error') return 'bg-red-50/50';
-        if (row.status === 'warning') return 'bg-yellow-50/50';
-        return 'bg-green-50/30';
-    };
+    }, [headers, mapping]);
 
     // Show upload if no data
     if (headers.length === 0) {
@@ -733,90 +388,56 @@ export default function DataGridStep() {
 
     return (
         <div className="space-y-4">
-            {/* Filter Buttons */}
-            <div className="flex items-center gap-2 flex-wrap">
-                <Filter size={16} className="text-gray-400" />
-                <button
-                    onClick={() => setFilter('all')}
-                    className={cn(
-                        'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                        filter === 'all'
-                            ? 'bg-emidias-primary text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    )}
-                >
-                    Todos ({summary.total})
-                </button>
-                <button
-                    onClick={() => setFilter('valid')}
-                    className={cn(
-                        'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                        filter === 'valid'
-                            ? 'bg-green-500 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    )}
-                >
-                    Válidos ({summary.valid})
-                </button>
-                <button
-                    onClick={() => setFilter('warnings')}
-                    className={cn(
-                        'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                        filter === 'warnings'
-                            ? 'bg-yellow-500 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    )}
-                >
-                    Avisos ({summary.warnings})
-                </button>
-                <button
-                    onClick={() => setFilter('errors')}
-                    className={cn(
-                        'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                        filter === 'errors'
-                            ? 'bg-red-500 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    )}
-                >
-                    Erros ({summary.errors})
-                </button>
-
-                {/* Correction Summary */}
-                {session?.cellCorrections && Object.keys(session.cellCorrections).length > 0 && (
-                    <div className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
-                        <CheckCircle2 size={14} />
-                        {Object.keys(session.cellCorrections).length} correções automáticas
+            {/* Summary */}
+            <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
+                    <CheckCircle2 size={16} />
+                    {summary.total} linhas detectadas
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm font-medium">
+                    <CheckCircle2 size={16} />
+                    {summary.mappedCount} colunas mapeadas
+                </div>
+                {summary.allRequiredMapped && (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium">
+                        <CheckCircle2 size={16} />
+                        Todos os campos obrigatórios mapeados
+                    </div>
+                )}
+                {!summary.allRequiredMapped && (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg text-sm font-medium">
+                        ⚠️ Campos obrigatórios: Código OOH, Endereço, Latitude, Longitude
                     </div>
                 )}
 
-                {isValidating && (
-                    <div className="ml-auto flex items-center gap-2 text-sm text-emidias-primary">
-                        <Loader2 size={14} className="animate-spin" />
-                        Validando...
+                {/* Correction Summary */}
+                {session?.cellCorrections && Object.keys(session.cellCorrections).length > 0 && (
+                    <div className="ml-auto flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
+                        <CheckCircle2 size={16} />
+                        {Object.keys(session.cellCorrections).length} normalizações automáticas
                     </div>
                 )}
             </div>
 
-            {/* Data Grid */}
+            {/* Data Grid - READ ONLY */}
             <div className="border border-gray-200 rounded-xl overflow-hidden">
                 <DataGrid
                     columns={columns}
-                    rows={filteredRows}
-                    onRowsChange={handleRowsChange}
+                    rows={rows}
                     rowKeyGetter={(row) => row.id}
-                    rowClass={rowClassName}
                     headerRowHeight={80}
                     rowHeight={35}
                     style={{ height: 500 }}
                     className="rdg-light"
-                    onFill={handleFill}
                 />
             </div>
 
             {/* Hint */}
-            <p className="text-xs text-gray-500 text-center">
-                💡 Dica: Clique duplo para editar | Arraste o canto da célula para preencher | Use setas para navegar
-            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-900">
+                    💡 <strong>Dica:</strong> Revise o mapeamento das colunas acima. Os dados foram normalizados automaticamente e serão validados completamente na próxima etapa, onde você poderá editar cada ponto individualmente.
+                </p>
+            </div>
         </div>
     );
 }

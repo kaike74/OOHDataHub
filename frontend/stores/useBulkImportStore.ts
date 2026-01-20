@@ -60,9 +60,6 @@ export interface BulkImportSession {
     // Cell corrections tracking: "rowIndex-colIndex" -> { original, corrected, field }
     cellCorrections: Record<string, { original: any; corrected: any; field: string }>;
 
-    // Cell validations tracking: "rowIndex-colIndex" -> { severity, message, suggestion }
-    cellValidations: Record<string, { severity: 'error' | 'warning' | 'valid'; message: string; suggestion?: string }>;
-
     // Parsed points
     pontos: BulkPoint[];
 
@@ -132,7 +129,6 @@ export const useBulkImportStore = create<BulkImportState>()(
                     columnHeaders: [],
                     columnMapping: {},
                     cellCorrections: {},
-                    cellValidations: {},
                     pontos: [],
                     pontosSalvos: [],
                 };
