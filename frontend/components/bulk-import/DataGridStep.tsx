@@ -461,31 +461,47 @@ export default function DataGridStep() {
             onRowChange({ ...row, [column.key]: newValue });
         };
 
+        const handleBlur = () => {
+            // Normalize on blur for specific fields
+            if (fieldName && fieldName !== 'ignore' && !NO_NORMALIZE_FIELDS.includes(fieldName)) {
+                const result = normalizeField(fieldName, value);
+                if (result.success && result.value !== value) {
+                    handleChange(result.value);
+                }
+            }
+            onClose();
+        };
+
         // Custom editors for specific field types
         switch (fieldName) {
-            case 'tipos':
-                return <TiposEditor value={String(value || '')} onChange={handleChange} onClose={onClose} />;
-
-            case 'medidas':
-                return <MedidasEditor value={String(value || '')} onChange={handleChange} onClose={onClose} />;
-
             case 'periodo_locacao':
-                return <PeriodoEditor value={String(value || '')} onChange={handleChange} onClose={onClose} />;
+                return (
+                    <select
+                        className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
+                        value={String(value || 'Bissemanal')}
+                        onChange={(e) => {
+                            handleChange(e.target.value);
+                            onClose();
+                        }}
+                        autoFocus
+                    >
+                        <option value="Bissemanal">Bissemanal</option>
+                        <option value="Mensal">Mensal</option>
+                    </select>
+                );
 
             case 'latitude':
-                return <CoordinateEditor value={value} onChange={handleChange} onClose={onClose} type="latitude" />;
-
             case 'longitude':
-                return <CoordinateEditor value={value} onChange={handleChange} onClose={onClose} type="longitude" />;
+                return <CoordinateEditor value={value} onChange={handleChange} onClose={onClose} type={fieldName as 'latitude' | 'longitude'} />;
 
             default:
-                // Default text input
+                // Default text input with normalization on blur
                 return (
                     <input
                         className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
                         value={String(value || '')}
                         onChange={(e) => handleChange(e.target.value)}
-                        onBlur={() => onClose()}
+                        onBlur={handleBlur}
                         autoFocus
                     />
                 );

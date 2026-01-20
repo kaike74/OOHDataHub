@@ -450,7 +450,7 @@ export function normalizeField(
                 return {
                     success: true,
                     value: endereco,
-                    warning: String(value) !== endereco ? 'Endereço formatado' : undefined
+                    warning: String(value).trim() !== endereco ? 'Endereço formatado' : undefined
                 };
 
             case 'cidade':

@@ -1298,26 +1298,7 @@
    REACT DATA GRID - DRAG FILL HANDLE
     */
 
-/* Make fill handle visible and styled */
-.rdg-cell[aria-selected='true']::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  width: 8px;
-  height: 8px;
-  background-color: var(--emidias-primary);
-  border: 2px solid white;
-  border-radius: 50%;
-  cursor: crosshair;
-  z-index: 10;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
 
-.rdg-cell[aria-selected='true']::after:hover {
-  background-color: var(--emidias-accent);
-  transform: scale(1.2);
-}
 
 /* 
    REACT DATA GRID - CUSTOM STYLES
@@ -1325,27 +1306,7 @@
 
 
 
-/* Make fill handle visible and styled */
-.rdg-cell[aria-selected='true']::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  width: 8px;
-  height: 8px;
-  background-color: var(--emidias-primary);
-  border: 2px solid white;
-  border-radius: 50%;
-  cursor: crosshair;
-  z-index: 100;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  pointer-events: all;
-}
 
-.rdg-cell[aria-selected='true']::after:hover {
-  background-color: var(--emidias-accent);
-  transform: scale(1.2);
-}
 
 /* Fix tooltip z-index and positioning */
 .rdg-cell {
