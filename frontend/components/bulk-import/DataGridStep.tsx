@@ -11,6 +11,8 @@ import * as XLSX from 'xlsx';
 import { normalizeField } from '@/lib/dataNormalizers';
 import { CellDiff } from './CorrectionDiff';
 import { TiposEditor, MedidasEditor, PeriodoEditor, CoordinateEditor } from './CustomCellEditors';
+import { TiposMultiSelectEditor } from './TiposMultiSelectEditor';
+import { TIPOS_OOH, PERIODO_LOCACAO } from '@/constants/oohTypes';
 import 'react-data-grid/lib/styles.css';
 
 // Field options for column mapping
@@ -469,8 +471,7 @@ export default function DataGridStep() {
                     onRowChange({ ...row, [column.key]: result.value });
                 }
             }
-            // Small delay to ensure state update before closing
-            setTimeout(() => onClose(), 10);
+            onClose();
         };
 
         const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -485,32 +486,11 @@ export default function DataGridStep() {
         switch (fieldName) {
             case 'tipos':
                 return (
-                    <select
-                        className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
+                    <TiposMultiSelectEditor
                         value={String(value || '')}
-                        onChange={(e) => {
-                            const options = Array.from(e.target.selectedOptions).map(opt => opt.value);
-                            handleChange(options.join(', '));
-                        }}
-                        onBlur={handleBlurAndNormalize}
-                        onKeyDown={handleKeyDown}
-                        multiple
-                        size={5}
-                        autoFocus
-                    >
-                        <option value="Outdoor">Outdoor</option>
-                        <option value="Frontlight">Frontlight</option>
-                        <option value="Backlight">Backlight</option>
-                        <option value="Painel rodoviário">Painel rodoviário</option>
-                        <option value="Led">Led</option>
-                        <option value="Iluminado">Iluminado</option>
-                        <option value="Digital">Digital</option>
-                        <option value="Relógio de rua">Relógio de rua</option>
-                        <option value="Empena">Empena</option>
-                        <option value="Totem">Totem</option>
-                        <option value="Busdoor">Busdoor</option>
-                        <option value="Taxidoor">Taxidoor</option>
-                    </select>
+                        onChange={handleChange}
+                        onClose={onClose}
+                    />
                 );
 
             case 'periodo_locacao':
@@ -520,13 +500,14 @@ export default function DataGridStep() {
                         value={String(value || 'Bissemanal')}
                         onChange={(e) => {
                             handleChange(e.target.value);
-                            setTimeout(() => onClose(), 10);
+                            onClose();
                         }}
                         onKeyDown={handleKeyDown}
                         autoFocus
                     >
-                        <option value="Bissemanal">Bissemanal</option>
-                        <option value="Mensal">Mensal</option>
+                        {PERIODO_LOCACAO.map(periodo => (
+                            <option key={periodo} value={periodo}>{periodo}</option>
+                        ))}
                     </select>
                 );
 
