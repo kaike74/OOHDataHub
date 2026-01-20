@@ -405,15 +405,8 @@ export default function DataGridStep() {
                 setValidationResults(results);
                 setColumnMapping(mapping);
 
-                // Store cell validations in session
-                if (session) {
-                    useBulkImportStore.setState({
-                        session: {
-                            ...session,
-                            cellValidations
-                        }
-                    });
-                }
+                // Note: cellValidations are computed but not stored in session for now
+                // This avoids React rendering issues
 
                 setRows(prevRows => prevRows.map((row, idx) => ({
                     ...row,
@@ -425,7 +418,7 @@ export default function DataGridStep() {
         };
 
         validateAll();
-    }, [mapping, rawRows, setColumnMapping, session]);
+    }, [mapping, rawRows, setColumnMapping]);
 
     // Summary
     const summary = useMemo(() => {
