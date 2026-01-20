@@ -461,19 +461,58 @@ export default function DataGridStep() {
             onRowChange({ ...row, [column.key]: newValue });
         };
 
-        const handleBlur = () => {
+        const handleBlurAndNormalize = () => {
             // Normalize on blur for specific fields
             if (fieldName && fieldName !== 'ignore' && !NO_NORMALIZE_FIELDS.includes(fieldName)) {
                 const result = normalizeField(fieldName, value);
                 if (result.success && result.value !== value) {
-                    handleChange(result.value);
+                    onRowChange({ ...row, [column.key]: result.value });
                 }
             }
-            onClose();
+            // Small delay to ensure state update before closing
+            setTimeout(() => onClose(), 10);
+        };
+
+        const handleKeyDown = (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                handleBlurAndNormalize();
+            } else if (e.key === 'Escape') {
+                onClose();
+            }
         };
 
         // Custom editors for specific field types
         switch (fieldName) {
+            case 'tipos':
+                return (
+                    <select
+                        className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
+                        value={String(value || '')}
+                        onChange={(e) => {
+                            const options = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                            handleChange(options.join(', '));
+                        }}
+                        onBlur={handleBlurAndNormalize}
+                        onKeyDown={handleKeyDown}
+                        multiple
+                        size={5}
+                        autoFocus
+                    >
+                        <option value="Outdoor">Outdoor</option>
+                        <option value="Frontlight">Frontlight</option>
+                        <option value="Backlight">Backlight</option>
+                        <option value="Painel rodoviário">Painel rodoviário</option>
+                        <option value="Led">Led</option>
+                        <option value="Iluminado">Iluminado</option>
+                        <option value="Digital">Digital</option>
+                        <option value="Relógio de rua">Relógio de rua</option>
+                        <option value="Empena">Empena</option>
+                        <option value="Totem">Totem</option>
+                        <option value="Busdoor">Busdoor</option>
+                        <option value="Taxidoor">Taxidoor</option>
+                    </select>
+                );
+
             case 'periodo_locacao':
                 return (
                     <select
@@ -481,8 +520,9 @@ export default function DataGridStep() {
                         value={String(value || 'Bissemanal')}
                         onChange={(e) => {
                             handleChange(e.target.value);
-                            onClose();
+                            setTimeout(() => onClose(), 10);
                         }}
+                        onKeyDown={handleKeyDown}
                         autoFocus
                     >
                         <option value="Bissemanal">Bissemanal</option>
@@ -501,7 +541,8 @@ export default function DataGridStep() {
                         className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
                         value={String(value || '')}
                         onChange={(e) => handleChange(e.target.value)}
-                        onBlur={handleBlur}
+                        onBlur={handleBlurAndNormalize}
+                        onKeyDown={handleKeyDown}
                         autoFocus
                     />
                 );
