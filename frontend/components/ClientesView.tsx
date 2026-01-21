@@ -6,7 +6,7 @@ import ClientModal from './ClientModal';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import ClientsTable from './clients/ClientsTable';
-import ClientDetailsSidebar from './clients/ClientDetailsSidebar';
+import ClientDetailModal from './clients/ClientDetailModal';
 
 interface ClientesViewProps {
     isModalOpen?: boolean;
@@ -123,7 +123,7 @@ export default function ClientesView({ isModalOpen, onCloseModal, searchTerm = '
                 editClient={editingCliente}
             />
 
-            <ClientDetailsSidebar
+            <ClientDetailModal
                 isOpen={!!selectedClientDetails}
                 client={selectedClientDetails}
                 onClose={() => setSelectedClientDetails(null)}

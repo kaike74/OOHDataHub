@@ -47,8 +47,8 @@ export interface UnifiedDetailModalProps {
     // Header
     /** Modal title */
     title: string;
-    /** Optional subtitle */
-    subtitle?: string;
+    /** Optional subtitle (can be string or React node) */
+    subtitle?: string | React.ReactNode;
     /** Optional logo/image (URL or React node) */
     logo?: string | React.ReactNode;
 
@@ -183,9 +183,13 @@ export function UnifiedDetailModal({
                             {title}
                         </h2>
                         {subtitle && (
-                            <p className="text-sm text-gray-500 mt-1">
-                                {subtitle}
-                            </p>
+                            <div className="mt-1">
+                                {typeof subtitle === 'string' ? (
+                                    <p className="text-sm text-gray-500">{subtitle}</p>
+                                ) : (
+                                    subtitle
+                                )}
+                            </div>
                         )}
                     </div>
 

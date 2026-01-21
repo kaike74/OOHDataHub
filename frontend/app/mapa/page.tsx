@@ -4,7 +4,7 @@ import { useStore } from '@/lib/store';
 import MainLayout from '@/components/layout/MainLayout';
 import GoogleMap from '@/components/map/GoogleMap';
 import PointDetailsModal from '@/components/PointDetailsModal'; // REPLACED Sidebar
-import ExibidoraSidebar from '@/components/ExibidoraSidebar';
+import ExhibitorDetailModal from '@/components/exhibitors/ExhibitorDetailModal';
 import MapFilters from '@/components/MapFilters';
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
@@ -115,7 +115,7 @@ export default function MapaPage() {
                         </div>
                         {/* New Modal instead of Sidebar */}
                         <PointDetailsModal />
-                        <ExibidoraSidebar />
+                        <ExhibitorDetailModal />
                         <MapFilters isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
                         <CreatePointModal />
                     </>

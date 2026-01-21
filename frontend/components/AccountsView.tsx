@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
 import { AnimatedSearchBar } from '@/components/ui/AnimatedSearchBar';
 import AccountsTable from '@/components/accounts/AccountsTable';
-import AccountDetailsSidebar from '@/components/accounts/AccountDetailsSidebar';
+import AccountDetailModal from '@/components/accounts/AccountDetailModal';
 import CreateUserModal from '@/components/accounts/CreateUserModal';
 import { Button } from '@/components/ui/Button';
 import { Plus, AlertCircle } from 'lucide-react';
@@ -155,7 +155,7 @@ export default function AccountsView({ searchTerm = '' }: AccountsViewProps) {
                 </div>
             </div>
 
-            <AccountDetailsSidebar
+            <AccountDetailModal
                 isOpen={!!selectedAccount}
                 account={selectedAccount}
                 onClose={() => setSelectedAccount(null)}
