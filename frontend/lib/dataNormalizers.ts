@@ -233,14 +233,19 @@ export function normalizeCoordinate(input: string | number): number {
         str = str.replace(/["']/g, '');
 
         // CRÍTICO: Remove pontos de milhar ANTES de converter vírgula
-        // Detecta se tem ponto seguido de 3 dígitos (milhar) vs ponto decimal
-        // Ex: -46.655.881 → -46655881 (milhar)
-        // Ex: -46.655881 → -46.655881 (decimal)
-        if (str.match(/\.\d{3}($|\.)/)) {
-            console.log('[normalizeCoordinate] Detected thousand separator, removing dots');
-            // Tem ponto de milhar, remove TODOS os pontos
+        // Detecta se tem MÚLTIPLOS pontos de milhar (ex: -46.655.881)
+        // Coordenadas como -23.561.684 também podem ter este padrão, então:
+        // - Se tem DOIS ou mais grupos de .XXX → milhar (ex: -46.655.881)
+        // - Se tem apenas UM grupo .XXX → pode ser coordenada mal formatada, NÃO remove
+        const thousandSeparatorCount = (str.match(/\.\d{3}/g) || []).length;
+        console.log('[normalizeCoordinate] Thousand separator count:', thousandSeparatorCount);
+
+        if (thousandSeparatorCount >= 2) {
+            console.log('[normalizeCoordinate] Detected MULTIPLE thousand separators, removing all dots');
+            // Tem múltiplos pontos de milhar, remove TODOS os pontos
             str = str.replace(/\./g, '');
         }
+        // Se tem apenas 1, mantém os pontos (pode ser coordenada como -23.561.684)
 
         // Agora vírgula → ponto (para decimal)
         str = str.replace(/,/g, '.');

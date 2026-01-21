@@ -265,6 +265,10 @@ export default function DataGridStep() {
             return headers.map((_, colIdx) => row[`col_${colIdx}`]);
         });
 
+        // CRITICAL: Update originalData to persist user edits
+        // This ensures edits made when column is "ignore" are not lost when remapping
+        setOriginalData(updatedData);
+
         // Update store
         const { session } = useBulkImportStore.getState();
         if (session) {
