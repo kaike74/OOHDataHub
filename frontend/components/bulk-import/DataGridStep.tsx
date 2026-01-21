@@ -174,11 +174,13 @@ export default function DataGridStep() {
 
         rawRows.forEach((row, rowIdx) => {
             const cellKey = `${rowIdx}-${colIdx}`;
-            const originalValue = originalData[rowIdx]?.[colIdx];
+            // CRITICAL: Use rawRows (current data) instead of originalData (can be stale)
+            // originalData is updated async via setState, so it may not reflect recent edits
+            const currentValue = row[colIdx];
 
             // Skip normalization for codigo_ooh - keep as-is
             if (fieldName === 'codigo_ooh') {
-                const trimmed = originalValue ? String(originalValue).trim() : originalValue;
+                const trimmed = currentValue ? String(currentValue).trim() : currentValue;
                 updatedData[rowIdx] = [...updatedData[rowIdx]];
                 updatedData[rowIdx][colIdx] = trimmed;
 
@@ -196,7 +198,7 @@ export default function DataGridStep() {
             }
 
             // Normalize and validate other fields
-            const result = normalizeField(fieldName, originalValue);
+            const result = normalizeField(fieldName, currentValue);
 
             if (result.success) {
                 // Update data with normalized value
@@ -205,7 +207,7 @@ export default function DataGridStep() {
 
                 // Only show warning for EMPTY optional fields, not for normalized values
                 const isOptionalField = !['codigo_ooh', 'endereco', 'latitude', 'longitude'].includes(fieldName);
-                const isEmpty = !originalValue || String(originalValue).trim() === '';
+                const isEmpty = !currentValue || String(currentValue).trim() === '';
 
                 if (isEmpty && isOptionalField) {
                     newValidations[cellKey] = {
@@ -218,9 +220,9 @@ export default function DataGridStep() {
                     };
                 }
             } else {
-                // Keep original value but mark as error
+                // Keep current value but mark as error
                 updatedData[rowIdx] = [...updatedData[rowIdx]];
-                updatedData[rowIdx][colIdx] = originalValue;
+                updatedData[rowIdx][colIdx] = currentValue;
 
                 newValidations[cellKey] = {
                     severity: 'error',
