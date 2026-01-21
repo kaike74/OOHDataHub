@@ -58,13 +58,13 @@ interface PageHeaderProps {
  */
 export function PageHeader({ title, subtitle, action, children }: PageHeaderProps) {
     return (
-        <div className="flex items-center justify-between mb-6">
+        <div className="bg-plura-primary-light border-b border-plura-primary px-6 py-4 flex items-center justify-between">
             <div>
-                <h1 className="text-3xl font-bold text-plura-primary tracking-tight">
+                <h1 className="text-2xl font-bold text-white tracking-tight">
                     {title}
                 </h1>
                 {subtitle && (
-                    <p className="text-plura-gray-600 mt-1">
+                    <p className="text-white/70 mt-1 text-sm">
                         {subtitle}
                     </p>
                 )}
