@@ -32,7 +32,7 @@ export default function TeamManagement({ user }: TeamManagementProps) {
                         <CheckIcon /> Histórico de atividades
                     </div>
                 </div>
-                <Button className="w-full bg-emidias-accent hover:scale-[1.02] transition-transform">
+                <Button className="w-full bg-plura-accent hover:scale-[1.02] transition-transform">
                     Ver Planos
                 </Button>
             </div>
@@ -103,7 +103,7 @@ export default function TeamManagement({ user }: TeamManagementProps) {
                             required
                             value={inviteEmail}
                             onChange={(e) => setInviteEmail(e.target.value)}
-                            className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:border-emidias-primary outline-none"
+                            className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:border-plura-primary outline-none"
                         />
                         <div className="flex gap-2">
                             <select
@@ -117,7 +117,7 @@ export default function TeamManagement({ user }: TeamManagementProps) {
                             <Button
                                 type="submit"
                                 isLoading={isInviting}
-                                className="bg-emidias-primary whitespace-nowrap"
+                                className="bg-plura-primary whitespace-nowrap"
                             >
                                 Convidar
                             </Button>
@@ -157,7 +157,7 @@ export default function TeamManagement({ user }: TeamManagementProps) {
                                             {member.name}
                                         </p>
                                         {member.role === 'master' && (
-                                            <BadgeCheck size={14} className="text-emidias-accent" title="Master" />
+                                            <BadgeCheck size={14} className="text-plura-accent" title="Master" />
                                         )}
                                     </div>
                                     <p className="text-xs text-gray-500 truncate">{member.email}</p>

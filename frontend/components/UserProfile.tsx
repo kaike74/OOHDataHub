@@ -75,14 +75,14 @@ export default function UserProfile({ user }: UserProfileProps) {
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="flex-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:border-emidias-primary outline-none transition-all"
+                            className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:border-plura-primary outline-none transition-all"
                         />
                         <Button
                             onClick={handleSaveName}
                             isLoading={isSaving}
                             disabled={name === user.name}
                             size="sm"
-                            className="bg-emidias-primary"
+                            className="bg-plura-primary"
                         >
                             Salvar
                         </Button>

@@ -536,7 +536,7 @@ export default function GoogleMap({
                     map: googleMapRef.current!,
                     icon: {
                         path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
-                        fillColor: layer.color || '#FC1E75',
+                        fillColor: layer.color || '#06dd82',
                         fillOpacity: 1,
                         anchor: new google.maps.Point(12, 22),
                         strokeWeight: 0,
@@ -600,7 +600,7 @@ export default function GoogleMap({
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
                     scale: 10,
-                    fillColor: '#FC1E75',
+                    fillColor: '#06dd82',
                     fillOpacity: 0.8,
                     strokeColor: '#FFFFFF',
                     strokeWeight: 2
@@ -744,7 +744,7 @@ export default function GoogleMap({
             {/* Context Menu */}
             {contextMenu && !isStreetViewMode && (
                 <div
-                    className="fixed z-50 bg-white rounded-xl shadow-emidias-xl border border-gray-200 overflow-hidden"
+                    className="fixed z-50 bg-white rounded-xl shadow-plura-xl border border-gray-200 overflow-hidden"
                     style={{
                         left: `${contextMenu.x}px`,
                         top: `${contextMenu.y}px`,
@@ -762,10 +762,10 @@ export default function GoogleMap({
                     </div>
                     <button
                         onClick={handleCadastrarNoMapa}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 text-sm font-semibold text-emidias-primary"
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 text-sm font-semibold text-plura-primary"
                     >
-                        <div className="bg-emidias-accent/10 p-2 rounded-full">
-                            <MapPin size={16} className="text-emidias-accent" />
+                        <div className="bg-plura-accent/10 p-2 rounded-full">
+                            <MapPin size={16} className="text-plura-accent" />
                         </div>
                         Cadastrar OOH aqui
                     </button>
@@ -777,7 +777,7 @@ export default function GoogleMap({
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
                     <Button
                         onClick={handleCadastrarAqui}
-                        className="bg-emidias-accent hover:bg-emidias-accent/90 shadow-2xl animate-pulse"
+                        className="bg-plura-accent hover:bg-plura-accent/90 shadow-2xl animate-pulse"
                         size="lg"
                         leftIcon={<MapPin size={20} />}
                     >
@@ -792,7 +792,7 @@ export default function GoogleMap({
             {!isLoaded && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
                     <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emidias-primary mx-auto mb-4"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-plura-primary mx-auto mb-4"></div>
                         <p className="text-gray-500 font-medium">Carregando mapa...</p>
                     </div>
                 </div>

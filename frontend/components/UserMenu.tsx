@@ -47,7 +47,7 @@ export default function UserMenu() {
             {/* Trigger Avatar */}
             <button
                 onClick={toggleMenu}
-                className="w-9 h-9 rounded-full bg-gradient-to-br from-emidias-primary to-emidias-primary/80 text-white flex items-center justify-center text-sm font-bold shadow-md hover:shadow-lg transition-all ring-2 ring-white cursor-pointer"
+                className="w-9 h-9 rounded-full bg-gradient-to-br from-plura-primary to-plura-primary/80 text-white flex items-center justify-center text-sm font-bold shadow-md hover:shadow-lg transition-all ring-2 ring-white cursor-pointer"
             >
                 {initials}
             </button>
@@ -58,7 +58,7 @@ export default function UserMenu() {
 
                     {/* Header */}
                     <div className="bg-gray-50/50 p-4 border-b border-gray-100 flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-emidias-primary/10 text-emidias-primary flex items-center justify-center text-lg font-bold">
+                        <div className="w-12 h-12 rounded-full bg-plura-primary/10 text-plura-primary flex items-center justify-center text-lg font-bold">
                             {initials}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -75,7 +75,7 @@ export default function UserMenu() {
                         <button
                             onClick={() => setActiveTab('account')}
                             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${activeTab === 'account'
-                                ? 'bg-white text-emidias-primary shadow-sm border border-gray-100'
+                                ? 'bg-white text-plura-primary shadow-sm border border-gray-100'
                                 : 'text-gray-500 hover:bg-gray-50'
                                 }`}
                         >
@@ -85,7 +85,7 @@ export default function UserMenu() {
                         <button
                             onClick={() => setActiveTab('team')}
                             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${activeTab === 'team'
-                                ? 'bg-white text-emidias-primary shadow-sm border border-gray-100'
+                                ? 'bg-white text-plura-primary shadow-sm border border-gray-100'
                                 : 'text-gray-500 hover:bg-gray-50'
                                 }`}
                         >

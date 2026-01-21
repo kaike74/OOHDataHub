@@ -123,8 +123,8 @@
     font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: var(--plura-gray-50);
-    color: var(--plura-gray-900);
+    background-color: var(--plura-primary);
+    color: var(--plura-gray-100);
   }
 
   /* Seleção de texto personalizada */
