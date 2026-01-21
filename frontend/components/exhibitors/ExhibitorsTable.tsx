@@ -1,9 +1,12 @@
 'use client';
 
+import { useMemo } from 'react';
+import { PluraTable } from '@/components/ui/PluraTable';
+import { ColumnDef } from '@tanstack/react-table';
 import { Exibidora } from '@/lib/types';
 import { api } from '@/lib/api';
 import { SafeImage } from '@/components/ui/SafeImage';
-import { Building2, MapPin, Edit2, Trash2 } from 'lucide-react';
+import { Building2, Edit2, Trash2, Eye } from 'lucide-react';
 
 interface ExhibitorsTableProps {
     exibidoras: (Exibidora & { totalPontos?: number; cidades?: string[] })[];
@@ -13,126 +16,107 @@ interface ExhibitorsTableProps {
     onDelete: (exibidora: Exibidora, e: React.MouseEvent) => void;
 }
 
-export default function ExhibitorsTable({ exibidoras, isLoading, onRowClick, onEdit, onDelete }: ExhibitorsTableProps) {
-    if (isLoading) {
-        return (
-            <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emidias-accent"></div>
-            </div>
-        );
-    }
+export default function ExhibitorsTable({
+    exibidoras,
+    isLoading,
+    onRowClick,
+    onEdit,
+    onDelete
+}: ExhibitorsTableProps) {
 
-    if (exibidoras.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-gray-100 text-center">
-                <Building2 size={48} className="text-gray-200 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900">Nenhuma exibidora encontrada</h3>
-                <p className="text-sm text-gray-500 mt-1">Cadastre novas exibidoras para vê-las aqui.</p>
-            </div>
-        );
-    }
+    const columns = useMemo<ColumnDef<Exibidora & { totalPontos?: number; cidades?: string[] }>[]>(() => [
+        {
+            accessorKey: 'logo_r2_key',
+            header: 'Logo',
+            cell: ({ row }) => (
+                <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100 overflow-hidden">
+                    {row.original.logo_r2_key ? (
+                        <SafeImage
+                            src={api.getImageUrl(row.original.logo_r2_key)}
+                            alt={row.original.nome}
+                            className="w-full h-full object-contain"
+                        />
+                    ) : (
+                        <Building2 size={20} className="text-gray-300" />
+                    )}
+                </div>
+            ),
+            size: 80,
+            enableSorting: false,
+        },
+        {
+            accessorKey: 'nome',
+            header: 'Exibidora',
+            cell: ({ getValue }) => (
+                <div className="font-semibold text-gray-900">
+                    {getValue() as string}
+                </div>
+            ),
+        },
+        {
+            accessorKey: 'cnpj',
+            header: 'CNPJ',
+            cell: ({ getValue }) => (
+                <div className="font-mono text-xs text-gray-500">
+                    {getValue() as string || '-'}
+                </div>
+            ),
+        },
+        {
+            accessorKey: 'totalPontos',
+            header: 'Pontos',
+            cell: ({ getValue }) => (
+                <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold bg-plura-primary/5 text-plura-primary">
+                    {getValue() as number || 0}
+                </span>
+            ),
+            size: 100,
+        },
+        {
+            accessorKey: 'cidades',
+            header: 'Atuação',
+            cell: ({ getValue }) => {
+                const cidades = getValue() as string[] || [];
+                return (
+                    <div className="flex flex-wrap gap-1 max-w-[200px]">
+                        {cidades.slice(0, 2).map((city, i) => (
+                            <span key={i} className="text-xs text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                                {city}
+                            </span>
+                        ))}
+                        {cidades.length > 2 && (
+                            <span className="text-xs text-gray-400 px-1">+{cidades.length - 2}</span>
+                        )}
+                        {cidades.length === 0 && '-'}
+                    </div>
+                );
+            },
+        },
+    ], []);
+
+    const renderActions = (item: Exibidora) => [
+        {
+            label: 'Editar',
+            icon: <Edit2 size={18} />,
+            onClick: (e?: any) => onEdit(item, e), // Safe fallback for event
+            color: 'text-blue-600'
+        },
+        {
+            label: 'Excluir',
+            icon: <Trash2 size={18} />,
+            onClick: (e?: any) => onDelete(item, e),
+            color: 'text-red-600'
+        }
+    ];
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-                <table className="w-full">
-                    <thead>
-                        <tr className="bg-gray-50/50 border-b border-gray-100">
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[80px]">
-                                Logo
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Exibidora
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                CNPJ
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Pontos
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Atuação
-                            </th>
-                            <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Ações
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {exibidoras.map((exibidora) => (
-                            <tr
-                                key={exibidora.id}
-                                onClick={() => onRowClick(exibidora)}
-                                className="group hover:bg-gray-50/80 transition-colors cursor-pointer"
-                            >
-                                <td className="px-6 py-3 whitespace-nowrap">
-                                    <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100 overflow-hidden">
-                                        {exibidora.logo_r2_key ? (
-                                            <SafeImage
-                                                src={api.getImageUrl(exibidora.logo_r2_key)}
-                                                alt={exibidora.nome}
-                                                className="w-full h-full object-contain"
-                                            />
-                                        ) : (
-                                            <Building2 size={20} className="text-gray-300" />
-                                        )}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-3 whitespace-nowrap">
-                                    <div className="font-medium text-gray-900 group-hover:text-emidias-primary transition-colors">
-                                        {exibidora.nome}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-3 whitespace-nowrap">
-                                    <div className="font-mono text-xs text-gray-500">
-                                        {exibidora.cnpj || '-'}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-3 whitespace-nowrap">
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                                        {exibidora.totalPontos || 0}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-3 whitespace-nowrap">
-                                    <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                        {exibidora.cidades && exibidora.cidades.slice(0, 2).map((city, i) => (
-                                            <span key={i} className="text-xs text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
-                                                {city}
-                                            </span>
-                                        ))}
-                                        {exibidora.cidades && exibidora.cidades.length > 2 && (
-                                            <span className="text-xs text-gray-400 px-1">+{exibidora.cidades.length - 2}</span>
-                                        )}
-                                        {(!exibidora.cidades || exibidora.cidades.length === 0) && '-'}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-3 whitespace-nowrap text-right">
-                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {/* Assuming Edit functionality exists or will be hooked */}
-                                        <button
-                                            onClick={(e) => onEdit && onEdit(exibidora, e)}
-                                            className="p-2 text-gray-400 hover:text-emidias-accent hover:bg-emidias-accent/5 rounded-lg transition-colors"
-                                            title="Editar"
-                                        >
-                                            <Edit2 size={16} />
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onDelete && onDelete(exibidora, e);
-                                            }}
-                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                            title="Excluir"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <PluraTable
+            data={exibidoras}
+            columns={columns}
+            isLoading={isLoading}
+            searchPlaceholder="Buscar exibidora..."
+            onRowClick={onRowClick}
+            renderActions={renderActions}
+        />
     );
 }
