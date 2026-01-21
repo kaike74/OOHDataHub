@@ -48,7 +48,7 @@ export default function TopBar({ breadcrumbs, user, actions, counts }: TopBarPro
     }, []);
 
     return (
-        <div className="bg-white border-b border-gray-200 sticky top-0 z-30 flex flex-col shadow-sm transition-all duration-200">
+        <div className="bg-plura-primary/95 backdrop-blur-sm border-b border-plura-primary-light sticky top-0 z-30 flex flex-col shadow-lg transition-all duration-200">
             {/* Main Header Strip */}
             <div className="flex items-center justify-between px-4 sm:px-6 h-[70px]">
                 {/* Left: Logo & Navigation */}
@@ -107,7 +107,7 @@ export default function TopBar({ breadcrumbs, user, actions, counts }: TopBarPro
                     >
                         <Bell size={18} />
                         {unreadCount > 0 && (
-                            <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] flex items-center justify-center bg-emidias-primary text-white text-[10px] font-bold rounded-full border-2 border-white px-1">
+                            <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] flex items-center justify-center bg-plura-accent text-plura-primary text-[10px] font-bold rounded-full border-2 border-plura-primary px-1">
                                 {unreadCount > 9 ? '9+' : unreadCount}
                             </span>
                         )}

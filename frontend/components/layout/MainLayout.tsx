@@ -24,7 +24,7 @@ export default function MainLayout({ children, user, actions, counts, breadcrumb
     // For now we rely on propBreadcrumbs being passed by pages
 
     return (
-        <div className="min-h-screen h-screen flex flex-col bg-gray-50 overflow-hidden">
+        <div className="min-h-screen h-screen flex flex-col bg-plura-primary overflow-hidden">
             {/* Fixed Top Navigation */}
             <TopBar
                 breadcrumbs={propBreadcrumbs}
