@@ -219,12 +219,18 @@ export function normalizeCoordinate(input: string | number): number {
     if (typeof input === 'number') {
         num = input;
     } else {
-        // Converte para string e remove espaços
-        let str = String(input).trim();
-        console.log('[normalizeCoordinate] After trim:', str);
+        // Converte para string e limpa
+        let str = String(input);
+        console.log('[normalizeCoordinate] Raw Input:', str);
+
+        // 1. Remove espaços em branco (incluindo internos)
+        str = str.replace(/\s/g, '');
+
+        // 2. Normaliza tipos de traço/hífen (en-dash, em-dash, non-standard hyphens)
+        str = str.replace(/[–—−]/g, '-');
 
         // Se for vazio ou apenas hífen/traço, é inválido
-        if (!str || str === '-' || str === '–' || str === '—') {
+        if (!str || str === '-') {
             console.error('[normalizeCoordinate] Empty or invalid dash');
             throw new Error('Coordenada inválida');
         }
@@ -249,7 +255,7 @@ export function normalizeCoordinate(input: string | number): number {
 
         // Agora vírgula → ponto (para decimal)
         str = str.replace(/,/g, '.');
-        console.log('[normalizeCoordinate] After comma replacement:', str);
+        console.log('[normalizeCoordinate] After sanitation:', str);
 
         num = parseFloat(str);
         console.log('[normalizeCoordinate] Parsed number:', num);

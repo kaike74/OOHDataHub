@@ -170,13 +170,23 @@ export default function DataGridStep() {
         }
 
         const newValidations: Record<string, CellValidation> = { ...cellValidations };
+        // CRITICAL FIX: Always start from ORIGINAL data to preserve "Universal Rule"
+        // This ensures if we switch types (e.g. Text -> Lat -> Text), we don't lose the original value
+        // or get stuck with a normalized version that can't be reversed.
+        const sourceData = originalData.length > 0 ? originalData : rawRows;
         const updatedData = [...rawRows];
 
-        rawRows.forEach((row, rowIdx) => {
+        rawRows.forEach((_, rowIdx) => {
             const cellKey = `${rowIdx}-${colIdx}`;
-            // CRITICAL: Use rawRows (current data) instead of originalData (can be stale)
-            // originalData is updated async via setState, so it may not reflect recent edits
-            const currentValue = row[colIdx];
+
+            // Get value from source (original) data if available, falling back to current
+            // Safely access row and column
+            let currentValue = null;
+            if (sourceData[rowIdx] && sourceData[rowIdx][colIdx] !== undefined) {
+                currentValue = sourceData[rowIdx][colIdx];
+            } else if (rawRows[rowIdx]) {
+                currentValue = rawRows[rowIdx][colIdx];
+            }
 
             // Skip normalization for codigo_ooh - keep as-is
             if (fieldName === 'codigo_ooh') {
@@ -220,7 +230,7 @@ export default function DataGridStep() {
                     };
                 }
             } else {
-                // Keep current value but mark as error
+                // Keep ORIGINAL value but mark as error
                 updatedData[rowIdx] = [...updatedData[rowIdx]];
                 updatedData[rowIdx][colIdx] = currentValue;
 
