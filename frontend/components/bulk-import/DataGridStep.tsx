@@ -8,6 +8,9 @@ import { cn } from '@/lib/utils';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import { normalizeField } from '@/lib/dataNormalizers';
+import { TiposMultiSelectEditor } from './TiposMultiSelectEditor';
+import { PeriodoEditor } from './CustomCellEditors';
+import { PERIODO_LOCACAO } from '@/constants/oohTypes';
 import 'react-data-grid/lib/styles.css';
 
 // Field options for column mapping
@@ -151,7 +154,26 @@ export default function DataGridStep() {
             const cellKey = `${rowIdx}-${colIdx}`;
             const originalValue = originalData[rowIdx]?.[colIdx];
 
-            // Normalize and validate
+            // Skip normalization for codigo_ooh - keep as-is
+            if (fieldName === 'codigo_ooh') {
+                const trimmed = originalValue ? String(originalValue).trim() : originalValue;
+                updatedData[rowIdx] = [...updatedData[rowIdx]];
+                updatedData[rowIdx][colIdx] = trimmed;
+
+                if (!trimmed) {
+                    newValidations[cellKey] = {
+                        severity: 'error',
+                        message: 'Código OOH é obrigatório'
+                    };
+                } else {
+                    newValidations[cellKey] = {
+                        severity: 'valid'
+                    };
+                }
+                return;
+            }
+
+            // Normalize and validate other fields
             const result = normalizeField(fieldName, originalValue);
 
             if (result.success) {
@@ -159,10 +181,14 @@ export default function DataGridStep() {
                 updatedData[rowIdx] = [...updatedData[rowIdx]];
                 updatedData[rowIdx][colIdx] = result.value;
 
-                if (result.warning) {
+                // Only show warning for EMPTY optional fields, not for normalized values
+                const isOptionalField = !['codigo_ooh', 'endereco', 'latitude', 'longitude'].includes(fieldName);
+                const isEmpty = !originalValue || String(originalValue).trim() === '';
+
+                if (isEmpty && isOptionalField) {
                     newValidations[cellKey] = {
                         severity: 'warning',
-                        message: result.warning
+                        message: 'Campo opcional vazio'
                     };
                 } else {
                     newValidations[cellKey] = {
@@ -235,15 +261,45 @@ export default function DataGridStep() {
         if (!fieldName || fieldName === 'ignore') return;
 
         const cellKey = `${rowIdx}-${colIdx}`;
-        const result = normalizeField(fieldName, value);
 
+        // Skip normalization for codigo_ooh
+        if (fieldName === 'codigo_ooh') {
+            const trimmed = value ? String(value).trim() : value;
+            const newValidations = { ...cellValidations };
+
+            if (!trimmed) {
+                newValidations[cellKey] = {
+                    severity: 'error',
+                    message: 'Código OOH é obrigatório'
+                };
+            } else {
+                newValidations[cellKey] = {
+                    severity: 'valid'
+                };
+            }
+
+            const updatedRows = [...rows];
+            updatedRows[rowIdx] = {
+                ...updatedRows[rowIdx],
+                [`col_${colIdx}`]: trimmed
+            };
+            setRows(updatedRows);
+            setCellValidations(newValidations);
+            return;
+        }
+
+        const result = normalizeField(fieldName, value);
         const newValidations = { ...cellValidations };
 
         if (result.success) {
-            if (result.warning) {
+            // Only show warning for empty optional fields
+            const isOptionalField = !['codigo_ooh', 'endereco', 'latitude', 'longitude'].includes(fieldName);
+            const isEmpty = !value || String(value).trim() === '';
+
+            if (isEmpty && isOptionalField) {
                 newValidations[cellKey] = {
                     severity: 'warning',
-                    message: result.warning
+                    message: 'Campo opcional vazio'
                 };
             } else {
                 newValidations[cellKey] = {
@@ -372,6 +428,7 @@ export default function DataGridStep() {
     // Edit cell renderer
     const EditCellRenderer = ({ row, column, onRowChange, onClose }: RenderEditCellProps<GridRow>) => {
         const colIdx = parseInt(column.key.replace('col_', ''));
+        const fieldName = mapping[colIdx.toString()];
         const initialValue = row[column.key];
         const currentValueRef = useRef(initialValue);
         const [localValue, setLocalValue] = useState(initialValue);
@@ -399,16 +456,44 @@ export default function DataGridStep() {
             }
         };
 
-        return (
-            <input
-                className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
-                value={String(localValue || '')}
-                onChange={(e) => handleChange(e.target.value)}
-                onBlur={handleBlur}
-                onKeyDown={handleKeyDown}
-                autoFocus
-            />
-        );
+        // Custom editors for specific field types
+        switch (fieldName) {
+            case 'tipos':
+                return (
+                    <TiposMultiSelectEditor
+                        value={String(localValue || '')}
+                        onChange={handleChange}
+                        onClose={() => {
+                            revalidateCell(row.id, colIdx, currentValueRef.current);
+                            onClose(true);
+                        }}
+                    />
+                );
+
+            case 'periodo_locacao':
+                return (
+                    <PeriodoEditor
+                        value={String(localValue || '')}
+                        onChange={handleChange}
+                        onClose={() => {
+                            revalidateCell(row.id, colIdx, currentValueRef.current);
+                            onClose(true);
+                        }}
+                    />
+                );
+
+            default:
+                return (
+                    <input
+                        className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
+                        value={String(localValue || '')}
+                        onChange={(e) => handleChange(e.target.value)}
+                        onBlur={handleBlur}
+                        onKeyDown={handleKeyDown}
+                        autoFocus
+                    />
+                );
+        }
     };
 
     // Create columns
