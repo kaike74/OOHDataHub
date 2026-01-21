@@ -24,7 +24,7 @@ export default function BottomNav({ onMenuClick }: BottomNavProps) {
     ];
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 h-[60px] bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50 px-4 flex items-center justify-around pb-safe">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 h-[60px] bg-plura-primary/95 backdrop-blur-sm border-t border-plura-primary-light shadow-lg z-50 px-4 flex items-center justify-around pb-safe">
             {tabs.map((tab) => {
                 const isActive = isActiveTab(tab.id);
                 const Icon = tab.icon;
@@ -38,14 +38,14 @@ export default function BottomNav({ onMenuClick }: BottomNavProps) {
                         <div className={cn(
                             "p-1.5 rounded-xl transition-all duration-300",
                             isActive
-                                ? "text-white bg-emidias-primary shadow-lg shadow-emidias-primary/30 translate-y-[-4px]"
-                                : "text-gray-400 group-hover:text-gray-600"
+                                ? "text-white bg-plura-accent shadow-lg shadow-plura-accent/30 translate-y-[-4px]"
+                                : "text-gray-300 group-hover:text-plura-accent"
                         )}>
                             <Icon size={20} className={cn(isActive ? "fill-white/20" : "")} />
                         </div>
                         <span className={cn(
                             "text-[10px] font-medium transition-colors",
-                            isActive ? "text-emidias-primary" : "text-gray-400"
+                            isActive ? "text-plura-accent" : "text-gray-300"
                         )}>
                             {tab.label}
                         </span>

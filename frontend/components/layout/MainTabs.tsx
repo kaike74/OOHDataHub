@@ -58,15 +58,15 @@ export default function MainTabs({ className, counts }: Omit<MainTabsProps, 'cur
                         className={cn(
                             "group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] overflow-hidden whitespace-nowrap",
                             isActive
-                                ? "bg-black text-white max-w-[160px]"
-                                : "bg-transparent text-gray-500 hover:bg-gray-100 max-w-[44px] hover:max-w-[160px]"
+                                ? "bg-plura-accent text-white shadow-md shadow-plura-accent/20 max-w-[160px]"
+                                : "bg-transparent text-gray-600 hover:bg-plura-accent-subtle hover:text-plura-accent max-w-[44px] hover:max-w-[160px]"
                         )}
                     >
                         <Icon
                             size={20}
                             className={cn(
                                 "min-w-[20px] transition-colors",
-                                isActive ? "text-white" : "text-gray-500 group-hover:text-gray-900"
+                                isActive ? "text-white" : "text-gray-600 group-hover:text-plura-accent"
                             )}
                         />
 

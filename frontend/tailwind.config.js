@@ -12,9 +12,9 @@ module.exports = {
         'plura-primary': '#0c3138',
         'plura-primary-light': '#16464f',
         'plura-primary-dark': '#000000',
-        'plura-accent': '#06dd82',
-        'plura-accent-light': '#4ffbb0',
-        'plura-accent-dark': '#04b368',
+        'plura-accent': '#4a9d9c',
+        'plura-accent-light': '#6bb3b2',
+        'plura-accent-dark': '#3a7d7c',
 
         // Cores de Status
         'plura-success': '#10B981',
@@ -27,6 +27,12 @@ module.exports = {
         'plura-info': '#3B82F6',
         'plura-info-light': '#60A5FA',
 
+        accent: {
+          DEFAULT: '#4a9d9c',
+          light: '#6bb3b2',
+          dark: '#3a7d7c',
+          subtle: '#e8f4f4',
+        },
         // Tons Neutros
         'plura-gray': {
           50: '#F9FAFB',
@@ -73,9 +79,9 @@ module.exports = {
         'plura-lg': '0 8px 24px rgba(12, 49, 56, 0.12)',
         'plura-xl': '0 16px 32px rgba(12, 49, 56, 0.16)',
         'plura-2xl': '0 24px 48px rgba(12, 49, 56, 0.20)',
-        'accent': '0 8px 24px rgba(6, 221, 130, 0.25)',
-        'accent-lg': '0 12px 32px rgba(6, 221, 130, 0.30)',
-        'glow': '0 0 40px rgba(6, 221, 130, 0.3)',
+        'accent': '0 8px 24px rgba(74, 157, 156, 0.25)',
+        'accent-lg': '0 12px 32px rgba(74, 157, 156, 0.30)',
+        'glow': '0 0 40px rgba(74, 157, 156, 0.3)',
         'inner-soft': 'inset 0 2px 4px rgba(12, 49, 56, 0.06)',
       },
       spacing: {
