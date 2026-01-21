@@ -43,10 +43,10 @@ export default function InicioPage() {
     return (
         <MainLayout>
             <div className="max-w-7xl mx-auto p-6 md:p-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-3xl font-bold text-white mb-2">
                     Olá, {user?.name?.split(' ')[0] || 'Bem-vindo'}!
                 </h1>
-                <p className="text-gray-500 mb-8">
+                <p className="text-white/70 mb-8">
                     Aqui está um resumo das suas atividades recentes no OOH Data Hub.
                 </p>
 
