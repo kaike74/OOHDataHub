@@ -213,14 +213,19 @@ export function normalizeTipos(input: string): string[] {
 export function normalizeCoordinate(input: string | number): number {
     let num: number;
 
+    // DEBUG: Log input
+    console.log('[normalizeCoordinate] Input:', input, 'Type:', typeof input);
+
     if (typeof input === 'number') {
         num = input;
     } else {
         // Converte para string e remove espaços
         let str = String(input).trim();
+        console.log('[normalizeCoordinate] After trim:', str);
 
         // Se for vazio ou apenas hífen/traço, é inválido
         if (!str || str === '-' || str === '–' || str === '—') {
+            console.error('[normalizeCoordinate] Empty or invalid dash');
             throw new Error('Coordenada inválida');
         }
 
@@ -232,28 +237,36 @@ export function normalizeCoordinate(input: string | number): number {
         // Ex: -46.655.881 → -46655881 (milhar)
         // Ex: -46.655881 → -46.655881 (decimal)
         if (str.match(/\.\d{3}($|\.)/)) {
+            console.log('[normalizeCoordinate] Detected thousand separator, removing dots');
             // Tem ponto de milhar, remove TODOS os pontos
             str = str.replace(/\./g, '');
         }
 
         // Agora vírgula → ponto (para decimal)
         str = str.replace(/,/g, '.');
+        console.log('[normalizeCoordinate] After comma replacement:', str);
 
         num = parseFloat(str);
+        console.log('[normalizeCoordinate] Parsed number:', num);
 
         if (isNaN(num)) {
+            console.error('[normalizeCoordinate] NaN after parsing');
             throw new Error('Coordenada inválida');
         }
     }
 
     // Valida range
+    console.log('[normalizeCoordinate] Checking range: num =', num, 'valid range: -180 to 180');
     if (num < -180 || num > 180) {
+        console.error('[normalizeCoordinate] OUT OF RANGE!', num);
         throw new Error('Coordenada fora do range válido');
     }
 
     // ALWAYS return with 7 decimal places for consistency
     // This prevents validation issues when comparing inputs
-    return parseFloat(num.toFixed(7));
+    const result = parseFloat(num.toFixed(7));
+    console.log('[normalizeCoordinate] Final result:', result);
+    return result;
 }
 
 // ============================================================================
