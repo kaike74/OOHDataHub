@@ -138,6 +138,28 @@ export default function DataGridStep() {
     // Normalize and validate column when mapping changes
     const normalizeColumn = useCallback((colIdx: number, fieldName: string) => {
         if (fieldName === 'ignore' || rawRows.length === 0) {
+            // RESTORE ORIGINAL DATA when unmapping
+            if (originalData.length > 0) {
+                const restoredData = [...rawRows];
+                rawRows.forEach((_, rowIdx) => {
+                    if (originalData[rowIdx]) {
+                        restoredData[rowIdx] = [...restoredData[rowIdx]];
+                        restoredData[rowIdx][colIdx] = originalData[rowIdx][colIdx];
+                    }
+                });
+
+                // Update store with restored data
+                const { session } = useBulkImportStore.getState();
+                if (session) {
+                    useBulkImportStore.setState({
+                        session: {
+                            ...session,
+                            excelData: restoredData
+                        }
+                    });
+                }
+            }
+
             // Clear validations for this column
             const newValidations = { ...cellValidations };
             rawRows.forEach((_, rowIdx) => {

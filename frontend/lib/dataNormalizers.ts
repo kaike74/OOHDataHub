@@ -21,9 +21,15 @@ export function normalizeMedidas(input: string): Medidas {
     // Remove espaços extras
     let clean = input.trim().toUpperCase();
 
-    // Detecta unidade (padrão: M) - MELHORADO para detectar P, pixel, px, pixels (case insensitive)
+    // Detecta unidade explícita (P, PX, pixel, pixels)
     const unidadePattern = /\b(p|px|pixel|pixels?)\b/i;
-    const unidade = unidadePattern.test(input) ? 'PX' : 'M';
+    let unidadeExplicita: 'M' | 'PX' | null = null;
+
+    if (unidadePattern.test(input)) {
+        unidadeExplicita = 'PX';
+    } else if (/\b(m|metro|metros)\b/i.test(input)) {
+        unidadeExplicita = 'M';
+    }
 
     // Remove unidade e texto extra (metros, pixels, etc)
     clean = clean.replace(/\s*(M|PX|METROS?|PIXELS?|METRO|PIXEL|P)\s*/gi, '');
@@ -38,9 +44,28 @@ export function normalizeMedidas(input: string): Medidas {
         throw new Error('Formato de medida inválido');
     }
 
+    const largura = parseFloat(match[1]);
+    const altura = parseFloat(match[2]);
+
+    // Determina unidade:
+    // 1. Se foi explicitada, usa a explícita
+    // 2. Senão, usa regra de dígitos: >2 dígitos = PX, ≤2 dígitos = M
+    let unidade: 'M' | 'PX';
+
+    if (unidadeExplicita) {
+        unidade = unidadeExplicita;
+    } else {
+        // Conta dígitos dos números (sem decimal)
+        const larguraDigitos = Math.floor(largura).toString().length;
+        const alturaDigitos = Math.floor(altura).toString().length;
+        const maxDigitos = Math.max(larguraDigitos, alturaDigitos);
+
+        unidade = maxDigitos > 2 ? 'PX' : 'M';
+    }
+
     return {
-        largura: parseFloat(match[1]),
-        altura: parseFloat(match[2]),
+        largura,
+        altura,
         unidade
     };
 }
