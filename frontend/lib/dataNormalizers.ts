@@ -211,37 +211,39 @@ export function normalizeTipos(input: string): string[] {
 // ============================================================================
 
 export function normalizeCoordinate(input: string | number): number {
+    let num: number;
+
     if (typeof input === 'number') {
-        return input;
-    }
+        num = input;
+    } else {
+        // Converte para string e remove espaços
+        let str = String(input).trim();
 
-    // Converte para string e remove espaços
-    let str = String(input).trim();
+        // Se for vazio ou apenas hífen/traço, é inválido
+        if (!str || str === '-' || str === '–' || str === '—') {
+            throw new Error('Coordenada inválida');
+        }
 
-    // Se for vazio ou apenas hífen/traço, é inválido
-    if (!str || str === '-' || str === '–' || str === '—') {
-        throw new Error('Coordenada inválida');
-    }
+        // Remove aspas
+        str = str.replace(/["']/g, '');
 
-    // Remove aspas
-    str = str.replace(/["']/g, '');
+        // CRÍTICO: Remove pontos de milhar ANTES de converter vírgula
+        // Detecta se tem ponto seguido de 3 dígitos (milhar) vs ponto decimal
+        // Ex: -46.655.881 → -46655881 (milhar)
+        // Ex: -46.655881 → -46.655881 (decimal)
+        if (str.match(/\.\d{3}($|\.)/)) {
+            // Tem ponto de milhar, remove TODOS os pontos
+            str = str.replace(/\./g, '');
+        }
 
-    // CRÍTICO: Remove pontos de milhar ANTES de converter vírgula
-    // Detecta se tem ponto seguido de 3 dígitos (milhar) vs ponto decimal
-    // Ex: -46.655.881 → -46655881 (milhar)
-    // Ex: -46.655881 → -46.655881 (decimal)
-    if (str.match(/\.\d{3}($|\.)/)) {
-        // Tem ponto de milhar, remove TODOS os pontos
-        str = str.replace(/\./g, '');
-    }
+        // Agora vírgula → ponto (para decimal)
+        str = str.replace(/,/g, '.');
 
-    // Agora vírgula → ponto (para decimal)
-    str = str.replace(/,/g, '.');
+        num = parseFloat(str);
 
-    const num = parseFloat(str);
-
-    if (isNaN(num)) {
-        throw new Error('Coordenada inválida');
+        if (isNaN(num)) {
+            throw new Error('Coordenada inválida');
+        }
     }
 
     // Valida range
@@ -249,7 +251,9 @@ export function normalizeCoordinate(input: string | number): number {
         throw new Error('Coordenada fora do range válido');
     }
 
-    return num;
+    // ALWAYS return with 7 decimal places for consistency
+    // This prevents validation issues when comparing inputs
+    return parseFloat(num.toFixed(7));
 }
 
 // ============================================================================

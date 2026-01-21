@@ -329,21 +329,12 @@ export default function DataGridStep() {
                 };
             }
 
-            // Update with normalized value (handle number precision for coordinates)
+            // Update with normalized value
+            // For coordinates, normalizeCoordinate already returns with proper 7-decimal precision
             const updatedRows = [...rows];
-            let normalizedValue = result.value;
-
-            // For coordinates, ensure proper number comparison and storage
-            if (fieldName === 'latitude' || fieldName === 'longitude') {
-                if (typeof result.value === 'number') {
-                    // Round to 7 decimal places to avoid precision issues
-                    normalizedValue = Number(result.value.toFixed(7));
-                }
-            }
-
             updatedRows[rowIdx] = {
                 ...updatedRows[rowIdx],
-                [`col_${colIdx}`]: normalizedValue
+                [`col_${colIdx}`]: result.value
             };
             setRows(updatedRows);
         } else {
