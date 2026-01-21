@@ -11,6 +11,7 @@ import { normalizeField } from '@/lib/dataNormalizers';
 import { TiposMultiSelectEditor } from './TiposMultiSelectEditor';
 import { PeriodoEditor } from './CustomCellEditors';
 import { PERIODO_LOCACAO } from '@/constants/oohTypes';
+import { createPortal } from 'react-dom';
 import 'react-data-grid/lib/styles.css';
 
 // Field options for column mapping
@@ -329,11 +330,21 @@ export default function DataGridStep() {
                 };
             }
 
-            // Update with normalized value
+            // Update with normalized value (handle number precision for coordinates)
             const updatedRows = [...rows];
+            let normalizedValue = result.value;
+
+            // For coordinates, ensure proper number comparison and storage
+            if (fieldName === 'latitude' || fieldName === 'longitude') {
+                if (typeof result.value === 'number') {
+                    // Round to 7 decimal places to avoid precision issues
+                    normalizedValue = Number(result.value.toFixed(7));
+                }
+            }
+
             updatedRows[rowIdx] = {
                 ...updatedRows[rowIdx],
-                [`col_${colIdx}`]: result.value
+                [`col_${colIdx}`]: normalizedValue
             };
             setRows(updatedRows);
         } else {
@@ -454,6 +465,14 @@ export default function DataGridStep() {
         const initialValue = row[column.key];
         const currentValueRef = useRef(initialValue);
         const [localValue, setLocalValue] = useState(initialValue);
+        const [showPeriodoEditor, setShowPeriodoEditor] = useState(fieldName === 'periodo_locacao');
+
+        // Auto-show periodo editor on mount
+        useEffect(() => {
+            if (fieldName === 'periodo_locacao') {
+                setShowPeriodoEditor(true);
+            }
+        }, [fieldName]);
 
         const handleChange = (newValue: any) => {
             currentValueRef.current = newValue;
@@ -478,44 +497,61 @@ export default function DataGridStep() {
             }
         };
 
-        // Custom editors for specific field types
-        switch (fieldName) {
-            case 'tipos':
-                return (
-                    <TiposMultiSelectEditor
-                        value={String(localValue || '')}
-                        onChange={handleChange}
-                        onClose={() => {
-                            revalidateCell(row.id, colIdx, currentValueRef.current);
-                            onClose(true);
-                        }}
-                    />
-                );
+        // TIPOS editor
+        if (fieldName === 'tipos') {
+            return (
+                <TiposMultiSelectEditor
+                    value={String(localValue || '')}
+                    onChange={handleChange}
+                    onClose={() => {
+                        revalidateCell(row.id, colIdx, currentValueRef.current);
+                        onClose(true);
+                    }}
+                />
+            );
+        }
 
-            case 'periodo_locacao':
-                return (
-                    <PeriodoEditor
-                        value={String(localValue || '')}
-                        onChange={handleChange}
-                        onClose={() => {
-                            revalidateCell(row.id, colIdx, currentValueRef.current);
-                            onClose(true);
-                        }}
-                    />
-                );
-
-            default:
-                return (
+        // PERIODO LOCACAO editor with portal
+        if (fieldName === 'periodo_locacao') {
+            return (
+                <>
                     <input
                         className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
                         value={String(localValue || '')}
-                        onChange={(e) => handleChange(e.target.value)}
-                        onBlur={handleBlur}
-                        onKeyDown={handleKeyDown}
-                        autoFocus
+                        readOnly
+                        placeholder="Selecione..."
                     />
-                );
+                    {showPeriodoEditor && createPortal(
+                        <PeriodoEditor
+                            value={String(localValue || '')}
+                            onChange={(newValue) => {
+                                handleChange(newValue);
+                                revalidateCell(row.id, colIdx, newValue);
+                                setShowPeriodoEditor(false);
+                                onClose(true);
+                            }}
+                            onClose={() => {
+                                setShowPeriodoEditor(false);
+                                onClose(false);
+                            }}
+                        />,
+                        document.body
+                    )}
+                </>
+            );
         }
+
+        // DEFAULT text input
+        return (
+            <input
+                className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
+                value={String(localValue || '')}
+                onChange={(e) => handleChange(e.target.value)}
+                onBlur={handleBlur}
+                onKeyDown={handleKeyDown}
+                autoFocus
+            />
+        );
     };
 
     // Handle drag-fill
@@ -539,6 +575,9 @@ export default function DataGridStep() {
 
         setRows(newRows);
         handleRowsChange(newRows);
+
+        // Return the updated target row for the event
+        return sourceRow;
     };
 
     // Create columns

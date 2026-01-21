@@ -78,20 +78,10 @@ export function formatMedidas(medidas: Medidas): string {
 // TIPOS DE MÍDIA - ADVANCED
 // ============================================================================
 
-export const TIPOS_VALIDOS = [
-    'Outdoor',
-    'Frontlight',
-    'Backlight',
-    'Painel rodoviário',
-    'Led',
-    'Iluminado',
-    'Digital',
-    'Relógio de rua',
-    'Empena',
-    'Totem',
-    'Busdoor',
-    'Taxidoor'
-] as const;
+import { TIPOS_OOH } from '@/constants/oohTypes';
+
+// Use shared types list - same as dropdown
+export const TIPOS_VALIDOS = TIPOS_OOH;
 
 // Mapa EXPANDIDO de sinônimos
 const SINONIMOS: Record<string, string> = {
