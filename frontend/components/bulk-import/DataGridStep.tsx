@@ -307,6 +307,17 @@ export default function DataGridStep() {
             };
             setRows(updatedRows);
             setCellValidations(newValidations);
+
+            // CRITICAL: Update originalData so future validations use the edited value
+            setOriginalData(prevOriginal => {
+                const newOriginal = [...prevOriginal];
+                if (newOriginal[rowIdx]) {
+                    newOriginal[rowIdx] = [...newOriginal[rowIdx]];
+                    newOriginal[rowIdx][colIdx] = trimmed;
+                }
+                return newOriginal;
+            });
+
             return;
         }
 
@@ -337,6 +348,17 @@ export default function DataGridStep() {
                 [`col_${colIdx}`]: result.value
             };
             setRows(updatedRows);
+
+            // CRITICAL: Update originalData with the edited value
+            // This ensures future validations use the corrected value as baseline
+            setOriginalData(prevOriginal => {
+                const newOriginal = [...prevOriginal];
+                if (newOriginal[rowIdx]) {
+                    newOriginal[rowIdx] = [...newOriginal[rowIdx]];
+                    newOriginal[rowIdx][colIdx] = value; // Store user's input value
+                }
+                return newOriginal;
+            });
         } else {
             newValidations[cellKey] = {
                 severity: 'error',
