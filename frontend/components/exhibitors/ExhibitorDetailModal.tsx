@@ -9,7 +9,7 @@ import { formatDate } from '@/lib/utils';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { useBulkImportStore } from '@/stores/useBulkImportStore';
 import BulkImportModal from '@/components/bulk-import/BulkImportModal';
-import { UnifiedDetailModal } from '@/components/ui/UnifiedDetailModal';
+import { UnifiedSplitModal } from '@/components/ui/UnifiedSplitModal';
 
 // Componente para exibir contatos da exibidora
 function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undefined }) {
@@ -121,125 +121,150 @@ export default function ExhibitorDetailModal() {
 
     if (!selectedExibidora) return null;
 
-    // Logo component
-    const logo = selectedExibidora.logo_r2_key ? (
-        <SafeImage
-            src={api.getImageUrl(selectedExibidora.logo_r2_key)}
-            alt={selectedExibidora.nome}
-            className="w-full h-full object-cover"
-        />
-    ) : (
-        <Building2 size={40} className="text-gray-300" />
+    // LEFT CONTENT: Logo
+    const LeftContent = (
+        <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-600 p-8">
+            <div className="w-48 h-48 rounded-3xl bg-white/10 backdrop-blur-sm border border-white/20 p-6 flex items-center justify-center mb-6 shadow-2xl overflow-hidden">
+                {selectedExibidora.logo_r2_key ? (
+                    <SafeImage
+                        src={api.getImageUrl(selectedExibidora.logo_r2_key)}
+                        alt={selectedExibidora.nome}
+                        className="w-full h-full object-contain"
+                    />
+                ) : (
+                    <Building2 size={80} className="text-white/40" />
+                )}
+            </div>
+
+            {/* Exhibitor Name */}
+            <h2 className="text-2xl font-bold text-white text-center mb-2 drop-shadow-lg">
+                {selectedExibidora.nome}
+            </h2>
+
+            {/* Creation Date */}
+            {selectedExibidora.created_at && (
+                <div className="flex items-center gap-2 text-white/90">
+                    <Calendar size={14} />
+                    <span className="text-sm">Cadastrado em {formatDate(selectedExibidora.created_at)}</span>
+                </div>
+            )}
+
+            {/* Stats Badge */}
+            {stats && stats.totalPontos > 0 && (
+                <div className="mt-6 px-6 py-3 bg-white/20 backdrop-blur-sm rounded-2xl border border-white/30">
+                    <div className="text-center">
+                        <div className="text-3xl font-black text-white">{stats.totalPontos}</div>
+                        <div className="text-xs text-white/80 font-medium">Pontos Cadastrados</div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 
-    // Subtitle with creation date
-    const subtitle = selectedExibidora.created_at ? (
-        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <Calendar size={12} />
-            <span>Cadastrado em {formatDate(selectedExibidora.created_at)}</span>
+    // RIGHT CONTENT: Data
+    const RightContent = (
+        <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-gray-100">
+                <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <Building2 size={20} className="text-plura-accent" />
+                    Informações da Exibidora
+                </h1>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Basic Info */}
+                <div className="space-y-4">
+                    {selectedExibidora.cnpj && (
+                        <div className="flex gap-3">
+                            <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
+                                <FileText size={16} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">CNPJ</p>
+                                <p className="text-gray-900 font-medium text-sm mt-0.5 font-mono">{selectedExibidora.cnpj}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {selectedExibidora.razao_social && (
+                        <div className="flex gap-3">
+                            <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
+                                <Building2 size={16} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Razão Social</p>
+                                <p className="text-gray-900 font-medium text-sm mt-0.5 leading-snug">{selectedExibidora.razao_social}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {selectedExibidora.endereco && (
+                        <div className="flex gap-3">
+                            <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
+                                <MapPin size={16} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Endereço</p>
+                                <p className="text-gray-900 font-medium text-sm mt-0.5 leading-snug">{selectedExibidora.endereco}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Regions */}
+                {stats && stats.cidades.length > 0 && (
+                    <div className="border-t border-gray-100 pt-6">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Tag size={14} className="text-gray-400" />
+                            <h3 className="font-bold text-xs uppercase text-gray-400 tracking-widest">Atuação</h3>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                            {stats.cidades.map((cidade, idx) => (
+                                <span
+                                    key={idx}
+                                    className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-md text-xs font-medium border border-gray-200"
+                                >
+                                    {cidade}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Contacts */}
+                <div className="border-t border-gray-100 pt-6">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Phone size={14} className="text-gray-400" />
+                        <h3 className="font-bold text-xs uppercase text-gray-400 tracking-widest">Contatos</h3>
+                    </div>
+                    <ContatosExibidora idExibidora={selectedExibidora.id} />
+                </div>
+            </div>
         </div>
-    ) : undefined;
+    );
 
     return (
         <>
-            <UnifiedDetailModal
+            <UnifiedSplitModal
                 isOpen={isOpen}
                 onClose={handleClose}
-                title={selectedExibidora.nome}
-                subtitle={subtitle}
-                logo={logo}
-                sections={[
-                    // Stats
-                    ...(stats && stats.totalPontos > 0 ? [{
-                        content: (
-                            <div className="p-3 bg-gradient-to-r from-plura-accent/5 to-transparent rounded-xl border border-plura-accent/10 flex items-center justify-between">
-                                <p className="text-sm font-medium text-gray-600">Total de Pontos</p>
-                                <p className="text-2xl font-bold text-plura-accent">
-                                    {stats.totalPontos}
-                                </p>
-                            </div>
-                        )
-                    }] : []),
-                    // Informações
-                    {
-                        title: "Informações",
-                        icon: <Building2 size={16} />,
-                        content: (
-                            <div className="space-y-4">
-                                {selectedExibidora.cnpj && (
-                                    <div className="flex gap-3">
-                                        <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
-                                            <FileText size={16} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">CNPJ</p>
-                                            <p className="text-gray-900 font-medium text-sm mt-0.5 font-mono">{selectedExibidora.cnpj}</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {selectedExibidora.razao_social && (
-                                    <div className="flex gap-3">
-                                        <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
-                                            <Building2 size={16} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Razão Social</p>
-                                            <p className="text-gray-900 font-medium text-sm mt-0.5 leading-snug">{selectedExibidora.razao_social}</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {selectedExibidora.endereco && (
-                                    <div className="flex gap-3">
-                                        <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
-                                            <MapPin size={16} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Endereço</p>
-                                            <p className="text-gray-900 font-medium text-sm mt-0.5 leading-snug">{selectedExibidora.endereco}</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )
-                    },
-                    // Regiões de Atuação
-                    ...(stats && stats.cidades.length > 0 ? [{
-                        title: "Atuação",
-                        icon: <Tag size={16} />,
-                        content: (
-                            <div className="flex flex-wrap gap-1.5">
-                                {stats.cidades.map((cidade, idx) => (
-                                    <span
-                                        key={idx}
-                                        className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-md text-xs font-medium border border-gray-200"
-                                    >
-                                        {cidade}
-                                    </span>
-                                ))}
-                            </div>
-                        )
-                    }] : []),
-                    // Contatos
-                    {
-                        title: "Contatos",
-                        icon: <Phone size={16} />,
-                        content: <ContatosExibidora idExibidora={selectedExibidora.id} />
-                    }
-                ]}
+                leftContent={LeftContent}
+                leftBackground="dark"
+                rightContent={RightContent}
                 actions={[
                     {
-                        label: "Editar",
-                        onClick: handleEdit,
-                        icon: <Pencil size={16} />,
-                        variant: 'primary'
-                    },
-                    {
+                        icon: Upload,
                         label: "Cadastro em Massa",
                         onClick: handleBulkImport,
-                        icon: <Upload size={16} />,
-                        variant: 'secondary'
+                        variant: 'default'
+                    },
+                    {
+                        icon: Pencil,
+                        label: "Editar",
+                        onClick: handleEdit,
+                        variant: 'primary'
                     }
                 ]}
             />

@@ -31,6 +31,7 @@ interface PluraModalProps {
     maxWidth?: string;
     zIndex?: number;
     className?: string; // Additional classes for the prompt
+    children?: React.ReactNode; // Content for simple variant
 }
 
 export function PluraModal({
@@ -49,7 +50,8 @@ export function PluraModal({
     canProceed = true,
     maxWidth = '6xl',
     zIndex = 2000,
-    className
+    className,
+    children
 }: PluraModalProps) {
 
     // --- VARIANT 1: DETAIL (Split View like Point Details) ---
@@ -183,6 +185,22 @@ export function PluraModal({
                         {/* Let's assume standard children are passed inside Modal content */}
                     </div>
                 </div>
+            </Modal>
+        );
+    }
+
+    // --- VARIANT 3: SIMPLE (Standard Modal with Children) ---
+    if (variant === 'simple') {
+        return (
+            <Modal
+                isOpen={isOpen}
+                onClose={onClose}
+                title={title}
+                maxWidth={maxWidth}
+                zIndex={zIndex}
+                className={className}
+            >
+                {children}
             </Modal>
         );
     }

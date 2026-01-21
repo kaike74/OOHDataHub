@@ -7,7 +7,7 @@ import { X, MapPin, Building2, Eye, ShoppingCart, Copy, ExternalLink, Loader2, M
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { PluraModal } from '@/components/ui/PluraModal'; // Using standardized modal
+import { UnifiedSplitModal } from '@/components/ui/UnifiedSplitModal';
 import { Button } from '@/components/ui/Button';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { toast } from 'sonner';
@@ -367,13 +367,61 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
 
     return (
         <>
-            <PluraModal
+            <UnifiedSplitModal
                 isOpen={isPointModalOpen}
                 onClose={handleClose}
-                variant="detail"
-                visualColors="dark"
                 leftContent={LeftContent}
+                leftBackground="dark"
                 rightContent={RightContent}
+                navigation={canNavigate ? {
+                    current: isInProposalContext ? currentIndex + 1 : pontos.findIndex(p => p.id === selectedPonto?.id) + 1,
+                    total: isInProposalContext ? cartItems.length : pontos.length,
+                    onPrevious: () => handleNavigation('prev'),
+                    onNext: () => handleNavigation('next'),
+                    hasPrevious,
+                    hasNext
+                } : undefined}
+                actions={[
+                    // Proposal context actions
+                    ...(isInProposalContext ? [{
+                        icon: isInCart ? Trash2 : ShoppingCart,
+                        label: isInCart ? "Remover" : "Adicionar",
+                        onClick: handleAddToCart,
+                        variant: (isInCart ? 'danger' : 'primary') as 'default' | 'primary' | 'danger',
+                        isLoading: isAddingToCart
+                    }] : []),
+                    // Non-proposal context actions
+                    ...(!isInProposalContext ? [
+                        {
+                            icon: History,
+                            label: "Histórico",
+                            onClick: handleHistory,
+                            variant: 'default' as 'default' | 'primary' | 'danger'
+                        },
+                        {
+                            icon: Share2,
+                            label: "Compartilhar",
+                            onClick: () => {
+                                navigator.clipboard.writeText(`${window.location.origin}/mapa?ponto=${selectedPonto.id}`);
+                                toast.success('Link copiado');
+                            },
+                            variant: 'default' as 'default' | 'primary' | 'danger'
+                        },
+                        ...(canEdit ? [{
+                            icon: Edit,
+                            label: "Editar",
+                            onClick: handleEdit,
+                            variant: 'primary' as 'default' | 'primary' | 'danger'
+                        }] : []),
+                        ...(canEdit ? [{
+                            icon: Trash2,
+                            label: "Deletar",
+                            onClick: handleDelete,
+                            variant: 'danger' as 'default' | 'primary' | 'danger',
+                            isLoading: isDeleting
+                        }] : [])
+                    ] : [])
+                ]}
             />
             {/* Hidden Input */}
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { /* Reuse logic */ }} />
