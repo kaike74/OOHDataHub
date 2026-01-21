@@ -12,21 +12,21 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         return (
             <div className="w-full">
                 {label && (
-                    <label className="block text-sm font-semibold text-emidias-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-plura-gray-700 mb-2">
                         {label}
                     </label>
                 )}
                 <textarea
                     className={cn(
-                        "flex min-h-[80px] w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm ring-offset-background placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emidias-primary/20 focus-visible:border-emidias-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 resize-y",
-                        error && "border-emidias-danger focus-visible:ring-emidias-danger/20 focus-visible:border-emidias-danger bg-red-50/50",
+                        "flex min-h-[80px] w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm ring-offset-background placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plura-primary/20 focus-visible:border-plura-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 resize-y",
+                        error && "border-plura-danger focus-visible:ring-plura-danger/20 focus-visible:border-plura-danger bg-red-50/50",
                         className
                     )}
                     ref={ref}
                     {...props}
                 />
                 {error && (
-                    <p className="mt-1 text-xs font-medium text-emidias-danger animate-in slide-in-from-top-1">
+                    <p className="mt-1 text-xs font-medium text-plura-danger animate-in slide-in-from-top-1">
                         {error}
                     </p>
                 )}

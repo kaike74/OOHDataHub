@@ -14,12 +14,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ({ className, variant = 'primary', size = 'md', isLoading, leftIcon, rightIcon, children, disabled, ...props }, ref) => {
 
         const variants = {
-            primary: "bg-gradient-to-r from-emidias-primary to-emidias-accent text-white shadow-accent hover:shadow-accent-lg border-transparent",
-            secondary: "bg-white text-emidias-primary border-2 border-emidias-primary/10 hover:border-emidias-accent hover:text-emidias-accent hover:bg-white",
-            outline: "bg-transparent border border-emidias-gray-300 text-emidias-gray-700 hover:border-emidias-primary hover:text-emidias-primary",
-            ghost: "bg-transparent text-emidias-gray-600 hover:bg-emidias-gray-100 hover:text-emidias-primary shadow-none",
+            primary: "bg-gradient-to-r from-plura-primary to-plura-accent text-white shadow-accent hover:shadow-accent-lg border-transparent",
+            secondary: "bg-white text-plura-primary border-2 border-plura-primary/10 hover:border-plura-accent hover:text-plura-accent hover:bg-white",
+            outline: "bg-transparent border border-plura-gray-300 text-plura-gray-700 hover:border-plura-primary hover:text-plura-primary",
+            ghost: "bg-transparent text-plura-gray-600 hover:bg-plura-gray-100 hover:text-plura-primary shadow-none",
             danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 hover:border-red-200 shadow-sm",
-            accent: "bg-emidias-accent text-white hover:bg-emidias-accent-dark shadow-accent hover:shadow-accent-lg border-transparent",
+            accent: "bg-plura-accent text-white hover:bg-plura-accent-dark shadow-accent hover:shadow-accent-lg border-transparent",
         };
 
         const sizes = {

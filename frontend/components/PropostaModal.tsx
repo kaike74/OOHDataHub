@@ -148,11 +148,11 @@ export default function PropostaModal({ isOpen, onClose, clienteId, onSuccess }:
                                         required
                                         value={selectedClientId}
                                         onChange={handleClientChange}
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10 transition-all outline-none bg-white appearance-none cursor-pointer"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-plura-accent focus:ring-4 focus:ring-plura-accent/10 transition-all outline-none bg-white appearance-none cursor-pointer"
                                     >
                                         <option value="" disabled>Selecione um cliente...</option>
                                         <option value={0}>👤 Pessoal (Sem Cliente)</option>
-                                        <option value="new" className="font-bold text-emidias-accent">+ Cadastrar Novo Cliente</option>
+                                        <option value="new" className="font-bold text-plura-accent">+ Cadastrar Novo Cliente</option>
                                         <hr />
                                         {availableClientes.map(cliente => (
                                             <option key={cliente.id} value={cliente.id}>
@@ -171,7 +171,7 @@ export default function PropostaModal({ isOpen, onClose, clienteId, onSuccess }:
                                 required
                                 value={nome}
                                 onChange={(e) => setNome(e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10 transition-all outline-none"
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-plura-accent focus:ring-4 focus:ring-plura-accent/10 transition-all outline-none"
                                 placeholder="Ex: Campanha Verão 2025"
                             />
                         </div>
@@ -185,8 +185,8 @@ export default function PropostaModal({ isOpen, onClose, clienteId, onSuccess }:
                                         type="button"
                                         onClick={() => setComissao(opt)}
                                         className={`py-3 px-4 rounded-xl border font-semibold transition-all flex flex-col items-center gap-1 ${comissao === opt
-                                            ? 'bg-emidias-accent text-white border-emidias-accent shadow-lg shadow-emidias-accent/20'
-                                            : 'bg-white text-gray-600 border-gray-200 hover:border-emidias-accent/50 hover:bg-gray-50'
+                                            ? 'bg-plura-accent text-white border-plura-accent shadow-lg shadow-plura-accent/20'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:border-plura-accent/50 hover:bg-gray-50'
                                             }`}
                                     >
                                         <span className="text-lg">{opt}</span>
@@ -209,7 +209,7 @@ export default function PropostaModal({ isOpen, onClose, clienteId, onSuccess }:
                             <button
                                 type="submit"
                                 disabled={isSubmitting || (selectedClientId === '' && showClientSelect)}
-                                className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-emidias-accent hover:bg-emidias-accent-dark shadow-lg shadow-emidias-accent/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-plura-accent hover:bg-plura-accent-dark shadow-lg shadow-plura-accent/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? <Loader2 className="animate-spin" /> : 'Criar e Abrir Mapa'}
                             </button>

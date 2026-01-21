@@ -232,7 +232,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                             ))}
                         </optgroup>}
 
-                        <option value="create_new" className="text-emidias-accent font-semibold">
+                        <option value="create_new" className="text-plura-accent font-semibold">
                             + Criar Novo Cliente
                         </option>
                     </Select>
@@ -241,7 +241,7 @@ export default function CreateProposalModal({ isOpen, onClose, initialClientId, 
                     {user?.type !== 'external' && (
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                <DollarSign size={16} className="text-emidias-accent" />
+                                <DollarSign size={16} className="text-plura-accent" />
                                 Tabela de Comissão
                             </label>
                             <div className="grid grid-cols-3 gap-3">

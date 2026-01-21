@@ -72,7 +72,7 @@ export function Modal({
         >
             <div
                 className={cn(
-                    "w-full bg-white rounded-2xl shadow-emidias-2xl overflow-hidden relative transition-all duration-300 flex flex-col max-h-[90vh]",
+                    "w-full bg-white rounded-2xl shadow-plura-2xl overflow-hidden relative transition-all duration-300 flex flex-col max-h-[90vh]",
                     maxWidthClasses[maxWidth],
                     isOpen ? "scale-100 opacity-100 translate-y-0" : "scale-95 opacity-0 translate-y-4",
                     className
@@ -81,7 +81,7 @@ export function Modal({
             >
                 {/* Header */}
                 {(title || subtitle) && (
-                    <div className="bg-gradient-to-r from-emidias-primary to-emidias-primary-light p-6 text-white shrink-0 relative">
+                    <div className="bg-gradient-to-r from-plura-primary to-plura-primary-light p-6 text-white shrink-0 relative">
                         <button
                             onClick={onClose}
                             className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/30"
@@ -108,7 +108,7 @@ export function Modal({
 
                 {/* Footer */}
                 {footer && (
-                    <div className="p-4 border-t border-emidias-gray-100 bg-emidias-gray-50 flex justify-end gap-3 shrink-0">
+                    <div className="p-4 border-t border-plura-gray-100 bg-plura-gray-50 flex justify-end gap-3 shrink-0">
                         {footer}
                     </div>
                 )}

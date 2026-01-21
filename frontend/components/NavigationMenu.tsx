@@ -108,11 +108,11 @@ export default function NavigationMenu() {
     const getRoleBadge = (role: string) => {
         switch (role) {
             case 'master':
-                return { bg: 'bg-emidias-accent/10', text: 'text-emidias-accent', label: 'Master' };
+                return { bg: 'bg-plura-accent/10', text: 'text-plura-accent', label: 'Master' };
             case 'editor':
-                return { bg: 'bg-emidias-primary/10', text: 'text-emidias-primary', label: 'Editor' };
+                return { bg: 'bg-plura-primary/10', text: 'text-plura-primary', label: 'Editor' };
             default:
-                return { bg: 'bg-emidias-gray-100', text: 'text-emidias-gray-600', label: 'Visualizador' };
+                return { bg: 'bg-plura-gray-100', text: 'text-plura-gray-600', label: 'Visualizador' };
         }
     };
 
@@ -127,7 +127,7 @@ export default function NavigationMenu() {
             />
 
             {/* Menu Panel - Side 40 (Below Header which is 50) */}
-            <div className="fixed right-0 top-16 h-[calc(100vh-64px)] w-full sm:w-80 bg-white/90 backdrop-blur-xl shadow-emidias-2xl z-40 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col border-l border-white/20 animate-in slide-in-from-right duration-300">
+            <div className="fixed right-0 top-16 h-[calc(100vh-64px)] w-full sm:w-80 bg-white/90 backdrop-blur-xl shadow-plura-2xl z-40 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col border-l border-white/20 animate-in slide-in-from-right duration-300">
                 {/* Header */}
                 <div className="flex-shrink-0 p-6 border-b border-gray-100/50">
                     <div className="flex items-center justify-between mb-6">
@@ -144,7 +144,7 @@ export default function NavigationMenu() {
                     {user && (
                         <div className="p-4 bg-gradient-to-br from-white to-gray-50 rounded-2xl border border-gray-100 shadow-sm">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emidias-primary to-emidias-primary-dark flex items-center justify-center text-white font-bold text-sm shadow-md">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-plura-primary to-plura-primary-dark flex items-center justify-center text-white font-bold text-sm shadow-md">
                                     {user.email[0].toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -187,13 +187,13 @@ export default function NavigationMenu() {
                                     className={cn(
                                         "w-full flex items-center gap-3 p-3 rounded-xl transition-all group",
                                         isActive
-                                            ? "bg-emidias-primary text-white shadow-lg shadow-emidias-primary/20"
+                                            ? "bg-plura-primary text-white shadow-lg shadow-plura-primary/20"
                                             : "hover:bg-gray-50 text-gray-600"
                                     )}
                                 >
                                     <div className={cn(
                                         "p-2 rounded-lg transition-colors",
-                                        isActive ? "bg-white/10 text-white" : "bg-gray-100 text-gray-500 group-hover:bg-white group-hover:text-emidias-accent group-hover:shadow-sm"
+                                        isActive ? "bg-white/10 text-white" : "bg-gray-100 text-gray-500 group-hover:bg-white group-hover:text-plura-accent group-hover:shadow-sm"
                                     )}>
                                         <Icon size={18} />
                                     </div>
@@ -224,7 +224,7 @@ export default function NavigationMenu() {
                             onClick={handleSettings}
                             className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-gray-600 transition-all group"
                         >
-                            <div className="p-2 rounded-lg bg-gray-100 text-gray-500 group-hover:bg-white group-hover:text-emidias-accent group-hover:shadow-sm transition-colors">
+                            <div className="p-2 rounded-lg bg-gray-100 text-gray-500 group-hover:bg-white group-hover:text-plura-accent group-hover:shadow-sm transition-colors">
                                 <Settings size={18} />
                             </div>
                             <div className="flex-1 text-left">
@@ -240,9 +240,9 @@ export default function NavigationMenu() {
                         {/* Logout */}
                         <button
                             onClick={handleLogout}
-                            className="w-full flex items-center gap-3 p-3 rounded-xl text-emidias-danger hover:bg-emidias-danger/5 transition-all group"
+                            className="w-full flex items-center gap-3 p-3 rounded-xl text-plura-danger hover:bg-plura-danger/5 transition-all group"
                         >
-                            <div className="p-2 rounded-lg bg-emidias-danger/5 text-emidias-danger group-hover:bg-emidias-danger/10 transition-colors">
+                            <div className="p-2 rounded-lg bg-plura-danger/5 text-plura-danger group-hover:bg-plura-danger/10 transition-colors">
                                 <LogOut size={18} />
                             </div>
                             <div className="flex-1 text-left">
