@@ -3,10 +3,9 @@
 import MainLayout from '@/components/layout/MainLayout';
 import ExibidorasView from '@/components/ExibidorasView';
 import { useStore } from '@/lib/store';
-import { Button } from '@/components/ui/Button';
-import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { AnimatedSearchBar } from '@/components/ui/AnimatedSearchBar';
+import { ActionButton } from '@/components/ui/PageComponents';
 
 
 export default function ExibidorasPage() {
@@ -34,14 +33,10 @@ export default function ExibidorasPage() {
                     width="380px"
                 />
             </div>
-            <Button
+            <ActionButton
                 onClick={() => setIsModalOpen(true)}
-                variant="accent"
-                size="sm"
-                leftIcon={<Plus size={16} />}
-            >
-                Nova Exibidora
-            </Button>
+                label="Nova Exibidora"
+            />
         </div>
     );
 

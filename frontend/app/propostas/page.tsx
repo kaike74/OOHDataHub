@@ -5,11 +5,10 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import MainLayout from '@/components/layout/MainLayout';
 import PropostasView from '@/components/PropostasView';
-import { Button } from '@/components/ui/Button';
-import { Plus } from 'lucide-react';
 import { AnimatedSearchBar } from '@/components/ui/AnimatedSearchBar';
 import ProposalDetailClient from '@/components/proposals/ProposalDetailClient';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { ActionButton } from '@/components/ui/PageComponents';
 
 export default function PropostasPage() {
     const searchParams = useSearchParams();
@@ -89,14 +88,10 @@ export default function PropostasPage() {
                     width="380px"
                 />
             </div>
-            <Button
+            <ActionButton
                 onClick={() => setIsModalOpen(true)}
-                variant="accent"
-                size="sm"
-                leftIcon={<Plus size={16} />}
-            >
-                Nova Proposta
-            </Button>
+                label="Nova Proposta"
+            />
         </div>
     );
 

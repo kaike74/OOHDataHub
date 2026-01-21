@@ -3,9 +3,8 @@
 import MainLayout from '@/components/layout/MainLayout';
 import ClientesView from '@/components/ClientesView';
 import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Plus } from 'lucide-react';
 import { AnimatedSearchBar } from '@/components/ui/AnimatedSearchBar';
+import { ActionButton } from '@/components/ui/PageComponents';
 
 
 export default function ClientesPage() {
@@ -22,14 +21,10 @@ export default function ClientesPage() {
                     width="380px"
                 />
             </div>
-            <Button
+            <ActionButton
                 onClick={() => setIsModalOpen(true)}
-                variant="accent"
-                size="sm"
-                leftIcon={<Plus size={16} />}
-            >
-                Novo Cliente
-            </Button>
+                label="Novo Cliente"
+            />
         </div>
     );
 

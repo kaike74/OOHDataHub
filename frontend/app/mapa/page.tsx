@@ -10,9 +10,10 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { MapSkeleton } from '@/components/skeletons/MapSkeleton';
 import { Button } from '@/components/ui/Button';
-import { Plus, Filter as FilterIcon } from 'lucide-react';
+import { Filter as FilterIcon } from 'lucide-react';
 import AddressSearch from '@/components/AddressSearch';
 import CreatePointModal from '@/components/CreatePointModal';
+import { ActionButton } from '@/components/ui/PageComponents';
 
 export default function MapaPage() {
     const {
@@ -94,15 +95,10 @@ export default function MapaPage() {
                 Filtros
             </Button>
 
-            <Button
+            <ActionButton
                 onClick={() => setModalOpen(true)}
-                variant="accent"
-                size="sm"
-                className="h-[40px]"
-                leftIcon={<Plus size={16} />}
-            >
-                Novo Ponto
-            </Button>
+                label="Novo Ponto"
+            />
         </div>
     );
 
