@@ -5,13 +5,13 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   E-MÍDIAS DESIGN SYSTEM 2.0 (PLURA REBRAND)
-   Sistema de design refinado para o OOH Data Hub
+   PLURA DESIGN SYSTEM
+   Sistema de design unificado para o OOH Data Hub
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
   /* ─────────────────────────────────────────────────────────────────────────
-     CORES PLURA (NOVA IDENTIDADE)
+     CORES PLURA (IDENTIDADE PRINCIPAL)
      ───────────────────────────────────────────────────────────────────────── */
   --plura-primary: #0c3138;
   --plura-primary-light: #16464f;
@@ -22,42 +22,31 @@
   --plura-white: #FFFFFF;
 
   /* ─────────────────────────────────────────────────────────────────────────
-     CORES PRIMÁRIAS E-MÍDIAS (LEGADO - MANTIDO PARA COMPATIBILIDADE)
+     TONS NEUTROS
      ───────────────────────────────────────────────────────────────────────── */
-  --emidias-primary: #0c3138;   /* PLURA OVERRIDE */
-  --emidias-primary-light: #16464f;
-  --emidias-primary-dark: #000000;
-  --emidias-accent: #06dd82;    /* PLURA OVERRIDE */
-  --emidias-accent-light: #4ffbb0;
-  --emidias-accent-dark: #04b368;
+  --plura-gray-50: #F9FAFB;
+  --plura-gray-100: #F3F4F6;
+  --plura-gray-200: #E5E7EB;
+  --plura-gray-300: #D1D5DB;
+  --plura-gray-400: #9CA3AF;
+  --plura-gray-500: #6B7280;
+  --plura-gray-600: #4B5563;
+  --plura-gray-700: #374151;
+  --plura-gray-800: #1F2937;
+  --plura-gray-900: #111827;
 
   /* ─────────────────────────────────────────────────────────────────────────
-     TONS NEUTROS SOFISTICADOS
+     CORES DE STATUS
      ───────────────────────────────────────────────────────────────────────── */
-  --emidias-white: #FFFFFF;
-  --emidias-gray-50: #F9FAFB;
-  --emidias-gray-100: #F3F4F6;
-  --emidias-gray-200: #E5E7EB;
-  --emidias-gray-300: #D1D5DB;
-  --emidias-gray-400: #9CA3AF;
-  --emidias-gray-500: #6B7280;
-  --emidias-gray-600: #4B5563;
-  --emidias-gray-700: #374151;
-  --emidias-gray-800: #1F2937;
-  --emidias-gray-900: #111827;
-
-  /* ─────────────────────────────────────────────────────────────────────────
-     CORES DE STATUS REFINADAS
-     ───────────────────────────────────────────────────────────────────────── */
-  --emidias-success: #10B981;
-  --emidias-success-light: #34D399;
-  --emidias-success-dark: #059669;
-  --emidias-warning: #F59E0B;
-  --emidias-warning-light: #FBBF24;
-  --emidias-danger: #EF4444;
-  --emidias-danger-light: #F87171;
-  --emidias-info: #3B82F6;
-  --emidias-info-light: #60A5FA;
+  --plura-success: #10B981;
+  --plura-success-light: #34D399;
+  --plura-success-dark: #059669;
+  --plura-warning: #F59E0B;
+  --plura-warning-light: #FBBF24;
+  --plura-danger: #EF4444;
+  --plura-danger-light: #F87171;
+  --plura-info: #3B82F6;
+  --plura-info-light: #60A5FA;
 
   /* ─────────────────────────────────────────────────────────────────────────
      GRADIENTES MODERNOS
@@ -134,14 +123,14 @@
     font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: var(--emidias-gray-50);
-    color: var(--emidias-gray-900);
+    background-color: var(--plura-gray-50);
+    color: var(--plura-gray-900);
   }
 
   /* Seleção de texto personalizada */
   ::selection {
-    background: rgba(252, 30, 117, 0.2);
-    color: var(--emidias-gray-900);
+    background: rgba(6, 221, 130, 0.2);
+    color: var(--plura-gray-900);
   }
 
   /* Scrollbar personalizada */
@@ -151,18 +140,18 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--emidias-gray-100);
+    background: var(--plura-gray-100);
     border-radius: var(--radius-full);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--emidias-gray-300);
+    background: var(--plura-gray-300);
     border-radius: var(--radius-full);
     transition: background var(--transition-normal);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--emidias-gray-400);
+    background: var(--plura-gray-400);
   }
 }
 
@@ -317,15 +306,15 @@
   .glass-dark {
     backdrop-filter: blur(var(--blur-lg));
     -webkit-backdrop-filter: blur(var(--blur-lg));
-    background: rgba(6, 5, 91, 0.85);
+    background: rgba(12, 49, 56, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   .glass-accent {
     backdrop-filter: blur(var(--blur-lg));
     -webkit-backdrop-filter: blur(var(--blur-lg));
-    background: rgba(252, 30, 117, 0.1);
-    border: 1px solid rgba(252, 30, 117, 0.2);
+    background: rgba(6, 221, 130, 0.1);
+    border: 1px solid rgba(6, 221, 130, 0.2);
   }
 }
 
@@ -594,11 +583,11 @@
 
   0%,
   100% {
-    filter: drop-shadow(0 0 20px rgba(252, 30, 117, 0.4));
+    filter: drop-shadow(0 0 20px rgba(6, 221, 130, 0.4));
   }
 
   50% {
-    filter: drop-shadow(0 0 30px rgba(252, 30, 117, 0.6));
+    filter: drop-shadow(0 0 30px rgba(6, 221, 130, 0.6));
   }
 }
 
@@ -619,9 +608,9 @@
 
 .animate-shimmer {
   background: linear-gradient(90deg,
-      var(--emidias-gray-100) 25%,
-      var(--emidias-gray-50) 50%,
-      var(--emidias-gray-100) 75%);
+      var(--plura-gray-100) 25%,
+      var(--plura-gray-50) 50%,
+      var(--plura-gray-100) 75%);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -791,9 +780,9 @@
 @layer utilities {
   .loading-skeleton {
     background: linear-gradient(90deg,
-        var(--emidias-gray-200) 25%,
-        var(--emidias-gray-100) 50%,
-        var(--emidias-gray-200) 75%);
+        var(--plura-gray-200) 25%,
+        var(--plura-gray-100) 50%,
+        var(--plura-gray-200) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
     border-radius: var(--radius-md);

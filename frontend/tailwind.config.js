@@ -8,27 +8,27 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Cores Primárias E-MÍDIAS
-        'emidias-primary': '#06055B',
-        'emidias-primary-light': '#0A0980',
-        'emidias-primary-dark': '#040340',
-        'emidias-accent': '#FC1E75',
-        'emidias-accent-light': '#FF4D95',
-        'emidias-accent-dark': '#E01863',
+        // Cores Primárias PLURA
+        'plura-primary': '#0c3138',
+        'plura-primary-light': '#16464f',
+        'plura-primary-dark': '#000000',
+        'plura-accent': '#06dd82',
+        'plura-accent-light': '#4ffbb0',
+        'plura-accent-dark': '#04b368',
 
-        // Cores de Status Refinadas
-        'emidias-success': '#10B981',
-        'emidias-success-light': '#34D399',
-        'emidias-success-dark': '#059669',
-        'emidias-warning': '#F59E0B',
-        'emidias-warning-light': '#FBBF24',
-        'emidias-danger': '#EF4444',
-        'emidias-danger-light': '#F87171',
-        'emidias-info': '#3B82F6',
-        'emidias-info-light': '#60A5FA',
+        // Cores de Status
+        'plura-success': '#10B981',
+        'plura-success-light': '#34D399',
+        'plura-success-dark': '#059669',
+        'plura-warning': '#F59E0B',
+        'plura-warning-light': '#FBBF24',
+        'plura-danger': '#EF4444',
+        'plura-danger-light': '#F87171',
+        'plura-info': '#3B82F6',
+        'plura-info-light': '#60A5FA',
 
-        // Tons Neutros Sofisticados
-        'emidias-gray': {
+        // Tons Neutros
+        'plura-gray': {
           50: '#F9FAFB',
           100: '#F3F4F6',
           200: '#E5E7EB',
@@ -42,12 +42,9 @@ module.exports = {
         },
 
         // Cores de Utilidade
-        'emidias-white': '#FFFFFF',
-        'emidias-dark': '#1E293B',
-        'emidias-bg': '#F8FAFC',
-        'emidias-light-gray': '#F1F5F9',
-        'emidias-medium-gray': '#E2E8F0',
-        'emidias-dark-gray': '#475569',
+        'plura-white': '#FFFFFF',
+        'plura-dark': '#1E293B',
+        'plura-bg': '#F8FAFC',
       },
       fontFamily: {
         sans: ['Space Grotesk', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
@@ -68,18 +65,18 @@ module.exports = {
         '3xl': '24px',
       },
       boxShadow: {
-        'card': '0 2px 8px rgba(6, 5, 91, 0.06)',
-        'emidias': '0 4px 12px rgba(6, 5, 91, 0.1)',
-        'emidias-xs': '0 1px 2px rgba(6, 5, 91, 0.03)',
-        'emidias-sm': '0 2px 4px rgba(6, 5, 91, 0.05)',
-        'emidias-md': '0 4px 8px rgba(6, 5, 91, 0.08)',
-        'emidias-lg': '0 8px 24px rgba(6, 5, 91, 0.12)',
-        'emidias-xl': '0 16px 32px rgba(6, 5, 91, 0.16)',
-        'emidias-2xl': '0 24px 48px rgba(6, 5, 91, 0.20)',
-        'accent': '0 8px 24px rgba(252, 30, 117, 0.25)',
-        'accent-lg': '0 12px 32px rgba(252, 30, 117, 0.30)',
-        'glow': '0 0 40px rgba(252, 30, 117, 0.3)',
-        'inner-soft': 'inset 0 2px 4px rgba(6, 5, 91, 0.06)',
+        'card': '0 2px 8px rgba(12, 49, 56, 0.06)',
+        'plura': '0 4px 12px rgba(12, 49, 56, 0.1)',
+        'plura-xs': '0 1px 2px rgba(12, 49, 56, 0.03)',
+        'plura-sm': '0 2px 4px rgba(12, 49, 56, 0.05)',
+        'plura-md': '0 4px 8px rgba(12, 49, 56, 0.08)',
+        'plura-lg': '0 8px 24px rgba(12, 49, 56, 0.12)',
+        'plura-xl': '0 16px 32px rgba(12, 49, 56, 0.16)',
+        'plura-2xl': '0 24px 48px rgba(12, 49, 56, 0.20)',
+        'accent': '0 8px 24px rgba(6, 221, 130, 0.25)',
+        'accent-lg': '0 12px 32px rgba(6, 221, 130, 0.30)',
+        'glow': '0 0 40px rgba(6, 221, 130, 0.3)',
+        'inner-soft': 'inset 0 2px 4px rgba(12, 49, 56, 0.06)',
       },
       spacing: {
         '18': '4.5rem',
@@ -143,8 +140,8 @@ module.exports = {
           '50%': { transform: 'translateY(-10px)' },
         },
         glowPulse: {
-          '0%, 100%': { filter: 'drop-shadow(0 0 20px rgba(252, 30, 117, 0.4))' },
-          '50%': { filter: 'drop-shadow(0 0 30px rgba(252, 30, 117, 0.6))' },
+          '0%, 100%': { filter: 'drop-shadow(0 0 20px rgba(6, 221, 130, 0.4))' },
+          '50%': { filter: 'drop-shadow(0 0 30px rgba(6, 221, 130, 0.6))' },
         },
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
@@ -168,9 +165,9 @@ module.exports = {
         xl: '40px',
       },
       backgroundImage: {
-        'gradient-primary': 'linear-gradient(135deg, #06055B 0%, #0A0980 100%)',
-        'gradient-primary-full': 'linear-gradient(135deg, #06055B 0%, #0A0980 50%, #FC1E75 100%)',
-        'gradient-accent': 'linear-gradient(135deg, #FC1E75 0%, #FF4D95 100%)',
+        'gradient-primary': 'linear-gradient(135deg, #0c3138 0%, #16464f 100%)',
+        'gradient-primary-full': 'linear-gradient(135deg, #0c3138 0%, #16464f 50%, #06dd82 100%)',
+        'gradient-accent': 'linear-gradient(135deg, #06dd82 0%, #4ffbb0 100%)',
         'gradient-subtle': 'linear-gradient(135deg, #F9FAFB 0%, #E5E7EB 100%)',
         'gradient-success': 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
         'gradient-glass': 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
