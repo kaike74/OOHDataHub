@@ -184,24 +184,36 @@ export function normalizeTipos(input: string): string[] {
     // Split por vírgula, ponto-e-vírgula, barra, ou "e"
     const tipos = input.split(/[,;/]|\s+e\s+/).map(t => t.trim()).filter(Boolean);
 
-    return tipos.map(tipo => {
+    const result: string[] = [];
+    const invalid: string[] = [];
+
+    for (const tipo of tipos) {
         // Normaliza: lowercase, remove acentos
         const normalized = removeAccents(tipo.toLowerCase());
 
         // Busca sinônimo exato
         if (SINONIMOS[normalized]) {
-            return SINONIMOS[normalized];
+            result.push(SINONIMOS[normalized]);
+            continue;
         }
 
-        // Fuzzy match com tipos válidos (threshold reduzido para 0.6)
+        // Fuzzy match com tipos válidos (threshold mais restritivo: 0.75)
         const match = findBestMatch(tipo, TIPOS_VALIDOS);
-        if (match.score > 0.6) {
-            return match.value;
+        if (match.score > 0.75) {
+            result.push(match.value);
+            continue;
         }
 
-        // Se não encontrou, mantém original com capitalize
-        return capitalize(tipo);
-    });
+        // Se não encontrou com boa similaridade, é INVÁLIDO
+        invalid.push(tipo);
+    }
+
+    // Se há valores inválidos, throw error
+    if (invalid.length > 0) {
+        throw new Error(`Tipos inválidos: ${invalid.join(', ')}`);
+    }
+
+    return result;
 }
 
 // ============================================================================

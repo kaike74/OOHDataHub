@@ -518,6 +518,29 @@ export default function DataGridStep() {
         }
     };
 
+    // Handle drag-fill
+    const handleFill = ({ columnKey, sourceRow, targetRows }: any) => {
+        const colIdx = parseInt(columnKey.replace('col_', ''));
+        const fieldName = mapping[colIdx.toString()];
+        const sourceValue = sourceRow[columnKey];
+
+        const newRows = [...rows];
+        targetRows.forEach((targetRow: GridRow) => {
+            newRows[targetRow.id] = {
+                ...newRows[targetRow.id],
+                [columnKey]: sourceValue
+            };
+
+            // Re-validate filled cell
+            if (fieldName && fieldName !== 'ignore') {
+                revalidateCell(targetRow.id, colIdx, sourceValue);
+            }
+        });
+
+        setRows(newRows);
+        handleRowsChange(newRows);
+    };
+
     // Create columns
     const columns: Column<GridRow>[] = useMemo(() => {
         return headers.map((header, idx) => ({
@@ -622,12 +645,13 @@ export default function DataGridStep() {
                 </div>
             )}
 
-            {/* Data Grid - EDITABLE */}
+            {/* Data Grid - EDITABLE with drag-fill */}
             <div className="border border-gray-200 rounded-xl overflow-hidden">
                 <DataGrid
                     columns={columns}
                     rows={rows}
                     onRowsChange={handleRowsChange}
+                    onFill={handleFill}
                     rowKeyGetter={(row) => row.id}
                     headerRowHeight={80}
                     rowHeight={35}
