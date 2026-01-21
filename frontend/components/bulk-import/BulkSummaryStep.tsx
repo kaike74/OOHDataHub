@@ -57,8 +57,8 @@ export default function BulkSummaryStep() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 gap-4 w-full max-w-md">
-                <div className="bg-gradient-to-br from-emidias-primary/10 to-emidias-accent/10 rounded-xl p-4 border border-emidias-primary/20">
-                    <div className="text-3xl font-bold text-emidias-primary">{totalPoints}</div>
+                <div className="bg-gradient-to-br from-plura-primary/10 to-plura-accent/10 rounded-xl p-4 border border-plura-primary/20">
+                    <div className="text-3xl font-bold text-plura-primary">{totalPoints}</div>
                     <div className="text-sm text-gray-600 mt-1">Pontos Cadastrados</div>
                 </div>
                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">

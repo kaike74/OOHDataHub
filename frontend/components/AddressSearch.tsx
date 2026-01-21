@@ -257,11 +257,11 @@ export default function AddressSearch({ onLocationSelect, onSelectExhibitor, onS
       </div>
 
       {showDropdown && allResults.length > 0 && isOpen && (
-        <div className="absolute top-full mt-2 left-0 right-0 bg-white/95 backdrop-blur-md rounded-xl shadow-emidias-xl max-h-96 overflow-y-auto z-[60] animate-fade-in-up border border-emidias-gray-200">
+        <div className="absolute top-full mt-2 left-0 right-0 bg-white/95 backdrop-blur-md rounded-xl shadow-plura-xl max-h-96 overflow-y-auto z-[60] animate-fade-in-up border border-plura-gray-200">
           <div className="p-1.5">
             {dbResults.length > 0 && (
               <>
-                <div className="text-xs font-semibold text-emidias-gray-500 px-2.5 py-1.5">
+                <div className="text-xs font-semibold text-plura-gray-500 px-2.5 py-1.5">
                   {onlyPoints ? `Resultados (${dbResults.length})` : `🎯 Pontos Cadastrados (${dbResults.length})`}
                 </div>
                 {dbResults.map((result, index) => (
@@ -272,7 +272,7 @@ export default function AddressSearch({ onLocationSelect, onSelectExhibitor, onS
                       "w-full text-left px-2.5 py-2 rounded-lg transition-colors group border-l-2",
                       result.inCart
                         ? "bg-green-50 border-green-500 hover:bg-green-100"
-                        : "border-transparent hover:bg-emidias-blue-50"
+                        : "border-transparent hover:bg-plura-gray-50"
                     )}
                   >
                     <div className="flex items-start gap-2">
@@ -280,19 +280,19 @@ export default function AddressSearch({ onLocationSelect, onSelectExhibitor, onS
                         <Building2 size={14} className="text-purple-500 mt-0.5 flex-shrink-0" />
                       ) : (
                         <div className="relative">
-                          <Target size={14} className={cn("mt-0.5 flex-shrink-0", result.inCart ? "text-green-500" : "text-emidias-accent")} />
+                          <Target size={14} className={cn("mt-0.5 flex-shrink-0", result.inCart ? "text-green-500" : "text-plura-accent")} />
                           {result.inCart && <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full border border-white" />}
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className={cn("text-sm font-medium truncate group-hover:text-emidias-primary", result.inCart ? "text-green-700" : "text-emidias-gray-900")}>
+                          <span className={cn("text-sm font-medium truncate group-hover:text-plura-primary", result.inCart ? "text-green-700" : "text-plura-gray-900")}>
                             {result.label}
                           </span>
                           {result.inCart && <span className="text-[10px] bg-green-100 text-green-700 px-1.5 rounded-full font-bold">NO PLANO</span>}
                         </div>
                         {result.sublabel && (
-                          <div className="text-xs text-emidias-gray-500 truncate mt-0.5">
+                          <div className="text-xs text-plura-gray-500 truncate mt-0.5">
                             {result.sublabel}
                           </div>
                         )}
@@ -305,24 +305,24 @@ export default function AddressSearch({ onLocationSelect, onSelectExhibitor, onS
 
             {googleResults.length > 0 && (
               <>
-                {dbResults.length > 0 && <div className="h-px bg-emidias-gray-200 my-1.5" />}
-                <div className="text-xs font-semibold text-emidias-gray-500 px-2.5 py-1.5">
+                {dbResults.length > 0 && <div className="h-px bg-plura-gray-200 my-1.5" />}
+                <div className="text-xs font-semibold text-plura-gray-500 px-2.5 py-1.5">
                   📍 Endereços Google ({googleResults.length})
                 </div>
                 {googleResults.map((result, index) => (
                   <button
                     key={`google-${index}`}
                     onClick={() => handleSelectGoogleResult(result)}
-                    className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-emidias-blue-50 transition-colors group"
+                    className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-plura-gray-50 transition-colors group"
                   >
                     <div className="flex items-start gap-2">
                       <MapPin size={14} className="text-blue-500 mt-0.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-emidias-gray-900 truncate group-hover:text-emidias-primary">
+                        <div className="text-sm font-medium text-plura-gray-900 truncate group-hover:text-plura-primary">
                           {result.label}
                         </div>
                         {result.sublabel && (
-                          <div className="text-xs text-emidias-gray-500 truncate mt-0.5">
+                          <div className="text-xs text-plura-gray-500 truncate mt-0.5">
                             {result.sublabel}
                           </div>
                         )}

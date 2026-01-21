@@ -33,7 +33,7 @@ export default function Breadcrumbs({ items, className }: BreadcrumbsProps) {
                         {item.href && !item.active ? (
                             <Link
                                 href={item.href}
-                                className="hover:text-emidias-primary hover:underline transition-colors font-medium truncate max-w-[150px]"
+                                className="hover:text-plura-primary hover:underline transition-colors font-medium truncate max-w-[150px]"
                             >
                                 {item.label}
                             </Link>

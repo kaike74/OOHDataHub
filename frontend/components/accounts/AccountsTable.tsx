@@ -28,7 +28,7 @@ export default function AccountsTable({ accounts, isLoading, onRowClick, onDelet
     if (isLoading) {
         return (
             <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emidias-accent"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-plura-accent"></div>
             </div>
         );
     }
@@ -80,12 +80,12 @@ export default function AccountsTable({ accounts, isLoading, onRowClick, onDelet
                                     className="group hover:bg-gray-50/80 transition-colors cursor-pointer"
                                 >
                                     <td className="px-6 py-3 whitespace-nowrap">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm flex-shrink-0 ${isInternal ? 'bg-gradient-to-br from-purple-600 to-indigo-600' : 'bg-gradient-to-br from-emidias-primary to-emidias-primary-light'}`}>
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm flex-shrink-0 ${isInternal ? 'bg-gradient-to-br from-purple-600 to-indigo-600' : 'bg-gradient-to-br from-plura-primary to-plura-primary-light'}`}>
                                             {(user.name || user.email || '?').charAt(0).toUpperCase()}
                                         </div>
                                     </td>
                                     <td className="px-6 py-3 whitespace-nowrap">
-                                        <div className="font-medium text-gray-900 group-hover:text-emidias-primary transition-colors">
+                                        <div className="font-medium text-gray-900 group-hover:text-plura-primary transition-colors">
                                             {user.name || '-'}
                                         </div>
                                     </td>
@@ -120,7 +120,7 @@ export default function AccountsTable({ accounts, isLoading, onRowClick, onDelet
                                                 onClick={() => onResetPassword(user.id)}
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-8 w-8 text-gray-400 hover:text-emidias-accent hover:bg-emidias-accent/5"
+                                                className="h-8 w-8 text-gray-400 hover:text-plura-accent hover:bg-plura-accent/5"
                                                 title="Resetar Senha"
                                             >
                                                 <RotateCcw size={16} />

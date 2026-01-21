@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
 
                 {/* Right Side - Form */}
                 <div className="w-full max-w-md lg:pl-12">
-                    <div className="bg-white p-8 sm:p-10 rounded-2xl shadow-emidias-xl border border-emidias-gray-100 group/card relative transition-all duration-500 hover:shadow-2xl">
+                    <div className="bg-white p-8 sm:p-10 rounded-2xl shadow-plura-xl border border-plura-gray-100 group/card relative transition-all duration-500 hover:shadow-2xl">
                         {/* Subtle glow on hover */}
                         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-2xl blur-2xl scale-110 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
@@ -123,7 +123,7 @@ export default function ForgotPasswordPage() {
                                 <div className="text-center pt-2">
                                     <Link
                                         href="/login"
-                                        className="text-sm text-gray-500 hover:text-emidias-primary font-medium transition-colors hover:underline underline-offset-4 flex items-center justify-center gap-2"
+                                        className="text-sm text-gray-500 hover:text-plura-primary font-medium transition-colors hover:underline underline-offset-4 flex items-center justify-center gap-2"
                                     >
                                         <ArrowLeft size={16} />
                                         Voltar ao login

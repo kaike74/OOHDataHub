@@ -447,22 +447,22 @@ export default function MapLayers() {
             <div className="absolute top-20 left-4 z-10 font-sans">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="bg-white p-3 rounded-xl shadow-emidias-md hover:bg-gray-50 transition-colors group border border-gray-100"
+                    className="bg-white p-3 rounded-xl shadow-plura-md hover:bg-gray-50 transition-colors group border border-gray-100"
                     title="Camadas Personalizadas"
                 >
-                    <Layers className="text-gray-700 group-hover:text-emidias-accent transition-colors" size={24} />
+                    <Layers className="text-gray-700 group-hover:text-plura-accent transition-colors" size={24} />
                     {customLayers.length > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emidias-accent text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-plura-accent text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
                             {customLayers.filter(l => l.visible).length}
                         </span>
                     )}
                 </button>
 
                 {isOpen && (
-                    <div className="absolute top-14 left-0 w-80 bg-white/95 backdrop-blur-xl rounded-2xl shadow-emidias-2xl border border-white/20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col max-h-[80vh]">
+                    <div className="absolute top-14 left-0 w-80 bg-white/95 backdrop-blur-xl rounded-2xl shadow-plura-2xl border border-white/20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col max-h-[80vh]">
                         <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0 bg-white/50">
-                            <h3 className="font-semibold text-emidias-primary flex items-center gap-2">
-                                <Layers size={18} className="text-emidias-accent" />
+                            <h3 className="font-semibold text-plura-primary flex items-center gap-2">
+                                <Layers size={18} className="text-plura-accent" />
                                 Minhas Camadas
                             </h3>
                             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-8 w-8 rounded-full">
@@ -502,7 +502,7 @@ export default function MapLayers() {
                                                                     onChange={(e) => setTempLayerName(e.target.value)}
                                                                     onBlur={saveLayerName}
                                                                     onKeyDown={(e) => e.key === 'Enter' && saveLayerName()}
-                                                                    className="text-sm font-medium text-gray-700 bg-white border border-emidias-primary/30 rounded px-1.5 py-0.5 min-w-0 w-full outline-none ring-1 ring-emidias-primary"
+                                                                    className="text-sm font-medium text-gray-700 bg-white border border-plura-primary/30 rounded px-1.5 py-0.5 min-w-0 w-full outline-none ring-1 ring-plura-primary"
                                                                 />
                                                             ) : (
                                                                 <div
@@ -518,14 +518,14 @@ export default function MapLayers() {
                                                         {/* Actions */}
                                                         <div className="flex items-center gap-1">
                                                             {progress ? (
-                                                                <Loader2 size={14} className="animate-spin text-emidias-accent" />
+                                                                <Loader2 size={14} className="animate-spin text-plura-accent" />
                                                             ) : (
                                                                 <>
                                                                     <Button
                                                                         variant="ghost"
                                                                         size="icon"
                                                                         onClick={() => handleToggleVisibility(layer.id, layer.visible)}
-                                                                        className="h-7 w-7 text-gray-400 hover:text-emidias-primary"
+                                                                        className="h-7 w-7 text-gray-400 hover:text-plura-primary"
                                                                     >
                                                                         {layer.visible ? <Eye size={14} /> : <EyeOff size={14} />}
                                                                     </Button>
@@ -569,7 +569,7 @@ export default function MapLayers() {
                                                     {progress && (
                                                         <div className="mt-2 w-full bg-gray-100 rounded-full h-1 overflow-hidden">
                                                             <div
-                                                                className="bg-emidias-accent h-full transition-all duration-300"
+                                                                className="bg-plura-accent h-full transition-all duration-300"
                                                                 style={{ width: `${(progress.current / progress.total) * 100}%` }}
                                                             />
                                                         </div>
@@ -585,7 +585,7 @@ export default function MapLayers() {
                                             <input {...getInputProps()} />
                                             <Button
                                                 variant="outline"
-                                                className="w-full border-dashed border-gray-300 hover:border-emidias-accent hover:text-emidias-accent hover:bg-emidias-accent/5 backdrop-blur-none"
+                                                className="w-full border-dashed border-gray-300 hover:border-plura-accent hover:text-plura-accent hover:bg-plura-accent/5 backdrop-blur-none"
                                             >
                                                 <Upload size={16} className="mr-2" />
                                                 Adicionar Nova Camada
@@ -705,7 +705,7 @@ export default function MapLayers() {
                         <div className="flex items-center justify-between px-6 py-4 bg-gray-50/80 border-b border-gray-100 rounded-t-2xl cursor-move backdrop-blur-sm">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100">
-                                    <TableIcon size={20} className="text-emidias-accent" />
+                                    <TableIcon size={20} className="text-plura-accent" />
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-gray-800 text-lg tracking-tight">{activeLayer.name}</h3>

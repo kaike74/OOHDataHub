@@ -120,12 +120,12 @@ export function ExhibitorPopover({ exhibitorId, exhibitorName, children, classNa
                                     <p className="font-semibold text-gray-800">{c.nome}</p>
                                     <div className="flex flex-col gap-0.5 mt-0.5 ml-1">
                                         {c.telefone && (
-                                            <a href={`tel:${c.telefone}`} className="flex items-center gap-1.5 hover:text-emidias-primary">
+                                            <a href={`tel:${c.telefone}`} className="flex items-center gap-1.5 hover:text-plura-primary">
                                                 <Phone size={10} /> {c.telefone}
                                             </a>
                                         )}
                                         {c.email && (
-                                            <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 hover:text-emidias-primary">
+                                            <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 hover:text-plura-primary">
                                                 <Mail size={10} /> {c.email}
                                             </a>
                                         )}
@@ -170,7 +170,7 @@ export function ExhibitorPopover({ exhibitorId, exhibitorName, children, classNa
                 onMouseLeave={handleMouseLeave}
             >
                 <div
-                    className="cursor-pointer hover:text-emidias-accent transition-colors"
+                    className="cursor-pointer hover:text-plura-accent transition-colors"
                     onClick={(e) => {
                         e.stopPropagation();
                         setIsOpen(!isOpen);

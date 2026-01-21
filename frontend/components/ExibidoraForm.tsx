@@ -244,7 +244,7 @@ export default function ExibidoraForm({ onSuccess, onCancel, onDelete, initialDa
                 <>
                     {/* Logo Upload */}
                     <div>
-                        <label className="block text-sm font-semibold text-emidias-gray-700 mb-2">
+                        <label className="block text-sm font-semibold text-plura-gray-700 mb-2">
                             Logo da Exibidora
                         </label>
 
@@ -272,15 +272,15 @@ export default function ExibidoraForm({ onSuccess, onCancel, onDelete, initialDa
                                 className={cn(
                                     "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 bg-gray-50/50",
                                     isDragActive
-                                        ? "border-emidias-accent bg-pink-50/50 ring-2 ring-emidias-accent/20"
-                                        : "border-gray-200 hover:border-emidias-primary/50 hover:bg-white"
+                                        ? "border-plura-accent bg-pink-50/50 ring-2 ring-plura-accent/20"
+                                        : "border-gray-200 hover:border-plura-primary/50 hover:bg-white"
                                 )}
                             >
                                 <input {...getInputProps()} />
                                 <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center mx-auto mb-3">
-                                    <Upload className="text-emidias-primary" size={24} />
+                                    <Upload className="text-plura-primary" size={24} />
                                 </div>
-                                <p className="text-emidias-primary font-medium">
+                                <p className="text-plura-primary font-medium">
                                     {isDragActive ? 'Solte a logo aqui' : 'Arraste ou clique para enviar'}
                                 </p>
                                 <p className="text-gray-400 text-xs mt-1">
@@ -338,8 +338,8 @@ export default function ExibidoraForm({ onSuccess, onCancel, onDelete, initialDa
             {/* Contatos */}
             <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
-                    <label className="text-sm font-semibold text-emidias-gray-700 flex items-center gap-2">
-                        <Phone size={16} className="text-emidias-primary" />
+                    <label className="text-sm font-semibold text-plura-gray-700 flex items-center gap-2">
+                        <Phone size={16} className="text-plura-primary" />
                         Contatos
                     </label>
                     <Button
@@ -348,7 +348,7 @@ export default function ExibidoraForm({ onSuccess, onCancel, onDelete, initialDa
                         size="sm"
                         onClick={addContato}
                         leftIcon={<Plus size={14} />}
-                        className="bg-white border-dashed border-gray-300 hover:border-emidias-accent hover:text-emidias-accent"
+                        className="bg-white border-dashed border-gray-300 hover:border-plura-accent hover:text-plura-accent"
                     >
                         Adicionar
                     </Button>

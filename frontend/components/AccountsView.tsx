@@ -129,7 +129,7 @@ export default function AccountsView({ searchTerm = '' }: AccountsViewProps) {
                                 onClick={() => setUserTypeFilter('external')}
                                 variant={userTypeFilter === 'external' ? 'primary' : 'outline'}
                                 size="sm"
-                                className={userTypeFilter === 'external' ? 'bg-emidias-primary hover:bg-emidias-primary/90' : 'hover:bg-gray-100'}
+                                className={userTypeFilter === 'external' ? 'bg-plura-primary hover:bg-plura-primary/90' : 'hover:bg-gray-100'}
                             >
                                 Externo
                             </Button>
@@ -138,7 +138,7 @@ export default function AccountsView({ searchTerm = '' }: AccountsViewProps) {
                         <Button
                             onClick={() => setIsCreateModalOpen(true)}
                             size="sm"
-                            className="bg-emidias-primary hover:bg-emidias-primary/90 flex items-center gap-2"
+                            className="bg-plura-primary hover:bg-plura-primary/90 flex items-center gap-2"
                         >
                             <Plus className="w-4 h-4" />
                             Criar Usuário

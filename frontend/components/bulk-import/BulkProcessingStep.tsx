@@ -128,7 +128,7 @@ export default function BulkProcessingStep() {
             return <XCircle size={20} className="text-red-500" />;
         }
         if (status === 'processing') {
-            return <Loader2 size={20} className="text-emidias-primary animate-spin" />;
+            return <Loader2 size={20} className="text-plura-primary animate-spin" />;
         }
         return <div className="w-5 h-5 rounded-full border-2 border-gray-300" />;
     };
@@ -142,7 +142,7 @@ export default function BulkProcessingStep() {
             {/* Progress Bar */}
             <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div
-                    className="absolute left-0 top-0 h-full bg-gradient-to-r from-emidias-primary to-emidias-accent transition-all duration-500 ease-out"
+                    className="absolute left-0 top-0 h-full bg-gradient-to-r from-plura-primary to-plura-accent transition-all duration-500 ease-out"
                     style={{ width: `${progressPercent}%` }}
                 />
             </div>

@@ -125,7 +125,7 @@ export default function NotificationCenter({ isOpen, onClose }: NotificationCent
                         <Bell className="w-5 h-5 text-gray-700" />
                         <h3 className="font-semibold text-gray-900">Notificações</h3>
                         {unreadCount > 0 && (
-                            <span className="px-2 py-0.5 bg-emidias-primary text-white text-xs font-medium rounded-full">
+                            <span className="px-2 py-0.5 bg-plura-primary text-white text-xs font-medium rounded-full">
                                 {unreadCount}
                             </span>
                         )}
@@ -134,7 +134,7 @@ export default function NotificationCenter({ isOpen, onClose }: NotificationCent
                         {unreadCount > 0 && (
                             <button
                                 onClick={handleMarkAllAsRead}
-                                className="text-xs text-emidias-primary hover:text-emidias-primary/80 font-medium"
+                                className="text-xs text-plura-primary hover:text-plura-primary/80 font-medium"
                             >
                                 Marcar todas como lidas
                             </button>
@@ -152,7 +152,7 @@ export default function NotificationCenter({ isOpen, onClose }: NotificationCent
                 <div className="flex-1 overflow-y-auto">
                     {loading ? (
                         <div className="flex items-center justify-center py-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emidias-primary"></div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-plura-primary"></div>
                         </div>
                     ) : notifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
@@ -178,7 +178,7 @@ export default function NotificationCenter({ isOpen, onClose }: NotificationCent
                                                     {notification.title}
                                                 </p>
                                                 {!notification.is_read && (
-                                                    <div className="w-2 h-2 bg-emidias-primary rounded-full flex-shrink-0 mt-1.5" />
+                                                    <div className="w-2 h-2 bg-plura-primary rounded-full flex-shrink-0 mt-1.5" />
                                                 )}
                                             </div>
                                             {notification.message && (

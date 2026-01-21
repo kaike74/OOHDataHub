@@ -121,8 +121,8 @@ export default function ExcelUploadStep() {
                     className={cn(
                         'border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-300',
                         isDragActive
-                            ? 'border-emidias-accent bg-pink-50/50 ring-4 ring-emidias-accent/20 scale-[1.02]'
-                            : 'border-gray-200 hover:border-emidias-primary/50 hover:bg-gray-50/50',
+                            ? 'border-plura-accent bg-pink-50/50 ring-4 ring-plura-accent/20 scale-[1.02]'
+                            : 'border-gray-200 hover:border-plura-primary/50 hover:bg-gray-50/50',
                         isProcessing && 'opacity-50 cursor-not-allowed'
                     )}
                 >
@@ -131,8 +131,8 @@ export default function ExcelUploadStep() {
                     <div className="flex flex-col items-center gap-4">
                         {isProcessing ? (
                             <>
-                                <div className="w-16 h-16 bg-emidias-primary/10 rounded-2xl flex items-center justify-center">
-                                    <Loader2 className="text-emidias-primary animate-spin" size={32} />
+                                <div className="w-16 h-16 bg-plura-primary/10 rounded-2xl flex items-center justify-center">
+                                    <Loader2 className="text-plura-primary animate-spin" size={32} />
                                 </div>
                                 <div>
                                     <p className="text-lg font-semibold text-gray-900">
@@ -145,7 +145,7 @@ export default function ExcelUploadStep() {
                             </>
                         ) : (
                             <>
-                                <div className="w-16 h-16 bg-gradient-to-br from-emidias-primary to-emidias-accent rounded-2xl flex items-center justify-center shadow-lg">
+                                <div className="w-16 h-16 bg-gradient-to-br from-plura-primary to-plura-accent rounded-2xl flex items-center justify-center shadow-lg">
                                     <Upload className="text-white" size={32} />
                                 </div>
                                 <div>

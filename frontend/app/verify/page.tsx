@@ -52,7 +52,7 @@ export default function VerifyEmailPage() {
 
     return (
         <div className="min-h-screen bg-white flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-emidias-xl border border-emidias-gray-100 text-center animate-fade-in-scale">
+            <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-plura-xl border border-plura-gray-100 text-center animate-fade-in-scale">
 
                 <div className="mb-6 flex justify-center">
                     <Image src="/assets/logo.png" alt="Logo" width={180} height={180} className="w-48" />
@@ -60,7 +60,7 @@ export default function VerifyEmailPage() {
 
                 {status === 'loading' && (
                     <div className="py-8">
-                        <Loader2 className="w-12 h-12 text-emidias-primary animate-spin mx-auto mb-4" />
+                        <Loader2 className="w-12 h-12 text-plura-primary animate-spin mx-auto mb-4" />
                         <h2 className="text-xl font-bold text-gray-900">Verificando...</h2>
                     </div>
                 )}

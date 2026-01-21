@@ -37,7 +37,7 @@ export default function CompactCartSummary() {
                 className="h-12 bg-white border-t border-gray-200 hover:bg-gray-50 cursor-pointer flex items-center justify-between px-6 z-50 relative transition-colors group"
             >
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 text-emidias-primary font-bold">
+                    <div className="flex items-center gap-2 text-plura-primary font-bold">
                         <ShoppingCart size={18} />
                         <span>{itemCount} itens selecionados</span>
                     </div>

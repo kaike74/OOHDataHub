@@ -127,7 +127,7 @@ export default function AccountDetailsSidebar({ account, onClose, isOpen }: Acco
                 <div className="flex-1 overflow-y-auto p-6 space-y-8">
                     {/* Header */}
                     <div className="flex flex-col items-center">
-                        <div className={`w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-3xl shadow mb-3 ${isInternal ? 'bg-gradient-to-br from-purple-600 to-indigo-600' : 'bg-gradient-to-br from-emidias-primary to-emidias-primary-light'}`}>
+                        <div className={`w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-3xl shadow mb-3 ${isInternal ? 'bg-gradient-to-br from-purple-600 to-indigo-600' : 'bg-gradient-to-br from-plura-primary to-plura-primary-light'}`}>
                             {(account.name || account.email).charAt(0).toUpperCase()}
                         </div>
                         <h3 className="text-xl font-bold text-gray-900">{account.name}</h3>
@@ -150,7 +150,7 @@ export default function AccountDetailsSidebar({ account, onClose, isOpen }: Acco
                     {/* Shared Proposals */}
                     <div>
                         <h4 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
-                            <Share2 size={18} className="text-emidias-accent" />
+                            <Share2 size={18} className="text-plura-accent" />
                             Propostas Compartilhadas
                             <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">{shares.length}</span>
                         </h4>
@@ -170,7 +170,7 @@ export default function AccountDetailsSidebar({ account, onClose, isOpen }: Acco
                                     <div key={share.share_id} className="bg-white border border-gray-200 p-3 rounded-lg flex items-center justify-between group hover:shadow-sm transition-all">
                                         <div>
                                             <p
-                                                className="font-medium text-sm text-gray-900 cursor-pointer hover:text-emidias-accent hover:underline"
+                                                className="font-medium text-sm text-gray-900 cursor-pointer hover:text-plura-accent hover:underline"
                                                 onClick={() => router.push(`/propostas?id=${share.proposal_id}`)}
                                             >
                                                 {share.proposal_name}
@@ -196,7 +196,7 @@ export default function AccountDetailsSidebar({ account, onClose, isOpen }: Acco
                     {/* Created Proposals */}
                     <div>
                         <h4 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
-                            <FileText size={18} className="text-emidias-primary" />
+                            <FileText size={18} className="text-plura-primary" />
                             Propostas Criadas
                             <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">{createdProposals.length}</span>
                         </h4>
@@ -215,7 +215,7 @@ export default function AccountDetailsSidebar({ account, onClose, isOpen }: Acco
                                 {createdProposals.map(prop => (
                                     <div
                                         key={prop.id}
-                                        className="bg-white border border-gray-200 p-3 rounded-lg flex items-center justify-between cursor-pointer hover:border-emidias-primary/30 hover:shadow-sm"
+                                        className="bg-white border border-gray-200 p-3 rounded-lg flex items-center justify-between cursor-pointer hover:border-plura-primary/30 hover:shadow-sm"
                                         onClick={() => router.push(`/propostas?id=${prop.id}`)}
                                     >
                                         <div>

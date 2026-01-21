@@ -401,9 +401,9 @@ export default function DataGridStep() {
                     value={mappedField}
                     onChange={(e) => handleMappingChange(colIdx, e.target.value)}
                     className={cn(
-                        'text-xs font-medium px-2 py-1 rounded border focus:outline-none focus:ring-1 focus:ring-emidias-primary/30 transition-colors',
+                        'text-xs font-medium px-2 py-1 rounded border focus:outline-none focus:ring-1 focus:ring-plura-primary/30 transition-colors',
                         fieldOption?.required
-                            ? 'bg-pink-50 border-emidias-accent text-emidias-accent'
+                            ? 'bg-pink-50 border-plura-accent text-plura-accent'
                             : 'bg-gray-50 border-gray-200 text-gray-600'
                     )}
                     onClick={(e) => e.stopPropagation()}
@@ -549,7 +549,7 @@ export default function DataGridStep() {
         // DEFAULT text input
         return (
             <input
-                className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
+                className="w-full h-full px-2 text-sm border-2 border-plura-primary focus:outline-none"
                 value={String(localValue || '')}
                 onChange={(e) => handleChange(e.target.value)}
                 onBlur={handleBlur}
@@ -644,8 +644,8 @@ export default function DataGridStep() {
                     className={cn(
                         'w-full max-w-2xl p-12 border-2 border-dashed rounded-2xl cursor-pointer transition-all',
                         isDragActive
-                            ? 'border-emidias-primary bg-emidias-primary/5'
-                            : 'border-gray-300 hover:border-emidias-primary hover:bg-gray-50'
+                            ? 'border-plura-primary bg-plura-primary/5'
+                            : 'border-gray-300 hover:border-plura-primary hover:bg-gray-50'
                     )}
                 >
                     <input {...getInputProps()} />

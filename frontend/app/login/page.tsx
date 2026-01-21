@@ -208,16 +208,16 @@ export default function LoginPage() {
 
                 {/* Right Side - Login Card */}
                 <div className="w-full max-w-md lg:pl-12">
-                    <div className="bg-white p-8 sm:p-10 rounded-2xl shadow-emidias-xl border border-emidias-gray-100 animate-fade-in-scale group/card relative transition-all duration-500 hover:shadow-2xl" style={{ animationDelay: '0.2s' }}>
+                    <div className="bg-white p-8 sm:p-10 rounded-2xl shadow-plura-xl border border-plura-gray-100 animate-fade-in-scale group/card relative transition-all duration-500 hover:shadow-2xl" style={{ animationDelay: '0.2s' }}>
                         {/* Subtle glow on hover - same as logo */}
                         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-2xl blur-2xl scale-110 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
                         {/* Welcome Text */}
                         <div className="mb-8 text-center lg:text-left">
-                            <h2 className="text-2xl sm:text-3xl font-bold text-emidias-gray-900 mb-2">
+                            <h2 className="text-2xl sm:text-3xl font-bold text-plura-gray-900 mb-2">
                                 Bem-vindo de volta
                             </h2>
-                            <p className="text-emidias-gray-500">
+                            <p className="text-plura-gray-500">
                                 Faça login para acessar o sistema
                             </p>
                         </div>
@@ -250,7 +250,7 @@ export default function LoginPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="text-emidias-gray-400 hover:text-emidias-gray-600 transition-colors p-1"
+                                        className="text-plura-gray-400 hover:text-plura-gray-600 transition-colors p-1"
                                     >
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
@@ -280,7 +280,7 @@ export default function LoginPage() {
                             <div className="text-center pt-2">
                                 <Link
                                     href="/forgot-password"
-                                    className="text-sm text-emidias-accent hover:text-emidias-accent-dark font-medium transition-colors hover:underline underline-offset-4"
+                                    className="text-sm text-plura-accent hover:text-plura-accent-dark font-medium transition-colors hover:underline underline-offset-4"
                                 >
                                     Esqueceu sua senha?
                                 </Link>
@@ -288,12 +288,12 @@ export default function LoginPage() {
                         </form>
 
                         {/* Footer */}
-                        <div className="mt-8 pt-6 border-t border-emidias-gray-200">
-                            <p className="text-center text-sm text-emidias-gray-500">
+                        <div className="mt-8 pt-6 border-t border-plura-gray-200">
+                            <p className="text-center text-sm text-plura-gray-500">
                                 Não tem uma conta?{' '}
                                 <Link
                                     href={email ? `/signup?email=${encodeURIComponent(email)}` : '/signup'}
-                                    className="text-emidias-accent hover:text-emidias-accent-dark font-medium transition-colors hover:underline underline-offset-4"
+                                    className="text-plura-accent hover:text-plura-accent-dark font-medium transition-colors hover:underline underline-offset-4"
                                 >
                                     Criar conta
                                 </Link>
@@ -305,7 +305,7 @@ export default function LoginPage() {
 
             {/* Footer Branding */}
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
-                <p className="text-xs text-emidias-gray-400 tracking-wider">
+                <p className="text-xs text-plura-gray-400 tracking-wider">
                     E-MÍDIAS &copy; {new Date().getFullYear()}
                 </p>
             </div>

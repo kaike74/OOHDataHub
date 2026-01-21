@@ -106,9 +106,9 @@ export default function BulkImportModal() {
                                     className={cn(
                                         'w-2 h-2 rounded-full transition-all',
                                         step === displayStep
-                                            ? 'bg-emidias-primary w-6'
+                                            ? 'bg-plura-primary w-6'
                                             : step < displayStep
-                                                ? 'bg-emidias-primary/50'
+                                                ? 'bg-plura-primary/50'
                                                 : 'bg-gray-200'
                                     )}
                                 />
@@ -157,7 +157,7 @@ export default function BulkImportModal() {
                 {/* Progress Bar */}
                 <div className="relative h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                        className="absolute left-0 top-0 h-full bg-gradient-to-r from-emidias-primary to-emidias-accent transition-all duration-500 ease-out"
+                        className="absolute left-0 top-0 h-full bg-gradient-to-r from-plura-primary to-plura-accent transition-all duration-500 ease-out"
                         style={{ width: `${(displayStep / totalSteps) * 100}%` }}
                     />
                 </div>

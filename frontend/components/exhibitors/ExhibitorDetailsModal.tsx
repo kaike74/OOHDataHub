@@ -154,7 +154,7 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                                                     <p className="text-xs font-medium text-gray-700 line-clamp-2" title={`${p.endereco}, ${p.numero} - ${p.bairro}`}>
                                                         {p.endereco}, {p.numero} - {p.bairro}
                                                     </p>
-                                                    <span className="text-xs font-bold text-emidias-primary whitespace-nowrap bg-emidias-primary/5 px-1.5 py-0.5 rounded">
+                                                    <span className="text-xs font-bold text-plura-primary whitespace-nowrap bg-plura-primary/5 px-1.5 py-0.5 rounded">
                                                         {valor ? formatCurrency(valor) : '-'}
                                                     </span>
                                                 </div>
@@ -211,7 +211,7 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                                         setEditingExibidora(exibidoras);
                                         setExibidoraModalOpen(true);
                                     }}
-                                    className="h-8 w-8 rounded-xl bg-gray-50 hover:bg-emidias-primary/10 hover:text-emidias-primary text-gray-500 flex items-center justify-center transition-all border border-gray-200"
+                                    className="h-8 w-8 rounded-xl bg-gray-50 hover:bg-plura-primary/10 hover:text-plura-primary text-gray-500 flex items-center justify-center transition-all border border-gray-200"
                                     title="Editar Exibidora"
                                 >
                                     <Edit size={16} />
@@ -222,7 +222,7 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                                     const startImport = useBulkImportStore.getState().startImport;
                                     startImport(exibidoras.id, exibidoras.nome);
                                 }}
-                                className="h-8 px-3 rounded-xl bg-emidias-primary hover:bg-emidias-primary/90 text-white flex items-center gap-2 transition-all text-xs font-medium"
+                                className="h-8 px-3 rounded-xl bg-plura-primary hover:bg-plura-primary/90 text-white flex items-center gap-2 transition-all text-xs font-medium"
                                 title="Cadastro em Massa"
                             >
                                 <Upload size={14} />
@@ -262,7 +262,7 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                             <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm col-span-2">
                                 <div className="flex justify-between items-center mb-3">
                                     <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                                        <Users size={14} className="text-emidias-primary" />
+                                        <Users size={14} className="text-plura-primary" />
                                         Contatos
                                     </h3>
                                     {canEdit && (
@@ -284,7 +284,7 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                                 <div className="grid grid-cols-2 gap-3">
                                     {localContacts && localContacts.length > 0 ? (
                                         localContacts.slice(0, 4).map((contact: any, idx: number) => (
-                                            <div key={idx} className="bg-gray-50/50 rounded-xl p-2.5 border border-gray-100/50 hover:border-emidias-primary/20 transition-colors group/contact">
+                                            <div key={idx} className="bg-gray-50/50 rounded-xl p-2.5 border border-gray-100/50 hover:border-plura-primary/20 transition-colors group/contact">
                                                 <div className="flex justify-between items-start mb-0.5">
                                                     <div className="flex items-center gap-1.5 min-w-0">
                                                         <span className="text-[11px] font-bold text-gray-700 truncate">{contact.nome}</span>
@@ -333,7 +333,7 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                         {/* Proposals Card - Flexible & Scrollable */}
                         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex-1 flex flex-col min-h-0">
                             <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-3 shrink-0">
-                                <TrendingUp size={14} className="text-emidias-primary" />
+                                <TrendingUp size={14} className="text-plura-primary" />
                                 Histórico de Propostas
                             </h3>
 
@@ -353,7 +353,7 @@ export default function ExhibitorDetailsModal({ exibidoras, isOpen, onClose, can
                                                 onClick={() => router.push(`/propostas?id=${prop.id}`)}
                                             >
                                                 <div className="flex flex-col gap-0.5">
-                                                    <span className="text-xs font-bold text-gray-800 group-hover:text-emidias-primary transition-colors">{prop.nome}</span>
+                                                    <span className="text-xs font-bold text-gray-800 group-hover:text-plura-primary transition-colors">{prop.nome}</span>
                                                     <StatusBadge status={prop.status} />
                                                 </div>
                                                 <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded text-[10px] font-bold text-gray-500">

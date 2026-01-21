@@ -280,7 +280,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
             {/* Header */}
             <div className="px-5 py-5 border-b border-gray-100 bg-white z-20">
                 <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-1">
-                    <MapPin size={18} className="text-emidias-primary" /> {selectedPonto.endereco}
+                    <MapPin size={18} className="text-plura-primary" /> {selectedPonto.endereco}
                 </h1>
                 <div className="flex flex-wrap items-center gap-x-3 text-sm text-gray-500 font-semibold">
                     <span>{selectedPonto.cidade} - {selectedPonto.uf}</span>

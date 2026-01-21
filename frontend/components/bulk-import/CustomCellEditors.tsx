@@ -47,7 +47,7 @@ export function TiposEditor({ value, onChange, onClose }: TiposEditorProps) {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20" onClick={handleSave}>
             <div
                 ref={ref}
-                className="w-80 max-h-96 bg-white border-2 border-emidias-primary rounded-lg shadow-2xl overflow-auto"
+                className="w-80 max-h-96 bg-white border-2 border-plura-primary rounded-lg shadow-2xl overflow-auto"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="p-3 space-y-2">
@@ -60,14 +60,14 @@ export function TiposEditor({ value, onChange, onClose }: TiposEditorProps) {
                                 type="checkbox"
                                 checked={selectedTipos.includes(tipo)}
                                 onChange={() => handleToggle(tipo)}
-                                className="w-4 h-4 text-emidias-primary rounded focus:ring-emidias-primary"
+                                className="w-4 h-4 text-plura-primary rounded focus:ring-plura-primary"
                             />
                             <span className="text-sm">{tipo}</span>
                         </label>
                     ))}
                     <button
                         onClick={handleSave}
-                        className="w-full mt-3 px-3 py-2 bg-emidias-primary text-white rounded-lg text-sm font-medium hover:bg-emidias-primary/90"
+                        className="w-full mt-3 px-3 py-2 bg-plura-primary text-white rounded-lg text-sm font-medium hover:bg-plura-primary/90"
                     >
                         Confirmar ({selectedTipos.length})
                     </button>
@@ -130,7 +130,7 @@ export function MedidasEditor({ value, onChange, onClose }: MedidasEditorProps) 
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20" onClick={handleSave}>
             <div
                 ref={ref}
-                className="w-72 bg-white border-2 border-emidias-primary rounded-lg shadow-2xl p-3"
+                className="w-72 bg-white border-2 border-plura-primary rounded-lg shadow-2xl p-3"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="space-y-3">
@@ -142,7 +142,7 @@ export function MedidasEditor({ value, onChange, onClose }: MedidasEditorProps) 
                             value={largura}
                             onChange={(e) => setLargura(e.target.value)}
                             placeholder="Largura"
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emidias-primary"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-plura-primary"
                             autoFocus
                         />
                         <span className="text-gray-400">×</span>
@@ -151,7 +151,7 @@ export function MedidasEditor({ value, onChange, onClose }: MedidasEditorProps) 
                             value={altura}
                             onChange={(e) => setAltura(e.target.value)}
                             placeholder="Altura"
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emidias-primary"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-plura-primary"
                         />
                     </div>
 
@@ -159,7 +159,7 @@ export function MedidasEditor({ value, onChange, onClose }: MedidasEditorProps) 
                         <button
                             onClick={() => setUnidade('M')}
                             className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${unidade === 'M'
-                                ? 'bg-emidias-primary text-white'
+                                ? 'bg-plura-primary text-white'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >
@@ -168,7 +168,7 @@ export function MedidasEditor({ value, onChange, onClose }: MedidasEditorProps) 
                         <button
                             onClick={() => setUnidade('PX')}
                             className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${unidade === 'PX'
-                                ? 'bg-emidias-primary text-white'
+                                ? 'bg-plura-primary text-white'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >
@@ -178,7 +178,7 @@ export function MedidasEditor({ value, onChange, onClose }: MedidasEditorProps) 
 
                     <button
                         onClick={handleSave}
-                        className="w-full px-3 py-2 bg-emidias-primary text-white rounded-lg text-sm font-medium hover:bg-emidias-primary/90"
+                        className="w-full px-3 py-2 bg-plura-primary text-white rounded-lg text-sm font-medium hover:bg-plura-primary/90"
                     >
                         Confirmar
                     </button>
@@ -222,13 +222,13 @@ export function PeriodoEditor({ value, onChange, onClose }: PeriodoEditorProps) 
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20" onClick={onClose}>
             <div
                 ref={ref}
-                className="w-48 bg-white border-2 border-emidias-primary rounded-lg shadow-2xl p-2"
+                className="w-48 bg-white border-2 border-plura-primary rounded-lg shadow-2xl p-2"
                 onClick={(e) => e.stopPropagation()}
             >
                 <button
                     onClick={() => handleSelect('Bissemanal')}
                     className={`w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors ${selected === 'Bissemanal'
-                            ? 'bg-emidias-primary text-white'
+                            ? 'bg-plura-primary text-white'
                             : 'hover:bg-gray-100'
                         }`}
                 >
@@ -237,7 +237,7 @@ export function PeriodoEditor({ value, onChange, onClose }: PeriodoEditorProps) 
                 <button
                     onClick={() => handleSelect('Mensal')}
                     className={`w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors ${selected === 'Mensal'
-                            ? 'bg-emidias-primary text-white'
+                            ? 'bg-plura-primary text-white'
                             : 'hover:bg-gray-100'
                         }`}
                 >
@@ -319,7 +319,7 @@ export function CoordinateEditor({ value, onChange, onClose, type }: CoordinateE
                 onKeyDown={handleKeyDown}
                 className={`w-full h-full px-2 text-sm border-2 focus:outline-none ${error
                     ? 'border-red-500'
-                    : 'border-emidias-primary'
+                    : 'border-plura-primary'
                     }`}
                 placeholder={type === 'latitude' ? 'Ex: -23.5615' : 'Ex: -46.6558'}
                 autoFocus

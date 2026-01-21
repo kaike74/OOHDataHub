@@ -192,9 +192,9 @@ export default function BulkPointReviewStep() {
                                 </div>
                             </div>
                         ))}
-                        <div {...getRootProps()} className="flex items-center justify-center aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-emidias-primary hover:bg-gray-50 cursor-pointer transition-all">
+                        <div {...getRootProps()} className="flex items-center justify-center aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-plura-primary hover:bg-gray-50 cursor-pointer transition-all">
                             <input {...getInputProps()} />
-                            <Plus className="text-gray-300 hover:text-emidias-primary" />
+                            <Plus className="text-gray-300 hover:text-plura-primary" />
                         </div>
                     </div>
                 ) : (
@@ -202,7 +202,7 @@ export default function BulkPointReviewStep() {
                         {...getRootProps()}
                         className={cn(
                             'border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all',
-                            isDragActive ? 'border-emidias-accent bg-pink-50/50' : 'border-gray-200 hover:border-emidias-primary/50'
+                            isDragActive ? 'border-plura-accent bg-pink-50/50' : 'border-gray-200 hover:border-plura-primary/50'
                         )}
                     >
                         <input {...getInputProps()} />
@@ -266,8 +266,8 @@ export default function BulkPointReviewStep() {
                             className={cn(
                                 'px-4 py-2 rounded-lg text-sm font-medium transition-all border',
                                 tipos.includes(tipo)
-                                    ? 'bg-emidias-primary text-white border-emidias-primary'
-                                    : 'bg-white text-gray-600 border-gray-200 hover:border-emidias-primary'
+                                    ? 'bg-plura-primary text-white border-plura-primary'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-plura-primary'
                             )}
                         >
                             {tipo}
@@ -280,7 +280,7 @@ export default function BulkPointReviewStep() {
             <div className="bg-gray-50/50 rounded-xl p-5 border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                     <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                        <DollarSign size={16} className="text-emidias-accent" />
+                        <DollarSign size={16} className="text-plura-accent" />
                         Tabela de Preços
                     </label>
                     <Button

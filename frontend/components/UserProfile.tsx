@@ -102,7 +102,7 @@ export default function UserProfile({ user }: UserProfileProps) {
                     required
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:border-emidias-primary outline-none transition-all"
+                    className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:border-plura-primary outline-none transition-all"
                 />
 
                 <input
@@ -112,7 +112,7 @@ export default function UserProfile({ user }: UserProfileProps) {
                     minLength={6}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:border-emidias-primary outline-none transition-all"
+                    className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:border-plura-primary outline-none transition-all"
                 />
 
                 <Button

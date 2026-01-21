@@ -263,7 +263,7 @@ export default function GoogleMap({
             pinWrapper.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
 
             // Colors
-            // Pink: #FC1E75 (emidias-accent)
+            // Pink: #FC1E75 (plura-accent)
             // Green: #059669 (Strong Green)
             if (isInCart) {
                 // Pin with Minimalist Check (Green)

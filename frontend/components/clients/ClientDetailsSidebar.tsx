@@ -157,7 +157,7 @@ export default function ClientDetailsSidebar({ client, onClose, isOpen }: Client
                     <div>
                         <div className="flex items-center justify-between mb-4">
                             <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                                <FileText size={18} className="text-emidias-accent" />
+                                <FileText size={18} className="text-plura-accent" />
                                 Propostas
                             </h4>
                             <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
@@ -181,11 +181,11 @@ export default function ClientDetailsSidebar({ client, onClose, isOpen }: Client
                                     <div
                                         key={proposal.id}
                                         onClick={() => router.push(`/propostas?id=${proposal.id}`)}
-                                        className="group bg-white border border-gray-200 rounded-xl p-3 hover:border-emidias-accent/30 hover:shadow-md transition-all cursor-pointer relative overflow-hidden"
+                                        className="group bg-white border border-gray-200 rounded-xl p-3 hover:border-plura-accent/30 hover:shadow-md transition-all cursor-pointer relative overflow-hidden"
                                     >
                                         <div className="flex items-start justify-between mb-2">
                                             <div>
-                                                <h5 className="font-medium text-gray-900 text-sm group-hover:text-emidias-accent transition-colors">
+                                                <h5 className="font-medium text-gray-900 text-sm group-hover:text-plura-accent transition-colors">
                                                     {proposal.nome}
                                                 </h5>
                                                 <div className="flex items-center gap-2 mt-1">
@@ -195,7 +195,7 @@ export default function ClientDetailsSidebar({ client, onClose, isOpen }: Client
                                                     </span>
                                                 </div>
                                             </div>
-                                            <div className="w-6 h-6 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-emidias-accent group-hover:text-white transition-colors">
+                                            <div className="w-6 h-6 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-plura-accent group-hover:text-white transition-colors">
                                                 <ArrowRight size={12} />
                                             </div>
                                         </div>

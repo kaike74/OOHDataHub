@@ -123,7 +123,7 @@ export default function LocationAutocomplete({ value = [], onChange, placeholder
                     value={inputValue}
                     onChange={handleInputChange}
                     placeholder={placeholder}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10 transition-all outline-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-plura-accent focus:ring-4 focus:ring-plura-accent/10 transition-all outline-none"
                     disabled={!isScriptLoaded}
                 />
 

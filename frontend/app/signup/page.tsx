@@ -79,7 +79,7 @@ export default function SignupPage() {
     if (success) {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center p-4">
-                <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-emidias-xl border border-emidias-gray-100 text-center animate-fade-in-scale">
+                <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-plura-xl border border-plura-gray-100 text-center animate-fade-in-scale">
                     <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600">
                         <Mail size={32} />
                     </div>
@@ -124,13 +124,13 @@ export default function SignupPage() {
 
                 {/* Right Side - Signup Card */}
                 <div className="w-full max-w-md lg:pl-12">
-                    <div className="bg-white p-8 sm:p-10 rounded-2xl shadow-emidias-xl border border-emidias-gray-100 animate-fade-in-scale relative">
+                    <div className="bg-white p-8 sm:p-10 rounded-2xl shadow-plura-xl border border-plura-gray-100 animate-fade-in-scale relative">
 
                         <div className="mb-8 text-center lg:text-left">
-                            <h2 className="text-2xl sm:text-3xl font-bold text-emidias-gray-900 mb-2">
+                            <h2 className="text-2xl sm:text-3xl font-bold text-plura-gray-900 mb-2">
                                 Crie sua conta
                             </h2>
-                            <p className="text-emidias-gray-500">
+                            <p className="text-plura-gray-500">
                                 {inviteToken ? 'Para aceitar seu convite, preencha seus dados.' : 'Cadastre-se para acessar o portal.'}
                             </p>
                         </div>
@@ -172,7 +172,7 @@ export default function SignupPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="text-emidias-gray-400 hover:text-emidias-gray-600 transition-colors p-1"
+                                        className="text-plura-gray-400 hover:text-plura-gray-600 transition-colors p-1"
                                     >
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
@@ -211,7 +211,7 @@ export default function SignupPage() {
                                 Já tem uma conta?{' '}
                                 <Link
                                     href="/login"
-                                    className="text-emidias-accent hover:text-emidias-accent-dark font-medium transition-colors hover:underline"
+                                    className="text-plura-accent hover:text-plura-accent-dark font-medium transition-colors hover:underline"
                                 >
                                     Fazer Login
                                 </Link>

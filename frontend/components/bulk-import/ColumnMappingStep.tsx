@@ -415,8 +415,8 @@ export default function ColumnMappingStep() {
                     className={cn(
                         'w-full max-w-2xl p-12 border-2 border-dashed rounded-2xl cursor-pointer transition-all',
                         isDragActive
-                            ? 'border-emidias-primary bg-emidias-primary/5'
-                            : 'border-gray-300 hover:border-emidias-primary hover:bg-gray-50'
+                            ? 'border-plura-primary bg-plura-primary/5'
+                            : 'border-gray-300 hover:border-plura-primary hover:bg-gray-50'
                     )}
                 >
                     <input {...getInputProps()} />
@@ -449,7 +449,7 @@ export default function ColumnMappingStep() {
                     className={cn(
                         'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
                         filter === 'all'
-                            ? 'bg-emidias-primary text-white'
+                            ? 'bg-plura-primary text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     )}
                 >
@@ -498,7 +498,7 @@ export default function ColumnMappingStep() {
                 )}
 
                 {isValidating && (
-                    <div className="ml-auto flex items-center gap-2 text-sm text-emidias-primary">
+                    <div className="ml-auto flex items-center gap-2 text-sm text-plura-primary">
                         <Loader2 size={14} className="animate-spin" />
                         Validando...
                     </div>
@@ -532,9 +532,9 @@ export default function ColumnMappingStep() {
                                                     value={mappedField}
                                                     onChange={(e) => handleMappingChange(idx, e.target.value)}
                                                     className={cn(
-                                                        'text-xs font-semibold px-2 py-1 rounded border focus:outline-none focus:ring-2 focus:ring-emidias-primary/20',
+                                                        'text-xs font-semibold px-2 py-1 rounded border focus:outline-none focus:ring-2 focus:ring-plura-primary/20',
                                                         fieldOption?.required
-                                                            ? 'bg-pink-50 border-emidias-accent text-emidias-accent'
+                                                            ? 'bg-pink-50 border-plura-accent text-plura-accent'
                                                             : 'bg-white border-gray-300 text-gray-700'
                                                     )}
                                                 >
@@ -612,7 +612,7 @@ export default function ColumnMappingStep() {
                                                                 if (e.key === 'Enter') handleCellSave();
                                                                 if (e.key === 'Escape') handleCellCancel();
                                                             }}
-                                                            className="w-full px-2 py-1 border border-emidias-primary rounded focus:outline-none"
+                                                            className="w-full px-2 py-1 border border-plura-primary rounded focus:outline-none"
                                                             autoFocus
                                                         />
                                                     ) : correction ? (

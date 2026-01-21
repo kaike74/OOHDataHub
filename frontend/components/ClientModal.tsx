@@ -215,7 +215,7 @@ export default function ClientModal({ isOpen, onClose, onSuccess, editClient }: 
                 type="submit"
                 form="client-form"
                 isLoading={isSubmitting}
-                className="shadow-lg shadow-emidias-accent/20"
+                className="shadow-lg shadow-plura-accent/20"
                 leftIcon={isSubmitting ? <Loader2 className="animate-spin" size={16} /> : undefined}
             >
                 {isSubmitting ? 'Salvando...' : isEditMode ? 'Atualizar Cliente' : 'Salvar Cliente'}
@@ -247,13 +247,13 @@ export default function ClientModal({ isOpen, onClose, onSuccess, editClient }: 
                     {/* Logo Upload */}
                     <div className="flex flex-col items-center gap-2">
                         <div
-                            className="w-28 h-28 rounded-xl bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center relative overflow-hidden group hover:border-emidias-accent hover:bg-emidias-accent/5 transition-all cursor-pointer"
+                            className="w-28 h-28 rounded-xl bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center relative overflow-hidden group hover:border-plura-accent hover:bg-plura-accent/5 transition-all cursor-pointer"
                             onClick={() => fileInputRef.current?.click()}
                         >
                             {logoPreview ? (
                                 <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
                             ) : (
-                                <div className="flex flex-col items-center text-gray-400 group-hover:text-emidias-accent">
+                                <div className="flex flex-col items-center text-gray-400 group-hover:text-plura-accent">
                                     <Upload size={24} className="mb-1" />
                                     <span className="text-[10px] uppercase font-bold">Logo</span>
                                 </div>
@@ -298,13 +298,13 @@ export default function ClientModal({ isOpen, onClose, onSuccess, editClient }: 
                                             ? 'border-green-300 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 bg-green-50/30'
                                             : cnpjValidation === 'invalid'
                                                 ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10 bg-red-50/30'
-                                                : 'border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10'
+                                                : 'border-gray-200 focus:border-plura-accent focus:ring-4 focus:ring-plura-accent/10'
                                         }`}
                                     placeholder="00.000.000/0000-00"
                                 />
                                 {cnpjValidation === 'loading' && (
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                        <Loader2 className="animate-spin text-emidias-accent" size={18} />
+                                        <Loader2 className="animate-spin text-plura-accent" size={18} />
                                     </div>
                                 )}
                             </div>
@@ -324,7 +324,7 @@ export default function ClientModal({ isOpen, onClose, onSuccess, editClient }: 
                                 }}
                                 className={`w-full px-4 py-2.5 rounded-xl border transition-all outline-none ${formData.nome.trim().length > 0 && formData.nome.trim().length < 3
                                         ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
-                                        : 'border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10'
+                                        : 'border-gray-200 focus:border-plura-accent focus:ring-4 focus:ring-plura-accent/10'
                                     }`}
                                 placeholder="Razão Social ou Nome Fantasia"
                             />
@@ -340,7 +340,7 @@ export default function ClientModal({ isOpen, onClose, onSuccess, editClient }: 
                             type="text"
                             value={formData.cidade}
                             onChange={(e) => setFormData(p => ({ ...p, cidade: e.target.value }))}
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10 transition-all outline-none bg-gray-50 text-gray-600 cursor-not-allowed" // Styled as read-only suggestion but editable if user wants potentially? User said "automaticamente", usually implies read-only sync, but safer to allow edit if API wrong. But bg-gray-50 suggests read-only. Let's make it editable but styled normally? Or keep as is.
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-plura-accent focus:ring-4 focus:ring-plura-accent/10 transition-all outline-none bg-gray-50 text-gray-600 cursor-not-allowed" // Styled as read-only suggestion but editable if user wants potentially? User said "automaticamente", usually implies read-only sync, but safer to allow edit if API wrong. But bg-gray-50 suggests read-only. Let's make it editable but styled normally? Or keep as is.
                             placeholder="Cidade"
                         // readOnly // User request: "dois campos de localização distintos um é a localização que tem no cnpj do cliente UF/Cidade". It prevents editing if I set readOnly. Usually better to allow correction.
                         />
@@ -351,7 +351,7 @@ export default function ClientModal({ isOpen, onClose, onSuccess, editClient }: 
                             type="text"
                             value={formData.uf}
                             onChange={(e) => setFormData(p => ({ ...p, uf: e.target.value }))}
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10 transition-all outline-none text-center bg-gray-50 text-gray-600 cursor-not-allowed"
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-plura-accent focus:ring-4 focus:ring-plura-accent/10 transition-all outline-none text-center bg-gray-50 text-gray-600 cursor-not-allowed"
                             placeholder="UF"
                             maxLength={2}
                         //  readOnly
@@ -365,7 +365,7 @@ export default function ClientModal({ isOpen, onClose, onSuccess, editClient }: 
                         <select
                             value={formData.segmento}
                             onChange={(e) => setFormData(p => ({ ...p, segmento: e.target.value }))}
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10 transition-all outline-none bg-white"
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-plura-accent focus:ring-4 focus:ring-plura-accent/10 transition-all outline-none bg-white"
                         >
                             <option value="">Selecione...</option>
                             <option value="Varejo">Varejo</option>
@@ -396,7 +396,7 @@ export default function ClientModal({ isOpen, onClose, onSuccess, editClient }: 
                     <textarea
                         value={formData.publico_alvo}
                         onChange={(e) => setFormData(p => ({ ...p, publico_alvo: e.target.value }))}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-emidias-accent focus:ring-4 focus:ring-emidias-accent/10 transition-all outline-none resize-none h-20"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-plura-accent focus:ring-4 focus:ring-plura-accent/10 transition-all outline-none resize-none h-20"
                         placeholder="Descreva o público-alvo principal..."
                     />
                 </div>

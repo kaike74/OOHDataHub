@@ -225,11 +225,11 @@ export default function ProposalMapFilters({
         <div className="card-base overflow-hidden">
             <button
                 onClick={() => toggleSection(sectionKey)}
-                className="w-full px-4 py-3.5 bg-emidias-gray-50 hover:bg-emidias-gray-100 flex items-center justify-between transition-all group"
+                className="w-full px-4 py-3.5 bg-plura-gray-50 hover:bg-plura-gray-100 flex items-center justify-between transition-all group"
             >
                 <div className="flex items-center gap-3">
-                    <Icon size={18} className="text-emidias-accent" />
-                    <span className="font-semibold text-emidias-gray-900 text-sm">{title}</span>
+                    <Icon size={18} className="text-plura-accent" />
+                    <span className="font-semibold text-plura-gray-900 text-sm">{title}</span>
                     {count !== undefined && count > 0 && (
                         <span className="badge badge-accent text-[10px] px-2 py-0.5">
                             {count}
@@ -238,7 +238,7 @@ export default function ProposalMapFilters({
                 </div>
                 <ChevronDown
                     size={18}
-                    className={`text-emidias-gray-400 transition-transform duration-200 ${expandedSections[sectionKey] ? 'rotate-180' : ''}`}
+                    className={`text-plura-gray-400 transition-transform duration-200 ${expandedSections[sectionKey] ? 'rotate-180' : ''}`}
                 />
             </button>
 
@@ -276,7 +276,7 @@ export default function ProposalMapFilters({
         onChange: () => void;
         label: string;
     }) => (
-        <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-emidias-gray-50 transition-all group">
+        <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-plura-gray-50 transition-all group">
             <input
                 type="checkbox"
                 checked={checked}
@@ -286,14 +286,14 @@ export default function ProposalMapFilters({
             <div
                 onClick={onChange}
                 className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${checked
-                    ? 'bg-emidias-accent border-emidias-accent'
-                    : 'border-emidias-gray-300 group-hover:border-emidias-accent/50'
+                    ? 'bg-plura-accent border-plura-accent'
+                    : 'border-plura-gray-300 group-hover:border-plura-accent/50'
                     }`}>
                 {checked && <Check size={14} className="text-white" strokeWidth={3} />}
             </div>
             <span
                 onClick={onChange}
-                className={`text-sm transition-colors ${checked ? 'text-emidias-gray-900 font-medium' : 'text-emidias-gray-600'}`}>
+                className={`text-sm transition-colors ${checked ? 'text-plura-gray-900 font-medium' : 'text-plura-gray-600'}`}>
                 {label}
             </span>
         </label>
@@ -308,7 +308,7 @@ export default function ProposalMapFilters({
             />
 
             {/* Panel */}
-            <div className="fixed left-0 top-[70px] bottom-0 w-full sm:w-96 bg-emidias-gray-50 shadow-emidias-2xl z-50 overflow-hidden flex flex-col animate-slide-in-left">
+            <div className="fixed left-0 top-[70px] bottom-0 w-full sm:w-96 bg-plura-gray-50 shadow-plura-2xl z-50 overflow-hidden flex flex-col animate-slide-in-left">
                 {/* Header */}
                 <div className="flex-shrink-0 gradient-primary px-6 py-4">
                     <div className="flex items-center justify-between">
@@ -335,21 +335,21 @@ export default function ProposalMapFilters({
                 </div>
 
                 {/* Results Counter */}
-                <div className="flex-shrink-0 px-6 py-4 bg-white border-b border-emidias-gray-100">
+                <div className="flex-shrink-0 px-6 py-4 bg-white border-b border-plura-gray-100">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-emidias-accent rounded-full animate-pulse" />
-                            <span className="text-sm font-semibold text-emidias-gray-900">
+                            <div className="w-2 h-2 bg-plura-accent rounded-full animate-pulse" />
+                            <span className="text-sm font-semibold text-plura-gray-900">
                                 {filteredCount} pontos
                             </span>
-                            <span className="text-sm text-emidias-gray-500">encontrados</span>
+                            <span className="text-sm text-plura-gray-500">encontrados</span>
                         </div>
                         {activeFiltersCount > 0 && (
                             <Button
                                 onClick={handleClearAll}
                                 variant="ghost"
                                 size="sm"
-                                className="text-xs font-medium text-emidias-accent hover:text-emidias-accent-dark h-auto px-2 py-1"
+                                className="text-xs font-medium text-plura-accent hover:text-plura-accent-dark h-auto px-2 py-1"
                             >
                                 Limpar todos
                             </Button>
@@ -373,7 +373,7 @@ export default function ProposalMapFilters({
                                     />
                                 ))
                             ) : (
-                                <p className="text-sm text-emidias-gray-500 italic py-2 px-2">Nenhum país cadastrado</p>
+                                <p className="text-sm text-plura-gray-500 italic py-2 px-2">Nenhum país cadastrado</p>
                             )}
                         </div>
                     </FilterSection>
@@ -382,7 +382,7 @@ export default function ProposalMapFilters({
                     <FilterSection title="Localização" icon={MapPin} sectionKey="localizacao" count={selectedUFs.length + selectedCidades.length}>
                         {/* UF */}
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">UF</label>
+                            <label className="text-xs font-semibold text-plura-gray-500 uppercase tracking-wider">UF</label>
                             <SearchInput value={ufSearch} onChange={setUfSearch} placeholder="Buscar UF..." />
                             <div className="space-y-1 max-h-32 overflow-y-auto">
                                 {filteredUFs.length > 0 ? (
@@ -395,14 +395,14 @@ export default function ProposalMapFilters({
                                         />
                                     ))
                                 ) : (
-                                    <p className="text-sm text-emidias-gray-500 italic py-2 px-2">Nenhuma UF cadastrada</p>
+                                    <p className="text-sm text-plura-gray-500 italic py-2 px-2">Nenhuma UF cadastrada</p>
                                 )}
                             </div>
                         </div>
 
                         {/* Cidade */}
-                        <div className="space-y-2 pt-2 border-t border-emidias-gray-100">
-                            <label className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">Cidade</label>
+                        <div className="space-y-2 pt-2 border-t border-plura-gray-100">
+                            <label className="text-xs font-semibold text-plura-gray-500 uppercase tracking-wider">Cidade</label>
                             <SearchInput value={cidadeSearch} onChange={setCidadeSearch} placeholder="Buscar cidade..." />
                             <div className="space-y-1 max-h-40 overflow-y-auto">
                                 {filteredCidades.map(cidade => (
@@ -451,7 +451,7 @@ export default function ProposalMapFilters({
                         <FilterSection title="Faixa de Valor" icon={DollarSign} sectionKey="valor" count={valorMin || valorMax ? 1 : 0}>
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">Mínimo</label>
+                                    <label className="text-xs font-semibold text-plura-gray-500 uppercase tracking-wider">Mínimo</label>
                                     <Input
                                         type="number"
                                         value={valorMin}
@@ -460,7 +460,7 @@ export default function ProposalMapFilters({
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-emidias-gray-500 uppercase tracking-wider">Máximo</label>
+                                    <label className="text-xs font-semibold text-plura-gray-500 uppercase tracking-wider">Máximo</label>
                                     <Input
                                         type="number"
                                         value={valorMax}
@@ -469,7 +469,7 @@ export default function ProposalMapFilters({
                                     />
                                 </div>
                             </div>
-                            <p className="text-xs text-emidias-gray-400 italic">
+                            <p className="text-xs text-plura-gray-400 italic">
                                 Valores baseados em produtos de Locação
                             </p>
                         </FilterSection>
@@ -477,7 +477,7 @@ export default function ProposalMapFilters({
                 </div>
 
                 {/* Footer */}
-                <div className="flex-shrink-0 p-4 bg-white border-t border-emidias-gray-100 flex gap-3">
+                <div className="flex-shrink-0 p-4 bg-white border-t border-plura-gray-100 flex gap-3">
                     <Button
                         onClick={onClose}
                         variant="accent"

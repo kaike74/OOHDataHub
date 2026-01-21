@@ -62,7 +62,7 @@ export function PeriodoSelectEditor({ value, onChange, onClose }: PeriodoSelectE
     return (
         <div className="relative w-full h-full">
             {/* Input display */}
-            <div className="w-full h-full px-2 text-sm border-2 border-emidias-primary bg-white flex items-center">
+            <div className="w-full h-full px-2 text-sm border-2 border-plura-primary bg-white flex items-center">
                 <span className="truncate text-gray-700">
                     {selected || 'Selecione...'}
                 </span>
@@ -85,7 +85,7 @@ export function PeriodoSelectEditor({ value, onChange, onClose }: PeriodoSelectE
                                 className={cn(
                                     'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors text-left',
                                     isSelected
-                                        ? 'bg-emidias-primary/10 text-emidias-primary font-medium'
+                                        ? 'bg-plura-primary/10 text-plura-primary font-medium'
                                         : 'hover:bg-gray-50 text-gray-700'
                                 )}
                             >
@@ -93,7 +93,7 @@ export function PeriodoSelectEditor({ value, onChange, onClose }: PeriodoSelectE
                                     className={cn(
                                         'w-4 h-4 rounded border flex items-center justify-center shrink-0',
                                         isSelected
-                                            ? 'bg-emidias-primary border-emidias-primary'
+                                            ? 'bg-plura-primary border-plura-primary'
                                             : 'border-gray-300'
                                     )}
                                 >

@@ -238,12 +238,12 @@ export default function ProposalDetailClient() {
                 onClick={() => setIsFiltersOpen(true)}
                 variant="outline"
                 size="sm"
-                className={`h-[40px] px-3 border-gray-200 hover:border-emidias-accent hover:text-emidias-accent ${activeFiltersCount > 0 ? 'border-emidias-accent text-emidias-accent bg-emidias-accent/5' : ''}`}
+                className={`h-[40px] px-3 border-gray-200 hover:border-plura-accent hover:text-plura-accent ${activeFiltersCount > 0 ? 'border-plura-accent text-plura-accent bg-plura-accent/5' : ''}`}
                 leftIcon={<Filter size={16} />}
             >
                 Filtros
                 {activeFiltersCount > 0 && (
-                    <span className="ml-2 bg-emidias-accent text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                    <span className="ml-2 bg-plura-accent text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                         {activeFiltersCount}
                     </span>
                 )}

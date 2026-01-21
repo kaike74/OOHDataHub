@@ -194,7 +194,7 @@ export default function ConfigPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <header className="bg-gradient-to-r from-emidias-primary to-[#0A0970] text-white sticky top-0 z-50 shadow-md">
+            <header className="bg-gradient-to-r from-plura-primary to-[#0A0970] text-white sticky top-0 z-50 shadow-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         <div className="flex items-center gap-4">
@@ -238,9 +238,9 @@ export default function ConfigPage() {
                                         <button
                                             key={item.id}
                                             onClick={() => setActiveSection(item.id)}
-                                            className={`w-full flex items-center p-3 rounded-xl transition-all ${isActive ? 'bg-emidias-primary text-white shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
+                                            className={`w-full flex items-center p-3 rounded-xl transition-all ${isActive ? 'bg-plura-primary text-white shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
                                         >
-                                            <Icon size={20} className={isActive ? 'text-white' : 'text-emidias-accent'} />
+                                            <Icon size={20} className={isActive ? 'text-white' : 'text-plura-accent'} />
                                             <div className="flex-1 text-left ml-3">
                                                 <p className={`font-medium text-sm ${isActive ? 'text-white' : 'text-gray-900'}`}>
                                                     {item.label}
@@ -264,7 +264,7 @@ export default function ConfigPage() {
                             <div className="space-y-6 animate-in fade-in-up duration-500">
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                     <div className="flex items-center gap-4 mb-6">
-                                        <div className="w-16 h-16 bg-gradient-to-br from-emidias-primary to-emidias-primary-light rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-md">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-plura-primary to-plura-primary-light rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-md">
                                             {user.email[0].toUpperCase()}
                                         </div>
                                         <div>
@@ -279,7 +279,7 @@ export default function ConfigPage() {
 
                                     <div className="space-y-4">
                                         <div className="flex items-start gap-4 p-4 rounded-lg bg-gray-50">
-                                            <Mail className="text-emidias-primary mt-0.5" />
+                                            <Mail className="text-plura-primary mt-0.5" />
                                             <div>
                                                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Email</p>
                                                 <p className="text-gray-900 font-medium">{user.email}</p>
@@ -287,7 +287,7 @@ export default function ConfigPage() {
                                         </div>
 
                                         <div className="flex items-start gap-4 p-4 rounded-lg bg-gray-50">
-                                            <Shield className="text-emidias-primary mt-0.5" />
+                                            <Shield className="text-plura-primary mt-0.5" />
                                             <div className="flex-1">
                                                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Nível de Acesso</p>
                                                 <div className="flex items-center gap-2 mt-1">
@@ -347,8 +347,8 @@ export default function ConfigPage() {
                             <div className="space-y-6 animate-in fade-in-up duration-500">
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                     <div className="flex items-center gap-3 mb-6">
-                                        <div className="w-12 h-12 bg-emidias-accent/10 rounded-xl flex items-center justify-center">
-                                            <Key size={24} className="text-emidias-accent" />
+                                        <div className="w-12 h-12 bg-plura-accent/10 rounded-xl flex items-center justify-center">
+                                            <Key size={24} className="text-plura-accent" />
                                         </div>
                                         <div>
                                             <h2 className="text-xl font-bold text-gray-900">
@@ -434,8 +434,8 @@ export default function ConfigPage() {
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                     <div className="flex items-center justify-between mb-6">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 bg-emidias-accent/10 rounded-xl flex items-center justify-center">
-                                                <Users size={24} className="text-emidias-accent" />
+                                            <div className="w-12 h-12 bg-plura-accent/10 rounded-xl flex items-center justify-center">
+                                                <Users size={24} className="text-plura-accent" />
                                             </div>
                                             <div>
                                                 <h2 className="text-xl font-bold text-gray-900">
@@ -504,10 +504,10 @@ export default function ConfigPage() {
                                             {users.map((u, index) => (
                                                 <div
                                                     key={u.id}
-                                                    className="bg-white p-4 rounded-xl border border-gray-200 hover:border-emidias-accent hover:shadow-md transition-all duration-200"
+                                                    className="bg-white p-4 rounded-xl border border-gray-200 hover:border-plura-accent hover:shadow-md transition-all duration-200"
                                                 >
                                                     <div className="flex items-center gap-4">
-                                                        <div className="w-12 h-12 bg-gradient-to-br from-emidias-primary to-emidias-primary-light rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                                                        <div className="w-12 h-12 bg-gradient-to-br from-plura-primary to-plura-primary-light rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
                                                             {u.email[0].toUpperCase()}
                                                         </div>
                                                         <div className="flex-1 min-w-0">

@@ -145,7 +145,7 @@ export default function CreateUserModal({ isOpen, onClose, userType, onSuccess }
                                     <label
                                         key={option.value}
                                         className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${formData.role === option.value
-                                                ? 'border-emidias-primary bg-blue-50'
+                                                ? 'border-plura-primary bg-blue-50'
                                                 : 'border-gray-200 hover:border-gray-300'
                                             }`}
                                     >
@@ -155,7 +155,7 @@ export default function CreateUserModal({ isOpen, onClose, userType, onSuccess }
                                             value={option.value}
                                             checked={formData.role === option.value}
                                             onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
-                                            className="text-emidias-primary focus:ring-emidias-primary"
+                                            className="text-plura-primary focus:ring-plura-primary"
                                         />
                                         <Icon className="w-5 h-5 text-gray-600" />
                                         <div className="flex-1">
@@ -175,7 +175,7 @@ export default function CreateUserModal({ isOpen, onClose, userType, onSuccess }
                         <select
                             value={formData.plan}
                             onChange={(e) => setFormData({ ...formData, plan: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emidias-primary"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-plura-primary"
                         >
                             <option value="Gratuito">Gratuito</option>
                             <option value="Pro">Pro (futuro)</option>
@@ -199,7 +199,7 @@ export default function CreateUserModal({ isOpen, onClose, userType, onSuccess }
                     <Button
                         type="submit"
                         disabled={loading}
-                        className="bg-emidias-primary hover:bg-emidias-primary/90"
+                        className="bg-plura-primary hover:bg-plura-primary/90"
                     >
                         {loading ? 'Criando...' : 'Criar Usuário'}
                     </Button>

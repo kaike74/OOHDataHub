@@ -40,7 +40,7 @@ function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undef
         <div className="mt-4 space-y-2 w-full">
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Contatos</p>
             {contatos.map((contato) => (
-                <div key={contato.id} className="p-3 bg-gray-50/50 rounded-xl border border-gray-100 hover:border-emidias-accent/30 transition-all flex flex-col gap-1.5">
+                <div key={contato.id} className="p-3 bg-gray-50/50 rounded-xl border border-gray-100 hover:border-plura-accent/30 transition-all flex flex-col gap-1.5">
                     {contato.nome && (
                         <p className="font-semibold text-gray-900 text-sm">{contato.nome}</p>
                     )}
@@ -48,7 +48,7 @@ function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undef
                         {contato.telefone && (
                             <a
                                 href={`tel:${contato.telefone}`}
-                                className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-emidias-accent transition-colors"
+                                className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-plura-accent transition-colors"
                             >
                                 <Phone size={12} />
                                 {contato.telefone}
@@ -57,7 +57,7 @@ function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undef
                         {contato.email && (
                             <a
                                 href={`mailto:${contato.email}`}
-                                className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-emidias-accent transition-colors"
+                                className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-plura-accent transition-colors"
                             >
                                 <Mail size={12} />
                                 {contato.email}
@@ -129,7 +129,7 @@ export default function ExibidoraSidebar() {
             />
 
             {/* Sidebar */}
-            <div className="fixed right-0 top-16 h-[calc(100vh-64px)] w-full sm:w-80 bg-white/95 backdrop-blur-xl shadow-emidias-2xl z-40 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col border-l border-white/20 animate-in slide-in-from-right">
+            <div className="fixed right-0 top-16 h-[calc(100vh-64px)] w-full sm:w-80 bg-white/95 backdrop-blur-xl shadow-plura-2xl z-40 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col border-l border-white/20 animate-in slide-in-from-right">
 
                 {/* Header com Logo */}
                 <div className="relative h-44 bg-gray-100 flex-shrink-0 group">
@@ -179,9 +179,9 @@ export default function ExibidoraSidebar() {
                     <div className="p-5 space-y-6">
                         {/* Stats Badge */}
                         {stats && stats.totalPontos > 0 && (
-                            <div className="p-3 bg-gradient-to-r from-emidias-accent/5 to-transparent rounded-xl border border-emidias-accent/10 flex items-center justify-between">
+                            <div className="p-3 bg-gradient-to-r from-plura-accent/5 to-transparent rounded-xl border border-plura-accent/10 flex items-center justify-between">
                                 <p className="text-sm font-medium text-gray-600">Total de Pontos</p>
-                                <p className="text-2xl font-bold text-emidias-accent">
+                                <p className="text-2xl font-bold text-plura-accent">
                                     {stats.totalPontos}
                                 </p>
                             </div>

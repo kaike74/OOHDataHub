@@ -174,7 +174,7 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
                             <Button
                                 onClick={() => setExibidoraModalOpen(true)}
                                 size="lg"
-                                className="bg-emidias-accent hover:bg-emidias-accent/90"
+                                className="bg-plura-accent hover:bg-plura-accent/90"
                                 leftIcon={<Plus size={24} />}
                             >
                                 Cadastrar Primeira Exibidora

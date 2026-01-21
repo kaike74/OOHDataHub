@@ -574,7 +574,7 @@ export default function CreatePointModal() {
         {/* Progress Bar */}
         <div className="relative h-1 bg-gray-100 rounded-full mb-6 overflow-hidden">
           <div
-            className="absolute left-0 top-0 h-full bg-emidias-primary transition-all duration-300 ease-out"
+            className="absolute left-0 top-0 h-full bg-plura-primary transition-all duration-300 ease-out"
             style={{ width: `${(currentStep / 2) * 100}%` }}
           />
         </div>
@@ -586,7 +586,7 @@ export default function CreatePointModal() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Imagens Dropzone */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-emidias-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-plura-gray-700 mb-2">
                     Fotos do Ponto
                   </label>
 
@@ -611,9 +611,9 @@ export default function CreatePointModal() {
                           </div>
                         </div>
                       ))}
-                      <div {...getRootProps()} className="flex items-center justify-center aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-emidias-primary hover:bg-gray-50 cursor-pointer transition-all">
+                      <div {...getRootProps()} className="flex items-center justify-center aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-plura-primary hover:bg-gray-50 cursor-pointer transition-all">
                         <input {...getInputProps()} />
-                        <Plus className="text-gray-300 hover:text-emidias-primary" />
+                        <Plus className="text-gray-300 hover:text-plura-primary" />
                       </div>
                     </div>
                   ) : (
@@ -622,15 +622,15 @@ export default function CreatePointModal() {
                       className={cn(
                         "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 bg-gray-50/50",
                         isDragActive
-                          ? "border-emidias-accent bg-pink-50/50 ring-2 ring-emidias-accent/20"
-                          : "border-gray-200 hover:border-emidias-primary/50 hover:bg-white"
+                          ? "border-plura-accent bg-pink-50/50 ring-2 ring-plura-accent/20"
+                          : "border-gray-200 hover:border-plura-primary/50 hover:bg-white"
                       )}
                     >
                       <input {...getInputProps()} />
                       <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center mx-auto mb-3">
-                        <ImageIcon className="text-emidias-primary" size={24} />
+                        <ImageIcon className="text-plura-primary" size={24} />
                       </div>
-                      <p className="text-emidias-primary font-medium">
+                      <p className="text-plura-primary font-medium">
                         {isDragActive ? 'Solte as fotos aqui' : 'Arraste fotos ou clique para enviar'}
                       </p>
                       <p className="text-gray-400 text-xs mt-1">
@@ -660,7 +660,7 @@ export default function CreatePointModal() {
                       onKeyDown={handleAddressKeyDown}
                       error={errors.endereco}
                       required
-                      icon={isSearchingAddress ? <Loader2 className="animate-spin text-emidias-primary" size={18} /> : <Search size={18} />}
+                      icon={isSearchingAddress ? <Loader2 className="animate-spin text-plura-primary" size={18} /> : <Search size={18} />}
                     />
 
                     {/* Suggestions Dropdown */}
@@ -671,9 +671,9 @@ export default function CreatePointModal() {
                             key={suggestion.place_id}
                             type="button"
                             onClick={() => handleSelectPrediction(suggestion.place_id, suggestion.description)}
-                            className="w-full text-left px-4 py-3 hover:bg-emidias-blue-50 transition-colors flex items-start gap-3 border-b border-gray-50 last:border-0"
+                            className="w-full text-left px-4 py-3 hover:bg-plura-gray-50 transition-colors flex items-start gap-3 border-b border-gray-50 last:border-0"
                           >
-                            <MapPin size={16} className="mt-1 text-emidias-primary shrink-0" />
+                            <MapPin size={16} className="mt-1 text-plura-primary shrink-0" />
                             <div>
                               <div className="text-sm font-medium text-gray-900">
                                 {suggestion.structured_formatting.main_text}
@@ -720,7 +720,7 @@ export default function CreatePointModal() {
                     rows={2}
                   />
                   {isFetchingReferencia && (
-                    <p className="text-xs text-emidias-accent mt-1 flex items-center gap-1 animate-pulse">
+                    <p className="text-xs text-plura-accent mt-1 flex items-center gap-1 animate-pulse">
                       <Loader2 size={10} className="animate-spin" />
                       Buscando referências automáticas...
                     </p>
@@ -732,9 +732,9 @@ export default function CreatePointModal() {
             <div className="space-y-6 animate-in slide-in-from-right-4 fade-in duration-300">
 
               {showInlineExibidoraForm ? (
-                <div className="bg-white rounded-xl border border-emidias-primary/20 shadow-lg p-6 animate-in zoom-in-95 duration-300 relative">
+                <div className="bg-white rounded-xl border border-plura-primary/20 shadow-lg p-6 animate-in zoom-in-95 duration-300 relative">
                   <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
-                    <h3 className="font-bold text-lg text-emidias-primary flex items-center gap-2">
+                    <h3 className="font-bold text-lg text-plura-primary flex items-center gap-2">
                       <Plus size={20} />
                       Cadastrar Nova Exibidora
                     </h3>
@@ -750,23 +750,23 @@ export default function CreatePointModal() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-emidias-gray-700 mb-2">
-                      Exibidora <span className="text-emidias-accent">*</span>
+                    <label className="block text-sm font-semibold text-plura-gray-700 mb-2">
+                      Exibidora <span className="text-plura-accent">*</span>
                     </label>
                     <div className="relative">
                       <select
                         value={idExibidora}
                         onChange={handleIdExibidoraChange}
                         className={cn(
-                          "w-full h-[46px] rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emidias-primary/20 focus-visible:border-emidias-primary transition-all appearance-none cursor-pointer",
-                          errors.idExibidora && "border-emidias-danger"
+                          "w-full h-[46px] rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plura-primary/20 focus-visible:border-plura-primary transition-all appearance-none cursor-pointer",
+                          errors.idExibidora && "border-plura-danger"
                         )}
                         style={{
                           paddingLeft: idExibidora && idExibidora !== 'CREATE_NEW' && exibidoras.find(ex => ex.id.toString() === idExibidora)?.logo_r2_key ? '52px' : '16px'
                         }}
                       >
                         <option value="">Selecione uma exibidora</option>
-                        <option value="CREATE_NEW" className="font-semibold text-emidias-primary">+ Cadastrar Nova Exibidora</option>
+                        <option value="CREATE_NEW" className="font-semibold text-plura-primary">+ Cadastrar Nova Exibidora</option>
                         {exibidoras.map(ex => (
                           <option key={ex.id} value={ex.id}>{ex.nome}</option>
                         ))}
@@ -788,7 +788,7 @@ export default function CreatePointModal() {
 
                   {/* Tipos de Painel (Reordered) */}
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-emidias-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-plura-gray-700 mb-2">
                       Tipos de Painel
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -800,8 +800,8 @@ export default function CreatePointModal() {
                           className={cn(
                             "px-4 py-2 rounded-lg text-sm font-medium transition-all border",
                             tipos.includes(tipo)
-                              ? "bg-emidias-primary text-white border-emidias-primary shadow-md shadow-emidias-primary/20"
-                              : "bg-white text-gray-600 border-gray-200 hover:border-emidias-primary hover:text-emidias-primary"
+                              ? "bg-plura-primary text-white border-plura-primary shadow-md shadow-plura-primary/20"
+                              : "bg-white text-gray-600 border-gray-200 hover:border-plura-primary hover:text-plura-primary"
                           )}
                         >
                           {tipo}
@@ -813,7 +813,7 @@ export default function CreatePointModal() {
                   {/* Medidas Custom Input */}
                   <div className="">
                     <div className='flex items-center justify-between mb-2'>
-                      <label className="block text-sm font-semibold text-emidias-gray-700">
+                      <label className="block text-sm font-semibold text-plura-gray-700">
                         Medidas
                       </label>
                       <div className="bg-gray-100 p-0.5 rounded-lg flex text-xs font-semibold">
@@ -822,7 +822,7 @@ export default function CreatePointModal() {
                           onClick={() => setMedidaUnit('M')}
                           className={cn(
                             "px-2 py-1 rounded-md transition-all",
-                            medidaUnit === 'M' ? "bg-white shadow-sm text-emidias-primary" : "text-gray-500 hover:text-gray-700"
+                            medidaUnit === 'M' ? "bg-white shadow-sm text-plura-primary" : "text-gray-500 hover:text-gray-700"
                           )}
                         >
                           Metros
@@ -832,7 +832,7 @@ export default function CreatePointModal() {
                           onClick={() => setMedidaUnit('Px')}
                           className={cn(
                             "px-2 py-1 rounded-md transition-all",
-                            medidaUnit === 'Px' ? "bg-white shadow-sm text-emidias-primary" : "text-gray-500 hover:text-gray-700"
+                            medidaUnit === 'Px' ? "bg-white shadow-sm text-plura-primary" : "text-gray-500 hover:text-gray-700"
                           )}
                         >
                           Pixels
@@ -877,8 +877,8 @@ export default function CreatePointModal() {
                   {/* Tabela de Preços Dinâmica */}
                   <div className="md:col-span-2 bg-gray-50/50 rounded-xl p-5 border border-gray-100">
                     <div className="flex items-center justify-between mb-4">
-                      <label className="text-sm font-semibold text-emidias-gray-700 flex items-center gap-2">
-                        <DollarSign size={16} className="text-emidias-accent" />
+                      <label className="text-sm font-semibold text-plura-gray-700 flex items-center gap-2">
+                        <DollarSign size={16} className="text-plura-accent" />
                         Tabela de Preços (Estimativa)
                       </label>
                       <Button
@@ -901,7 +901,7 @@ export default function CreatePointModal() {
                               <select
                                 value={custo.produto}
                                 onChange={(e) => updateCusto(index, 'produto', e.target.value)}
-                                className="w-full h-10 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emidias-primary focus:ring-2 focus:ring-emidias-primary/20 outline-none transition-all placeholder:text-gray-400"
+                                className="w-full h-10 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-plura-primary focus:ring-2 focus:ring-plura-primary/20 outline-none transition-all placeholder:text-gray-400"
                               >
                                 <option value="" disabled>Selecione...</option>
                                 <option value="Locação">Locação</option>
@@ -922,7 +922,7 @@ export default function CreatePointModal() {
                               <select
                                 value={custo.periodo}
                                 onChange={(e) => updateCusto(index, 'periodo', e.target.value)}
-                                className="w-full h-10 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emidias-primary focus:ring-2 focus:ring-emidias-primary/20 outline-none transition-all"
+                                className="w-full h-10 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-plura-primary focus:ring-2 focus:ring-plura-primary/20 outline-none transition-all"
                               >
                                 <option value="">Período...</option>
                                 <option value="Bissemanal">Bissemana</option>

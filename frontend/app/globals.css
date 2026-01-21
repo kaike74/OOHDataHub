@@ -323,35 +323,35 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer utilities {
-  .shadow-emidias-xs {
+  .shadow-plura-xs {
     box-shadow: var(--shadow-xs);
   }
 
-  .shadow-emidias-sm {
+  .shadow-plura-sm {
     box-shadow: var(--shadow-sm);
   }
 
-  .shadow-emidias-md {
+  .shadow-plura-md {
     box-shadow: var(--shadow-md);
   }
 
-  .shadow-emidias-lg {
+  .shadow-plura-lg {
     box-shadow: var(--shadow-lg);
   }
 
-  .shadow-emidias-xl {
+  .shadow-plura-xl {
     box-shadow: var(--shadow-xl);
   }
 
-  .shadow-emidias-2xl {
+  .shadow-plura-2xl {
     box-shadow: var(--shadow-2xl);
   }
 
-  .shadow-emidias-accent {
+  .shadow-plura-accent {
     box-shadow: var(--shadow-accent);
   }
 
-  .shadow-emidias-glow {
+  .shadow-plura-glow {
     box-shadow: var(--shadow-glow);
   }
 

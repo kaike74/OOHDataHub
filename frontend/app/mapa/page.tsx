@@ -88,7 +88,7 @@ export default function MapaPage() {
                 onClick={() => setIsFilterOpen(true)}
                 variant="outline"
                 size="sm" // Use generic size or "icon" if preferred
-                className="h-[40px] px-3 border-gray-200 hover:border-emidias-primary hover:text-emidias-primary"
+                className="h-[40px] px-3 border-gray-200 hover:border-plura-primary hover:text-plura-primary"
                 leftIcon={<FilterIcon size={16} />}
             >
                 Filtros
