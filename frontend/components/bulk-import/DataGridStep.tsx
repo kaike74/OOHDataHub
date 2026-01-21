@@ -9,9 +9,8 @@ import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import { normalizeField } from '@/lib/dataNormalizers';
 import { TiposMultiSelectEditor } from './TiposMultiSelectEditor';
-import { PeriodoEditor } from './CustomCellEditors';
+import { PeriodoSelectEditor } from './PeriodoSelectEditor';
 import { PERIODO_LOCACAO } from '@/constants/oohTypes';
-import { createPortal } from 'react-dom';
 import 'react-data-grid/lib/styles.css';
 
 // Field options for column mapping
@@ -465,14 +464,6 @@ export default function DataGridStep() {
         const initialValue = row[column.key];
         const currentValueRef = useRef(initialValue);
         const [localValue, setLocalValue] = useState(initialValue);
-        const [showPeriodoEditor, setShowPeriodoEditor] = useState(fieldName === 'periodo_locacao');
-
-        // Auto-show periodo editor on mount
-        useEffect(() => {
-            if (fieldName === 'periodo_locacao') {
-                setShowPeriodoEditor(true);
-            }
-        }, [fieldName]);
 
         const handleChange = (newValue: any) => {
             currentValueRef.current = newValue;
@@ -511,33 +502,18 @@ export default function DataGridStep() {
             );
         }
 
-        // PERIODO LOCACAO editor with portal
+        // PERIODO LOCACAO editor with dropdown (single select)
         if (fieldName === 'periodo_locacao') {
             return (
-                <>
-                    <input
-                        className="w-full h-full px-2 text-sm border-2 border-emidias-primary focus:outline-none"
-                        value={String(localValue || '')}
-                        readOnly
-                        placeholder="Selecione..."
-                    />
-                    {showPeriodoEditor && createPortal(
-                        <PeriodoEditor
-                            value={String(localValue || '')}
-                            onChange={(newValue) => {
-                                handleChange(newValue);
-                                revalidateCell(row.id, colIdx, newValue);
-                                setShowPeriodoEditor(false);
-                                onClose(true);
-                            }}
-                            onClose={() => {
-                                setShowPeriodoEditor(false);
-                                onClose(false);
-                            }}
-                        />,
-                        document.body
-                    )}
-                </>
+                <PeriodoSelectEditor
+                    value={String(localValue || '')}
+                    onChange={(newValue) => {
+                        handleChange(newValue);
+                        revalidateCell(row.id, colIdx, newValue);
+                        onClose(true);
+                    }}
+                    onClose={() => onClose(true)}
+                />
             );
         }
 
@@ -554,29 +530,34 @@ export default function DataGridStep() {
         );
     };
 
-    // Handle drag-fill
-    const handleFill = ({ columnKey, sourceRow, targetRows }: any) => {
+    // Handle drag-fill - returns the sourceRow to satisfy FillEvent signature
+    const handleFill = ({ columnKey, sourceRow, targetRows }: any): GridRow => {
         const colIdx = parseInt(columnKey.replace('col_', ''));
         const fieldName = mapping[colIdx.toString()];
         const sourceValue = sourceRow[columnKey];
 
-        const newRows = [...rows];
+        // Update rows with sourceValue
         targetRows.forEach((targetRow: GridRow) => {
-            newRows[targetRow.id] = {
-                ...newRows[targetRow.id],
+            const updatedRow = {
+                ...targetRow,
                 [columnKey]: sourceValue
             };
 
+            // Update in state
+            setRows(prevRows => {
+                const newRows = [...prevRows];
+                newRows[targetRow.id] = updatedRow;
+                return newRows;
+            });
+
             // Re-validate filled cell
             if (fieldName && fieldName !== 'ignore') {
-                revalidateCell(targetRow.id, colIdx, sourceValue);
+                setTimeout(() => {
+                    revalidateCell(targetRow.id, colIdx, sourceValue);
+                }, 0);
             }
         });
 
-        setRows(newRows);
-        handleRowsChange(newRows);
-
-        // Return the updated target row for the event
         return sourceRow;
     };
 
@@ -684,7 +665,7 @@ export default function DataGridStep() {
                 </div>
             )}
 
-            {/* Data Grid - EDITABLE with drag-fill */}
+            {/* Data Grid - EDITABLE with drag-fill and single-click editing */}
             <div className="border border-gray-200 rounded-xl overflow-hidden">
                 <DataGrid
                     columns={columns}
