@@ -7,6 +7,7 @@ import { formatDate, formatCurrency } from '@/lib/utils';
 import { FileText, MapPin, Eye, Trash2, Pencil, History, User } from 'lucide-react'; // Added User icon
 import { SafeImage } from '@/components/ui/SafeImage';
 import { api } from '@/lib/api';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 // --- Types ---
 export interface ProposalTableItem {
@@ -41,34 +42,7 @@ export interface ProposalsTableProps {
 }
 
 // --- Components ---
-const StatusBadge = ({ status }: { status: string }) => {
-    let bgColor, textColor, dotColor;
-    switch (status) {
-        case 'aprovado': // Corrected from 'aprovada' based on likely backend response
-        case 'aprovada':
-            bgColor = 'bg-plura-accent/10 border-plura-accent/20';
-            textColor = 'text-plura-accent-dark';
-            dotColor = 'bg-plura-accent';
-            break;
-        case 'em_negociacao':
-            bgColor = 'bg-blue-50 border-blue-100';
-            textColor = 'text-blue-700';
-            dotColor = 'bg-blue-500';
-            break;
-        default: // Rascunho
-            bgColor = 'bg-gray-100 border-gray-200';
-            textColor = 'text-gray-600';
-            dotColor = 'bg-gray-400';
-    }
 
-    // Plura Style Badge
-    return (
-        <span className={`px-2.5 py-1 rounded-lg border text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 ${bgColor} ${textColor}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
-            {status?.replace(/_/g, ' ') || 'Rascunho'}
-        </span>
-    );
-};
 
 export default function ProposalsTable({
     data,

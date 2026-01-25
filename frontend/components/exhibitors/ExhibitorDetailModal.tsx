@@ -9,7 +9,7 @@ import { formatDate } from '@/lib/utils';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { useBulkImportStore } from '@/stores/useBulkImportStore';
 import BulkImportModal from '@/components/bulk-import/BulkImportModal';
-import { UnifiedSplitModal } from '@/components/ui/UnifiedSplitModal';
+import { UnifiedStandardModal } from '@/components/ui/UnifiedStandardModal';
 
 // Componente para exibir contatos da exibidora
 function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undefined }) {
@@ -18,54 +18,27 @@ function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undef
 
     useEffect(() => {
         if (!idExibidora) return;
-
         const fetchContatos = async () => {
             setLoading(true);
-            try {
-                const data = await api.getContatos(idExibidora);
-                setContatos(data);
-            } catch (error) {
-                console.error('Erro ao buscar contatos:', error);
-            } finally {
-                setLoading(false);
-            }
+            try { setContatos(await api.getContatos(idExibidora)); }
+            catch (error) { console.error('Erro ao buscar contatos:', error); }
+            finally { setLoading(false); }
         };
-
         fetchContatos();
     }, [idExibidora]);
 
-    if (loading || contatos.length === 0) return null;
+    if (loading) return <div className="p-4"><div className="h-6 bg-gray-50 rounded animate-pulse" /></div>;
+    if (contatos.length === 0) return <p className="text-xs text-gray-400 p-4 font-normal italic">Nenhum contato cadastrado</p>;
 
     return (
         <div className="space-y-2">
             {contatos.map((contato) => (
-                <div key={contato.id} className="p-3 bg-gray-50/50 rounded-xl border border-gray-100 hover:border-plura-accent/30 transition-all flex flex-col gap-1.5">
-                    {contato.nome && (
-                        <p className="font-semibold text-gray-900 text-sm">{contato.nome}</p>
-                    )}
-                    <div className="flex flex-wrap gap-3">
-                        {contato.telefone && (
-                            <a
-                                href={`tel:${contato.telefone}`}
-                                className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-plura-accent transition-colors"
-                            >
-                                <Phone size={12} />
-                                {contato.telefone}
-                            </a>
-                        )}
-                        {contato.email && (
-                            <a
-                                href={`mailto:${contato.email}`}
-                                className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-plura-accent transition-colors"
-                            >
-                                <Mail size={12} />
-                                {contato.email}
-                            </a>
-                        )}
+                <div key={contato.id} className="p-3 bg-white rounded-lg border border-gray-100 flex flex-col gap-1 hover:border-gray-300 transition-colors">
+                    {contato.nome && <p className="font-bold text-gray-900 text-xs">{contato.nome}</p>}
+                    <div className="flex flex-col gap-1">
+                        {contato.telefone && <a href={`tel:${contato.telefone}`} className="flex items-center gap-1.5 text-[11px] text-gray-600 hover:text-blue-600"><Phone size={10} />{contato.telefone}</a>}
+                        {contato.email && <a href={`mailto:${contato.email}`} className="flex items-center gap-1.5 text-[11px] text-gray-600 hover:text-blue-600"><Mail size={10} />{contato.email}</a>}
                     </div>
-                    {contato.observacoes && (
-                        <p className="text-xs text-gray-500 mt-1 italic">{contato.observacoes}</p>
-                    )}
                 </div>
             ))}
         </div>
@@ -83,162 +56,90 @@ export default function ExhibitorDetailModal() {
     const setExibidoraModalOpen = useStore((state) => state.setExibidoraModalOpen);
     const pontos = useStore((state) => state.pontos);
 
-    // Calcular estatísticas da exibidora
     const stats = useMemo(() => {
         if (!selectedExibidora) return null;
-
         const pontosExibidora = pontos.filter((p) => p.id_exibidora === selectedExibidora.id);
         const cidades = [...new Set(pontosExibidora.map((p) => p.cidade).filter(Boolean))];
-        const ufs = [...new Set(pontosExibidora.map((p) => p.uf).filter(Boolean))];
-
-        return {
-            totalPontos: pontosExibidora.length,
-            cidades: cidades as string[],
-            ufs: ufs as string[],
-        };
+        return { totalPontos: pontosExibidora.length, cidades: cidades as string[] };
     }, [selectedExibidora, pontos]);
 
-    const handleClose = useCallback(() => {
-        setSidebarOpen(false);
-        setFilterExibidora([]);
-        setCurrentView('exibidoras');
-    }, [setSidebarOpen, setFilterExibidora, setCurrentView]);
-
-    const handleEdit = useCallback(() => {
-        if (!selectedExibidora) return;
-        setEditingExibidora(selectedExibidora);
-        setExibidoraModalOpen(true);
-    }, [selectedExibidora, setEditingExibidora, setExibidoraModalOpen]);
+    const handleClose = useCallback(() => { setSidebarOpen(false); setFilterExibidora([]); setCurrentView('exibidoras'); }, [setSidebarOpen, setFilterExibidora, setCurrentView]);
+    const handleEdit = useCallback(() => { if (!selectedExibidora) return; setEditingExibidora(selectedExibidora); setExibidoraModalOpen(true); }, [selectedExibidora, setEditingExibidora, setExibidoraModalOpen]);
 
     const startImport = useBulkImportStore((state) => state.startImport);
-    const handleBulkImport = useCallback(() => {
-        if (!selectedExibidora) return;
-        startImport(selectedExibidora.id, selectedExibidora.nome);
-    }, [selectedExibidora, startImport]);
+    const handleBulkImport = useCallback(() => { if (!selectedExibidora) return; startImport(selectedExibidora.id, selectedExibidora.nome); }, [selectedExibidora, startImport]);
 
-    // Só mostra se tiver exibidora selecionada e NÃO tiver ponto selecionado
     const isOpen = !!selectedExibidora && isSidebarOpen && !selectedPonto;
-
     if (!selectedExibidora) return null;
 
-    // LEFT CONTENT: Logo
-    const LeftContent = (
-        <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-600 p-8">
-            <div className="w-48 h-48 rounded-3xl bg-white/10 backdrop-blur-sm border border-white/20 p-6 flex items-center justify-center mb-6 shadow-2xl overflow-hidden">
+    // 1. Hero
+    const HeroContent = (
+        <div className="flex items-center gap-6">
+            <div className="h-20 w-20 rounded-2xl bg-white border border-gray-100 p-2 flex items-center justify-center shadow-sm">
                 {selectedExibidora.logo_r2_key ? (
-                    <SafeImage
-                        src={api.getImageUrl(selectedExibidora.logo_r2_key)}
-                        alt={selectedExibidora.nome}
-                        className="w-full h-full object-contain"
-                    />
+                    <SafeImage src={api.getImageUrl(selectedExibidora.logo_r2_key)} alt={selectedExibidora.nome} className="w-full h-full object-contain" />
                 ) : (
-                    <Building2 size={80} className="text-white/40" />
+                    <Building2 size={32} className="text-gray-300" />
                 )}
             </div>
-
-            {/* Exhibitor Name */}
-            <h2 className="text-2xl font-bold text-white text-center mb-2 drop-shadow-lg">
-                {selectedExibidora.nome}
-            </h2>
-
-            {/* Creation Date */}
-            {selectedExibidora.created_at && (
-                <div className="flex items-center gap-2 text-white/90">
-                    <Calendar size={14} />
-                    <span className="text-sm">Cadastrado em {formatDate(selectedExibidora.created_at)}</span>
+            <div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">{selectedExibidora.nome}</h1>
+                <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <span className="flex items-center gap-1.5"><Calendar size={14} /> {selectedExibidora.created_at ? formatDate(selectedExibidora.created_at) : 'N/A'}</span>
+                    <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">{stats?.totalPontos || 0} Pontos</span>
                 </div>
-            )}
-
-            {/* Stats Badge */}
-            {stats && stats.totalPontos > 0 && (
-                <div className="mt-6 px-6 py-3 bg-white/20 backdrop-blur-sm rounded-2xl border border-white/30">
-                    <div className="text-center">
-                        <div className="text-3xl font-black text-white">{stats.totalPontos}</div>
-                        <div className="text-xs text-white/80 font-medium">Pontos Cadastrados</div>
-                    </div>
-                </div>
-            )}
+            </div>
         </div>
     );
 
-    // RIGHT CONTENT: Data
-    const RightContent = (
-        <div className="flex flex-col h-full">
-            {/* Header */}
-            <div className="px-6 py-5 border-b border-gray-100">
-                <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <Building2 size={20} className="text-plura-accent" />
-                    Informações da Exibidora
-                </h1>
-            </div>
-
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {/* Basic Info */}
-                <div className="space-y-4">
-                    {selectedExibidora.cnpj && (
-                        <div className="flex gap-3">
-                            <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
-                                <FileText size={16} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">CNPJ</p>
-                                <p className="text-gray-900 font-medium text-sm mt-0.5 font-mono">{selectedExibidora.cnpj}</p>
-                            </div>
-                        </div>
-                    )}
-
-                    {selectedExibidora.razao_social && (
-                        <div className="flex gap-3">
-                            <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
-                                <Building2 size={16} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Razão Social</p>
-                                <p className="text-gray-900 font-medium text-sm mt-0.5 leading-snug">{selectedExibidora.razao_social}</p>
-                            </div>
-                        </div>
-                    )}
-
-                    {selectedExibidora.endereco && (
-                        <div className="flex gap-3">
-                            <div className="mt-0.5 p-1.5 rounded-lg bg-gray-100 text-gray-500">
-                                <MapPin size={16} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Endereço</p>
-                                <p className="text-gray-900 font-medium text-sm mt-0.5 leading-snug">{selectedExibidora.endereco}</p>
-                            </div>
-                        </div>
-                    )}
+    // 2. Info Cards
+    const InfoContent = (
+        <div className="flex flex-col gap-4 h-full">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex-1">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="p-1.5 bg-purple-50 text-purple-700 rounded-lg"><Building2 size={16} /></div>
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Dados da Empresa</h3>
                 </div>
 
-                {/* Regions */}
-                {stats && stats.cidades.length > 0 && (
-                    <div className="border-t border-gray-100 pt-6">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Tag size={14} className="text-gray-400" />
-                            <h3 className="font-bold text-xs uppercase text-gray-400 tracking-widest">Atuação</h3>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                            {stats.cidades.map((cidade, idx) => (
-                                <span
-                                    key={idx}
-                                    className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-md text-xs font-medium border border-gray-200"
-                                >
-                                    {cidade}
-                                </span>
-                            ))}
-                        </div>
+                <div className="space-y-4">
+                    <div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Razão Social</span>
+                        <p className="text-sm font-medium text-gray-900">{selectedExibidora.razao_social || '-'}</p>
                     </div>
-                )}
+                    <div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">CNPJ</span>
+                        <p className="text-sm font-mono text-gray-900 bg-gray-50 inline-block px-1.5 rounded">{selectedExibidora.cnpj || '-'}</p>
+                    </div>
+                    <div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Endereço</span>
+                        <p className="text-sm text-gray-600">{selectedExibidora.endereco || '-'}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
-                {/* Contacts */}
-                <div className="border-t border-gray-100 pt-6">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Phone size={14} className="text-gray-400" />
-                        <h3 className="font-bold text-xs uppercase text-gray-400 tracking-widest">Contatos</h3>
-                    </div>
+    // 3. List / Visual (Merged here for efficiency)
+    const RightGrid = (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+            {/* Cities */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                    <Tag size={14} className="text-gray-400" />
+                    <span className="text-xs font-bold text-gray-500 uppercase">Cidades Atendidas</span>
+                </div>
+                <div className="p-4 flex flex-wrap gap-2 overflow-y-auto max-h-[300px] custom-scrollbar">
+                    {stats?.cidades.map((c, i) => <span key={i} className="px-2 py-1 bg-gray-50 text-gray-600 border border-gray-100 rounded text-xs">{c}</span>)}
+                </div>
+            </div>
+
+            {/* Contacts */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                    <Phone size={14} className="text-gray-400" />
+                    <span className="text-xs font-bold text-gray-500 uppercase">Contatos</span>
+                </div>
+                <div className="flex-1 overflow-y-auto max-h-[300px] custom-scrollbar p-2">
                     <ContatosExibidora idExibidora={selectedExibidora.id} />
                 </div>
             </div>
@@ -247,12 +148,13 @@ export default function ExhibitorDetailModal() {
 
     return (
         <>
-            <UnifiedSplitModal
+            <UnifiedStandardModal
                 isOpen={isOpen}
                 onClose={handleClose}
-                leftContent={LeftContent}
-                leftBackground="dark"
-                rightContent={RightContent}
+                title="Detalhes da Exibidora"
+                hero={HeroContent}
+                infoContent={InfoContent}
+                listContent={RightGrid}
                 actions={[
                     {
                         icon: Upload,
@@ -268,8 +170,6 @@ export default function ExhibitorDetailModal() {
                     }
                 ]}
             />
-
-            {/* Bulk Import Modal */}
             <BulkImportModal />
         </>
     );

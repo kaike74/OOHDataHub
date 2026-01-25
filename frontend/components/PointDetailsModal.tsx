@@ -2,12 +2,13 @@
 
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency, cn, formatDate } from '@/lib/utils';
 import { X, MapPin, Building2, Eye, ShoppingCart, Copy, ExternalLink, Loader2, MessageSquare, Trash2, Edit, History, Crosshair, Edit2, Maximize2, TrendingUp, Plus, ChevronLeft, ChevronRight, Share2, FileText, DollarSign } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { UnifiedSplitModal } from '@/components/ui/UnifiedSplitModal';
+import { UnifiedStandardModal } from '@/components/ui/UnifiedStandardModal';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/Button';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { toast } from 'sonner';
@@ -365,14 +366,143 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
         </div>
     );
 
+    // 4. HERO SECTION for Point
+    const HeroContent = (
+        <div className="flex items-center gap-6">
+            <div className="h-20 w-20 rounded-2xl bg-gray-900 flex items-center justify-center overflow-hidden shadow-sm flex-shrink-0">
+                {imagens.length > 0 ? (
+                    <SafeImage src={api.getImageUrl(imagens[0])} alt="Thumb" className="w-full h-full object-cover opacity-80" />
+                ) : (
+                    <MapPin size={32} className="text-white/30" />
+                )}
+            </div>
+            <div>
+                <div className="flex items-center gap-2 mb-1">
+                    <h1 className="text-2xl font-black text-gray-900 uppercase tracking-tight">{selectedPonto.codigo_ooh}</h1>
+                    <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs font-bold uppercase">{selectedPonto.tipo}</span>
+                </div>
+                <p className="text-sm text-gray-500 font-medium flex items-center gap-1.5">
+                    <MapPin size={14} className="text-gray-400" />
+                    {selectedPonto.endereco}, {selectedPonto.cidade} - {selectedPonto.uf}
+                </p>
+            </div>
+        </div>
+    );
+
+    // 5. VISUAL CONTENT (Map + Carousel)
+    const VisualContent = (
+        <div className="h-full flex flex-col gap-4">
+            {/* Main Image / Map Container */}
+            <div className="flex-1 bg-gray-900 rounded-2xl overflow-hidden relative min-h-[300px] shadow-sm group">
+                {/* Image Carousel or Map */}
+                <SafeImage src={api.getImageUrl(imagens[currentImageIndex])} alt="Visual" className="w-full h-full object-cover" />
+
+                {/* Overlays */}
+                <div className="absolute bottom-4 right-4 flex gap-2">
+                    <button onClick={() => setIsLightboxOpen(true)} className="bg-black/50 hover:bg-black/80 text-white p-2 rounded-lg backdrop-blur-sm transition-all"><Maximize2 size={16} /></button>
+                    <button onClick={() => setStreetViewRequest({ lat: selectedPonto.latitude!, lng: selectedPonto.longitude! })} className="bg-white text-black p-2 rounded-lg font-bold text-xs flex items-center gap-1 shadow-lg hover:bg-gray-100 transition-all"><Eye size={14} /> Street View</button>
+                </div>
+            </div>
+
+            {/* Thumbnails */}
+            {imagens.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                    {imagens.map((img, idx) => (
+                        <button key={idx} onClick={() => setCurrentImageIndex(idx)} className={cn("h-16 w-24 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all", idx === currentImageIndex ? "border-plura-accent" : "border-transparent opacity-60 hover:opacity-100")}>
+                            <SafeImage src={api.getImageUrl(img)} alt="Thumb" className="w-full h-full object-cover" />
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+
+    // 6. INFO CONTENT (Cards)
+    const InfoContent = (
+        <div className="space-y-4">
+            {/* Cards Grid */}
+            <div className="grid grid-cols-2 gap-4">
+                {/* Values */}
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-[140px]">
+                    <div className="flex justify-between items-start">
+                        <div className="p-1.5 bg-green-50 text-green-700 rounded-lg"><DollarSign size={16} /></div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400">Investimento</span>
+                    </div>
+                    <div>
+                        <span className="text-2xl font-black text-gray-900 block">{formatCurrency(produtos[0]?.valor || 0)}</span>
+                        <span className="text-[10px] text-gray-500 uppercase">{produtos[0]?.tipo || 'Sob Consulta'}</span>
+                    </div>
+                </div>
+
+                {/* Performance */}
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-[140px]">
+                    <div className="flex justify-between items-start">
+                        <div className="p-1.5 bg-blue-50 text-blue-700 rounded-lg"><TrendingUp size={16} /></div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400">Impacto</span>
+                    </div>
+                    <div>
+                        <span className="text-2xl font-black text-gray-900 block">{selectedPonto.fluxo ? parseInt(selectedPonto.fluxo as any).toLocaleString() : 'N/A'}</span>
+                        <span className="text-[10px] text-gray-500 uppercase">Impacto Diário Estimado</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Exhibitor Card */}
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-50 text-purple-700 rounded-lg"><Building2 size={20} /></div>
+                    <div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400 block">Exibidora Responsável</span>
+                        <span className="font-bold text-sm text-gray-900">{selectedPonto.exibidora_nome}</span>
+                    </div>
+                </div>
+                {canEdit && <Button size="sm" variant="ghost" className="text-xs" onClick={() => useStore.getState().setExibidoraModalOpen(true)}>Gerenciar</Button>}
+            </div>
+        </div>
+    );
+
+    // 7. LIST CONTENT (Proposals)
+    const ListContent = (
+        <div className="h-full flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-[300px]">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                <div className="flex items-center gap-2">
+                    <ShoppingCart size={14} className="text-gray-400" />
+                    <span className="text-xs font-bold text-gray-500 uppercase">Propostas Ativas</span>
+                </div>
+                <span className="bg-white text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded border border-gray-200">{pointProposals.length}</span>
+            </div>
+
+            {pointProposals.length > 0 ? (
+                <div className="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-2">
+                    {pointProposals.map(p => (
+                        <div key={p.id} className="p-3 bg-white border border-gray-100 rounded-lg hover:border-blue-200">
+                            <p className="text-sm font-medium text-gray-900">{p.nome}</p>
+                            <div className="flex justify-between mt-1">
+                                <StatusBadge status={p.status} />
+                                <span className="text-[10px] text-gray-400">{formatDate(p.created_at)}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-6">
+                    <ShoppingCart size={24} className="opacity-20 mb-2" />
+                    <p className="text-xs">Nenhuma proposta vinculada</p>
+                </div>
+            )}
+        </div>
+    );
+
     return (
         <>
-            <UnifiedSplitModal
+            <UnifiedStandardModal
                 isOpen={isPointModalOpen}
                 onClose={handleClose}
-                leftContent={LeftContent}
-                leftBackground="dark"
-                rightContent={RightContent}
+                title="Detalhes do Ponto"
+                hero={HeroContent}
+                visualContent={VisualContent}
+                infoContent={InfoContent}
+                listContent={ListContent}
                 navigation={canNavigate ? {
                     current: isInProposalContext ? currentIndex + 1 : pontos.findIndex(p => p.id === selectedPonto?.id) + 1,
                     total: isInProposalContext ? cartItems.length : pontos.length,
@@ -382,7 +512,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                     hasNext
                 } : undefined}
                 actions={[
-                    // Proposal context actions
+                    // Actions... (Reused)
                     ...(isInProposalContext ? [{
                         icon: isInCart ? Trash2 : ShoppingCart,
                         label: isInCart ? "Remover" : "Adicionar",
@@ -390,36 +520,11 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                         variant: (isInCart ? 'danger' : 'primary') as 'default' | 'primary' | 'danger',
                         isLoading: isAddingToCart
                     }] : []),
-                    // Non-proposal context actions
                     ...(!isInProposalContext ? [
-                        {
-                            icon: History,
-                            label: "Histórico",
-                            onClick: handleHistory,
-                            variant: 'default' as 'default' | 'primary' | 'danger'
-                        },
-                        {
-                            icon: Share2,
-                            label: "Compartilhar",
-                            onClick: () => {
-                                navigator.clipboard.writeText(`${window.location.origin}/mapa?ponto=${selectedPonto.id}`);
-                                toast.success('Link copiado');
-                            },
-                            variant: 'default' as 'default' | 'primary' | 'danger'
-                        },
-                        ...(canEdit ? [{
-                            icon: Edit,
-                            label: "Editar",
-                            onClick: handleEdit,
-                            variant: 'primary' as 'default' | 'primary' | 'danger'
-                        }] : []),
-                        ...(canEdit ? [{
-                            icon: Trash2,
-                            label: "Deletar",
-                            onClick: handleDelete,
-                            variant: 'danger' as 'default' | 'primary' | 'danger',
-                            isLoading: isDeleting
-                        }] : [])
+                        { icon: History, label: "Histórico", onClick: handleHistory, variant: 'default' as const },
+                        { icon: Share2, label: "Compartilhar", onClick: () => { navigator.clipboard.writeText(`${window.location.origin}/mapa?ponto=${selectedPonto.id}`); toast.success('Link copiado'); }, variant: 'default' as const },
+                        ...(canEdit ? [{ icon: Edit, label: "Editar", onClick: handleEdit, variant: 'primary' as const }] : []),
+                        ...(canEdit ? [{ icon: Trash2, label: "Deletar", onClick: handleDelete, variant: 'danger' as const, isLoading: isDeleting }] : [])
                     ] : [])
                 ]}
             />

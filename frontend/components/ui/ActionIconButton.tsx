@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
 
-interface ActionIconButtonProps {
+export interface ActionIconButtonProps {
     icon: LucideIcon;
     label: string;
     onClick: () => void;
@@ -12,6 +12,8 @@ interface ActionIconButtonProps {
     isLoading?: boolean;
     className?: string;
 }
+
+export type ActionButton = ActionIconButtonProps;
 
 /**
  * Action Icon Button with Tab-like Hover Animation
