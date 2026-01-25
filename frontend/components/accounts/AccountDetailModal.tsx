@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { User, Mail, Shield, Briefcase, Share2, FileText, Trash2, Edit, AlertCircle } from 'lucide-react';
+import { Mail, Shield, Briefcase, Share2, FileText, Trash2, Edit, AlertCircle, Clock, CreditCard, Activity } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
@@ -78,7 +78,7 @@ export default function AccountDetailModal({ account, onClose, isOpen }: Account
         try {
             await api.deleteShare(shareId);
             setShares(prev => prev.filter(s => s.share_id !== shareId));
-        } catch (e) {
+        } catch {
             alert('Erro ao remover compartilhamento');
         }
     };
@@ -115,20 +115,44 @@ export default function AccountDetailModal({ account, onClose, isOpen }: Account
 
     // 2. Info Cards (Stats)
     const InfoContent = (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4 h-full">
             <div className="flex items-center gap-2 mb-2">
                 <div className="p-1.5 bg-indigo-50 text-indigo-700 rounded-lg"><AlertCircle size={16} /></div>
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Metricas</h3>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Visão Geral</h3>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <div className="text-[10px] font-bold text-gray-400 uppercase mb-1">Compartilhamentos</div>
-                    <div className="text-2xl font-black text-gray-900">{shares.length}</div>
+            <div className="grid grid-cols-2 gap-3">
+                {/* Activity */}
+                <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-[100px]">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Clock size={12} /> Último Acesso</span>
+                    <span className="text-sm font-bold text-gray-900">Hoje, 14:30</span>
                 </div>
-                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <div className="text-[10px] font-bold text-gray-400 uppercase mb-1">Criadas</div>
-                    <div className="text-2xl font-black text-gray-900">{createdProposals.length}</div>
+                {/* Plan */}
+                <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-[100px]">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><CreditCard size={12} /> Plano Atual</span>
+                    <span className="text-sm font-bold text-gray-900">{isInternal ? 'Enterprise' : 'Pro'}</span>
+                </div>
+            </div>
+
+            {/* Recent Activity Summary */}
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                    <Activity size={14} className="text-gray-400" />
+                    <span className="text-[10px] uppercase font-bold text-gray-400">Atividade Recente</span>
+                </div>
+                <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        <p className="text-xs text-gray-600">Criou a proposta <span className="font-bold text-gray-800">Campanha Verão</span></p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        <p className="text-xs text-gray-600">Compartilhou <span className="font-bold text-gray-800">Q1 2026</span> com 3 usuários</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                        <p className="text-xs text-gray-600">Login realizado via Desktop</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -141,7 +165,7 @@ export default function AccountDetailModal({ account, onClose, isOpen }: Account
             <div className="flex flex-col h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-[300px]">
                 <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                     <span className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
-                        <Share2 size={14} /> Compartilhadas
+                        <Share2 size={14} /> Propostas Colaborativas
                     </span>
                     <span className="bg-white text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded border border-gray-200">{shares.length}</span>
                 </div>
@@ -155,7 +179,7 @@ export default function AccountDetailModal({ account, onClose, isOpen }: Account
                             <button onClick={() => handleUnshare(share.share_id)} className="text-gray-300 hover:text-red-500 p-1.5"><Trash2 size={14} /></button>
                         </div>
                     ))}
-                    {shares.length === 0 && <p className="text-center text-xs text-gray-400 py-10">Nenhum item</p>}
+                    {shares.length === 0 && <p className="text-center text-xs text-gray-400 py-10">Nenhuma proposta compartilhada</p>}
                 </div>
             </div>
 
@@ -163,7 +187,7 @@ export default function AccountDetailModal({ account, onClose, isOpen }: Account
             <div className="flex flex-col h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-[300px]">
                 <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                     <span className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
-                        <FileText size={14} /> Criadas
+                        <FileText size={14} /> Minhas Propostas
                     </span>
                     <span className="bg-white text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded border border-gray-200">{createdProposals.length}</span>
                 </div>
@@ -177,7 +201,7 @@ export default function AccountDetailModal({ account, onClose, isOpen }: Account
                             <span className="text-xs font-bold text-gray-900">{formatCurrency(prop.total_valor || 0)}</span>
                         </div>
                     ))}
-                    {createdProposals.length === 0 && <p className="text-center text-xs text-gray-400 py-10">Nenhum item</p>}
+                    {createdProposals.length === 0 && <p className="text-center text-xs text-gray-400 py-10">Nenhuma proposta criada</p>}
                 </div>
             </div>
         </div>

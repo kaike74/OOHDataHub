@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Building2, FileText, MapPin, User, ArrowRight, Plus, Edit, Trash2 } from 'lucide-react';
+import { Building2, FileText, MapPin, ArrowRight, Plus, Edit, Trash2, DollarSign, History } from 'lucide-react';
 import { Cliente, Proposta } from '@/lib/types';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { api } from '@/lib/api';
@@ -93,11 +93,26 @@ export default function ClientDetailModal({ client, onClose, isOpen }: ClientDet
     );
 
     // 2. Info Content (Cards)
+    const totalInvestment = proposals.reduce((acc, p) => acc + (p.total_valor || 0), 0);
+    const lastActivity = proposals.length > 0 ? proposals.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at : null;
+
     const InfoContent = (
         <div className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
                 <div className="p-1.5 bg-green-50 text-green-700 rounded-lg"><Building2 size={16} /></div>
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Dados Cadastrais</h3>
+            </div>
+
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-[100px]">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><DollarSign size={12} /> Total Investido</span>
+                    <span className="text-xl font-black text-gray-900">{formatCurrency(totalInvestment)}</span>
+                </div>
+                <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-[100px]">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><History size={12} /> Última Atividade</span>
+                    <span className="text-sm font-bold text-gray-700">{lastActivity ? formatDate(lastActivity) : '-'}</span>
+                </div>
             </div>
 
             <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow">
@@ -136,7 +151,7 @@ export default function ClientDetailModal({ client, onClose, isOpen }: ClientDet
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     <div className="p-1.5 bg-blue-50 text-blue-700 rounded-lg"><FileText size={16} /></div>
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Propostas Recentes</h3>
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Propostas</h3>
                 </div>
                 <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{proposals.length}</span>
             </div>
@@ -144,7 +159,7 @@ export default function ClientDetailModal({ client, onClose, isOpen }: ClientDet
             <div className="bg-white rounded-xl border border-gray-200 flex-1 overflow-hidden flex flex-col min-h-[300px] shadow-sm">
                 {isLoadingProposals ? (
                     <div className="p-4 space-y-3">
-                        {[1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-50 rounded-lg animate-pulse" />)}
+                        {[1, 2, 3].map(i => <div key={i} className="h-20 bg-gray-50 rounded-lg animate-pulse" />)}
                     </div>
                 ) : proposals.length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center p-6 text-gray-400">
@@ -157,15 +172,19 @@ export default function ClientDetailModal({ client, onClose, isOpen }: ClientDet
                             <div
                                 key={proposal.id}
                                 onClick={() => router.push(`/propostas?id=${proposal.id}`)}
-                                className="group p-3 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all cursor-pointer"
+                                className="group p-3 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all cursor-pointer relative"
                             >
-                                <div className="flex justify-between items-start mb-1">
-                                    <span className="font-medium text-sm text-gray-900 group-hover:text-blue-600 transition-colors">{proposal.nome}</span>
-                                    <StatusBadge status={proposal.status} />
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-sm text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">{proposal.nome}</span>
+                                        <span className="text-[10px] text-gray-400">Criada em {formatDate(proposal.created_at)}</span>
+                                    </div>
+                                    <ArrowRight size={14} className="text-gray-300 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-all absolute right-3 top-3" />
                                 </div>
-                                <div className="flex justify-between items-end">
-                                    <span className="text-[10px] text-gray-400">{formatDate(proposal.created_at)}</span>
-                                    <span className="text-xs font-bold text-gray-900">{formatCurrency(proposal.total_valor || 0)}</span>
+
+                                <div className="flex items-end justify-between mt-2 pt-2 border-t border-gray-50">
+                                    <StatusBadge status={proposal.status} />
+                                    <span className="text-sm font-black text-gray-900">{formatCurrency(proposal.total_valor || 0)}</span>
                                 </div>
                             </div>
                         ))}

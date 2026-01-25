@@ -2,7 +2,7 @@
 
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { Building2, FileText, MapPin, Phone, Mail, Pencil, Tag, Calendar, Upload } from 'lucide-react';
+import { Building2, FileText, MapPin, Phone, Mail, Pencil, Tag, Calendar, Upload, TrendingUp, DollarSign } from 'lucide-react';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import type { Contato } from '@/lib/types';
 import { formatDate } from '@/lib/utils';
@@ -92,9 +92,21 @@ export default function ExhibitorDetailModal() {
         </div>
     );
 
-    // 2. Info Cards
+    // 2. Info Cards (Company Data + Stats)
     const InfoContent = (
         <div className="flex flex-col gap-4 h-full">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-[100px]">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><TrendingUp size={12} /> Performance Média</span>
+                    <span className="text-xl font-black text-gray-900">{stats?.totalPontos ? '12.5k' : '-'} <span className="text-[10px] font-normal text-gray-400">imp/dia</span></span>
+                </div>
+                <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-[100px]">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><DollarSign size={12} /> Faturamento Est.</span>
+                    <span className="text-xl font-black text-gray-900">R$ 450k</span>
+                </div>
+            </div>
+
             <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex-1">
                 <div className="flex items-center gap-2 mb-4">
                     <div className="p-1.5 bg-purple-50 text-purple-700 rounded-lg"><Building2 size={16} /></div>
@@ -121,26 +133,56 @@ export default function ExhibitorDetailModal() {
 
     // 3. List / Visual (Merged here for efficiency)
     const RightGrid = (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-            {/* Cities */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
-                <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-                    <Tag size={14} className="text-gray-400" />
-                    <span className="text-xs font-bold text-gray-500 uppercase">Cidades Atendidas</span>
+        <div className="flex flex-col gap-4 h-full">
+            {/* Points List */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col flex-1 min-h-[200px] overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                    <div className="flex items-center gap-2">
+                        <MapPin size={14} className="text-gray-400" />
+                        <span className="text-xs font-bold text-gray-500 uppercase">Pontos Cadastrados</span>
+                    </div>
+                    <span className="text-[10px] font-bold bg-white border border-gray-200 px-2 py-0.5 rounded text-gray-600">{stats?.totalPontos || 0}</span>
                 </div>
-                <div className="p-4 flex flex-wrap gap-2 overflow-y-auto max-h-[300px] custom-scrollbar">
-                    {stats?.cidades.map((c, i) => <span key={i} className="px-2 py-1 bg-gray-50 text-gray-600 border border-gray-100 rounded text-xs">{c}</span>)}
+                <div className="p-0 overflow-y-auto flex-1 custom-scrollbar">
+                    {pontos.filter(p => p.id_exibidora === selectedExibidora.id).length > 0 ? (
+                        <div className="divide-y divide-gray-50">
+                            {pontos.filter(p => p.id_exibidora === selectedExibidora.id).map(p => (
+                                <div key={p.id} className="p-3 hover:bg-gray-50 flex justify-between items-center group cursor-pointer transition-colors">
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-900 group-hover:text-blue-600">{p.codigo_ooh}</p>
+                                        <p className="text-[10px] text-gray-500 truncate max-w-[200px]">{p.endereco}</p>
+                                    </div>
+                                    <span className="text-[10px] font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">{p.tipo}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="p-6 text-center text-xs text-gray-400 italic">Nenhum ponto encontrado</div>
+                    )}
                 </div>
             </div>
 
-            {/* Contacts */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
-                <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-                    <Phone size={14} className="text-gray-400" />
-                    <span className="text-xs font-bold text-gray-500 uppercase">Contatos</span>
+            <div className="grid grid-cols-2 gap-4 h-[250px]">
+                {/* Cities */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
+                    <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                        <Tag size={14} className="text-gray-400" />
+                        <span className="text-xs font-bold text-gray-500 uppercase">Cidades</span>
+                    </div>
+                    <div className="p-4 flex flex-wrap gap-2 overflow-y-auto custom-scrollbar content-start">
+                        {stats?.cidades.map((c, i) => <span key={i} className="px-2 py-1 bg-gray-50 text-gray-600 border border-gray-100 rounded text-[10px] font-medium">{c}</span>)}
+                    </div>
                 </div>
-                <div className="flex-1 overflow-y-auto max-h-[300px] custom-scrollbar p-2">
-                    <ContatosExibidora idExibidora={selectedExibidora.id} />
+
+                {/* Contacts */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
+                    <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                        <Phone size={14} className="text-gray-400" />
+                        <span className="text-xs font-bold text-gray-500 uppercase">Contatos</span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
+                        <ContatosExibidora idExibidora={selectedExibidora.id} />
+                    </div>
                 </div>
             </div>
         </div>

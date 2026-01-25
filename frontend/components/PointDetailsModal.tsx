@@ -3,7 +3,7 @@
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { formatCurrency, cn, formatDate } from '@/lib/utils';
-import { X, MapPin, Building2, Eye, ShoppingCart, Copy, ExternalLink, Loader2, MessageSquare, Trash2, Edit, History, Crosshair, Edit2, Maximize2, TrendingUp, Plus, ChevronLeft, ChevronRight, Share2, FileText, DollarSign } from 'lucide-react';
+import { X, MapPin, Building2, Eye, ShoppingCart, Copy, ExternalLink, Loader2, MessageSquare, Trash2, Edit, History, Crosshair, Edit2, Maximize2, TrendingUp, Plus, ChevronLeft, ChevronRight, Share2, FileText, DollarSign, Tag } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -392,38 +392,49 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
     // 5. VISUAL CONTENT (Map + Carousel)
     const VisualContent = (
         <div className="h-full flex flex-col gap-4">
-            {/* Main Image / Map Container */}
-            <div className="flex-1 bg-gray-900 rounded-2xl overflow-hidden relative min-h-[300px] shadow-sm group">
-                {/* Image Carousel or Map */}
+            {/* Image Carousel (Top 60%) */}
+            <div className="flex-[1.5] bg-gray-900 rounded-2xl overflow-hidden relative min-h-[250px] shadow-sm group">
                 <SafeImage src={api.getImageUrl(imagens[currentImageIndex])} alt="Visual" className="w-full h-full object-cover" />
 
-                {/* Overlays */}
+                {/* Image Controls */}
                 <div className="absolute bottom-4 right-4 flex gap-2">
                     <button onClick={() => setIsLightboxOpen(true)} className="bg-black/50 hover:bg-black/80 text-white p-2 rounded-lg backdrop-blur-sm transition-all"><Maximize2 size={16} /></button>
-                    <button onClick={() => setStreetViewRequest({ lat: selectedPonto.latitude!, lng: selectedPonto.longitude! })} className="bg-white text-black p-2 rounded-lg font-bold text-xs flex items-center gap-1 shadow-lg hover:bg-gray-100 transition-all"><Eye size={14} /> Street View</button>
                 </div>
+
+                {/* Thumbnails Overlay (Bottom Left) */}
+                {imagens.length > 1 && (
+                    <div className="absolute bottom-4 left-4 p-2 bg-black/40 backdrop-blur-md rounded-xl flex gap-2 overflow-x-auto max-w-[calc(100%-100px)] custom-scrollbar">
+                        {imagens.map((img, idx) => (
+                            <button key={idx} onClick={() => setCurrentImageIndex(idx)} className={cn("h-10 w-14 rounded overflow-hidden border-2 flex-shrink-0 transition-all", idx === currentImageIndex ? "border-plura-accent" : "border-white/20 opacity-60 hover:opacity-100")}>
+                                <SafeImage src={api.getImageUrl(img)} alt="Thumb" className="w-full h-full object-cover" />
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
-            {/* Thumbnails */}
-            {imagens.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
-                    {imagens.map((img, idx) => (
-                        <button key={idx} onClick={() => setCurrentImageIndex(idx)} className={cn("h-16 w-24 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all", idx === currentImageIndex ? "border-plura-accent" : "border-transparent opacity-60 hover:opacity-100")}>
-                            <SafeImage src={api.getImageUrl(img)} alt="Thumb" className="w-full h-full object-cover" />
-                        </button>
-                    ))}
+            {/* Mini Map (Bottom 40%) */}
+            <div className="flex-1 rounded-2xl overflow-hidden relative border border-gray-200 shadow-sm bg-gray-100 group/map">
+                <div ref={mapRef} className="w-full h-full grayscale-[20%] group-hover/map:grayscale-0 transition-all duration-500" />
+                <div className="absolute top-3 right-3 z-[10] flex gap-2">
+                    <button onClick={() => setStreetViewRequest({ lat: selectedPonto.latitude!, lng: selectedPonto.longitude! })} className="bg-white text-gray-900 px-3 py-1.5 rounded-lg shadow-sm font-bold text-[10px] uppercase tracking-wide flex items-center gap-1.5 hover:bg-gray-50 transition-colors">
+                        <Eye size={12} /> Street View
+                    </button>
                 </div>
-            )}
+                <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded border border-gray-200 text-[10px] font-mono text-gray-500">
+                    {selectedPonto.latitude?.toFixed(4)}, {selectedPonto.longitude?.toFixed(4)}
+                </div>
+            </div>
         </div>
     );
 
     // 6. INFO CONTENT (Cards)
     const InfoContent = (
-        <div className="space-y-4">
-            {/* Cards Grid */}
+        <div className="flex flex-col gap-4 h-full">
+            {/* Top Grid: Values & Impact */}
             <div className="grid grid-cols-2 gap-4">
                 {/* Values */}
-                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-[140px]">
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between min-h-[120px]">
                     <div className="flex justify-between items-start">
                         <div className="p-1.5 bg-green-50 text-green-700 rounded-lg"><DollarSign size={16} /></div>
                         <span className="text-[10px] uppercase font-bold text-gray-400">Investimento</span>
@@ -435,7 +446,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                 </div>
 
                 {/* Performance */}
-                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-[140px]">
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between min-h-[120px]">
                     <div className="flex justify-between items-start">
                         <div className="p-1.5 bg-blue-50 text-blue-700 rounded-lg"><TrendingUp size={16} /></div>
                         <span className="text-[10px] uppercase font-bold text-gray-400">Impacto</span>
@@ -447,49 +458,94 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                 </div>
             </div>
 
-            {/* Exhibitor Card */}
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-50 text-purple-700 rounded-lg"><Building2 size={20} /></div>
-                    <div>
-                        <span className="text-[10px] uppercase font-bold text-gray-400 block">Exibidora Responsável</span>
-                        <span className="font-bold text-sm text-gray-900">{selectedPonto.exibidora_nome}</span>
-                    </div>
+            {/* Middle: Products List */}
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-orange-50 text-orange-700 rounded-lg"><Tag size={16} /></div>
+                    <span className="text-[10px] uppercase font-bold text-gray-400">Produtos Disponíveis</span>
                 </div>
-                {canEdit && <Button size="sm" variant="ghost" className="text-xs" onClick={() => useStore.getState().setExibidoraModalOpen(true)}>Gerenciar</Button>}
+                {produtos.length > 0 ? (
+                    <div className="space-y-2">
+                        {produtos.map((prod: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 border border-gray-100">
+                                <span className="text-xs font-bold text-gray-700 uppercase">{prod.tipo}</span>
+                                <span className="text-xs font-medium text-gray-900">{formatCurrency(prod.valor)}</span>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-6 text-gray-400 text-xs italic">
+                        Nenhum produto listado
+                    </div>
+                )}
+            </div>
+
+            {/* Bottom: Exhibitor */}
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-700 font-bold shrink-0">
+                            {selectedPonto.exibidora_nome?.charAt(0) || <Building2 size={20} />}
+                        </div>
+                        <div className="min-w-0">
+                            <span className="text-[10px] uppercase font-bold text-gray-400 block mb-0.5">Exibidora Responsável</span>
+                            <span className="font-bold text-sm text-gray-900 truncate block">{selectedPonto.exibidora_nome}</span>
+                        </div>
+                    </div>
+                    {canEdit && <Button size="sm" variant="ghost" className="text-xs shrink-0" onClick={() => useStore.getState().setExibidoraModalOpen(true)}>Gerenciar</Button>}
+                </div>
             </div>
         </div>
     );
 
-    // 7. LIST CONTENT (Proposals)
+    // 7. LIST CONTENT (Proposals & History)
     const ListContent = (
-        <div className="h-full flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-[300px]">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                <div className="flex items-center gap-2">
-                    <ShoppingCart size={14} className="text-gray-400" />
-                    <span className="text-xs font-bold text-gray-500 uppercase">Propostas Ativas</span>
+        <div className="flex flex-col gap-4 h-full">
+            {/* Proposals List (60%) */}
+            <div className="flex-[3] flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-[200px]">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                    <div className="flex items-center gap-2">
+                        <ShoppingCart size={14} className="text-gray-400" />
+                        <span className="text-xs font-bold text-gray-500 uppercase">Propostas Ativas</span>
+                    </div>
+                    <span className="bg-white text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded border border-gray-200">{pointProposals.length}</span>
                 </div>
-                <span className="bg-white text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded border border-gray-200">{pointProposals.length}</span>
-            </div>
 
-            {pointProposals.length > 0 ? (
-                <div className="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-2">
-                    {pointProposals.map(p => (
-                        <div key={p.id} className="p-3 bg-white border border-gray-100 rounded-lg hover:border-blue-200">
-                            <p className="text-sm font-medium text-gray-900">{p.nome}</p>
-                            <div className="flex justify-between mt-1">
-                                <StatusBadge status={p.status} />
+                {pointProposals.length > 0 ? (
+                    <div className="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-2">
+                        {pointProposals.map(p => (
+                            <div key={p.id} className="p-3 bg-white border border-gray-100 rounded-lg hover:border-blue-200 transition-colors group">
+                                <div className="flex justify-between items-start mb-1">
+                                    <p className="text-xs font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">{p.nome}</p>
+                                    <StatusBadge status={p.status} />
+                                </div>
                                 <span className="text-[10px] text-gray-400">{formatDate(p.created_at)}</span>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-6">
+                        <ShoppingCart size={24} className="opacity-20 mb-2" />
+                        <p className="text-xs">Nenhuma proposta vinculada</p>
+                    </div>
+                )}
+            </div>
+
+            {/* History (40%) - Quick View */}
+            <div className="flex-[2] flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-[150px]">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                    <div className="flex items-center gap-2">
+                        <History size={14} className="text-gray-400" />
+                        <span className="text-xs font-bold text-gray-500 uppercase">Histórico Recente</span>
+                    </div>
+                    {/* Visual only, real history triggered by modal */}
+                    <button onClick={handleHistory} className="text-[10px] text-blue-600 hover:text-blue-700 font-bold">Ver Completo</button>
                 </div>
-            ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-6">
-                    <ShoppingCart size={24} className="opacity-20 mb-2" />
-                    <p className="text-xs">Nenhuma proposta vinculada</p>
+                <div className="flex-1 p-4 flex flex-col items-center justify-center text-gray-400 gap-2">
+                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center"><History size={14} className="opacity-30" /></div>
+                    <p className="text-[10px] text-center max-w-[150px]">Visualize o histórico completo de alterações e disponibilidade clicando acima.</p>
                 </div>
-            )}
+            </div>
         </div>
     );
 
