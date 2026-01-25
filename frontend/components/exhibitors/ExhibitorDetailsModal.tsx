@@ -48,7 +48,8 @@ function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undef
 export default function ExhibitorDetailsModal() {
     const selectedExibidora = useStore((state) => state.selectedExibidora);
     const setEditingExibidora = useStore((state) => state.setEditingExibidora);
-    const isExibidoraModalOpen = useStore((state) => state.isExibidoraModalOpen);
+    const isExhibitorDetailsOpen = useStore((state) => state.isExhibitorDetailsOpen);
+    const setExhibitorDetailsOpen = useStore((state) => state.setExhibitorDetailsOpen);
     const setExibidoraModalOpen = useStore((state) => state.setExibidoraModalOpen);
     const pontos = useStore((state) => state.pontos);
 
@@ -64,23 +65,21 @@ export default function ExhibitorDetailsModal() {
     }, [selectedExibidora, pontos]);
 
     const handleClose = useCallback(() => {
-        setExibidoraModalOpen(false);
-    }, [setExibidoraModalOpen]);
+        setExhibitorDetailsOpen(false);
+    }, [setExhibitorDetailsOpen]);
 
     const handleEdit = useCallback(() => {
         if (!selectedExibidora) return;
         setEditingExibidora(selectedExibidora);
-        // Note: Logic to switch form mode? Usually done inside BulkImport or Edit Modal trigger
-        // Assuming hitting "Editar" opens sidebar or generic edit modal?
-        // But for now, just keep existing behavior of setting editing state.
-    }, [selectedExibidora, setEditingExibidora]);
+        setExibidoraModalOpen(true);
+    }, [selectedExibidora, setEditingExibidora, setExibidoraModalOpen]);
 
     const startImport = useBulkImportStore((state) => state.startImport);
     const handleBulkImport = useCallback(() => { if (!selectedExibidora) return; startImport(selectedExibidora.id, selectedExibidora.nome); }, [selectedExibidora, startImport]);
 
     // Map Initialization
     useEffect(() => {
-        if (!selectedExibidora || !isExibidoraModalOpen || !stats?.pontos.length) return;
+        if (!selectedExibidora || !isExhibitorDetailsOpen || !stats?.pontos.length) return;
 
         const initMap = async () => {
             try {
@@ -135,10 +134,10 @@ export default function ExhibitorDetailsModal() {
         const timer = setTimeout(initMap, 500); // Slight delay for modal animation
         return () => clearTimeout(timer);
 
-    }, [selectedExibidora, isExibidoraModalOpen, stats?.pontos]);
+    }, [selectedExibidora, isExhibitorDetailsOpen, stats?.pontos]);
 
 
-    const isOpen = !!selectedExibidora && isExibidoraModalOpen;
+    const isOpen = !!selectedExibidora && isExhibitorDetailsOpen;
     if (!selectedExibidora) return null;
 
     // 1. Hero

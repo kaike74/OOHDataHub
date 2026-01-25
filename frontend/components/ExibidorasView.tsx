@@ -116,7 +116,7 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
 
     const handleRowClick = (exibidora: any) => {
         useStore.getState().setSelectedExibidora(exibidora);
-        useStore.getState().setExibidoraModalOpen(true);
+        useStore.getState().setExhibitorDetailsOpen(true);
     };
 
     const handleEdit = (exibidora: any, e: React.MouseEvent) => {
