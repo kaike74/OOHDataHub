@@ -20,7 +20,7 @@ interface UnifiedStandardModalProps {
     onClose: () => void;
 
     // 1. Header
-    title: string;
+    title: React.ReactNode | string;
 
     // 2. Hero (Top Section) - Avatar, Main Info, Badges
     hero: React.ReactNode;

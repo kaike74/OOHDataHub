@@ -2,8 +2,8 @@
 
 import { useStore } from '@/lib/store';
 import { api } from '@/lib/api';
-import { Building2, FileText, MapPin, Phone, Mail, Pencil, Tag, Calendar, Upload, TrendingUp, DollarSign } from 'lucide-react';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { Building2, Phone, Mail, Pencil, Tag, Calendar, Upload, TrendingUp, DollarSign, MapPin } from 'lucide-react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import type { Contato } from '@/lib/types';
 import { formatDate } from '@/lib/utils';
 import { SafeImage } from '@/components/ui/SafeImage';
@@ -56,11 +56,15 @@ export default function ExhibitorDetailModal() {
     const setExibidoraModalOpen = useStore((state) => state.setExibidoraModalOpen);
     const pontos = useStore((state) => state.pontos);
 
+    const mapRef = useRef<HTMLDivElement>(null);
+    const googleMapRef = useRef<google.maps.Map | null>(null);
+    const markersRef = useRef<any[]>([]);
+
     const stats = useMemo(() => {
         if (!selectedExibidora) return null;
         const pontosExibidora = pontos.filter((p) => p.id_exibidora === selectedExibidora.id);
         const cidades = [...new Set(pontosExibidora.map((p) => p.cidade).filter(Boolean))];
-        return { totalPontos: pontosExibidora.length, cidades: cidades as string[] };
+        return { totalPontos: pontosExibidora.length, cidades: cidades as string[], pontos: pontosExibidora };
     }, [selectedExibidora, pontos]);
 
     const handleClose = useCallback(() => { setSidebarOpen(false); setFilterExibidora([]); setCurrentView('exibidoras'); }, [setSidebarOpen, setFilterExibidora, setCurrentView]);
@@ -68,6 +72,66 @@ export default function ExhibitorDetailModal() {
 
     const startImport = useBulkImportStore((state) => state.startImport);
     const handleBulkImport = useCallback(() => { if (!selectedExibidora) return; startImport(selectedExibidora.id, selectedExibidora.nome); }, [selectedExibidora, startImport]);
+
+    // Map Initialization
+    useEffect(() => {
+        if (!selectedExibidora || !isSidebarOpen || !stats?.pontos.length) return;
+
+        const initMap = async () => {
+            try {
+                const { setOptions, importLibrary } = await import('@googlemaps/js-api-loader');
+                setOptions({ key: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '', v: "weekly" });
+                await importLibrary("maps");
+                const { AdvancedMarkerElement } = await importLibrary("marker") as any;
+
+                if (!mapRef.current) return;
+
+                if (!googleMapRef.current) {
+                    googleMapRef.current = new google.maps.Map(mapRef.current, {
+                        center: { lat: -23.550520, lng: -46.633308 },
+                        zoom: 10,
+                        mapId: "EXHIBITOR_DETAILS_MAP",
+                        disableDefaultUI: true,
+                        gestureHandling: 'cooperative'
+                    });
+                }
+
+                // Clear markers
+                markersRef.current.forEach(m => m.map = null);
+                markersRef.current = [];
+
+                const bounds = new google.maps.LatLngBounds();
+
+                stats.pontos.forEach(p => {
+                    if (p.latitude && p.longitude) {
+                        const pin = document.createElement('div');
+                        pin.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="24" height="24" fill="#FC1E75"><path d="M384 192c0 87.4-117 243-168.3 307.2c-12.3 15.3-35.1 15.3-47.4 0C117 435 0 279.4 0 192C0 86 86 0 192 0S384 86 384 192z M192 272c44.2 0 80-35.8 80-80s-35.8-80-80-80s-80 35.8-80 80s35.8 80 80 80z"/></svg>`;
+
+                        const marker = new AdvancedMarkerElement({
+                            position: { lat: p.latitude, lng: p.longitude },
+                            map: googleMapRef.current,
+                            content: pin,
+                            title: p.codigo_ooh
+                        });
+                        markersRef.current.push(marker);
+                        bounds.extend({ lat: p.latitude, lng: p.longitude });
+                    }
+                });
+
+                if (!bounds.isEmpty() && googleMapRef.current) {
+                    googleMapRef.current.fitBounds(bounds);
+                }
+
+            } catch (e) {
+                console.error("Error loading map", e);
+            }
+        };
+
+        const timer = setTimeout(initMap, 500); // Slight delay for modal animation
+        return () => clearTimeout(timer);
+
+    }, [selectedExibidora, isSidebarOpen, stats?.pontos]);
+
 
     const isOpen = !!selectedExibidora && isSidebarOpen && !selectedPonto;
     if (!selectedExibidora) return null;
@@ -92,7 +156,20 @@ export default function ExhibitorDetailModal() {
         </div>
     );
 
-    // 2. Info Cards (Company Data + Stats)
+    // 2. Visual Content (Map of Points)
+    const VisualContent = (
+        <div className="w-full h-full min-h-[300px] bg-gray-100 rounded-2xl overflow-hidden relative border border-gray-200 shadow-sm group">
+            <div ref={mapRef} className="w-full h-full grayscale-[20%] group-hover:grayscale-0 transition-all duration-500" />
+            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm z-10">
+                <span className="text-xs font-bold text-gray-700 flex items-center gap-2">
+                    <MapPin size={12} className="text-plura-primary" />
+                    Mapa de Abrangência
+                </span>
+            </div>
+        </div>
+    );
+
+    // 3. Info Content (Stats + Data)
     const InfoContent = (
         <div className="flex flex-col gap-4 h-full">
             {/* Stats Grid */}
@@ -131,8 +208,8 @@ export default function ExhibitorDetailModal() {
         </div>
     );
 
-    // 3. List / Visual (Merged here for efficiency)
-    const RightGrid = (
+    // 4. List Content (List of Points + Contacts)
+    const ListContent = (
         <div className="flex flex-col gap-4 h-full">
             {/* Points List */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col flex-1 min-h-[200px] overflow-hidden">
@@ -144,9 +221,9 @@ export default function ExhibitorDetailModal() {
                     <span className="text-[10px] font-bold bg-white border border-gray-200 px-2 py-0.5 rounded text-gray-600">{stats?.totalPontos || 0}</span>
                 </div>
                 <div className="p-0 overflow-y-auto flex-1 custom-scrollbar">
-                    {pontos.filter(p => p.id_exibidora === selectedExibidora.id).length > 0 ? (
+                    {stats?.pontos && stats.pontos.length > 0 ? (
                         <div className="divide-y divide-gray-50">
-                            {pontos.filter(p => p.id_exibidora === selectedExibidora.id).map(p => (
+                            {stats.pontos.map((p) => (
                                 <div key={p.id} className="p-3 hover:bg-gray-50 flex justify-between items-center group cursor-pointer transition-colors">
                                     <div>
                                         <p className="text-xs font-bold text-gray-900 group-hover:text-blue-600">{p.codigo_ooh}</p>
@@ -162,6 +239,7 @@ export default function ExhibitorDetailModal() {
                 </div>
             </div>
 
+            {/* Contacts & Cities Grid */}
             <div className="grid grid-cols-2 gap-4 h-[250px]">
                 {/* Cities */}
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
@@ -195,8 +273,9 @@ export default function ExhibitorDetailModal() {
                 onClose={handleClose}
                 title="Detalhes da Exibidora"
                 hero={HeroContent}
+                visualContent={VisualContent}
                 infoContent={InfoContent}
-                listContent={RightGrid}
+                listContent={ListContent}
                 actions={[
                     {
                         icon: Upload,

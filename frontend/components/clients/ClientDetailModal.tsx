@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Building2, FileText, MapPin, ArrowRight, Plus, Edit, Trash2, DollarSign, History } from 'lucide-react';
+import { Building2, FileText, MapPin, ArrowRight, Plus, Edit, Trash2, TrendingUp, Tag } from 'lucide-react';
 import { Cliente, Proposta } from '@/lib/types';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { api } from '@/lib/api';
@@ -93,8 +93,9 @@ export default function ClientDetailModal({ client, onClose, isOpen }: ClientDet
     );
 
     // 2. Info Content (Cards)
-    const totalInvestment = proposals.reduce((acc, p) => acc + (p.total_valor || 0), 0);
-    const lastActivity = proposals.length > 0 ? proposals.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at : null;
+    const activeCampaigns = proposals.filter(p => !['draft', 'cancelled', 'rejected'].includes(p.status)).length;
+    // Estimate points used (mock logic or based on available data if items are populated, otherwise just a count of proposals * avg items? Let's just use active campaigns and create date for now as per user request for "simple" but useful)
+    // User suggested: "Número de Campanhas Ativas", "Segmento de Atuação"
 
     const InfoContent = (
         <div className="space-y-4">
@@ -103,15 +104,15 @@ export default function ClientDetailModal({ client, onClose, isOpen }: ClientDet
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Dados Cadastrais</h3>
             </div>
 
-            {/* Metrics Grid */}
+            {/* Metrics Grid (New) */}
             <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-[100px]">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><DollarSign size={12} /> Total Investido</span>
-                    <span className="text-xl font-black text-gray-900">{formatCurrency(totalInvestment)}</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><TrendingUp size={12} /> Campanhas Ativas</span>
+                    <span className="text-xl font-black text-gray-900">{activeCampaigns}</span>
                 </div>
                 <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-[100px]">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><History size={12} /> Última Atividade</span>
-                    <span className="text-sm font-bold text-gray-700">{lastActivity ? formatDate(lastActivity) : '-'}</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Tag size={12} /> Segmento</span>
+                    <span className="text-sm font-bold text-gray-700 truncate">{client.segmento || 'Geral'}</span>
                 </div>
             </div>
 

@@ -162,7 +162,7 @@ export default function AccountDetailModal({ account, onClose, isOpen }: Account
     const ListContent = (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
             {/* Shared List */}
-            <div className="flex flex-col h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-[300px]">
+            <div className="flex flex-col h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-[400px]">
                 <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                     <span className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
                         <Share2 size={14} /> Propostas Colaborativas
@@ -184,7 +184,7 @@ export default function AccountDetailModal({ account, onClose, isOpen }: Account
             </div>
 
             {/* Created List */}
-            <div className="flex flex-col h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-[300px]">
+            <div className="flex flex-col h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-[400px]">
                 <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                     <span className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
                         <FileText size={14} /> Minhas Propostas

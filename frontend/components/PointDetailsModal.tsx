@@ -367,13 +367,15 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
     );
 
     // 4. HERO SECTION for Point
+    const logoExibidora = exibidoras.find(e => e.id === selectedPonto.id_exibidora)?.logo_r2_key;
+
     const HeroContent = (
         <div className="flex items-center gap-6">
-            <div className="h-20 w-20 rounded-2xl bg-gray-900 flex items-center justify-center overflow-hidden shadow-sm flex-shrink-0">
-                {imagens.length > 0 ? (
-                    <SafeImage src={api.getImageUrl(imagens[0])} alt="Thumb" className="w-full h-full object-cover opacity-80" />
+            <div className="h-20 w-20 rounded-2xl bg-white border border-gray-100 p-2 flex items-center justify-center shadow-sm flex-shrink-0">
+                {logoExibidora ? (
+                    <SafeImage src={api.getImageUrl(logoExibidora)} alt="Exibidora" className="w-full h-full object-contain" />
                 ) : (
-                    <MapPin size={32} className="text-white/30" />
+                    <Building2 size={32} className="text-gray-300" />
                 )}
             </div>
             <div>
@@ -480,19 +482,39 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                 )}
             </div>
 
-            {/* Bottom: Exhibitor */}
+            {/* Bottom: Exhibitor Contacts */}
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-700 font-bold shrink-0">
-                            {selectedPonto.exibidora_nome?.charAt(0) || <Building2 size={20} />}
-                        </div>
-                        <div className="min-w-0">
-                            <span className="text-[10px] uppercase font-bold text-gray-400 block mb-0.5">Exibidora Responsável</span>
-                            <span className="font-bold text-sm text-gray-900 truncate block">{selectedPonto.exibidora_nome}</span>
-                        </div>
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <div className="text-purple-700"><Building2 size={16} /></div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400">Contatos da Exibidora</span>
                     </div>
-                    {canEdit && <Button size="sm" variant="ghost" className="text-xs shrink-0" onClick={() => useStore.getState().setExibidoraModalOpen(true)}>Gerenciar</Button>}
+                    {canEdit && (
+                        <button
+                            onClick={() => {
+                                useStore.getState().setExibidoraFormMode('contacts');
+                                useStore.getState().setEditingExibidora(exibidoras.find(e => e.id === selectedPonto.id_exibidora) || null);
+                                useStore.getState().setExibidoraModalOpen(true);
+                            }}
+                            className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-blue-600 transition-colors"
+                            title="Editar Contatos"
+                        >
+                            <Edit size={14} />
+                        </button>
+                    )}
+                </div>
+                <div className="space-y-2 max-h-[150px] overflow-y-auto custom-scrollbar">
+                    {exhibitorContacts.length > 0 ? exhibitorContacts.map(c => (
+                        <div key={c.id} className="text-xs border-b border-gray-50 last:border-0 pb-2 last:pb-0">
+                            <p className="font-bold text-gray-900">{c.nome}</p>
+                            <div className="flex flex-col text-gray-500 text-[10px]">
+                                {c.telefone && <span>{c.telefone}</span>}
+                                {c.email && <span>{c.email}</span>}
+                            </div>
+                        </div>
+                    )) : (
+                        <p className="text-xs text-gray-400 italic">Nenhum contato disponível</p>
+                    )}
                 </div>
             </div>
         </div>
