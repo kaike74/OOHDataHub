@@ -115,12 +115,14 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
     }, [exibidorasComStats, searchTerm]);
 
     const handleRowClick = (exibidora: any) => {
-        setSelectedExibidoraId(exibidora.id);
+        useStore.getState().setSelectedExibidora(exibidora);
+        useStore.getState().setExibidoraModalOpen(true);
     };
 
     const handleEdit = (exibidora: any, e: React.MouseEvent) => {
         e.stopPropagation();
-        setExibidoraModalOpen(true);
+        useStore.getState().setSelectedExibidora(exibidora);
+        useStore.getState().setExibidoraModalOpen(true);
     };
 
     const handleDeleteExibidora = async (exibidora: any, e: React.MouseEvent) => {
@@ -141,12 +143,6 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
             }
         }
     };
-
-    // Derive selected exhibitor from fresh data
-    const selectedExibidoraDetails = useMemo(() => {
-        if (!selectedExibidoraId) return null;
-        return exibidorasComStats.find(e => e.id === selectedExibidoraId) || null;
-    }, [selectedExibidoraId, exibidorasComStats]);
 
     return (
         <div className="h-full bg-gray-50 flex flex-col overflow-hidden relative">
@@ -184,12 +180,7 @@ export default function ExibidorasView({ isModalOpen, onCloseModal, searchTerm =
                 </div>
             </div>
 
-            <ExhibitorDetailsModal
-                isOpen={!!selectedExibidoraDetails}
-                exibidoras={selectedExibidoraDetails}
-                onClose={() => setSelectedExibidoraId(null)}
-                canEdit={true}
-            />
+            <ExhibitorDetailsModal />
             <ExibidoraModal />
         </div>
     );
