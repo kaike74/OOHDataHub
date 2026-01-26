@@ -65,14 +65,14 @@ export function Modal({
     return createPortal(
         <div
             className={cn(
-                "fixed inset-0 flex items-center justify-center p-2 transition-all duration-300",
+                "fixed inset-0 flex items-center justify-center p-4 sm:p-6 transition-all duration-300",
                 isOpen ? "bg-black/40 backdrop-blur-sm opacity-100" : "bg-black/0 backdrop-blur-none opacity-0 pointer-events-none"
             )}
             style={{ zIndex }}
         >
             <div
                 className={cn(
-                    "w-full bg-white rounded-2xl shadow-2xl overflow-hidden relative transition-all duration-300 flex flex-col h-[calc(100vh-16px)]",
+                    "w-full bg-white rounded-2xl shadow-2xl overflow-hidden relative transition-all duration-300 flex flex-col max-h-[90vh]",
                     maxWidthClasses[maxWidth],
                     isOpen ? "scale-100 opacity-100 translate-y-0" : "scale-95 opacity-0 translate-y-4",
                     className

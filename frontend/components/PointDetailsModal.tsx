@@ -454,10 +454,10 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
     // 6. INFO CONTENT (Cards)
     const InfoContent = (
         <div className="flex flex-col gap-4 h-full">
-            {/* Top Grid: Performance & Exhibitor (Replaced Values) */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Top Grid: Performance Only (Expanded) */}
+            <div className="grid grid-cols-1 gap-4">
                 {/* Performance */}
-                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between min-h-[120px]">
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between min-h-[100px]">
                     <div className="flex justify-between items-start">
                         <div className="p-1.5 bg-blue-50 text-blue-700 rounded-lg"><TrendingUp size={16} /></div>
                         <span className="text-[10px] uppercase font-bold text-gray-400">Impacto</span>
@@ -465,26 +465,6 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                     <div>
                         <span className="text-2xl font-black text-gray-900 block">{selectedPonto.fluxo ? parseInt(selectedPonto.fluxo as any).toLocaleString() : 'N/A'}</span>
                         <span className="text-[10px] text-gray-500 uppercase">Impacto Diário Estimado</span>
-                    </div>
-                </div>
-
-                {/* Exhibitor Card (Moved up) */}
-                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between min-h-[120px]">
-                    <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-purple-50 text-purple-700 rounded-lg"><Building2 size={16} /></div>
-                            <span className="text-[10px] font-bold text-gray-400 uppercase">Exibidora</span>
-                        </div>
-                        {canEdit && <button onClick={() => useStore.getState().setExibidoraModalOpen(true)} className="text-gray-400 hover:text-blue-600"><Edit size={12} /></button>}
-                    </div>
-                    <div className="cursor-pointer group" onClick={handleOpenExhibitor}>
-                        <p className="font-bold text-sm text-gray-900 group-hover:text-blue-600 transition-colors flex items-center gap-1">
-                            {selectedPonto.exibidora_nome}
-                            <ExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </p>
-                        <div className="text-[10px] text-gray-500 truncate mt-1">
-                            {exhibitorContacts[0]?.nome ? `Contato: ${exhibitorContacts[0].nome}` : 'Ver contatos'}
-                        </div>
                     </div>
                 </div>
             </div>
@@ -511,21 +491,55 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                 )}
             </div>
 
-            {/* Bottom: Contacts List (Condensed) */}
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
+            {/* Bottom: Contacts List (Enhanced) */}
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex-[1.5] overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between mb-3 border-b border-gray-50 pb-2">
                     <div className="flex items-center gap-2">
-                        <span className="text-[10px] uppercase font-bold text-gray-400">Outros Contatos</span>
+                        <div className="p-1.5 bg-green-50 text-green-700 rounded-lg"><MessageSquare size={14} /></div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400">Contatos</span>
                     </div>
+                    {canEdit && (
+                        <button
+                            onClick={() => {
+                                useStore.getState().setExibidoraFormMode('contacts');
+                                useStore.getState().setEditingExibidora(fullExhibitor || null);
+                                useStore.getState().setExibidoraModalOpen(true);
+                            }}
+                            className="text-gray-400 hover:text-blue-600 transition-colors p-1"
+                            title="Editar Contatos"
+                        >
+                            <Edit size={14} />
+                        </button>
+                    )}
                 </div>
-                <div className="space-y-2 max-h-[100px] overflow-y-auto custom-scrollbar">
-                    {exhibitorContacts.length > 0 ? exhibitorContacts.slice(0, 3).map(c => (
-                        <div key={c.id} className="text-xs border-b border-gray-50 last:border-0 pb-1 last:pb-0 flex justify-between">
-                            <span className="font-bold text-gray-900">{c.nome}</span>
-                            <span className="text-gray-500">{c.telefone || c.email}</span>
+                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1">
+                    {exhibitorContacts.length > 0 ? exhibitorContacts.map(c => (
+                        <div key={c.id} className="p-2 border border-gray-100 rounded-lg text-xs hover:border-gray-200 transition-colors bg-gray-50/50">
+                            <div className="flex justify-between items-start mb-1">
+                                <span className="font-bold text-gray-900 truncate">{c.nome}</span>
+                                {c.observacoes && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <MessageSquare size={12} className="text-blue-400 hover:text-blue-600 cursor-help" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p className="max-w-[200px] text-xs">{c.observacoes}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                            </div>
+                            <div className="flex flex-col gap-0.5 text-gray-500 font-medium">
+                                {c.email && <span className="truncate flex items-center gap-1.5 w-full"><span className="w-1 h-1 rounded-full bg-gray-300 flex-shrink-0" />{c.email}</span>}
+                                {c.telefone && <span className="truncate flex items-center gap-1.5 w-full"><span className="w-1 h-1 rounded-full bg-gray-300 flex-shrink-0" />{c.telefone}</span>}
+                            </div>
                         </div>
                     )) : (
-                        <p className="text-xs text-gray-400 italic">Nenhum contato extra</p>
+                        <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-1 pb-4">
+                            <MessageSquare size={20} className="opacity-20" />
+                            <p className="text-[10px] italic">Sem contatos cadastrados</p>
+                        </div>
                     )}
                 </div>
             </div>
