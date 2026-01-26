@@ -83,27 +83,27 @@ export function UnifiedStandardModal({
             <div className="flex flex-col h-[90vh] md:h-[700px] bg-white shadow-2xl overflow-hidden relative">
 
                 {/* 1. HEADER (Fixed) */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white/80 backdrop-blur-sm z-20">
-                    <h2 className="text-lg font-bold text-gray-900 truncate">{title}</h2>
+                <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-white/80 backdrop-blur-sm z-20 min-h-[48px]">
+                    <h2 className="text-base font-bold text-gray-900 truncate">{title}</h2>
                     <button
                         onClick={onClose}
-                        className="h-8 w-8 rounded-lg bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all border border-gray-100"
+                        className="h-7 w-7 rounded-md bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all border border-gray-100"
                     >
-                        <X size={18} />
+                        <X size={16} />
                     </button>
                 </div>
 
                 {/* SCROLLABLE CONTENT AREA */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/30">
-                    <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
+                    <div className="p-4 space-y-4 max-w-[1600px] mx-auto">
 
                         {/* 2. HERO SECTION */}
-                        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+                        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm relative overflow-hidden">
                             {hero}
                         </div>
 
                         {/* 3. CONTENT GRID */}
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
 
                             {/* Visual Panel (Map/Image) */}
                             {visualContent && (
