@@ -65,7 +65,7 @@ export function Modal({
     return createPortal(
         <div
             className={cn(
-                "fixed inset-0 flex items-center justify-center p-4 transition-all duration-300",
+                "fixed inset-0 flex items-center justify-center p-2 sm:p-4 transition-all duration-300",
                 isOpen ? "bg-black/40 backdrop-blur-sm opacity-100" : "bg-black/0 backdrop-blur-none opacity-0 pointer-events-none"
             )}
             style={{ zIndex }}

@@ -126,6 +126,13 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
     // --- Handlers ---
     const handleClose = useCallback(() => { setPointModalOpen(false); setSelectedPonto(null); }, [setPointModalOpen, setSelectedPonto]);
 
+    const fullExhibitor = exibidoras.find(e => e.id === selectedPonto?.id_exibidora);
+    const handleOpenExhibitor = () => {
+        if (!fullExhibitor) return;
+        useStore.getState().setSelectedExibidora(fullExhibitor);
+        useStore.getState().setExhibitorDetailsOpen(true);
+    };
+
     // Navigation
     const handleNavigation = useCallback((direction: 'prev' | 'next') => {
         const isNext = direction === 'next';
@@ -371,11 +378,14 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
 
     const HeroContent = (
         <div className="flex items-center gap-6">
-            <div className="h-20 w-20 rounded-2xl bg-white border border-gray-100 p-2 flex items-center justify-center shadow-sm flex-shrink-0">
+            <div
+                className="h-20 w-20 rounded-2xl bg-white border border-gray-100 p-2 flex items-center justify-center shadow-sm flex-shrink-0 cursor-pointer hover:border-blue-200 transition-colors group"
+                onClick={handleOpenExhibitor}
+            >
                 {logoExibidora ? (
-                    <SafeImage src={api.getImageUrl(logoExibidora)} alt="Exibidora" className="w-full h-full object-contain" />
+                    <SafeImage src={api.getImageUrl(logoExibidora)} alt="Exibidora" className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
                 ) : (
-                    <Building2 size={32} className="text-gray-300" />
+                    <Building2 size={32} className="text-gray-300 group-hover:text-blue-400" />
                 )}
             </div>
             <div>
@@ -430,23 +440,13 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
         </div>
     );
 
+
+
     // 6. INFO CONTENT (Cards)
     const InfoContent = (
         <div className="flex flex-col gap-4 h-full">
-            {/* Top Grid: Values & Impact */}
+            {/* Top Grid: Performance & Exhibitor (Replaced Values) */}
             <div className="grid grid-cols-2 gap-4">
-                {/* Values */}
-                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between min-h-[120px]">
-                    <div className="flex justify-between items-start">
-                        <div className="p-1.5 bg-green-50 text-green-700 rounded-lg"><DollarSign size={16} /></div>
-                        <span className="text-[10px] uppercase font-bold text-gray-400">Investimento</span>
-                    </div>
-                    <div>
-                        <span className="text-2xl font-black text-gray-900 block">{formatCurrency(produtos[0]?.valor || 0)}</span>
-                        <span className="text-[10px] text-gray-500 uppercase">{produtos[0]?.tipo || 'Sob Consulta'}</span>
-                    </div>
-                </div>
-
                 {/* Performance */}
                 <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between min-h-[120px]">
                     <div className="flex justify-between items-start">
@@ -456,6 +456,26 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                     <div>
                         <span className="text-2xl font-black text-gray-900 block">{selectedPonto.fluxo ? parseInt(selectedPonto.fluxo as any).toLocaleString() : 'N/A'}</span>
                         <span className="text-[10px] text-gray-500 uppercase">Impacto Diário Estimado</span>
+                    </div>
+                </div>
+
+                {/* Exhibitor Card (Moved up) */}
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between min-h-[120px]">
+                    <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-purple-50 text-purple-700 rounded-lg"><Building2 size={16} /></div>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase">Exibidora</span>
+                        </div>
+                        {canEdit && <button onClick={() => useStore.getState().setExibidoraModalOpen(true)} className="text-gray-400 hover:text-blue-600"><Edit size={12} /></button>}
+                    </div>
+                    <div className="cursor-pointer group" onClick={handleOpenExhibitor}>
+                        <p className="font-bold text-sm text-gray-900 group-hover:text-blue-600 transition-colors flex items-center gap-1">
+                            {selectedPonto.exibidora_nome}
+                            <ExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </p>
+                        <div className="text-[10px] text-gray-500 truncate mt-1">
+                            {exhibitorContacts[0]?.nome ? `Contato: ${exhibitorContacts[0].nome}` : 'Ver contatos'}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -482,38 +502,21 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                 )}
             </div>
 
-            {/* Bottom: Exhibitor Contacts */}
+            {/* Bottom: Contacts List (Condensed) */}
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                        <div className="text-purple-700"><Building2 size={16} /></div>
-                        <span className="text-[10px] uppercase font-bold text-gray-400">Contatos da Exibidora</span>
+                        <span className="text-[10px] uppercase font-bold text-gray-400">Outros Contatos</span>
                     </div>
-                    {canEdit && (
-                        <button
-                            onClick={() => {
-                                useStore.getState().setExibidoraFormMode('contacts');
-                                useStore.getState().setEditingExibidora(exibidoras.find(e => e.id === selectedPonto.id_exibidora) || null);
-                                useStore.getState().setExibidoraModalOpen(true);
-                            }}
-                            className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-blue-600 transition-colors"
-                            title="Editar Contatos"
-                        >
-                            <Edit size={14} />
-                        </button>
-                    )}
                 </div>
-                <div className="space-y-2 max-h-[150px] overflow-y-auto custom-scrollbar">
-                    {exhibitorContacts.length > 0 ? exhibitorContacts.map(c => (
-                        <div key={c.id} className="text-xs border-b border-gray-50 last:border-0 pb-2 last:pb-0">
-                            <p className="font-bold text-gray-900">{c.nome}</p>
-                            <div className="flex flex-col text-gray-500 text-[10px]">
-                                {c.telefone && <span>{c.telefone}</span>}
-                                {c.email && <span>{c.email}</span>}
-                            </div>
+                <div className="space-y-2 max-h-[100px] overflow-y-auto custom-scrollbar">
+                    {exhibitorContacts.length > 0 ? exhibitorContacts.slice(0, 3).map(c => (
+                        <div key={c.id} className="text-xs border-b border-gray-50 last:border-0 pb-1 last:pb-0 flex justify-between">
+                            <span className="font-bold text-gray-900">{c.nome}</span>
+                            <span className="text-gray-500">{c.telefone || c.email}</span>
                         </div>
                     )) : (
-                        <p className="text-xs text-gray-400 italic">Nenhum contato disponível</p>
+                        <p className="text-xs text-gray-400 italic">Nenhum contato extra</p>
                     )}
                 </div>
             </div>
@@ -576,7 +579,18 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
             <UnifiedStandardModal
                 isOpen={isPointModalOpen}
                 onClose={handleClose}
-                title="Detalhes do Ponto"
+                title={
+                    <div className="flex items-center gap-2">
+                        <span>Detalhes do Ponto</span>
+                        <span className="text-gray-300">•</span>
+                        <span
+                            className="text-gray-500 hover:text-blue-600 cursor-pointer transition-colors"
+                            onClick={handleOpenExhibitor}
+                        >
+                            {selectedPonto.exibidora_nome}
+                        </span>
+                    </div>
+                }
                 hero={HeroContent}
                 visualContent={VisualContent}
                 infoContent={InfoContent}
@@ -616,7 +630,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                     <SafeImage src={api.getImageUrl(imagens[currentImageIndex])} alt="Full" className="max-h-[90vh] max-w-[90vw] object-contain" />
                 </div>
             )}
-            <ExhibitorDetailsModal isOpen={isExhibitorModalOpen} onClose={() => setIsExhibitorModalOpen(false)} exibidoras={selectedExhibitorForModal} canEdit={canEdit} />
+            <ExhibitorDetailsModal />
             <ExibidoraModal zIndex={2200} />
         </>
     );
