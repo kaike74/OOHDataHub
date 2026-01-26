@@ -67,7 +67,7 @@ export function UnifiedStandardModal({
     listContent,
     actions = [],
     navigation,
-    maxWidth = '7xl',
+    maxWidth = 'full',
     zIndex = 2000,
     className
 }: UnifiedStandardModalProps) {
@@ -76,11 +76,11 @@ export function UnifiedStandardModal({
             isOpen={isOpen}
             onClose={onClose}
             maxWidth={maxWidth}
-            className={cn('p-0 overflow-hidden rounded-[1.5rem] bg-gray-50/50', className)}
+            className={cn('p-0 overflow-hidden rounded-[1.5rem] bg-white', className)}
             zIndex={zIndex}
             hideCloseButton={true}
         >
-            <div className="flex flex-col h-[90vh] md:h-[700px] bg-white shadow-2xl overflow-hidden relative">
+            <div className="flex flex-col h-full bg-white shadow-none overflow-hidden relative">
 
                 {/* 1. HEADER (Fixed) */}
                 <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-white/80 backdrop-blur-sm z-20 min-h-[48px]">

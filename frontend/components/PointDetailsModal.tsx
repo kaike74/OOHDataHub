@@ -389,6 +389,15 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                 )}
             </div>
             <div>
+                <div
+                    className="flex items-center gap-2 mb-0.5 cursor-pointer group/exhibitor"
+                    onClick={handleOpenExhibitor}
+                >
+                    <span className="text-xs font-bold text-plura-primary group-hover/exhibitor:text-plura-primary-dark transition-colors uppercase tracking-wider flex items-center gap-1">
+                        {selectedPonto.exibidora_nome}
+                        <ExternalLink size={10} className="opacity-0 group-hover/exhibitor:opacity-100 transition-opacity" />
+                    </span>
+                </div>
                 <div className="flex items-center gap-2 mb-1">
                     <h1 className="text-2xl font-black text-gray-900 uppercase tracking-tight">{selectedPonto.codigo_ooh}</h1>
                     <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs font-bold uppercase">{selectedPonto.tipo}</span>
@@ -579,18 +588,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
             <UnifiedStandardModal
                 isOpen={isPointModalOpen}
                 onClose={handleClose}
-                title={
-                    <div className="flex items-center gap-2">
-                        <span>Detalhes do Ponto</span>
-                        <span className="text-gray-300">•</span>
-                        <span
-                            className="text-gray-500 hover:text-blue-600 cursor-pointer transition-colors"
-                            onClick={handleOpenExhibitor}
-                        >
-                            {selectedPonto.exibidora_nome}
-                        </span>
-                    </div>
-                }
+                title="Detalhes do Ponto"
                 hero={HeroContent}
                 visualContent={VisualContent}
                 infoContent={InfoContent}
