@@ -66,6 +66,8 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
 
     const [proposals, setProposals] = useState<any[]>([]);
     const [selectedCities, setSelectedCities] = useState<string[]>([]);
+    const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+    const [isTypeFilterOpen, setIsTypeFilterOpen] = useState(false);
 
     const stats = useMemo(() => {
         if (!selectedExibidora) return null;
@@ -85,7 +87,6 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
             try {
                 const all = await api.getAdminProposals();
                 // Filter proposals that contain ANY point from this exhibitor
-                // Since we don't have direct 'exhibitor_id' on items always reliable, we use point IDs.
                 const pointIds = new Set(stats.pontos.map(p => p.id));
                 const filtered = all.filter((prop: any) =>
                     prop.itens?.some((item: any) => pointIds.has(item.id_ooh))
@@ -102,6 +103,8 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
         setExhibitorDetailsOpen(false);
         setProposals([]);
         setSelectedCities([]);
+        setSelectedTypes([]);
+        setIsTypeFilterOpen(false);
     }, [setExhibitorDetailsOpen]);
 
     const handleEdit = useCallback(() => {
@@ -118,11 +121,24 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
         setSelectedCities(prev => prev.includes(city) ? prev.filter(c => c !== city) : [...prev, city]);
     };
 
+    const toggleType = (type: string) => {
+        setSelectedTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
+    };
+
     const filteredPontos = useMemo(() => {
         if (!stats?.pontos) return [];
-        if (selectedCities.length === 0) return stats.pontos;
-        return stats.pontos.filter(p => p.cidade && selectedCities.includes(p.cidade));
-    }, [stats?.pontos, selectedCities]);
+        let filtered = stats.pontos;
+
+        if (selectedCities.length > 0) {
+            filtered = filtered.filter(p => p.cidade && selectedCities.includes(p.cidade));
+        }
+
+        if (selectedTypes.length > 0) {
+            filtered = filtered.filter(p => p.tipo && selectedTypes.includes(p.tipo));
+        }
+
+        return filtered;
+    }, [stats?.pontos, selectedCities, selectedTypes]);
 
     // Map Initialization
     useEffect(() => {
@@ -188,7 +204,7 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
         const timer = setTimeout(initMap, 500);
         return () => clearTimeout(timer);
 
-    }, [selectedExibidora, isExhibitorDetailsOpen, filteredPontos]); // Re-render map on filtered points change
+    }, [selectedExibidora, isExhibitorDetailsOpen, filteredPontos, stats?.pontos.length]);
 
     const isOpen = !!selectedExibidora && isExhibitorDetailsOpen;
     if (!selectedExibidora) return null;
@@ -261,66 +277,58 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
         </div>
     );
 
-    // 3. Info Content (Proposals & Types)
+    // 3. Info Content (Points List + Filters) - CENTER COLUMN
     const InfoContent = (
         <div className="flex flex-col gap-4 h-full">
-            {/* OOH Types Card */}
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                    <div className="p-1.5 bg-blue-50 text-blue-700 rounded-lg"><Tag size={16} /></div>
-                    <span className="text-[10px] uppercase font-bold text-gray-400">Tipos de OOH</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    {stats?.tipos.map((type, i) => (
-                        <span key={i} className="px-2 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-bold text-gray-600 uppercase">
-                            {type}
-                        </span>
-                    ))}
-                    {!stats?.tipos.length && <span className="text-xs text-gray-400 italic">Nenhum tipo identificado</span>}
-                </div>
-            </div>
-
-            {/* Proposals Card */}
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex-1 flex flex-col min-h-[150px]">
-                <div className="flex items-center justify-between mb-3 border-b border-gray-50 pb-2">
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-indigo-50 text-indigo-700 rounded-lg"><Upload size={16} /></div> {/* Using Upload icon as placeholder or maybe FileText */}
-                        <span className="text-[10px] uppercase font-bold text-gray-400">Propostas Vinculadas</span>
-                    </div>
-                    <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{proposals.length}</span>
-                </div>
-
-                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
-                    {proposals.length > 0 ? proposals.map(prop => (
-                        <div key={prop.id} className="p-2 border border-gray-100 rounded-lg hover:border-indigo-200 transition-colors bg-gray-50/50">
-                            <p className="text-xs font-bold text-gray-900 truncate">{prop.nome}</p>
-                            <div className="flex justify-between items-center mt-1">
-                                <span className="text-[10px] text-gray-500">{formatDate(prop.created_at)}</span>
-                                <span className="text-[9px] px-1.5 py-0.5 bg-white border border-gray-200 rounded text-gray-400 font-mono">{prop.status}</span>
-                            </div>
-                        </div>
-                    )) : (
-                        <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-1 pb-4">
-                            <p className="text-[10px] italic">Nenhuma proposta encontrada</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-
-    // 4. List Content (Points with City Filter + Contacts)
-    const ListContent = (
-        <div className="flex flex-col gap-4 h-full">
-            {/* Points List with City Filter Header */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col flex-[1.5] min-h-[250px] overflow-hidden">
+            {/* Points List with Filters */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col flex-1 min-h-[500px] overflow-hidden">
                 <div className="flex flex-col border-b border-gray-100">
                     <div className="px-4 py-3 flex items-center justify-between bg-gray-50/50">
-                        <div className="flex items-center gap-2">
-                            <MapPin size={14} className="text-gray-400" />
-                            <span className="text-xs font-bold text-gray-500 uppercase">Pontos Cadastrados</span>
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                                <MapPin size={14} className="text-gray-400" />
+                                <span className="text-xs font-bold text-gray-500 uppercase">Pontos</span>
+                            </div>
+                            <span className="text-[10px] font-bold bg-white border border-gray-200 px-2 py-0.5 rounded text-gray-600">{filteredPontos.length}/{stats?.totalPontos}</span>
+
+                            {/* Type Filter Button */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsTypeFilterOpen(!isTypeFilterOpen)}
+                                    className={`
+                                        flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wide transition-all
+                                        ${selectedTypes.length > 0 ? 'bg-plura-primary text-white border-plura-primary' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}
+                                    `}
+                                >
+                                    <Tag size={10} />
+                                    Tipos {selectedTypes.length > 0 && `(${selectedTypes.length})`}
+                                </button>
+
+                                {isTypeFilterOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-10" onClick={() => setIsTypeFilterOpen(false)} />
+                                        <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 p-2 z-20 flex flex-col gap-1 max-h-[200px] overflow-y-auto custom-scrollbar">
+                                            {stats?.tipos.map(type => (
+                                                <button
+                                                    key={type}
+                                                    onClick={(e) => { e.stopPropagation(); toggleType(type); }}
+                                                    className={`
+                                                        text-left px-2 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-between
+                                                        ${selectedTypes.includes(type) ? 'bg-plura-primary/10 text-plura-primary' : 'hover:bg-gray-50 text-gray-700'}
+                                                    `}
+                                                >
+                                                    {type}
+                                                    {selectedTypes.includes(type) && <div className="w-1.5 h-1.5 rounded-full bg-plura-primary" />}
+                                                </button>
+                                            ))}
+                                            {(!stats?.tipos || stats.tipos.length === 0) && (
+                                                <span className="text-[10px] text-gray-400 italic p-2">Nenhum tipo disponível</span>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
-                        <span className="text-[10px] font-bold bg-white border border-gray-200 px-2 py-0.5 rounded text-gray-600">{filteredPontos.length}</span>
                     </div>
 
                     {/* City Filters */}
@@ -333,7 +341,7 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
                                         key={city}
                                         onClick={() => toggleCity(city)}
                                         className={`
-                                            px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap transition-all border
+                                            px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap transition-all border
                                             ${isSelected
                                                 ? 'bg-plura-primary text-white border-plura-primary shadow-sm'
                                                 : 'bg-gray-50 text-gray-500 border-gray-100 hover:border-gray-300'
@@ -344,11 +352,6 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
                                     </button>
                                 );
                             })}
-                            {stats.cidades.length > 5 && (
-                                <span className="text-[10px] text-gray-400 flex items-center px-1 italic">
-                                    +{stats.cidades.length - 5}
-                                </span>
-                            )}
                         </div>
                     )}
                 </div>
@@ -375,13 +378,18 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
                         </div>
                     ) : (
                         <div className="p-6 text-center text-xs text-gray-400 italic">
-                            {selectedCities.length > 0 ? 'Nenhum ponto nessas cidades' : 'Nenhum ponto encontrado'}
+                            {(selectedCities.length > 0 || selectedTypes.length > 0) ? 'Nenhum ponto com esses filtros' : 'Nenhum ponto encontrado'}
                         </div>
                     )}
                 </div>
             </div>
+        </div>
+    );
 
-            {/* Contacts */}
+    // 4. List Content (Contacts + Proposals) - RIGHT COLUMN
+    const ListContent = (
+        <div className="flex flex-col gap-4 h-full">
+            {/* Contacts (Top) */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col flex-1 min-h-[150px]">
                 <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 bg-gray-50/50">
                     <Phone size={14} className="text-gray-400" />
@@ -389,6 +397,33 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
                     <ContatosExibidora idExibidora={selectedExibidora.id} />
+                </div>
+            </div>
+
+            {/* Proposals (Bottom) */}
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col flex-[1.5] min-h-[200px]">
+                <div className="flex items-center justify-between mb-3 border-b border-gray-50 pb-2">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-indigo-50 text-indigo-700 rounded-lg"><Upload size={16} /></div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400">Propostas</span>
+                    </div>
+                    <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{proposals.length}</span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
+                    {proposals.length > 0 ? proposals.map(prop => (
+                        <div key={prop.id} className="p-2 border border-gray-100 rounded-lg hover:border-indigo-200 transition-colors bg-gray-50/50">
+                            <p className="text-xs font-bold text-gray-900 truncate">{prop.nome}</p>
+                            <div className="flex justify-between items-center mt-1">
+                                <span className="text-[10px] text-gray-500">{formatDate(prop.created_at)}</span>
+                                <span className="text-[9px] px-1.5 py-0.5 bg-white border border-gray-200 rounded text-gray-400 font-mono">{prop.status}</span>
+                            </div>
+                        </div>
+                    )) : (
+                        <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-1 pb-4">
+                            <p className="text-[10px] italic">Nenhuma proposta vinculada</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
