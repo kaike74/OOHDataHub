@@ -59,6 +59,11 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
     const pontos = useStore((state) => state.pontos);
     const setPointModalOpen = useStore((state) => state.setPointModalOpen);
     const setSelectedPonto = useStore((state) => state.setSelectedPonto);
+    const isPointModalOpen = useStore((state) => state.isPointModalOpen);
+
+    // Determine if we can go "Back" to a previous modal context
+    // If Point Modal is Open, it means it's underneath or part of the stack
+    const hasBack = isPointModalOpen;
 
     const mapRef = useRef<HTMLDivElement>(null);
     const googleMapRef = useRef<google.maps.Map | null>(null);
