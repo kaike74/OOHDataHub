@@ -454,6 +454,7 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
                     }
                 ]}
                 zIndex={zIndex}
+                onBack={hasBack ? () => setExhibitorDetailsOpen(false) : undefined}
             />
             <BulkImportModal />
         </>

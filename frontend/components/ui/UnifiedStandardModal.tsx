@@ -31,35 +31,15 @@ interface UnifiedStandardModalProps {
     infoContent?: React.ReactNode;   // Key Value Cards (Center/Middle)
     listContent?: React.ReactNode;   // Lists, History (Right/Bottom)
 
-    // 4. Footer
-    actions?: ActionButton[];
-    navigation?: NavigationConfig;
+    onBack?: () => void; // New Prop for "Back" navigation
 
-    maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
-    zIndex?: number;
-    className?: string;
+    // ... existing props
 }
 
-/**
- * Unified Standard Modal
- * 
- * Layout Structure:
- * ┌─────────────────────────────────┐
- * │ Header: Title + Close           │
- * ├─────────────────────────────────┤
- * │ Hero: Avatar + Main Info        │
- * ├─────────────────────────────────┤
- * │ Content Grid (Auto-layout)      │
- * │ ┌────────┬────────┬────────┐    │
- * │ │ Visual │  Info  │  List  │    │
- * │ └────────┴────────┴────────┘    │
- * ├─────────────────────────────────┤
- * │ Footer: Actions & Nav           │
- * └─────────────────────────────────┘
- */
 export function UnifiedStandardModal({
     isOpen,
     onClose,
+    onBack, // Destructure
     title,
     hero,
     visualContent,
@@ -84,7 +64,18 @@ export function UnifiedStandardModal({
 
                 {/* 1. HEADER (Fixed) */}
                 <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-white/80 backdrop-blur-sm z-20 min-h-[48px]">
-                    <h2 className="text-base font-bold text-gray-900 truncate">{title}</h2>
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        {onBack && (
+                            <button
+                                onClick={onBack}
+                                className="h-7 w-7 rounded-md bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-900 flex items-center justify-center transition-all border border-gray-200"
+                                title="Voltar"
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                        )}
+                        <h2 className="text-base font-bold text-gray-900 truncate">{title}</h2>
+                    </div>
                     <button
                         onClick={onClose}
                         className="h-7 w-7 rounded-md bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all border border-gray-100"

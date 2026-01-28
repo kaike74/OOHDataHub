@@ -27,6 +27,7 @@ export default function PointDetailsModal({ readOnly = false, ...props }: PointD
     // --- Store & State (Unchanged) ---
     const selectedPonto = useStore((state) => state.selectedPonto);
     const isPointModalOpen = useStore((state) => state.isPointModalOpen);
+    const isExhibitorModalOpenInStore = useStore((state) => state.isExhibitorDetailsOpen); // For Back Navigation
     const pointModalIndex = useStore((state) => state.pointModalIndex);
     const setPointModalOpen = useStore((state) => state.setPointModalOpen);
     const setPointModalIndex = useStore((state) => state.setPointModalIndex);
@@ -632,6 +633,7 @@ export default function PointDetailsModal({ readOnly = false, ...props }: PointD
                     ] : [])
                 ]}
                 zIndex={props.zIndex}
+                onBack={isExhibitorModalOpenInStore ? () => setPointModalOpen(false) : undefined}
             />
             {/* Hidden Input */}
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { /* Reuse logic */ }} />
