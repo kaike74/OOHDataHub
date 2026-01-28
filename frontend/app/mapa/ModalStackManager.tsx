@@ -20,18 +20,30 @@ export function ModalStackManager() {
         setTopModal(modal);
     };
 
-    // React to store changes to automatically set top modal
+    // React to store changes - when a modal opens, it should be on top
+    // CRITICAL: Use direct state updates in useEffect to ensure immediate reaction
     useEffect(() => {
-        if (isPointOpen) setTopModal('point');
-    }, [isPointOpen]);
+        if (isPointOpen && topModal !== 'point') {
+            setTopModal('point');
+        } else if (!isPointOpen && topModal === 'point') {
+            // If point closed, fall back to exhibitor if it's open
+            if (isExhibitorOpen) setTopModal('exhibitor');
+            else if (isExhibitorFormOpen) setTopModal('form');
+            else setTopModal(null);
+        }
+    }, [isPointOpen, topModal, isExhibitorOpen, isExhibitorFormOpen]);
 
     useEffect(() => {
-        if (isExhibitorOpen) setTopModal('exhibitor');
-    }, [isExhibitorOpen]);
+        if (isExhibitorOpen && topModal !== 'exhibitor' && !isPointOpen) {
+            setTopModal('exhibitor');
+        }
+    }, [isExhibitorOpen, topModal, isPointOpen]);
 
     useEffect(() => {
-        if (isExhibitorFormOpen) setTopModal('form');
-    }, [isExhibitorFormOpen]);
+        if (isExhibitorFormOpen && topModal !== 'form' && !isPointOpen && !isExhibitorOpen) {
+            setTopModal('form');
+        }
+    }, [isExhibitorFormOpen, topModal, isPointOpen, isExhibitorOpen]);
 
     // Base Z-Indices
     const BASE_Z = 2000;

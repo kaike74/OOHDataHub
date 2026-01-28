@@ -33,7 +33,14 @@ interface UnifiedStandardModalProps {
 
     onBack?: () => void; // New Prop for "Back" navigation
 
-    // ... existing props
+    // Actions and Navigation
+    actions?: ActionButton[];
+    navigation?: NavigationConfig;
+
+    // Styling
+    maxWidth?: string;
+    zIndex?: number;
+    className?: string;
 }
 
 export function UnifiedStandardModal({
