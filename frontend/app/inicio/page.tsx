@@ -8,6 +8,7 @@ import { ArrowRight, FileText, Users, MapPin, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ModalStackManager } from '@/app/mapa/ModalStackManager';
 
 interface DashboardStats {
     propostas_count: number;
@@ -167,6 +168,8 @@ export default function InicioPage() {
                     )}
                 </div>
             </div>
+
+            <ModalStackManager />
         </MainLayout>
     );
 }

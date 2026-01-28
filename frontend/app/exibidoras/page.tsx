@@ -6,6 +6,7 @@ import { useStore } from '@/lib/store';
 import { useState } from 'react';
 import { AnimatedSearchBar } from '@/components/ui/AnimatedSearchBar';
 import { ActionButton } from '@/components/ui/PageComponents';
+import { ModalStackManager } from '@/app/mapa/ModalStackManager';
 
 
 export default function ExibidorasPage() {
@@ -52,6 +53,7 @@ export default function ExibidorasPage() {
                 searchTerm={searchTerm}
             />
 
+            <ModalStackManager />
         </MainLayout>
     );
 }
