@@ -188,6 +188,7 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
 
                         // Click listener to open point details
                         marker.addListener("click", () => {
+                            setModalNavigationSource('exhibitor'); // Track that Point was opened from Exhibitor
                             setSelectedPonto(p);
                             setPointModalOpen(true);
                         });

@@ -36,6 +36,9 @@ interface AppState {
     hoveredCartItemId: number | null; // ID of cart item being hovered
     highlightedPointId: number | null; // ID of point to highlight (for "Ver na Proposta" animation)
 
+    // Modal Navigation Context - tracks which modal was opened from which
+    modalNavigationSource: 'exhibitor' | 'point' | 'map' | null;
+
     // Filters
     filterCidade: string[];
     filterUF: string[];
@@ -88,6 +91,9 @@ interface AppState {
     setHighlightedPointId: (id: number | null) => void;
     openPointModal: (ponto: Ponto, index?: number) => void;
 
+    // Modal Navigation Actions
+    setModalNavigationSource: (source: 'exhibitor' | 'point' | 'map' | null) => void;
+
     // Custom Layers
     customLayers: MapLayer[];
     setCustomLayers: (layers: MapLayer[]) => void;
@@ -137,6 +143,7 @@ export const useStore = create<AppState>()(
             pointModalIndex: 0,
             hoveredCartItemId: null,
             highlightedPointId: null,
+            modalNavigationSource: null,
 
             filterCidade: [],
             filterUF: [],
@@ -227,7 +234,7 @@ export const useStore = create<AppState>()(
                 editingExibidora: open ? state.editingExibidora : null,
                 exibidoraFormMode: open ? state.exibidoraFormMode : 'full', // Reset to full on close
             })),
-            setExhibitorDetailsOpen: (open) => set({ isExhibitorDetailsOpen: open }),
+            setExhibitorDetailsOpen: (open) => set({ isExhibitorDetailsOpen: open, modalNavigationSource: open ? undefined : null }),
             setExibidoraFormMode: (mode) => set({ exibidoraFormMode: mode }),
             setMenuOpen: (open) => set({ isMenuOpen: open }),
             setCurrentView: (view) => set((state) => ({
@@ -263,7 +270,7 @@ export const useStore = create<AppState>()(
             }),
 
             // Point Modal Actions
-            setPointModalOpen: (open) => set({ isPointModalOpen: open }),
+            setPointModalOpen: (open) => set({ isPointModalOpen: open, modalNavigationSource: open ? undefined : null }),
             setPointModalIndex: (index) => set({ pointModalIndex: index }),
             setHoveredCartItemId: (id) => set({ hoveredCartItemId: id }),
             setHighlightedPointId: (id) => set({ highlightedPointId: id }),
@@ -272,6 +279,9 @@ export const useStore = create<AppState>()(
                 isPointModalOpen: true,
                 pointModalIndex: index,
             }),
+
+            // Modal Navigation Actions
+            setModalNavigationSource: (source) => set({ modalNavigationSource: source }),
 
             refreshProposta: (proposta) => set({ selectedProposta: proposta }),
         }),

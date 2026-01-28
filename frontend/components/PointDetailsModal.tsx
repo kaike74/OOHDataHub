@@ -27,7 +27,8 @@ export default function PointDetailsModal({ readOnly = false, ...props }: PointD
     // --- Store & State (Unchanged) ---
     const selectedPonto = useStore((state) => state.selectedPonto);
     const isPointModalOpen = useStore((state) => state.isPointModalOpen);
-    const isExhibitorModalOpenInStore = useStore((state) => state.isExhibitorDetailsOpen); // For Back Navigation
+    const modalNavigationSource = useStore((state) => state.modalNavigationSource);
+    const setModalNavigationSource = useStore((state) => state.setModalNavigationSource);
     const pointModalIndex = useStore((state) => state.pointModalIndex);
     const setPointModalOpen = useStore((state) => state.setPointModalOpen);
     const setPointModalIndex = useStore((state) => state.setPointModalIndex);
@@ -130,6 +131,7 @@ export default function PointDetailsModal({ readOnly = false, ...props }: PointD
     const fullExhibitor = exibidoras.find(e => e.id === selectedPonto?.id_exibidora);
     const handleOpenExhibitor = () => {
         if (!fullExhibitor) return;
+        setModalNavigationSource('point'); // Track that Exhibitor was opened from Point
         useStore.getState().setSelectedExibidora(fullExhibitor);
         useStore.getState().setExhibitorDetailsOpen(true);
     };
@@ -633,7 +635,7 @@ export default function PointDetailsModal({ readOnly = false, ...props }: PointD
                     ] : [])
                 ]}
                 zIndex={props.zIndex}
-                onBack={isExhibitorModalOpenInStore ? () => setPointModalOpen(false) : undefined}
+                onBack={modalNavigationSource === 'exhibitor' ? () => setPointModalOpen(false) : undefined}
             />
             {/* Hidden Input */}
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { /* Reuse logic */ }} />
