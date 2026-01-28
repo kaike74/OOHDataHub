@@ -57,10 +57,7 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
     const setExhibitorDetailsOpen = useStore((state) => state.setExhibitorDetailsOpen);
     const setExibidoraModalOpen = useStore((state) => state.setExibidoraModalOpen);
     const pontos = useStore((state) => state.pontos);
-    const setPointModalOpen = useStore((state) => state.setPointModalOpen);
-    const setSelectedPonto = useStore((state) => state.setSelectedPonto);
     const modalNavigationSource = useStore((state) => state.modalNavigationSource);
-    const setModalNavigationSource = useStore((state) => state.setModalNavigationSource);
 
     // Show back button only when THIS modal was opened FROM the Point modal
     const hasBack = modalNavigationSource === 'point';
@@ -189,12 +186,10 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
                         // Click listener to open point details
                         marker.addListener("click", () => {
                             console.log('🗺️ MAP MARKER CLICKED:', { pontoId: p.id, codigo: p.codigo_ooh });
-                            console.log('Setting navigation source to exhibitor');
-                            setModalNavigationSource('exhibitor');
-                            console.log('Setting selected ponto:', p);
-                            setSelectedPonto(p);
-                            console.log('Opening point modal...');
-                            setPointModalOpen(true);
+                            console.log('Using getState() pattern...');
+                            useStore.getState().setModalNavigationSource('exhibitor');
+                            useStore.getState().setSelectedPonto(p);
+                            useStore.getState().setPointModalOpen(true);
                             console.log('Store states after click:', {
                                 isPointModalOpen: useStore.getState().isPointModalOpen,
                                 selectedPonto: useStore.getState().selectedPonto,
@@ -379,12 +374,10 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
                                     key={p.id}
                                     onClick={() => {
                                         console.log('📋 LIST ITEM CLICKED:', { pontoId: p.id, codigo: p.codigo_ooh });
-                                        console.log('Setting navigation source to exhibitor');
-                                        setModalNavigationSource('exhibitor');
-                                        console.log('Setting selected ponto:', p);
-                                        setSelectedPonto(p);
-                                        console.log('Opening point modal...');
-                                        setPointModalOpen(true);
+                                        console.log('Using getState() pattern...');
+                                        useStore.getState().setModalNavigationSource('exhibitor');
+                                        useStore.getState().setSelectedPonto(p);
+                                        useStore.getState().setPointModalOpen(true);
                                         console.log('Store states after click:', {
                                             isPointModalOpen: useStore.getState().isPointModalOpen,
                                             selectedPonto: useStore.getState().selectedPonto,

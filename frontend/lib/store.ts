@@ -201,14 +201,17 @@ export const useStore = create<AppState>()(
                 customLayers: state.customLayers.map(l => l.id === layerId ? { ...l, ...updates } : l)
             })),
 
-            setSelectedPonto: (ponto) => set((state) => ({
-                selectedPonto: ponto,
-                // Manter sidebar aberta se há exibidora selecionada (para voltar aos detalhes dela)
-                isSidebarOpen: !!ponto || !!state.selectedExibidora,
-                // SEMPRE preservar selectedExibidora - não limpar quando ponto é fechado
-                // Isso permite voltar aos detalhes da exibidora após fechar detalhes do ponto
-                selectedExibidora: state.selectedExibidora,
-            })),
+            setSelectedPonto: (ponto) => {
+                console.log('🔧 ZUSTAND setSelectedPonto called with:', ponto?.codigo_ooh || null);
+                return set((state) => ({
+                    selectedPonto: ponto,
+                    // Manter sidebar aberta se há exibidora selecionada (para voltar aos detalhes dela)
+                    isSidebarOpen: !!ponto || !!state.selectedExibidora,
+                    // SEMPRE preservar selectedExibidora - não limpar quando ponto é fechado
+                    // Isso permite voltar aos detalhes da exibidora após fechar detalhes do ponto
+                    selectedExibidora: state.selectedExibidora,
+                }));
+            },
             setEditingPonto: (ponto) => set({ editingPonto: ponto }),
             setSelectedExibidora: (exibidora) => set({
                 selectedExibidora: exibidora,
@@ -270,7 +273,11 @@ export const useStore = create<AppState>()(
             }),
 
             // Point Modal Actions
-            setPointModalOpen: (open) => set({ isPointModalOpen: open, modalNavigationSource: open ? undefined : null }),
+            setPointModalOpen: (open) => {
+                console.log('🔧 ZUSTAND setPointModalOpen called with:', open);
+                set({ isPointModalOpen: open, modalNavigationSource: open ? undefined : null });
+                console.log('🔧 ZUSTAND after set:', { isPointModalOpen: open });
+            },
             setPointModalIndex: (index) => set({ pointModalIndex: index }),
             setHoveredCartItemId: (id) => set({ hoveredCartItemId: id }),
             setHighlightedPointId: (id) => set({ highlightedPointId: id }),
@@ -281,7 +288,11 @@ export const useStore = create<AppState>()(
             }),
 
             // Modal Navigation Actions
-            setModalNavigationSource: (source) => set({ modalNavigationSource: source }),
+            setModalNavigationSource: (source) => {
+                console.log('🔧 ZUSTAND setModalNavigationSource called with:', source);
+                set({ modalNavigationSource: source });
+                console.log('🔧 ZUSTAND after set:', { modalNavigationSource: source });
+            },
 
             refreshProposta: (proposta) => set({ selectedProposta: proposta }),
         }),
