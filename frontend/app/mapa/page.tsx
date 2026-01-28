@@ -3,8 +3,6 @@
 import { useStore } from '@/lib/store';
 import MainLayout from '@/components/layout/MainLayout';
 import GoogleMap from '@/components/map/GoogleMap';
-import PointDetailsModal from '@/components/PointDetailsModal'; // REPLACED Sidebar
-import ExhibitorDetailsModal from '@/components/exhibitors/ExhibitorDetailsModal';
 import MapFilters from '@/components/MapFilters';
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
@@ -14,6 +12,7 @@ import { Filter as FilterIcon } from 'lucide-react';
 import AddressSearch from '@/components/AddressSearch';
 import CreatePointModal from '@/components/CreatePointModal';
 import { ActionButton } from '@/components/ui/PageComponents';
+import { ModalStackManager } from '@/app/mapa/ModalStackManager';
 
 export default function MapaPage() {
     const {
@@ -113,9 +112,10 @@ export default function MapaPage() {
                         <div className="absolute inset-0">
                             <GoogleMap searchLocation={searchLocation} showProposalActions={false} />
                         </div>
-                        {/* New Modal instead of Sidebar */}
-                        <PointDetailsModal />
-                        <ExhibitorDetailsModal />
+
+                        {/* Modals with Z-Index Management */}
+                        <ModalStackManager />
+
                         <MapFilters isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
                         <CreatePointModal />
                     </>

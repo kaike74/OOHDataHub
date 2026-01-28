@@ -10,6 +10,7 @@ import { SafeImage } from '@/components/ui/SafeImage';
 import { useBulkImportStore } from '@/stores/useBulkImportStore';
 import BulkImportModal from '@/components/bulk-import/BulkImportModal';
 import { UnifiedStandardModal } from '@/components/ui/UnifiedStandardModal';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
 
 // Componente para exibir contatos da exibidora
 function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undefined }) {
@@ -45,27 +46,62 @@ function ContatosExibidora({ idExibidora }: { idExibidora: number | null | undef
     );
 }
 
-export default function ExhibitorDetailsModal() {
+interface ExhibitorDetailsModalProps {
+    zIndex?: number;
+}
+
+export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalProps) {
     const selectedExibidora = useStore((state) => state.selectedExibidora);
     const setEditingExibidora = useStore((state) => state.setEditingExibidora);
     const isExhibitorDetailsOpen = useStore((state) => state.isExhibitorDetailsOpen);
     const setExhibitorDetailsOpen = useStore((state) => state.setExhibitorDetailsOpen);
     const setExibidoraModalOpen = useStore((state) => state.setExibidoraModalOpen);
     const pontos = useStore((state) => state.pontos);
+    const setPointModalOpen = useStore((state) => state.setPointModalOpen);
+    const setSelectedPonto = useStore((state) => state.setSelectedPonto);
 
     const mapRef = useRef<HTMLDivElement>(null);
     const googleMapRef = useRef<google.maps.Map | null>(null);
     const markersRef = useRef<any[]>([]);
 
+    const [proposals, setProposals] = useState<any[]>([]);
+    const [selectedCities, setSelectedCities] = useState<string[]>([]);
+
     const stats = useMemo(() => {
         if (!selectedExibidora) return null;
         const pontosExibidora = pontos.filter((p) => p.id_exibidora === selectedExibidora.id);
-        const cidades = [...new Set(pontosExibidora.map((p) => p.cidade).filter(Boolean))];
-        return { totalPontos: pontosExibidora.length, cidades: cidades as string[], pontos: pontosExibidora };
+        const cidades = [...new Set(pontosExibidora.map((p) => p.cidade).filter(Boolean))]; // Unique cities
+        const tipos = [...new Set(pontosExibidora.map((p) => p.tipo).filter(Boolean))]; // Unique types
+        return { totalPontos: pontosExibidora.length, cidades: cidades as string[], pontos: pontosExibidora, tipos: tipos as string[] };
     }, [selectedExibidora, pontos]);
+
+    // Fetch Proposals
+    useEffect(() => {
+        if (!selectedExibidora || !stats?.pontos.length) {
+            setProposals([]);
+            return;
+        }
+        const fetchProposals = async () => {
+            try {
+                const all = await api.getAdminProposals();
+                // Filter proposals that contain ANY point from this exhibitor
+                // Since we don't have direct 'exhibitor_id' on items always reliable, we use point IDs.
+                const pointIds = new Set(stats.pontos.map(p => p.id));
+                const filtered = all.filter((prop: any) =>
+                    prop.itens?.some((item: any) => pointIds.has(item.id_ooh))
+                );
+                setProposals(filtered);
+            } catch (e) {
+                console.error("Error fetching exhibited proposals", e);
+            }
+        };
+        fetchProposals();
+    }, [selectedExibidora, stats?.pontos]);
 
     const handleClose = useCallback(() => {
         setExhibitorDetailsOpen(false);
+        setProposals([]);
+        setSelectedCities([]);
     }, [setExhibitorDetailsOpen]);
 
     const handleEdit = useCallback(() => {
@@ -76,6 +112,17 @@ export default function ExhibitorDetailsModal() {
 
     const startImport = useBulkImportStore((state) => state.startImport);
     const handleBulkImport = useCallback(() => { if (!selectedExibidora) return; startImport(selectedExibidora.id, selectedExibidora.nome); }, [selectedExibidora, startImport]);
+
+    // Filter Logic
+    const toggleCity = (city: string) => {
+        setSelectedCities(prev => prev.includes(city) ? prev.filter(c => c !== city) : [...prev, city]);
+    };
+
+    const filteredPontos = useMemo(() => {
+        if (!stats?.pontos) return [];
+        if (selectedCities.length === 0) return stats.pontos;
+        return stats.pontos.filter(p => p.cidade && selectedCities.includes(p.cidade));
+    }, [stats?.pontos, selectedCities]);
 
     // Map Initialization
     useEffect(() => {
@@ -95,7 +142,7 @@ export default function ExhibitorDetailsModal() {
                         center: { lat: -23.550520, lng: -46.633308 },
                         zoom: 10,
                         mapId: "EXHIBITOR_DETAILS_MAP",
-                        disableDefaultUI: true,
+                        disableDefaultUI: true, // We will add custom controls
                         gestureHandling: 'cooperative'
                     });
                 }
@@ -106,7 +153,7 @@ export default function ExhibitorDetailsModal() {
 
                 const bounds = new google.maps.LatLngBounds();
 
-                stats.pontos.forEach(p => {
+                filteredPontos.forEach(p => {
                     if (p.latitude && p.longitude) {
                         const pin = document.createElement('div');
                         pin.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="24" height="24" fill="#FC1E75"><path d="M384 192c0 87.4-117 243-168.3 307.2c-12.3 15.3-35.1 15.3-47.4 0C117 435 0 279.4 0 192C0 86 86 0 192 0S384 86 384 192z M192 272c44.2 0 80-35.8 80-80s-35.8-80-80-80s-80 35.8-80 80s35.8 80 80 80z"/></svg>`;
@@ -117,6 +164,13 @@ export default function ExhibitorDetailsModal() {
                             content: pin,
                             title: p.codigo_ooh
                         });
+
+                        // Click listener to open point details
+                        marker.addListener("click", () => {
+                            setSelectedPonto(p);
+                            setPointModalOpen(true);
+                        });
+
                         markersRef.current.push(marker);
                         bounds.extend({ lat: p.latitude, lng: p.longitude });
                     }
@@ -131,16 +185,15 @@ export default function ExhibitorDetailsModal() {
             }
         };
 
-        const timer = setTimeout(initMap, 500); // Slight delay for modal animation
+        const timer = setTimeout(initMap, 500);
         return () => clearTimeout(timer);
 
-    }, [selectedExibidora, isExhibitorDetailsOpen, stats?.pontos]);
-
+    }, [selectedExibidora, isExhibitorDetailsOpen, filteredPontos]); // Re-render map on filtered points change
 
     const isOpen = !!selectedExibidora && isExhibitorDetailsOpen;
     if (!selectedExibidora) return null;
 
-    // 1. Hero
+    // 1. Hero Content
     const HeroContent = (
         <div className="flex items-center gap-6">
             <div className="h-20 w-20 rounded-2xl bg-white border border-gray-100 p-2 flex items-center justify-center shadow-sm">
@@ -152,15 +205,34 @@ export default function ExhibitorDetailsModal() {
             </div>
             <div>
                 <h1 className="text-2xl font-bold text-gray-900 mb-1">{selectedExibidora.nome}</h1>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span className="flex items-center gap-1.5"><Calendar size={14} /> {selectedExibidora.created_at ? formatDate(selectedExibidora.created_at) : 'N/A'}</span>
-                    <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">{stats?.totalPontos || 0} Pontos</span>
+                <div className="flex flex-col gap-1 text-sm text-gray-500">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">CNPJ</span>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span className="font-mono text-gray-700 bg-gray-50 px-1.5 py-0.5 rounded cursor-help border border-gray-100 hover:border-blue-200 transition-colors">
+                                        {selectedExibidora.cnpj || 'N/A'}
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p className="font-bold">{selectedExibidora.razao_social || 'Razão Social não informada'}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+                    {selectedExibidora.endereco && (
+                        <div className="flex items-center gap-1.5">
+                            <MapPin size={14} className="text-gray-400" />
+                            <span className="text-gray-600">{selectedExibidora.endereco}</span>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 
-    // 2. Visual Content (Map of Points)
+    // 2. Visual Content (Map with Zoom Controls)
     const VisualContent = (
         <div className="w-full h-full min-h-[300px] bg-gray-100 rounded-2xl overflow-hidden relative border border-gray-200 shadow-sm group">
             <div ref={mapRef} className="w-full h-full grayscale-[20%] group-hover:grayscale-0 transition-all duration-500" />
@@ -170,67 +242,131 @@ export default function ExhibitorDetailsModal() {
                     Mapa de Abrangência
                 </span>
             </div>
+
+            {/* Custom Zoom Controls */}
+            <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
+                <button
+                    onClick={() => googleMapRef.current?.setZoom((googleMapRef.current?.getZoom() || 10) + 1)}
+                    className="bg-white p-2 rounded-lg shadow-sm border border-gray-200 text-gray-600 hover:text-blue-600 hover:border-blue-200 transition-all"
+                >
+                    <div className="text-lg font-bold leading-none">+</div>
+                </button>
+                <button
+                    onClick={() => googleMapRef.current?.setZoom((googleMapRef.current?.getZoom() || 10) - 1)}
+                    className="bg-white p-2 rounded-lg shadow-sm border border-gray-200 text-gray-600 hover:text-blue-600 hover:border-blue-200 transition-all"
+                >
+                    <div className="text-lg font-bold leading-none">-</div>
+                </button>
+            </div>
         </div>
     );
 
-    // 3. Info Content (Stats + Data)
+    // 3. Info Content (Proposals & Types)
     const InfoContent = (
         <div className="flex flex-col gap-4 h-full">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-[100px]">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><TrendingUp size={12} /> Performance Média</span>
-                    <span className="text-xl font-black text-gray-900">{stats?.totalPontos ? '12.5k' : '-'} <span className="text-[10px] font-normal text-gray-400">imp/dia</span></span>
+            {/* OOH Types Card */}
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-blue-50 text-blue-700 rounded-lg"><Tag size={16} /></div>
+                    <span className="text-[10px] uppercase font-bold text-gray-400">Tipos de OOH</span>
                 </div>
-                <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-[100px]">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><DollarSign size={12} /> Faturamento Est.</span>
-                    <span className="text-xl font-black text-gray-900">R$ 450k</span>
+                <div className="flex flex-wrap gap-2">
+                    {stats?.tipos.map((type, i) => (
+                        <span key={i} className="px-2 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-bold text-gray-600 uppercase">
+                            {type}
+                        </span>
+                    ))}
+                    {!stats?.tipos.length && <span className="text-xs text-gray-400 italic">Nenhum tipo identificado</span>}
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex-1">
-                <div className="flex items-center gap-2 mb-4">
-                    <div className="p-1.5 bg-purple-50 text-purple-700 rounded-lg"><Building2 size={16} /></div>
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Dados da Empresa</h3>
+            {/* Proposals Card */}
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex-1 flex flex-col min-h-[150px]">
+                <div className="flex items-center justify-between mb-3 border-b border-gray-50 pb-2">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-indigo-50 text-indigo-700 rounded-lg"><Upload size={16} /></div> {/* Using Upload icon as placeholder or maybe FileText */}
+                        <span className="text-[10px] uppercase font-bold text-gray-400">Propostas Vinculadas</span>
+                    </div>
+                    <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{proposals.length}</span>
                 </div>
 
-                <div className="space-y-4">
-                    <div>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Razão Social</span>
-                        <p className="text-sm font-medium text-gray-900">{selectedExibidora.razao_social || '-'}</p>
-                    </div>
-                    <div>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">CNPJ</span>
-                        <p className="text-sm font-mono text-gray-900 bg-gray-50 inline-block px-1.5 rounded">{selectedExibidora.cnpj || '-'}</p>
-                    </div>
-                    <div>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Endereço</span>
-                        <p className="text-sm text-gray-600">{selectedExibidora.endereco || '-'}</p>
-                    </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
+                    {proposals.length > 0 ? proposals.map(prop => (
+                        <div key={prop.id} className="p-2 border border-gray-100 rounded-lg hover:border-indigo-200 transition-colors bg-gray-50/50">
+                            <p className="text-xs font-bold text-gray-900 truncate">{prop.nome}</p>
+                            <div className="flex justify-between items-center mt-1">
+                                <span className="text-[10px] text-gray-500">{formatDate(prop.created_at)}</span>
+                                <span className="text-[9px] px-1.5 py-0.5 bg-white border border-gray-200 rounded text-gray-400 font-mono">{prop.status}</span>
+                            </div>
+                        </div>
+                    )) : (
+                        <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-1 pb-4">
+                            <p className="text-[10px] italic">Nenhuma proposta encontrada</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 
-    // 4. List Content (List of Points + Contacts)
+    // 4. List Content (Points with City Filter + Contacts)
     const ListContent = (
         <div className="flex flex-col gap-4 h-full">
-            {/* Points List */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col flex-1 min-h-[200px] overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                    <div className="flex items-center gap-2">
-                        <MapPin size={14} className="text-gray-400" />
-                        <span className="text-xs font-bold text-gray-500 uppercase">Pontos Cadastrados</span>
+            {/* Points List with City Filter Header */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col flex-[1.5] min-h-[250px] overflow-hidden">
+                <div className="flex flex-col border-b border-gray-100">
+                    <div className="px-4 py-3 flex items-center justify-between bg-gray-50/50">
+                        <div className="flex items-center gap-2">
+                            <MapPin size={14} className="text-gray-400" />
+                            <span className="text-xs font-bold text-gray-500 uppercase">Pontos Cadastrados</span>
+                        </div>
+                        <span className="text-[10px] font-bold bg-white border border-gray-200 px-2 py-0.5 rounded text-gray-600">{filteredPontos.length}</span>
                     </div>
-                    <span className="text-[10px] font-bold bg-white border border-gray-200 px-2 py-0.5 rounded text-gray-600">{stats?.totalPontos || 0}</span>
+
+                    {/* City Filters */}
+                    {stats?.cidades && stats.cidades.length > 0 && (
+                        <div className="px-4 py-2 flex gap-2 overflow-x-auto custom-scrollbar bg-white shadow-[inset_0_-1px_4px_rgba(0,0,0,0.02)]">
+                            {stats.cidades.map(city => {
+                                const isSelected = selectedCities.includes(city);
+                                return (
+                                    <button
+                                        key={city}
+                                        onClick={() => toggleCity(city)}
+                                        className={`
+                                            px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap transition-all border
+                                            ${isSelected
+                                                ? 'bg-plura-primary text-white border-plura-primary shadow-sm'
+                                                : 'bg-gray-50 text-gray-500 border-gray-100 hover:border-gray-300'
+                                            }
+                                        `}
+                                    >
+                                        {city}
+                                    </button>
+                                );
+                            })}
+                            {stats.cidades.length > 5 && (
+                                <span className="text-[10px] text-gray-400 flex items-center px-1 italic">
+                                    +{stats.cidades.length - 5}
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
+
                 <div className="p-0 overflow-y-auto flex-1 custom-scrollbar">
-                    {stats?.pontos && stats.pontos.length > 0 ? (
+                    {filteredPontos.length > 0 ? (
                         <div className="divide-y divide-gray-50">
-                            {stats.pontos.map((p) => (
-                                <div key={p.id} className="p-3 hover:bg-gray-50 flex justify-between items-center group cursor-pointer transition-colors">
+                            {filteredPontos.map((p) => (
+                                <div
+                                    key={p.id}
+                                    onClick={() => {
+                                        setSelectedPonto(p);
+                                        setPointModalOpen(true);
+                                    }}
+                                    className="p-3 hover:bg-gray-50 flex justify-between items-center group cursor-pointer transition-colors"
+                                >
                                     <div>
-                                        <p className="text-xs font-bold text-gray-900 group-hover:text-blue-600">{p.codigo_ooh}</p>
+                                        <p className="text-xs font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{p.codigo_ooh}</p>
                                         <p className="text-[10px] text-gray-500 truncate max-w-[200px]">{p.endereco}</p>
                                     </div>
                                     <span className="text-[10px] font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">{p.tipo}</span>
@@ -238,33 +374,21 @@ export default function ExhibitorDetailsModal() {
                             ))}
                         </div>
                     ) : (
-                        <div className="p-6 text-center text-xs text-gray-400 italic">Nenhum ponto encontrado</div>
+                        <div className="p-6 text-center text-xs text-gray-400 italic">
+                            {selectedCities.length > 0 ? 'Nenhum ponto nessas cidades' : 'Nenhum ponto encontrado'}
+                        </div>
                     )}
                 </div>
             </div>
 
-            {/* Contacts & Cities Grid */}
-            <div className="grid grid-cols-2 gap-4 h-[250px]">
-                {/* Cities */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
-                    <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-                        <Tag size={14} className="text-gray-400" />
-                        <span className="text-xs font-bold text-gray-500 uppercase">Cidades</span>
-                    </div>
-                    <div className="p-4 flex flex-wrap gap-2 overflow-y-auto custom-scrollbar content-start">
-                        {stats?.cidades.map((c, i) => <span key={i} className="px-2 py-1 bg-gray-50 text-gray-600 border border-gray-100 rounded text-[10px] font-medium">{c}</span>)}
-                    </div>
+            {/* Contacts */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col flex-1 min-h-[150px]">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 bg-gray-50/50">
+                    <Phone size={14} className="text-gray-400" />
+                    <span className="text-xs font-bold text-gray-500 uppercase">Contatos</span>
                 </div>
-
-                {/* Contacts */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
-                    <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-                        <Phone size={14} className="text-gray-400" />
-                        <span className="text-xs font-bold text-gray-500 uppercase">Contatos</span>
-                    </div>
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
-                        <ContatosExibidora idExibidora={selectedExibidora.id} />
-                    </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
+                    <ContatosExibidora idExibidora={selectedExibidora.id} />
                 </div>
             </div>
         </div>
@@ -294,6 +418,7 @@ export default function ExhibitorDetailsModal() {
                         variant: 'primary'
                     }
                 ]}
+                zIndex={zIndex}
             />
             <BulkImportModal />
         </>

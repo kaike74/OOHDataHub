@@ -6,6 +6,7 @@ import { formatCurrency, cn, formatDate } from '@/lib/utils';
 import { X, MapPin, Building2, Eye, ShoppingCart, Copy, ExternalLink, Loader2, MessageSquare, Trash2, Edit, History, Crosshair, Edit2, Maximize2, TrendingUp, Plus, ChevronLeft, ChevronRight, Share2, FileText, DollarSign, Tag } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/Tooltip';
 
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { UnifiedStandardModal } from '@/components/ui/UnifiedStandardModal';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -14,16 +15,15 @@ import { SafeImage } from '@/components/ui/SafeImage';
 import { toast } from 'sonner';
 import HistoryModal from '@/components/HistoryModal';
 import CreateProposalModal from '@/components/CreateProposalModal';
-import ExhibitorDetailsModal from '@/components/exhibitors/ExhibitorDetailsModal';
-import ExibidoraModal from '@/components/ExibidoraModal';
 import type { Contato, Proposta } from '@/lib/types';
 import { getNextValidBiWeeklyStartDate, getSuggestedBiWeeklyEndDate, formatDateForInput, generateMonthlyPeriodId } from '@/lib/periodUtils';
 
 interface PointDetailsModalProps {
     readOnly?: boolean;
+    zIndex?: number;
 }
 
-export default function PointDetailsModal({ readOnly = false }: PointDetailsModalProps) {
+export default function PointDetailsModal({ readOnly = false, ...props }: PointDetailsModalProps) {
     // --- Store & State (Unchanged) ---
     const selectedPonto = useStore((state) => state.selectedPonto);
     const isPointModalOpen = useStore((state) => state.isPointModalOpen);
@@ -631,6 +631,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                         ...(canEdit ? [{ icon: Trash2, label: "Deletar", onClick: handleDelete, variant: 'danger' as const, isLoading: isDeleting }] : [])
                     ] : [])
                 ]}
+                zIndex={props.zIndex}
             />
             {/* Hidden Input */}
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { /* Reuse logic */ }} />
@@ -642,8 +643,7 @@ export default function PointDetailsModal({ readOnly = false }: PointDetailsModa
                     <SafeImage src={api.getImageUrl(imagens[currentImageIndex])} alt="Full" className="max-h-[90vh] max-w-[90vw] object-contain" />
                 </div>
             )}
-            <ExhibitorDetailsModal />
-            <ExibidoraModal zIndex={2200} />
+            {/* Embedded Modals REMOVED - Managed by ModalStackManager */}
         </>
     );
 }
