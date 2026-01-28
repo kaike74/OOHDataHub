@@ -216,8 +216,18 @@ export default function PointDetailsModal({ readOnly = false, ...props }: PointD
     };
 
     // --- Render Content for PluraModal ---
+    console.log('🔍 PointDetailsModal Render Check:', {
+        selectedPonto: selectedPonto?.codigo_ooh || null,
+        isPointModalOpen,
+        shouldRender: !!(selectedPonto && isPointModalOpen)
+    });
 
-    if (!selectedPonto || !isPointModalOpen) return null;
+    if (!selectedPonto || !isPointModalOpen) {
+        console.log('❌ PointDetailsModal NOT rendering - returning null');
+        return null;
+    }
+
+    console.log('✅ PointDetailsModal IS rendering');
 
     // LEFT CONTENT: Visuals
     const LeftContent = (

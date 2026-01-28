@@ -23,10 +23,13 @@ export function ModalStackManager() {
     // React to store changes - when a modal opens, it should be on top
     // CRITICAL: Use direct state updates in useEffect to ensure immediate reaction
     useEffect(() => {
+        console.log('🔄 ModalStack: Point state changed:', { isPointOpen, currentTop: topModal });
         if (isPointOpen && topModal !== 'point') {
+            console.log('📌 ModalStack: Setting Point as TOP modal');
             setTopModal('point');
         } else if (!isPointOpen && topModal === 'point') {
             // If point closed, fall back to exhibitor if it's open
+            console.log('📌 ModalStack: Point closed, falling back');
             if (isExhibitorOpen) setTopModal('exhibitor');
             else if (isExhibitorFormOpen) setTopModal('form');
             else setTopModal(null);
@@ -35,12 +38,14 @@ export function ModalStackManager() {
 
     useEffect(() => {
         if (isExhibitorOpen && topModal !== 'exhibitor' && !isPointOpen) {
+            console.log('📌 ModalStack: Setting Exhibitor as TOP modal');
             setTopModal('exhibitor');
         }
     }, [isExhibitorOpen, topModal, isPointOpen]);
 
     useEffect(() => {
         if (isExhibitorFormOpen && topModal !== 'form' && !isPointOpen && !isExhibitorOpen) {
+            console.log('📌 ModalStack: Setting Form as TOP modal');
             setTopModal('form');
         }
     }, [isExhibitorFormOpen, topModal, isPointOpen, isExhibitorOpen]);
@@ -49,13 +54,22 @@ export function ModalStackManager() {
     const BASE_Z = 2000;
 
     const getZIndex = (modal: 'point' | 'exhibitor' | 'form') => {
-        if (topModal === modal) return BASE_Z + 20; // Active is highest
-        // Conflict resolution if multiple are open but not top
-        // Default hierarchy if not top: Form > Exhibitor > Point
-        if (modal === 'form') return BASE_Z + 15;
-        if (modal === 'exhibitor') return BASE_Z + 10;
-        return BASE_Z;
+        const zIndex = topModal === modal ? BASE_Z + 20 :
+            modal === 'form' ? BASE_Z + 15 :
+                modal === 'exhibitor' ? BASE_Z + 10 : BASE_Z;
+
+        console.log(`🎚️ ModalStack Z-Index for ${modal}:`, zIndex, { isTop: topModal === modal, currentTop: topModal });
+        return zIndex;
     };
+
+    console.log('🎭 ModalStack Render:', {
+        topModal,
+        isPointOpen,
+        isExhibitorOpen,
+        isExhibitorFormOpen,
+        pointZ: getZIndex('point'),
+        exhibitorZ: getZIndex('exhibitor')
+    });
 
     return (
         <>

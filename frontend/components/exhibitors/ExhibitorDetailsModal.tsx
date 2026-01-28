@@ -188,9 +188,18 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
 
                         // Click listener to open point details
                         marker.addListener("click", () => {
-                            setModalNavigationSource('exhibitor'); // Track that Point was opened from Exhibitor
+                            console.log('🗺️ MAP MARKER CLICKED:', { pontoId: p.id, codigo: p.codigo_ooh });
+                            console.log('Setting navigation source to exhibitor');
+                            setModalNavigationSource('exhibitor');
+                            console.log('Setting selected ponto:', p);
                             setSelectedPonto(p);
+                            console.log('Opening point modal...');
                             setPointModalOpen(true);
+                            console.log('Store states after click:', {
+                                isPointModalOpen: useStore.getState().isPointModalOpen,
+                                selectedPonto: useStore.getState().selectedPonto,
+                                modalNavigationSource: useStore.getState().modalNavigationSource
+                            });
                         });
 
                         markersRef.current.push(marker);
@@ -369,9 +378,18 @@ export default function ExhibitorDetailsModal({ zIndex }: ExhibitorDetailsModalP
                                 <div
                                     key={p.id}
                                     onClick={() => {
-                                        setModalNavigationSource('exhibitor'); // Track that Point was opened from Exhibitor
+                                        console.log('📋 LIST ITEM CLICKED:', { pontoId: p.id, codigo: p.codigo_ooh });
+                                        console.log('Setting navigation source to exhibitor');
+                                        setModalNavigationSource('exhibitor');
+                                        console.log('Setting selected ponto:', p);
                                         setSelectedPonto(p);
+                                        console.log('Opening point modal...');
                                         setPointModalOpen(true);
+                                        console.log('Store states after click:', {
+                                            isPointModalOpen: useStore.getState().isPointModalOpen,
+                                            selectedPonto: useStore.getState().selectedPonto,
+                                            modalNavigationSource: useStore.getState().modalNavigationSource
+                                        });
                                     }}
                                     className="p-3 hover:bg-gray-50 flex justify-between items-center group cursor-pointer transition-colors"
                                 >
