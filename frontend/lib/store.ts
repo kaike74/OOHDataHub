@@ -275,8 +275,14 @@ export const useStore = create<AppState>()(
             // Point Modal Actions
             setPointModalOpen: (open) => {
                 console.log('🔧 ZUSTAND setPointModalOpen called with:', open);
-                set({ isPointModalOpen: open, modalNavigationSource: open ? undefined : null });
-                console.log('🔧 ZUSTAND after set:', { isPointModalOpen: open });
+                // CRITICAL: Only reset modalNavigationSource when CLOSING, not when opening!
+                // When opening, preserve the value set by setModalNavigationSource
+                if (open) {
+                    set({ isPointModalOpen: open });
+                } else {
+                    set({ isPointModalOpen: open, modalNavigationSource: null });
+                }
+                console.log('🔧 ZUSTAND after set:', { isPointModalOpen: open, modalNavigationSource: useStore.getState().modalNavigationSource });
             },
             setPointModalIndex: (index) => set({ pointModalIndex: index }),
             setHoveredCartItemId: (id) => set({ hoveredCartItemId: id }),
